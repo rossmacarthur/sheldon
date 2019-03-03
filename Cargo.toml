@@ -6,3 +6,5 @@ name = "sheldon"
 version = "0.1.0"
 
 [dependencies]
+clap = "2.32.0"
+log = "0.4.6"
