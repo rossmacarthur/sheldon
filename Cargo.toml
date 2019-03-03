@@ -6,5 +6,6 @@ name = "sheldon"
 version = "0.1.0"
 
 [dependencies]
+ansi_term = "0.11.0"
 clap = "2.32.0"
 log = "0.4.6"
