@@ -1,0 +1,8 @@
+[package]
+authors = ["Ross MacArthur <ross@macarthur.io>"]
+description = "A fast, configurable, shell plugin manager."
+edition = "2018"
+name = "sheldon"
+version = "0.1.0"
+
+[dependencies]
