@@ -1,9 +1,11 @@
+use std::process;
+
 use clap::{
     crate_authors, crate_description, crate_name, crate_version, App, AppSettings, Arg, SubCommand,
 };
 use log::{debug, error};
 
-fn main() {
+fn run() -> sheldon::Result<()> {
     let matches = App::new(crate_name!())
         .author(crate_authors!())
         .about(crate_description!())
@@ -35,5 +37,14 @@ fn main() {
         ("install", _) => error!("this command is not supported yet"),
         ("source", _) => error!("this command is not supported yet"),
         _ => unreachable!(),
+    }
+
+    Ok(())
+}
+
+fn main() {
+    if let Err(e) = run() {
+        error!("{}", e);
+        process::exit(1);
     }
 }

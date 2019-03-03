@@ -27,7 +27,7 @@ impl Log for Logger {
                 color
                     .bold()
                     .paint(format!("{: >5}:", level.to_string().to_lowercase())),
-                record.args()
+                format!("{}", record.args()).replace("\n", "\n         ") // indent multiline
             );
         }
     }
