@@ -14,7 +14,8 @@ pub enum ErrorKind {
     Serialize,
 }
 
-/// An error struct that holds the error kind, a context message, and optionally a source.
+/// An error struct that holds the error kind, a context message, and optionally
+/// a source.
 #[derive(Debug)]
 pub struct Error {
     /// The type of error.

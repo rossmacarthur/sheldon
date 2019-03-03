@@ -39,14 +39,15 @@ impl Log for Logger {
 ///
 /// # Panics
 ///
-/// Panics if this function is called a second time, or a global logger has already been set.
+/// Panics if this function is called a second time, or a global logger has
+/// already been set.
 ///
 /// # Examples
 ///
 /// ```
 /// use sheldon::init_logger;
 ///
-/// init_logger(true);  // enable debug logging
+/// init_logger(true); // enable debug logging
 /// ```
 pub fn init_logger(debug: bool) {
     log::set_logger(&LOGGER).expect("failed to set logger");

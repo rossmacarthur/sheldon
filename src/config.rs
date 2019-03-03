@@ -23,7 +23,8 @@ macro_rules! vec_into {
 pub enum Source {
     /// A clonable Git repository.
     Git { url: String },
-    /// A repository on GitHub, only the the username/repository needs to be specified.
+    /// A repository on GitHub, only the the username/repository needs to be
+    /// specified.
     GitHub { repository: String },
     /// A local directory.
     Local { directory: PathBuf },
@@ -36,7 +37,6 @@ pub enum Source {
 /// A configured plugin.
 ///
 /// Defines how to retrieve and use this plugin.
-///
 // Note: we would want to use #[serde(deny_unknown_fields)] here but it doesn't work with a
 // flattened internally-tagged enum. See https://github.com/serde-rs/serde/issues/1358.
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
@@ -44,14 +44,14 @@ pub struct Plugin {
     /// How to retrieve this plugin.
     #[serde(flatten)]
     source: Source,
-    /// Which files to use in this plugin's directory. If this is `None` then this will figured out
-    /// based on the global [`matches`] field.
+    /// Which files to use in this plugin's directory. If this is `None` then
+    /// this will figured out based on the global [`matches`] field.
     ///
     /// [`matches`]: struct.Global.html#structglobal.matches
     #[serde(rename = "use")]
     uses: Option<Vec<String>>,
-    /// What templates to apply to each matched file. If this is `None` then the default templates
-    /// will be applied.
+    /// What templates to apply to each matched file. If this is `None` then the
+    /// default templates will be applied.
     apply: Option<Vec<String>>,
 }
 
@@ -63,8 +63,9 @@ pub struct Global {
     root: Option<PathBuf>,
     /// Which files to match and use in a plugin's directory.
     ///
-    /// This should be a list of glob patterns. This is slightly different to a plugin's [`uses`]
-    /// field, in that this one only uses the first glob that returns more than zero files.
+    /// This should be a list of glob patterns. This is slightly different to a
+    /// plugin's [`uses`] field, in that this one only uses the first glob
+    /// that returns more than zero files.
     ///
     /// [`uses`]: struct.Plugin.html#structfield.uses
     #[serde(rename = "match")]
