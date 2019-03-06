@@ -12,6 +12,18 @@ pub enum ErrorKind {
     Deserialize,
     /// Occurs when serializing fails.
     Serialize,
+    /// Occurs when there is an invalid config setting.
+    Config,
+    /// Occurs when downloading fails.
+    Download,
+    /// Occurs when a template fails to compile.
+    Template,
+    /// Occurs when a template fails to render.
+    Render,
+    /// Hints that destructuring should not be exhaustive.
+    // Until https://github.com/rust-lang/rust/issues/44109 is stabilized.
+    #[doc(hidden)]
+    __Nonexhaustive,
 }
 
 /// An error struct that holds the error kind, a context message, and optionally
@@ -45,10 +57,66 @@ impl fmt::Display for Error {
 }
 
 impl Error {
+    pub fn kind(&self) -> ErrorKind {
+        self.kind
+    }
+
+    pub fn message(&self) -> &String {
+        &self.message
+    }
+
     pub(crate) fn deserialize<E: _Error + 'static>(e: E, path: &Path) -> Self {
         Error {
             kind: ErrorKind::Deserialize,
             message: format!("failed to deserialize from `{}`", path.to_string_lossy()),
+            source: Some(Box::new(e)),
+        }
+    }
+
+    pub(crate) fn serialize<E: _Error + 'static>(e: E, path: &Path) -> Self {
+        Error {
+            kind: ErrorKind::Serialize,
+            message: format!("failed to serialize to `{}`", path.to_string_lossy()),
+            source: Some(Box::new(e)),
+        }
+    }
+
+    pub(crate) fn config_git(url: &str) -> Self {
+        Error {
+            kind: ErrorKind::Config,
+            message: format!("failed to parse `{}` as a Git URL", url),
+            source: None,
+        }
+    }
+
+    pub(crate) fn config_github(repository: &str) -> Self {
+        Error {
+            kind: ErrorKind::Config,
+            message: format!("failed to parse `{}` as a GitHub repository", repository),
+            source: None,
+        }
+    }
+
+    pub(crate) fn download<E: _Error + 'static>(e: E, url: &str) -> Self {
+        Error {
+            kind: ErrorKind::Download,
+            message: format!("failed to git clone {}", url),
+            source: Some(Box::new(e)),
+        }
+    }
+
+    pub(crate) fn template<E: _Error + 'static>(e: E, name: &str) -> Self {
+        Error {
+            kind: ErrorKind::Template,
+            message: format!("failed to compile template `{}`", name),
+            source: Some(Box::new(e)),
+        }
+    }
+
+    pub(crate) fn render<E: _Error + 'static>(e: E, name: &str) -> Self {
+        Error {
+            kind: ErrorKind::Render,
+            message: format!("failed to render template `{}`", name),
             source: Some(Box::new(e)),
         }
     }

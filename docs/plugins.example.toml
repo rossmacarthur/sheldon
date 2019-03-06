@@ -1,0 +1,3 @@
+[plugins.pure]
+source = 'github'
+repository = 'sindresorhus/pure'
