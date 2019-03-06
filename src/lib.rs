@@ -789,31 +789,49 @@ pub fn lock(ctx: &Context) -> Result<()> {
         .to_path(&ctx.lock_file)?)
 }
 
+/// Check if the config file is newer than the lock file.
+fn config_file_newer(ctx: &Context) -> bool {
+    let config_time = fs::metadata(&ctx.config_file)
+        .ok()
+        .and_then(|m| m.modified().ok());
+    let lock_time = fs::metadata(&ctx.lock_file)
+        .ok()
+        .and_then(|m| m.modified().ok());
+
+    lock_time.is_some() && config_time.is_some() && config_time.unwrap() > lock_time.unwrap()
+}
+
 /// Generate the init shell script.
 ///
 /// - Reads the locked config from the lock file.
 ///     - If that fails the config will be read from the config path.
 /// - Prints out the generated shell script.
 pub fn source(ctx: &Context) -> Result<()> {
-    let locked = match LockedConfig::from_path(&ctx.lock_file) {
-        Ok(locked) => locked,
-        Err(e) => {
-            warn!("{}", e);
-            match Config::from_path(&ctx.config_file) {
-                Ok(config) => config.lock(&ctx.root)?,
-                Err(e) => {
-                    let source = e.source().and_then(|e| e.downcast_ref::<io::Error>());
+    let locked = if config_file_newer(ctx) {
+        info!("using new config");
+        Config::from_path(&ctx.config_file)?.lock(&ctx.root)?
+    } else {
+        match LockedConfig::from_path(&ctx.lock_file) {
+            Ok(locked) => locked,
+            Err(e) => {
+                warn!("{}", e);
+                match Config::from_path(&ctx.config_file) {
+                    Ok(config) => config.lock(&ctx.root)?,
+                    Err(e) => {
+                        let source = e.source().and_then(|e| e.downcast_ref::<io::Error>());
 
-                    if source.is_some() && source.unwrap().raw_os_error() == Some(2) {
-                        warn!("{}", e);
-                        LockedConfig::new(&ctx.root)
-                    } else {
-                        return Err(e);
-                    }
-                },
-            }
-        },
+                        if source.is_some() && source.unwrap().raw_os_error() == Some(2) {
+                            warn!("{}", e);
+                            LockedConfig::new(&ctx.root)
+                        } else {
+                            return Err(e);
+                        }
+                    },
+                }
+            },
+        }
     };
+
     locked.to_path(&ctx.lock_file)?;
     print!("{}", locked.source()?);
     Ok(())
