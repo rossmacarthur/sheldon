@@ -1,5 +1,7 @@
 # Configuration
 
+See an example config file [here](plugins.example.toml).
+
 The plugins file follows the [TOML] file format. Its fields are described in
 this section. It consists of a list of plugins, a list of templates, and a few
 global options.
@@ -19,7 +21,6 @@ global options.
   - [Example: symlinking files](#example-symlinking-files)
   - [Example: overriding the PATH template](#example-overriding-the-path-template)
 - [Global options](#global-options)
-  - [`root`](#root)
   - [`match`](#match)
   - [`apply`](#apply-1)
 
@@ -211,17 +212,6 @@ plugins using it.
 
 ## Global options
 
-### `root`
-
-The default location for all cloned repositories, cached files, and anything
-else **sheldon** creates. This field defaults to `$SHELDON_ROOT` if it is set,
-otherwise it will default to `$HOME/.sheldon`. This can be referenced in
-templates using `{{ root }}`.
-
-```toml
-root = '~/.sheldon'
-```
-
 ### `match`
 
 A list of glob patterns to match against a plugin's contents. The first pattern
@@ -229,7 +219,7 @@ that matches any files will be used by default as a plugin's `use` field. This
 defaults to
 
 ```toml
-matches = [
+match = [
   '{{ name }}.plugin.zsh',
   '{{ name }}.zsh',
   '{{ name }}.sh',
@@ -249,7 +239,7 @@ A list of template names to apply to all plugins by default. See
 [`apply`](#apply)
 
 ```toml
-actions = ['source']
+apply = ['source']
 ```
 
 [TOML]: https://github.com/toml-lang/toml

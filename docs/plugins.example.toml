@@ -1,3 +1,25 @@
+# Example ~/sheldon/plugins.toml file.
+
+match = [
+  '{{ name }}.plugin.zsh',
+  '{{ name }}.zsh',
+  '{{ name }}.sh',
+  '*.plugin.zsh',
+  '*.zsh',
+  '*.sh',
+]
+apply = ['source', 'PATH']
+
+[templates]
+function = 'ln -sf "{{ filename }}" "~/.zsh/functions/{{ name }}"'
+PATH = 'export PATH="$PATH:{{ directory }}"'  # override the default PATH
+
 [plugins.pure]
 source = 'github'
 repository = 'sindresorhus/pure'
+apply = ['function']
+
+[plugins.zsh-autosuggestions]
+source = 'github'
+repository = 'zsh-users/zsh-autosuggestions'
+use = ['{{ name }}.zsh']
