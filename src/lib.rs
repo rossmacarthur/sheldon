@@ -808,7 +808,7 @@ fn config_file_newer(ctx: &Context) -> bool {
 /// - Prints out the generated shell script.
 pub fn source(ctx: &Context) -> Result<()> {
     let locked = if config_file_newer(ctx) {
-        info!("using new config");
+        info!("loaded new config");
         Config::from_path(&ctx.config_file)?.lock(&ctx.root)?
     } else {
         match LockedConfig::from_path(&ctx.lock_file) {
