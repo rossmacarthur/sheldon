@@ -380,14 +380,14 @@ impl Plugin {
         self,
         name: String,
         root: &Path,
-        apply: &Vec<String>,
+        apply: &[String],
     ) -> Result<NormalizedPlugin> {
         Ok(NormalizedPlugin {
             name,
             directory: self.source.directory(root)?,
             source: self.source.normalized(),
             uses: self.uses,
-            apply: self.apply.unwrap_or_else(|| apply.clone()),
+            apply: self.apply.unwrap_or_else(|| apply.to_vec()),
         })
     }
 }
@@ -399,7 +399,7 @@ impl NormalizedPlugin {
     /// use for a plugin.
     ///
     /// [`LockedPlugin`]: struct.LockedPlugin.html
-    fn lock(self, root: &Path, matches: &Vec<String>) -> Result<LockedPlugin> {
+    fn lock(self, root: &Path, matches: &[String]) -> Result<LockedPlugin> {
         // Determine all the filenames
         let mut filenames = Vec::new();
 
@@ -565,7 +565,7 @@ impl Config {
     /// Download all required dependencies for plugins.
     ///
     /// TODO: Download in parallel
-    fn download(plugins: &Vec<NormalizedPlugin>) -> Result<()> {
+    fn download(plugins: &[NormalizedPlugin]) -> Result<()> {
         for plugin in plugins {
             if let NormalizedSource::Git { url } = &plugin.source {
                 if let Err(e) = git2::Repository::clone(&url, &plugin.directory) {
@@ -726,6 +726,12 @@ pub struct Context {
     lock_file: PathBuf,
 }
 
+impl Default for Context {
+    fn default() -> Self {
+        Self::defaults(None, None)
+    }
+}
+
 impl Context {
     /// Determine the root directory and config file location.
     ///
@@ -773,7 +779,7 @@ impl Context {
 
     /// Create new Context with the default values.
     pub fn new() -> Self {
-        Self::defaults(None, None)
+        Self::default()
     }
 }
 
@@ -784,9 +790,10 @@ impl Context {
 /// - Generates a locked config.
 /// - Writes the locked config to the lock file.
 pub fn lock(ctx: &Context) -> Result<()> {
-    Ok(Config::from_path(&ctx.config_file)?
+    Config::from_path(&ctx.config_file)?
         .lock(&ctx.root)?
-        .to_path(&ctx.lock_file)?)
+        .to_path(&ctx.lock_file)?;
+    Ok(())
 }
 
 /// Check if the config file is newer than the lock file.
