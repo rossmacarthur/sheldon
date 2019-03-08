@@ -8,7 +8,7 @@ rust:
 
 before_script:
   - |
-    if [[ "$TRAVIS_RUST_VERSION" == "nightly" ]]; then
+    if [[ "$TRAVIS_RUST_VERSION" = "nightly" ]]; then
       rustup component add rustfmt
     else
       rustup component add clippy
@@ -36,6 +36,8 @@ addons:
       - libiberty-dev
 
 after_success: |
-  ./scripts/coverage.sh &&
-  bash <(curl -s https://codecov.io/bash) &&
-  echo "Uploaded code coverage"
+  if [[ "$TRAVIS_RUST_VERSION" = "stable" ]]; then
+    ./scripts/coverage.sh &&
+    bash <(curl -s https://codecov.io/bash) &&
+    echo "Uploaded code coverage"
+  fi
