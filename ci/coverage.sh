@@ -23,5 +23,5 @@ fi
 for file in target/debug/*-*; do
   [ -x "${file}" ] || continue;
   mkdir -p "target/cov/$(basename $file)"
-  $KCOV --exclude-pattern=/.cargo --verify "target/cov/$(basename $file)" "$file"
+  $KCOV --exclude-pattern=tests --include-pattern=src --verify "target/cov/$(basename $file)" "$file"
 done
