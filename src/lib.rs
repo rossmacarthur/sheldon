@@ -376,12 +376,7 @@ impl Plugin {
     /// Consume the Plugin and convert to a [`NormalizedPlugin`].
     ///
     /// [`NormalizedPlugin`]: struct.NormalizedPlugin.html
-    fn normalized(
-        self,
-        name: String,
-        root: &Path,
-        apply: &[String],
-    ) -> Result<NormalizedPlugin> {
+    fn normalized(self, name: String, root: &Path, apply: &[String]) -> Result<NormalizedPlugin> {
         Ok(NormalizedPlugin {
             name,
             directory: self.source.directory(root)?,
