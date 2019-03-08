@@ -37,15 +37,15 @@ addons:
 
 after_success: |
   wget https://github.com/SimonKagstrom/kcov/archive/v36.tar.gz &&
-  tar xzf master.tar.gz &&
-  cd kcov-master &&
+  tar xzf v36.tar.gz &&
+  cd kcov-36 &&
   mkdir build &&
   cd build &&
   cmake .. &&
   make &&
   make install DESTDIR=../../kcov-build &&
   cd ../.. &&
-  rm -rf kcov-master &&
+  rm -rf kcov-36 &&
   for file in target/debug/sheldon-*; do
     [ -x "${file}" ] || continue
     mkdir -p "target/cov/$(basename $file)"
