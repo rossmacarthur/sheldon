@@ -1,25 +1,25 @@
 # sheldon
 
 [![Crates.io Version](https://img.shields.io/crates/v/sheldon.svg?style=flat-square)][crates]
+[![Docs.rs Status](https://img.shields.io/badge/docs.rs-latest-brightgreen.svg?style=flat-square)][docs]
 [![Build Status](https://img.shields.io/travis/rossmacarthur/sheldon/master.svg?style=flat-square)][travis]
 [![Code Coverage]( https://img.shields.io/codecov/c/github/rossmacarthur/sheldon.svg?style=flat-square)][codecov]
-[![Docs.rs Status](https://img.shields.io/badge/docs-passing-brightgreen.svg?style=flat-square&colorB=4c1)][docs]
 
 A fast, configurable, shell plugin manager.
 
 ## Features
 
 - Can manage
-  - [x] Remote Git repositories.
-  - [x] GitHub repositories.
-  - [x] Local plugins.
-  - [ ] Gist files
-  - [ ] Arbitrary binary downloads
-- [x] Configuration file using [TOML] syntax.
-- [x] Uses a lock file for much faster loading of plugins.
-- [x] Highly configurable install methods using handlebars templating.
-- [ ] Branch/tag/commit support.
-- [ ] Downloads plugins in parallel.
+  - Remote Git repositories.
+  - GitHub repositories.
+  - Local plugins.
+  - Gist files (planned).
+  - Arbitrary binary downloads (planned).
+- Configuration file using [TOML] syntax.
+- Uses a lock file for much faster loading of plugins.
+- Highly configurable install methods using handlebars templating.
+- Branch/tag/commit support (planned).
+- Downloads plugins in parallel (planned).
 
 ## Getting started
 
