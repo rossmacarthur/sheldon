@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -x
+
 build_kcov() {
     wget -q -O - https://github.com/SimonKagstrom/kcov/archive/v36.tar.gz | tar xz &&
     mv kcov-36 kcov-source && cd kcov-source &&
@@ -19,6 +21,7 @@ if [[ -z "$KCOV" ]]; then
 fi
 
 for file in target/debug/*-*; do
+  [ -x "${file}" ] || continue;
   mkdir -p "target/cov/$(basename $file)"
   $KCOV --exclude-pattern=/.cargo --verify "target/cov/$(basename $file)" "$file"
 done
