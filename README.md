@@ -3,7 +3,7 @@
 [![Crates.io Version](https://img.shields.io/crates/v/sheldon.svg?style=flat-square)][crates]
 [![Docs.rs Latest](https://img.shields.io/badge/docs.rs-latest-brightgreen.svg?style=flat-square&color=blue)][docs]
 [![Build Status](https://img.shields.io/travis/rossmacarthur/sheldon/master.svg?style=flat-square)][travis]
-[![Code Coverage](https://img.shields.io/codecov/c/github/rossmacarthur/sheldon/master.svg?style=flat-square)][codecov]
+<!-- [![Code Coverage](https://img.shields.io/codecov/c/github/rossmacarthur/sheldon/master.svg?style=flat-square)][codecov] -->
 
 A fast, configurable, shell plugin manager.
 
