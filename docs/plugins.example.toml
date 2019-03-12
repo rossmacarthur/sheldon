@@ -11,7 +11,7 @@ match = [
 apply = ['source', 'PATH']
 
 [templates]
-function = 'ln -sf "{{ filename }}" "~/.zsh/functions/{{ name }}"'
+function = { value = 'ln -sf "{{ filename }}" "~/.zsh/functions/{{ name }}"', each = true }
 PATH = 'export PATH="$PATH:{{ directory }}"'  # override the default PATH
 
 [plugins.pure]

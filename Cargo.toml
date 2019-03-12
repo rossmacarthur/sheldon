@@ -11,19 +11,19 @@ repository = "https://github.com/rossmacarthur/sheldon"
 version = "0.1.0"
 
 [dependencies]
-ansi_term = "0.11"
-clap = "2"
-dirs = "1"
-git2 = "0.8"
-glob = "0.2"
-handlebars = "1"
-indexmap = { version = "1", features = ["serde-1"] }
-maplit = "1"
-log = "0.4"
-serde = "1"
-serde_derive = "1"
-toml = "0.4"
-url = "1"
+ansi_term = "0.11.0"
+clap = "2.32.0"
+dirs = "1.0.5"
+git2 = "0.8.0"
+glob = "0.3.0"
+handlebars = "1.1.0"
+indexmap = { version = "1.0.2", features = ["serde-1"] }
+maplit = "1.0.1"
+log = "0.4.6"
+serde = "1.0.89"
+serde_derive = "1.0.89"
+toml = "0.4.10"
+url = "1.7.2"
 
 [dev-dependencies]
-tempfile = "3"
+tempfile = "3.0.7"

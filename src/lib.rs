@@ -6,7 +6,7 @@ use std::{
     collections::HashMap,
     env,
     error::Error as _Error,
-    fs, io,
+    fmt, fs, io,
     path::{Path, PathBuf},
     result,
 };
@@ -15,10 +15,16 @@ use clap::crate_name;
 use indexmap::IndexMap;
 use log::{debug, info, warn};
 use maplit::hashmap;
+use serde::{
+    de::{self, Deserialize, MapAccess, Visitor},
+    Deserializer,
+};
 use serde_derive::{Deserialize, Serialize};
 
-pub use error::{Error, ErrorKind, Result};
-pub use logging::init_logging;
+pub use crate::{
+    error::{Error, ErrorKind, Result},
+    logging::init_logging,
+};
 
 /////////////////////////////////////////////////////////////////////////
 // Utilities
@@ -33,6 +39,63 @@ macro_rules! vec_into {
 /// initialization.
 macro_rules! hashmap_into {
     ($($key:expr => $value:expr),*) => (hashmap!{$($key.into() => $value.into()),*})
+}
+
+/// Allow deserializing `Template` as string or a struct.
+#[derive(Debug, Deserialize)]
+struct TemplateAux {
+    value: String,
+    each: bool,
+}
+
+struct TemplateVisitor;
+
+impl<'de> Visitor<'de> for TemplateVisitor {
+    type Value = Template;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        formatter.write_str("string or map")
+    }
+
+    fn visit_str<E>(self, value: &str) -> result::Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        Ok(From::from(value))
+    }
+
+    fn visit_map<M>(self, visitor: M) -> result::Result<Self::Value, M::Error>
+    where
+        M: MapAccess<'de>,
+    {
+        let TemplateAux { value, each } =
+            Deserialize::deserialize(de::value::MapAccessDeserializer::new(visitor))?;
+        Ok(Template { value, each })
+    }
+}
+
+impl<'de> Deserialize<'de> for Template {
+    fn deserialize<D>(deserializer: D) -> result::Result<Template, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        deserializer.deserialize_any(TemplateVisitor)
+    }
+}
+
+impl From<String> for Template {
+    fn from(s: String) -> Self {
+        Template {
+            value: s,
+            each: false,
+        }
+    }
+}
+
+impl From<&str> for Template {
+    fn from(s: &str) -> Self {
+        s.to_string().into()
+    }
 }
 
 /////////////////////////////////////////////////////////////////////////
@@ -128,6 +191,15 @@ pub struct LockedPlugin {
     apply: Vec<String>,
 }
 
+/// A wrapper around a template string.
+#[derive(Clone, Debug, PartialEq, Serialize)]
+pub struct Template {
+    /// The actual template string.
+    value: String,
+    /// Whether this template should be applied for each filename.
+    each: bool,
+}
+
 /// The contents of a configuration file.
 #[derive(Clone, Debug, Deserialize, PartialEq)]
 #[serde(default, deny_unknown_fields)]
@@ -138,7 +210,7 @@ pub struct Config {
     /// The default list of template names to apply to each matched file.
     apply: Vec<String>,
     /// A map of name to template string.
-    templates: HashMap<String, String>,
+    templates: HashMap<String, Template>,
     /// Each configured plugin.
     plugins: IndexMap<String, Plugin>,
 }
@@ -149,7 +221,7 @@ pub struct LockedConfig {
     /// The root folder used.
     root: PathBuf,
     /// A map of name to template.
-    templates: HashMap<String, String>,
+    templates: HashMap<String, Template>,
     /// Each locked plugin.
     plugins: Vec<LockedPlugin>,
 }
@@ -464,6 +536,14 @@ impl NormalizedPlugin {
     }
 }
 
+impl Template {
+    /// Update whether this `Template` should be applied to all files or not.
+    pub fn each(mut self, each: bool) -> Self {
+        self.each = each;
+        self
+    }
+}
+
 impl Config {
     /// Read a Config from the given path.
     ///
@@ -546,7 +626,7 @@ impl Config {
     /// #
     /// let config = Config::new().template("source", "source \"{{ filename }}\"");
     /// ```
-    pub fn template<S: Into<String>, T: Into<String>>(mut self, name: S, template: T) -> Self {
+    pub fn template<S: Into<String>, T: Into<Template>>(mut self, name: S, template: T) -> Self {
         self.templates.insert(name.into(), template.into());
         self
     }
@@ -596,16 +676,16 @@ impl Config {
         }
 
         // Determine the templates.
-        let mut templates = hashmap_into! {
+        let mut templates: HashMap<String, Template> = hashmap_into! {
             "PATH" => "export PATH=\"{{ directory }}:$PATH\"",
             "path" => "path=( \"{{ directory }}\" $path )",
             "fpath" => "fpath=( \"{{ directory }}\" $fpath )",
-            "source" => "source \"{{ filename }}\""
+            "source" => Template::from("source \"{{ filename }}\"").each(true)
         };
 
         // Add custom user templates.
-        for (name, template) in &self.templates {
-            templates.insert(name.to_string(), template.to_string());
+        for (name, template) in self.templates {
+            templates.insert(name, template);
         }
 
         // Check that the templates can be compiled.
@@ -614,7 +694,7 @@ impl Config {
             templates_.set_strict_mode(true);
             for (name, template) in &templates {
                 templates_
-                    .register_template_string(&name, template)
+                    .register_template_string(&name, &template.value)
                     .map_err(|e| Error::template(e, name))?;
             }
         }
@@ -676,7 +756,7 @@ impl LockedConfig {
         templates.set_strict_mode(true);
         for (name, template) in &self.templates {
             templates
-                .register_template_string(&name, template)
+                .register_template_string(&name, &template.value)
                 .map_err(|e| Error::template(e, name))?;
         }
 
@@ -694,8 +774,17 @@ impl LockedConfig {
                         plugin.directory.to_str().expect("plugin directory is not valid UTF-8"),
                 };
 
-                for filename in &plugin.filenames {
-                    data.insert("filename", filename.to_str().unwrap());
+                if self.templates[name].each {
+                    for filename in &plugin.filenames {
+                        data.insert("filename", filename.to_str().unwrap());
+                        script.push_str(
+                            &templates
+                                .render(name, &data)
+                                .map_err(|e| Error::render(e, name))?,
+                        );
+                        script.push('\n');
+                    }
+                } else {
                     script.push_str(
                         &templates
                             .render(name, &data)

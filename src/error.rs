@@ -57,10 +57,12 @@ impl fmt::Display for Error {
 }
 
 impl Error {
+    /// Returns the kind of error that occurred.
     pub fn kind(&self) -> ErrorKind {
         self.kind
     }
 
+    /// Returns the error message.
     pub fn message(&self) -> &String {
         &self.message
     }
