@@ -120,7 +120,10 @@ impl Error {
     pub(crate) fn git_open<E: _Error + 'static>(e: E, directory: &Path) -> Self {
         Error {
             kind: ErrorKind::Git,
-            message: format!("failed to open repository at `{}`", directory.to_string_lossy()),
+            message: format!(
+                "failed to open repository at `{}`",
+                directory.to_string_lossy()
+            ),
             source: Some(Box::new(e)),
         }
     }

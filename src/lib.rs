@@ -514,9 +514,8 @@ impl Config {
                             return Err(Error::git_clone(e, &url));
                         } else {
                             info!("{} is already cloned (required for `{}`)", url, plugin.name);
-                            git2::Repository::open(&plugin.directory).map_err(|e| {
-                                Error::git_open(e, &plugin.directory)
-                            })?
+                            git2::Repository::open(&plugin.directory)
+                                .map_err(|e| Error::git_open(e, &plugin.directory))?
                         }
                     },
                 };
