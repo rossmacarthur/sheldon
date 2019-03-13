@@ -41,14 +41,18 @@ macro_rules! hashmap_into {
     ($($key:expr => $value:expr),*) => (hashmap!{$($key.into() => $value.into()),*})
 }
 
-/// Allow deserializing `Template` as string or a struct.
+/// Visitor to deserialize a `Template` as a string or a struct.
+///
+/// From https://stackoverflow.com/questions/54761790.
+struct TemplateVisitor;
+
+/// Auxiliary `Template` struct so that we don't encounter recursion when
+/// deserializing.
 #[derive(Debug, Deserialize)]
 struct TemplateAux {
     value: String,
     each: bool,
 }
-
-struct TemplateVisitor;
 
 impl<'de> Visitor<'de> for TemplateVisitor {
     type Value = Template;
@@ -74,6 +78,10 @@ impl<'de> Visitor<'de> for TemplateVisitor {
     }
 }
 
+/// Manually implement `Deserialize` for a `Template`.
+///
+/// Unfortunately we can't use this https://serde.rs/string-or-struct.html, because
+/// we are storing `Template`s in a map.
 impl<'de> Deserialize<'de> for Template {
     fn deserialize<D>(deserializer: D) -> result::Result<Template, D::Error>
     where
@@ -538,6 +546,13 @@ impl NormalizedPlugin {
 
 impl Template {
     /// Update whether this `Template` should be applied to all files or not.
+    ///
+    /// # Examples
+    /// ```
+    /// # use sheldon::Template;
+    ///
+    /// let template = Template::from("source \"{{filename}}\"").each(true);
+    /// ```
     pub fn each(mut self, each: bool) -> Self {
         self.each = each;
         self
