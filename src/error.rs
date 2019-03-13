@@ -1,6 +1,6 @@
 //! Error handling for this crate.
 
-use std::{error::Error as _Error, fmt, path::Path, result};
+use std::{error::Error as _Error, fmt, io, path::Path, result};
 
 /// A custom result type to use in this crate.
 pub type Result<T> = result::Result<T, Error>;
@@ -63,8 +63,18 @@ impl Error {
     }
 
     /// Returns the error message.
-    pub fn message(&self) -> &String {
+    pub fn message(&self) -> &str {
         &self.message
+    }
+
+    pub(crate) fn source_is_io_not_found(&self) -> bool {
+        if let Some(io_error) = self.source().and_then(|e| e.downcast_ref::<io::Error>()) {
+            if io_error.kind() == io::ErrorKind::NotFound {
+                return true;
+            }
+        }
+
+        false
     }
 
     pub(crate) fn deserialize<E: _Error + 'static>(e: E, path: &Path) -> Self {
