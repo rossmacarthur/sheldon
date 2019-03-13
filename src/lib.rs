@@ -413,13 +413,6 @@ impl NormalizedPlugin {
 
 impl Template {
     /// Update whether this `Template` should be applied to all files or not.
-    ///
-    /// # Examples
-    /// ```
-    /// # use sheldon::Template;
-    ///
-    /// let template = Template::from("source \"{{filename}}\"").each(true);
-    /// ```
     fn each(mut self, each: bool) -> Self {
         self.each = each;
         self
@@ -477,14 +470,6 @@ impl From<&str> for LockedTemplate {
 
 impl Config {
     /// Read a Config from the given path.
-    ///
-    /// # Examples
-    ///
-    /// ```ignore
-    /// # use sheldon::Config;
-    /// #
-    /// let config = Config::from_path("plugins.toml");
-    /// ```
     fn from_path<P: AsRef<Path>>(path: P) -> Result<Self> {
         let path = path.as_ref();
         let manager = toml::from_str(&String::from_utf8_lossy(
