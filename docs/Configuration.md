@@ -129,7 +129,7 @@ As template strings they could be represented like this
 
 ```toml
 [templates]
-source = "source {{ filename }}"
+source = { value = "source {{ filename }}", each = true }
 PATH = 'export PATH="{{ directory }}:$PATH"'
 FPATH = 'export FPATH="{{ directory }}:$FPATH"'
 path = 'path=( "{{ directory }}" $path )'
@@ -146,6 +146,10 @@ source = 'github'
 repository = 'sindresorhus/pure'
 apply = ['PATH', 'fpath']
 ```
+
+The `each` value, as used in the `source` template above, specifies that the
+template should be applied to each matched filename for the plugin. This
+defaults to false.
 
 ### Custom templates
 
