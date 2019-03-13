@@ -179,7 +179,7 @@ directory. We could create a new template with name **symlink**, like this
 
 ```toml
 [templates]
-symlink = 'ln -sf "{{ filename }}" "~/.zsh/functions/{{ name }}"'
+symlink = { value = 'ln -sf "{{ filename }}" "~/.zsh/functions/{{ name }}"', each = true }
 ```
 
 You can then apply it to the plugin like this
