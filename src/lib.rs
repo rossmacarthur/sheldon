@@ -500,17 +500,17 @@ impl Config {
         for plugin in plugins {
             if let NormalizedSource::Git { url, revision } = &plugin.source {
                 // Clone or open the repository.
-                let repo = match git2::Repository::clone(&url, &plugin.directory) {
+                let repo = match git::Repository::clone(&url, &plugin.directory) {
                     Ok(repo) => {
                         info!("{} cloned (required for `{}`)", url, plugin.name);
                         repo
                     },
                     Err(e) => {
-                        if e.code() != git2::ErrorCode::Exists {
+                        if e.code() != git::ErrorCode::Exists {
                             return Err(Error::git_clone(e, &url));
                         } else {
                             info!("{} is already cloned (required for `{}`)", url, plugin.name);
-                            git2::Repository::open(&plugin.directory)
+                            git::Repository::open(&plugin.directory)
                                 .map_err(|e| Error::git_open(e, &plugin.directory))?
                         }
                     },
