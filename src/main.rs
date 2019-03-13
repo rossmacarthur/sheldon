@@ -49,7 +49,7 @@ fn run() -> sheldon::Result<()> {
         ("add", _) => error!("this command is not supported yet"),
         ("plugins", _) => error!("this command is not supported yet"),
         ("lock", _) => sheldon::lock(&ctx)?,
-        ("source", _) => sheldon::source(&ctx)?,
+        ("source", _) => print!("{}", sheldon::source(&ctx)?),
         _ => unreachable!(),
     }
 

@@ -2,11 +2,8 @@ mod error;
 mod logging;
 
 use std::{
-    borrow::BorrowMut as _Borrow,
     collections::HashMap,
-    env,
-    error::Error as _Error,
-    fmt, fs, io,
+    env, fmt, fs,
     path::{Path, PathBuf},
     result,
 };
@@ -41,18 +38,12 @@ macro_rules! hashmap_into {
     ($($key:expr => $value:expr),*) => (hashmap!{$($key.into() => $value.into()),*})
 }
 
-/// Visitor to deserialize a `Template` as a string or a struct.
+/// Visitor to deserialize a [`Template`] as a string or a struct.
 ///
 /// From https://stackoverflow.com/questions/54761790.
+///
+/// [`Template`]: struct.Template.html
 struct TemplateVisitor;
-
-/// Auxiliary `Template` struct so that we don't encounter recursion when
-/// deserializing.
-#[derive(Debug, Deserialize)]
-struct TemplateAux {
-    value: String,
-    each: bool,
-}
 
 impl<'de> Visitor<'de> for TemplateVisitor {
     type Value = Template;
@@ -72,37 +63,9 @@ impl<'de> Visitor<'de> for TemplateVisitor {
     where
         M: MapAccess<'de>,
     {
-        let TemplateAux { value, each } =
+        let LockedTemplate { value, each } =
             Deserialize::deserialize(de::value::MapAccessDeserializer::new(visitor))?;
         Ok(Template { value, each })
-    }
-}
-
-/// Manually implement `Deserialize` for a `Template`.
-///
-/// Unfortunately we can't use this https://serde.rs/string-or-struct.html, because
-/// we are storing `Template`s in a map.
-impl<'de> Deserialize<'de> for Template {
-    fn deserialize<D>(deserializer: D) -> result::Result<Template, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        deserializer.deserialize_any(TemplateVisitor)
-    }
-}
-
-impl From<String> for Template {
-    fn from(s: String) -> Self {
-        Template {
-            value: s,
-            each: false,
-        }
-    }
-}
-
-impl From<&str> for Template {
-    fn from(s: &str) -> Self {
-        s.to_string().into()
     }
 }
 
@@ -129,18 +92,13 @@ pub enum Source {
     GitHub { repository: String },
     /// A local directory.
     Local { directory: PathBuf },
-    /// Hints that destructuring should not be exhaustive.
-    // Until https://github.com/rust-lang/rust/issues/44109 is stabilized.
-    #[serde(skip)]
-    #[doc(hidden)]
-    __Nonexhaustive,
 }
 
 /// The source type for a [`NormalizedPlugin`].
 ///
 /// [`NormalizedPlugin`]: struct.NormalizedPlugin.html
 #[derive(Clone, Debug, PartialEq)]
-pub enum NormalizedSource {
+enum NormalizedSource {
     /// A clonable Git repository.
     Git { url: String },
     /// A local directory.
@@ -152,7 +110,7 @@ pub enum NormalizedSource {
 // work with a flattened internally-tagged enum.
 // See https://github.com/serde-rs/serde/issues/1358.
 #[derive(Clone, Debug, Deserialize, PartialEq)]
-pub struct Plugin {
+struct Plugin {
     /// Specifies how to retrieve this plugin.
     #[serde(flatten)]
     source: Source,
@@ -171,7 +129,7 @@ pub struct Plugin {
 ///
 /// [`Plugin`]: struct.Plugin.html
 #[derive(Clone, Debug, PartialEq)]
-pub struct NormalizedPlugin {
+struct NormalizedPlugin {
     /// The name of this plugin.
     name: String,
     /// Specifies how to retrieve this plugin.
@@ -188,7 +146,7 @@ pub struct NormalizedPlugin {
 ///
 /// [`Plugin`]: struct.Plugin.html
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
-pub struct LockedPlugin {
+struct LockedPlugin {
     /// The name of this plugin.
     name: String,
     /// The directory that this plugin resides in.
@@ -201,17 +159,31 @@ pub struct LockedPlugin {
 
 /// A wrapper around a template string.
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct Template {
+struct Template {
     /// The actual template string.
     value: String,
-    /// Whether this template should be applied for each filename.
+    /// Whether this template should be applied to each filename.
+    each: bool,
+}
+
+/// A locked [`Template`].
+///
+/// This is exactly the same as a `Template` but we don't want to allow string
+/// deserialization.
+///
+/// [`Template`]: struct.Template.html
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+struct LockedTemplate {
+    /// The actual template string.
+    value: String,
+    /// Whether this template should be applied to each filename.
     each: bool,
 }
 
 /// The contents of a configuration file.
 #[derive(Clone, Debug, Deserialize, PartialEq)]
 #[serde(default, deny_unknown_fields)]
-pub struct Config {
+struct Config {
     /// Which files to match and use in a plugin's directory.
     #[serde(rename = "match")]
     matches: Vec<String>,
@@ -223,19 +195,21 @@ pub struct Config {
     plugins: IndexMap<String, Plugin>,
 }
 
-/// A locked configuration.
+/// A locked [`Config`].
+///
+/// [`Config`]: struct.Config.html
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
-pub struct LockedConfig {
+struct LockedConfig {
     /// The root folder used.
     root: PathBuf,
     /// A map of name to template.
-    templates: HashMap<String, Template>,
+    templates: HashMap<String, LockedTemplate>,
     /// Each locked plugin.
     plugins: Vec<LockedPlugin>,
 }
 
 /////////////////////////////////////////////////////////////////////////
-// Configuration implementation
+// Configuration implementations
 /////////////////////////////////////////////////////////////////////////
 
 impl Default for Config {
@@ -262,20 +236,34 @@ impl Default for Config {
 impl Source {
     /// Return the directory for this [`Source`].
     ///
-    /// For a Git or GitHub source this is the path to the repository's
-    /// directory where the repository is cloned. For a local source this is
-    /// simply the directory defined.
+    /// For a local source this is simply the directory defined. For a Git
+    /// or GitHub source this is the path to the repository's
+    /// directory where the repository is cloned. It adheres to the following
+    /// format:
+    ///
+    /// ```text
+    ///   repositories
+    ///   └── github.com
+    ///       └── rossmacarthur
+    ///           └── pure
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// - If a Git URL cannot be parsed.
+    /// - If a GitHub repository cannot be parsed into a username and
+    ///   repository.
     ///
     /// [`Source`]: enum.Source.html
     pub fn directory(&self, root: &Path) -> Result<PathBuf> {
-        let root = root.to_str().unwrap();
+        let root = root.to_str().expect("root directory is not valid UTF-8");
 
         Ok(match self {
             Source::Git { url } => {
                 let error = || Error::config_git(url);
 
-                // Parse the URL and generate a folder based on the URL.
-                let parsed = url::Url::parse(url).unwrap();
+                // Parse the URL and generate a directory based on the URL.
+                let parsed = url::Url::parse(url).map_err(|_| Error::config_git(url))?;
                 let base = vec![root, CLONE_DIRECTORY, parsed.host_str().ok_or_else(error)?];
                 let segments: Vec<_> = parsed.path_segments().ok_or_else(error)?.collect();
                 base.iter().chain(segments.iter()).collect()
@@ -294,173 +282,52 @@ impl Source {
                     .collect()
             },
             Source::Local { directory } => directory.clone(),
-            _ => unreachable!(),
         })
     }
 
     /// Return the URL for this [`Source`].
     ///
-    /// For a Git or GitHub source this is the URL to the remote repository, for
-    /// a local source this is `None`.
+    /// For a Git or GitHub source this is the URL to the remote repository.
+    ///
+    /// # Panics
+    ///
+    /// It is a programming error to call this method on a Local source, and
+    /// this function will panic.
     ///
     /// [`Source`]: enum.Source.html
-    pub fn url(&self) -> Option<String> {
+    fn url(&self) -> String {
         match self {
-            Source::Git { url } => Some(url.clone()),
-            Source::GitHub { repository } => {
-                Some(format!("https://{}/{}", GITHUB_HOST, repository))
-            },
-            Source::Local { .. } => None,
-            _ => unreachable!(),
+            Source::Git { url } => url.clone(),
+            Source::GitHub { repository } => format!("https://{}/{}", GITHUB_HOST, repository),
+            Source::Local { .. } => panic!("a Local Source has no URL"),
         }
     }
 
-    /// Normalize this [`Source`].
+    /// Consume the Source and convert it to a [`NormalizedSource`]
     ///
-    /// [`Source`]: enum.Source.html
-    fn normalized(self) -> NormalizedSource {
+    /// [`NormalizedSource`]: struct.NormalizedSource.html
+    fn normalize(self) -> NormalizedSource {
         match self {
-            Source::Git { .. } | Source::GitHub { .. } => NormalizedSource::Git {
-                url: self.url().unwrap(),
-            },
+            Source::Git { .. } | Source::GitHub { .. } => NormalizedSource::Git { url: self.url() },
             Source::Local { .. } => NormalizedSource::Local,
-            _ => unreachable!(),
         }
     }
 }
 
 impl Plugin {
-    /// Constructs a new Plugin with the given [`Source`].
+    /// Consume the Plugin and convert it to a [`NormalizedPlugin`].
     ///
-    /// # Examples
+    /// # Errors
     ///
-    /// ```
-    /// # use sheldon::{Source, Plugin};
-    /// #
-    /// let plugin = Plugin::new(
-    ///     Source::GitHub {
-    ///         repository: "zsh-users/zsh-autosuggestions".to_string()
-    ///     }
-    /// );
-    /// ```
-    ///
-    /// [`Source`]: enum.Source.html
-    pub fn new(source: Source) -> Self {
-        Plugin {
-            source,
-            uses: None,
-            apply: None,
-        }
-    }
-
-    /// Convenience method to construct a new [`Git`] Plugin.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use sheldon::Plugin;
-    /// #
-    /// let plugin = Plugin::new_git("https://github.com/zsh-users/zsh-autosuggestions");
-    /// ```
-    /// [`Git`]: enum.Source.html#variant.Git
-    pub fn new_git<S: Into<String>>(url: S) -> Self {
-        Self::new(Source::Git { url: url.into() })
-    }
-
-    /// Convenience method to construct a new [`GitHub`] Plugin.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use sheldon::Plugin;
-    /// #
-    /// let plugin = Plugin::new_github("zsh-users/zsh-autosuggestions");
-    /// ```
-    /// [`GitHub`]: enum.Source.html#variant.GitHub
-    pub fn new_github<S: Into<String>>(repository: S) -> Self {
-        Self::new(Source::GitHub {
-            repository: repository.into(),
-        })
-    }
-
-    /// Convenience method to construct a new [`Local`] Plugin.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use sheldon::Plugin;
-    /// #
-    /// let plugin = Plugin::new_local("/usr/share/zsh/zsh-autosuggestions");
-    /// ```
-    /// [`Local`]: enum.Source.html#variant.Local
-    pub fn new_local<P: Into<PathBuf>>(directory: P) -> Self {
-        Self::new(Source::Local {
-            directory: directory.into(),
-        })
-    }
-
-    /// Set which files to use in this plugin's directory. If none are set
-    /// then the files to use will be figured out based on the global
-    /// [`matches`] field.
-    ///
-    /// This can be called multiple times to add more files to use. Valid values
-    /// included glob patterns and/or strings containing template fields.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use sheldon::Plugin;
-    /// #
-    /// let plugin = Plugin::new_github("zsh-users/zsh-autosuggestions")
-    ///     .uses("*.zsh")
-    ///     .uses("{{ name }}.plugin.zsh");
-    /// ```
-    ///
-    /// [`matches`]: struct.Config.html#method.matches
-    pub fn uses<S: Into<String>>(mut self, uses: S) -> Self {
-        if let Some(v) = self.uses.borrow_mut() {
-            v.push(uses.into());
-        } else {
-            self.uses = Some(vec_into![uses]);
-        }
-        self
-    }
-
-    /// Add a template to apply to this Plugin. If none are set
-    /// then the templates specified in the global [`apply`] field will be
-    /// applied.
-    ///
-    /// This can be called multiple times to add more templates to apply. The
-    /// value should be a template name.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use sheldon::Plugin;
-    /// #
-    /// let plugin = Plugin::new_github("zsh-users/zsh-autosuggestions")
-    ///     .apply("source")
-    ///     .apply("PATH");
-    /// ```
-    ///
-    /// [`apply`]: struct.Config.html#method.apply
-    pub fn apply<S: Into<String>>(mut self, apply: S) -> Self {
-        if let Some(v) = self.apply.borrow_mut() {
-            v.push(apply.into());
-        } else {
-            self.apply = Some(vec_into![apply]);
-        }
-        self
-    }
-
-    /// Consume the Plugin and convert to a [`NormalizedPlugin`].
+    /// Any errors that can be returned by the [`Source::directory()`] method.
     ///
     /// [`NormalizedPlugin`]: struct.NormalizedPlugin.html
-    fn normalized(self, name: String, root: &Path, apply: &[String]) -> Result<NormalizedPlugin> {
+    /// [`Source::directory()`]: enum.Source.html#method.directory
+    fn normalize(self, name: String, root: &Path, apply: &[String]) -> Result<NormalizedPlugin> {
         Ok(NormalizedPlugin {
             name,
             directory: self.source.directory(root)?,
-            source: self.source.normalized(),
+            source: self.source.normalize(),
             uses: self.uses,
             apply: self.apply.unwrap_or_else(|| apply.to_vec()),
         })
@@ -546,30 +413,64 @@ impl NormalizedPlugin {
 
 impl Template {
     /// Update whether this `Template` should be applied to all files or not.
-    ///
-    /// # Examples
-    /// ```
-    /// # use sheldon::Template;
-    ///
-    /// let template = Template::from("source \"{{filename}}\"").each(true);
-    /// ```
-    pub fn each(mut self, each: bool) -> Self {
+    fn each(mut self, each: bool) -> Self {
         self.each = each;
         self
+    }
+
+    /// Consume the Template and convert it to a [`LockedTemplate`].
+    ///
+    /// [`LockedTemplate`]: struct.LockedTemplate.html
+    fn lock(self) -> LockedTemplate {
+        LockedTemplate {
+            value: self.value,
+            each: self.each,
+        }
+    }
+}
+
+/// Manually implement `Deserialize` for a [`Template`].
+///
+/// Unfortunately we can't use this https://serde.rs/string-or-struct.html, because
+/// we are storing `Template`s in a map.
+///
+/// [`Template`]: struct.Template.html
+impl<'de> Deserialize<'de> for Template {
+    fn deserialize<D>(deserializer: D) -> result::Result<Template, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        deserializer.deserialize_any(TemplateVisitor)
+    }
+}
+
+impl From<String> for Template {
+    fn from(s: String) -> Self {
+        Template {
+            value: s,
+            each: false,
+        }
+    }
+}
+
+impl From<&str> for Template {
+    fn from(s: &str) -> Self {
+        s.to_string().into()
+    }
+}
+
+impl From<&str> for LockedTemplate {
+    fn from(s: &str) -> Self {
+        LockedTemplate {
+            value: s.to_string(),
+            each: false,
+        }
     }
 }
 
 impl Config {
     /// Read a Config from the given path.
-    ///
-    /// # Examples
-    ///
-    /// ```ignore
-    /// # use sheldon::Config;
-    /// #
-    /// let config = Config::from_path("plugins.toml");
-    /// ```
-    pub fn from_path<P: AsRef<Path>>(path: P) -> Result<Self> {
+    fn from_path<P: AsRef<Path>>(path: P) -> Result<Self> {
         let path = path.as_ref();
         let manager = toml::from_str(&String::from_utf8_lossy(
             &fs::read(&path).map_err(|e| Error::deserialize(e, &path))?,
@@ -579,82 +480,9 @@ impl Config {
         Ok(manager)
     }
 
-    /// Construct a new empty Config using the default values.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use sheldon::Config;
-    /// #
-    /// let config = Config::new();
-    /// ```
-    pub fn new() -> Self {
-        Config::default()
-    }
-
-    /// Set the default matches.
-    ///
-    /// This should be a list of glob patterns. This is slightly different to a
-    /// plugin's [`uses`] field, in that this one only uses the first glob
-    /// that returns more than zero files.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use sheldon::Config;
-    /// #
-    /// let config = Config::new()
-    ///     .matches(vec![
-    ///         "{{ name }}.plugin.zsh".to_string(),
-    ///         "*.zsh".to_string()
-    ///     ]);
-    /// ```
-    ///
-    /// [`uses`]: struct.Plugin.html#method.uses
-    pub fn matches(mut self, matches: Vec<String>) -> Self {
-        self.matches = matches;
-        self
-    }
-
-    /// Set the default templates to apply.
-    ///
-    /// This should be a list of template names.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use sheldon::Config;
-    /// #
-    /// let config = Config::new().apply(vec!["source".to_string()]);
-    /// ```
-    pub fn apply(mut self, apply: Vec<String>) -> Self {
-        self.apply = apply;
-        self
-    }
-
-    /// Add a template string.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use sheldon::Config;
-    /// #
-    /// let config = Config::new().template("source", "source \"{{ filename }}\"");
-    /// ```
-    pub fn template<S: Into<String>, T: Into<Template>>(mut self, name: S, template: T) -> Self {
-        self.templates.insert(name.into(), template.into());
-        self
-    }
-
-    /// Add a plugin to this Config.
-    pub fn plugin<S: Into<String>>(mut self, name: S, plugin: Plugin) -> Self {
-        self.plugins.insert(name.into(), plugin);
-        self
-    }
-
     /// Download all required dependencies for plugins.
     ///
-    /// TODO: Download in parallel
+    /// TODO: Download in parallel!
     fn download(plugins: &[NormalizedPlugin]) -> Result<()> {
         for plugin in plugins {
             if let NormalizedSource::Git { url } = &plugin.source {
@@ -677,7 +505,7 @@ impl Config {
         // Create a new map of normalized plugins
         let mut normalized_plugins = Vec::with_capacity(self.plugins.len());
         for (name, plugin) in self.plugins {
-            normalized_plugins.push(plugin.normalized(name, root, &self.apply)?);
+            normalized_plugins.push(plugin.normalize(name, root, &self.apply)?);
         }
 
         // Clone all repositories
@@ -691,16 +519,16 @@ impl Config {
         }
 
         // Determine the templates.
-        let mut templates: HashMap<String, Template> = hashmap_into! {
+        let mut templates = hashmap_into! {
             "PATH" => "export PATH=\"{{ directory }}:$PATH\"",
             "path" => "path=( \"{{ directory }}\" $path )",
             "fpath" => "fpath=( \"{{ directory }}\" $fpath )",
-            "source" => Template::from("source \"{{ filename }}\"").each(true)
+            "source" => Template::from("source \"{{ filename }}\"").each(true).lock()
         };
 
         // Add custom user templates.
         for (name, template) in self.templates {
-            templates.insert(name, template);
+            templates.insert(name, template.lock());
         }
 
         // Check that the templates can be compiled.
@@ -724,7 +552,7 @@ impl Config {
 
 impl LockedConfig {
     /// Read a LockedConfig from the given path.
-    pub fn from_path<P: AsRef<Path>>(path: P) -> Result<Self> {
+    fn from_path<P: AsRef<Path>>(path: P) -> Result<Self> {
         let path = path.as_ref();
         let locked = toml::from_str(&String::from_utf8_lossy(
             &fs::read(&path).map_err(|e| Error::deserialize(e, &path))?,
@@ -738,14 +566,14 @@ impl LockedConfig {
     }
 
     /// Construct a new empty LockedConfig.
-    pub fn new(root: &Path) -> Self {
-        Config::new()
+    fn new(root: &Path) -> Self {
+        Config::default()
             .lock(root)
             .expect("failed to lock default Config")
     }
 
     /// Write a LockedConfig to the given path.
-    pub fn to_path<P: AsRef<Path>>(&self, path: P) -> Result<()> {
+    fn to_path<P: AsRef<Path>>(&self, path: P) -> Result<()> {
         let path = path.as_ref();
 
         if let Some(directory) = path.parent() {
@@ -765,7 +593,7 @@ impl LockedConfig {
     }
 
     /// Generate the shell script.
-    pub fn source(&self) -> Result<String> {
+    fn source(&self) -> Result<String> {
         // Compile the templates
         let mut templates = handlebars::Handlebars::new();
         templates.set_strict_mode(true);
@@ -781,17 +609,23 @@ impl LockedConfig {
             for name in &plugin.apply {
                 // Data to use in template rendering
                 let mut data = hashmap! {
-                    "root" =>
-                        self.root.to_str().expect("root directory is not valid UTF-8"),
-                    "name" =>
-                        &plugin.name,
-                    "directory" =>
-                        plugin.directory.to_str().expect("plugin directory is not valid UTF-8"),
+                    "root" => self
+                        .root
+                        .to_str()
+                        .expect("root directory is not valid UTF-8"),
+                    "name" => &plugin.name,
+                    "directory" => plugin
+                        .directory
+                        .to_str()
+                        .expect("plugin directory is not valid UTF-8"),
                 };
 
                 if self.templates[name].each {
                     for filename in &plugin.filenames {
-                        data.insert("filename", filename.to_str().unwrap());
+                        data.insert(
+                            "filename",
+                            filename.to_str().expect("filename is not valid UTF-8"),
+                        );
                         script.push_str(
                             &templates
                                 .render(name, &data)
@@ -875,11 +709,6 @@ impl Context {
             lock_file,
         }
     }
-
-    /// Create new Context with the default values.
-    pub fn new() -> Self {
-        Self::default()
-    }
 }
 
 /// Prepare a configuration for sourcing.
@@ -912,21 +741,24 @@ fn config_file_newer(ctx: &Context) -> bool {
 /// - Reads the locked config from the lock file.
 ///     - If that fails the config will be read from the config path.
 /// - Prints out the generated shell script.
-pub fn source(ctx: &Context) -> Result<()> {
+pub fn source(ctx: &Context) -> Result<String> {
+    let mut to_path = true;
+
     let locked = if config_file_newer(ctx) {
         info!("loaded new config");
         Config::from_path(&ctx.config_file)?.lock(&ctx.root)?
     } else {
         match LockedConfig::from_path(&ctx.lock_file) {
-            Ok(locked) => locked,
+            Ok(locked) => {
+                to_path = false;
+                locked
+            },
             Err(e) => {
                 warn!("{}", e);
                 match Config::from_path(&ctx.config_file) {
                     Ok(config) => config.lock(&ctx.root)?,
                     Err(e) => {
-                        let source = e.source().and_then(|e| e.downcast_ref::<io::Error>());
-
-                        if source.is_some() && source.unwrap().raw_os_error() == Some(2) {
+                        if e.source_is_io_not_found() {
                             warn!("{}", e);
                             LockedConfig::new(&ctx.root)
                         } else {
@@ -938,7 +770,9 @@ pub fn source(ctx: &Context) -> Result<()> {
         }
     };
 
-    locked.to_path(&ctx.lock_file)?;
-    print!("{}", locked.source()?);
-    Ok(())
+    if to_path {
+        locked.to_path(&ctx.lock_file)?;
+    }
+
+    locked.source()
 }
