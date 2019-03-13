@@ -1,4 +1,4 @@
-# Example ~/sheldon/plugins.toml file.
+# Example ~/.zsh/plugins.toml file.
 
 match = [
   '{{ name }}.plugin.zsh',
