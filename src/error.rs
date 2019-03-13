@@ -14,8 +14,8 @@ pub enum ErrorKind {
     Serialize,
     /// Occurs when there is an invalid config setting.
     Config,
-    /// Occurs when downloading fails.
-    Download,
+    /// Occurs when there are Git related failures.
+    Git,
     /// Occurs when a template fails to compile.
     Template,
     /// Occurs when a template fails to render.
@@ -109,10 +109,26 @@ impl Error {
         }
     }
 
-    pub(crate) fn download<E: _Error + 'static>(e: E, url: &str) -> Self {
+    pub(crate) fn git_clone<E: _Error + 'static>(e: E, url: &str) -> Self {
         Error {
-            kind: ErrorKind::Download,
+            kind: ErrorKind::Git,
             message: format!("failed to git clone {}", url),
+            source: Some(Box::new(e)),
+        }
+    }
+
+    pub(crate) fn git_open<E: _Error + 'static>(e: E, directory: &Path) -> Self {
+        Error {
+            kind: ErrorKind::Git,
+            message: format!("failed to open repository at `{}`", directory.to_string_lossy()),
+            source: Some(Box::new(e)),
+        }
+    }
+
+    pub(crate) fn git_checkout<E: _Error + 'static>(e: E, revision: &str) -> Self {
+        Error {
+            kind: ErrorKind::Git,
+            message: format!("failed to git checkout `{}`", revision),
             source: Some(Box::new(e)),
         }
     }
