@@ -296,12 +296,8 @@ impl Source {
 
     /// Return the URL for this [`Source`].
     ///
-    /// For a Git or GitHub source this is the URL to the remote repository.
-    ///
-    /// # Panics
-    ///
-    /// It is a programming error to call this method on a Local source, and
-    /// this function will panic.
+    /// For a Git or GitHub source this is the URL to the remote repository. For
+    /// a Local source this is None.
     ///
     /// [`Source`]: enum.Source.html
     fn url(&self) -> Option<String> {
