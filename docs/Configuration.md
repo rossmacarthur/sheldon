@@ -45,7 +45,7 @@ repositories
 
 A GitHub source must set the `source` field to `github` and specify the
 `repository` to clone, this should be the username / organization and the
-repository name seperated by a forward slash, as demonstrated in the example
+repository name separated by a forward slash, as demonstrated in the example
 below
 
 ```toml
