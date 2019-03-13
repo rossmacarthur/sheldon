@@ -12,7 +12,7 @@ apply = ['source', 'PATH']
 
 [templates]
 function = { value = 'ln -sf "{{ filename }}" "~/.zsh/functions/{{ name }}"', each = true }
-PATH = 'export PATH="$PATH:{{ directory }}"'  # override the default PATH
+PATH = 'export PATH="$PATH:{{ directory }}"'
 
 [plugins.pure]
 source = 'github'
