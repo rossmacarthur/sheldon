@@ -534,7 +534,7 @@ impl Config {
         }
 
         // Determine the templates.
-        let mut templates: HashMap<_, LockedTemplate> = hashmap_into! {
+        let mut templates = hashmap_into! {
             "PATH" => "export PATH=\"{{ directory }}:$PATH\"",
             "path" => "path=( \"{{ directory }}\" $path )",
             "fpath" => "fpath=( \"{{ directory }}\" $fpath )",
