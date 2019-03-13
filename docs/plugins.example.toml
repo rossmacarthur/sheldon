@@ -1,4 +1,4 @@
-# Example ~/sheldon/plugins.toml file.
+# Example ~/.zsh/plugins.toml file.
 
 match = [
   '{{ name }}.plugin.zsh',
@@ -11,8 +11,8 @@ match = [
 apply = ['source', 'PATH']
 
 [templates]
-function = 'ln -sf "{{ filename }}" "~/.zsh/functions/{{ name }}"'
-PATH = 'export PATH="$PATH:{{ directory }}"'  # override the default PATH
+function = { value = 'ln -sf "{{ filename }}" "~/.zsh/functions/{{ name }}"', each = true }
+PATH = 'export PATH="$PATH:{{ directory }}"'
 
 [plugins.pure]
 source = 'github'
