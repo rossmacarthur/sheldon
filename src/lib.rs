@@ -521,7 +521,8 @@ impl Config {
                     let error = |e| Error::git_checkout(e, revision);
                     let object = repo.revparse_single(revision).map_err(error)?;
                     repo.set_head_detached(object.id()).map_err(error)?;
-                    repo.reset(&object, git::ResetType::Hard, None).map_err(error)?;
+                    repo.reset(&object, git::ResetType::Hard, None)
+                        .map_err(error)?;
                     info!(
                         "{} checked out at {} (required for `{}`)",
                         url, revision, plugin.name
