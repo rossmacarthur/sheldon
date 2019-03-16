@@ -1,7 +1,7 @@
 # Example ~/.zsh/plugins.toml file.
 
 # Global matches, if a plugin doesn't provide a `use` field then the first one
-# the following that matches more than zero files will be used.
+# of the following that matches more than zero files will be used.
 match = [
   '{{ name }}.zsh',
   '*.zsh',
