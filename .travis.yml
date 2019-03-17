@@ -8,7 +8,7 @@ rust:
 
 # install rustfmt (nightly only) and clippy
 before_script:
-  - cargo install cargo-ci
+  - cargo install --force cargo-ci
   - cargo ci --only nightly rustup component add rustfmt
   - cargo ci --skip nightly rustup component add clippy
 

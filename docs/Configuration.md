@@ -14,6 +14,7 @@ global options.
   - [`git`](#git)
   - [`local`](#local)
 - [Plugin options](#plugin-options)
+  - [`revision`](#revision)
   - [`use`](#use)
   - [`apply`](#apply)
 - [Templates](#templates)
@@ -44,7 +45,7 @@ repositories
 ### `github`
 
 A GitHub source must set the `source` field to `github` and specify the
-`repository` to clone, this should be the username / organization and the
+`repository` to clone, this should be the username or  organization and the
 repository name separated by a forward slash, as demonstrated in the example
 below
 
@@ -78,9 +79,25 @@ directory = '~/Downloads/repositories/pure'
 
 ## Plugin options
 
-These are options that are common to each type of source.
+These are options that are common to multiple types of source.
+
+### `revision`
+
+*Supported by GitHub and Git source types.*
+
+The git tag, commit, or branch to checkout after cloning the repository. For
+example
+
+```toml
+[plugins.pure]
+source = 'github'
+repository = 'sindresorhus/pure'
+revision = 'v1.9.0'
+```
 
 ### `use`
+
+*Supported by all source types.*
 
 A list of files / globs to use. The plugin templates will be applied to *all*
 files that match the given patterns. For example
@@ -97,8 +114,10 @@ that matches any files will be used.
 
 ### `apply`
 
+*Supported by all source types.*
+
 A list of template names to apply to this plugin. This defaults to the global
-`apply`.
+[`apply`](#apply-1).
 
 ```toml
 [plugins.pure]
@@ -129,7 +148,7 @@ As template strings they could be represented like this
 
 ```toml
 [templates]
-source = { value = "source {{ filename }}", each = true }
+source = { value = 'source "{{ filename }}"', each = true }
 PATH = 'export PATH="{{ directory }}:$PATH"'
 FPATH = 'export FPATH="{{ directory }}:$FPATH"'
 path = 'path=( "{{ directory }}" $path )'
@@ -149,7 +168,7 @@ apply = ['PATH', 'fpath']
 
 The `each` value, as used in the `source` template above, specifies that the
 template should be applied to each matched filename for the plugin. This
-defaults to false.
+defaults to `false`.
 
 ### Custom templates
 
@@ -211,8 +230,8 @@ repository = 'sindresorhus/pure'
 actions = ['source', 'PATH']
 ```
 
-**Note:** this would obviously change the behaviour of **PATH** for *all*
-plugins using it.
+**Note:** this would change the behaviour of **PATH** for *all* plugins using
+it.
 
 ## Global options
 
@@ -239,8 +258,8 @@ match = [
 
 ### `apply`
 
-A list of template names to apply to all plugins by default. See
-[`apply`](#apply)
+A list of template names to apply to all plugins by default (see
+[`apply`](#apply)). This defaults to
 
 ```toml
 apply = ['source']

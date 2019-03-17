@@ -17,7 +17,7 @@ A fast, configurable, shell plugin manager.
 - Configuration file using [TOML] syntax.
 - Uses a lock file for much faster loading of plugins.
 - Highly configurable install methods using handlebars templating.
-- Branch/tag/commit support (planned).
+- Branch/tag/commit support.
 - Downloads plugins in parallel (planned).
 
 ## Getting started
