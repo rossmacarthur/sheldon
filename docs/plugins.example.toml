@@ -1,25 +1,35 @@
 # Example ~/.zsh/plugins.toml file.
 
+# Global matches, if a plugin doesn't provide a `use` field then the first one
+# of the following that matches more than zero files will be used.
 match = [
-  '{{ name }}.plugin.zsh',
   '{{ name }}.zsh',
-  '{{ name }}.sh',
-  '*.plugin.zsh',
   '*.zsh',
   '*.sh',
 ]
+
+# Global templates to apply by default, if a plugin doesn't provide a `use`
+# field then these will be used.
 apply = ['source', 'PATH']
 
+# Custom user defined templates, the `each` field means that these will be
+# applied for all matched files.
 [templates]
-function = { value = 'ln -sf "{{ filename }}" "~/.zsh/functions/{{ name }}"', each = true }
-PATH = 'export PATH="$PATH:{{ directory }}"'
+function = { value = 'ln -sf "{{ filename }}" "{{ root }}/functions/{{ name }}"', each = true }
+prompt = { value = 'ln -sf "{{ filename }}" "{{ root }}/functions/prompt_{{ name }}_setup"', each = true }
+
+[plugins.async]
+source = 'github'  # the source type: one of 'git', 'github', or 'local'.
+repository = 'mafredri/zsh-async'  # the GitHub repository in the form {username}/{repository}.
+revision = 'v1.7.1'  # this can be a branch or a commit or a tag to checkout.
+apply = ['function']  # these are the templates that will be applied to this plugin.
 
 [plugins.pure]
 source = 'github'
 repository = 'sindresorhus/pure'
-apply = ['function']
+apply = ['prompt']
 
 [plugins.zsh-autosuggestions]
-source = 'github'
-repository = 'zsh-users/zsh-autosuggestions'
-use = ['{{ name }}.zsh']
+source = 'git'
+url = 'https://github.com/zsh-users/zsh-autosuggestions'
+use = ['{{ name }}.plugin.zsh']

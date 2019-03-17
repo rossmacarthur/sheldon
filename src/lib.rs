@@ -86,10 +86,16 @@ const GITHUB_HOST: &str = "github.com";
 #[serde(rename_all = "lowercase", tag = "source")]
 pub enum Source {
     /// A clonable Git repository.
-    Git { url: String },
+    Git {
+        url: String,
+        revision: Option<String>,
+    },
     /// A GitHub repository, only the the username/repository needs to be
     /// specified.
-    GitHub { repository: String },
+    GitHub {
+        repository: String,
+        revision: Option<String>,
+    },
     /// A local directory.
     Local { directory: PathBuf },
 }
@@ -100,7 +106,10 @@ pub enum Source {
 #[derive(Clone, Debug, PartialEq)]
 enum NormalizedSource {
     /// A clonable Git repository.
-    Git { url: String },
+    Git {
+        url: String,
+        revision: Option<String>,
+    },
     /// A local directory.
     Local,
 }
@@ -259,7 +268,7 @@ impl Source {
         let root = root.to_str().expect("root directory is not valid UTF-8");
 
         Ok(match self {
-            Source::Git { url } => {
+            Source::Git { url, .. } => {
                 let error = || Error::config_git(url);
 
                 // Parse the URL and generate a directory based on the URL.
@@ -268,7 +277,7 @@ impl Source {
                 let segments: Vec<_> = parsed.path_segments().ok_or_else(error)?.collect();
                 base.iter().chain(segments.iter()).collect()
             },
-            Source::GitHub { repository } => {
+            Source::GitHub { repository, .. } => {
                 let error = || Error::config_github(repository);
 
                 // Split the GitHub identifier into username and repository name.
@@ -287,19 +296,17 @@ impl Source {
 
     /// Return the URL for this [`Source`].
     ///
-    /// For a Git or GitHub source this is the URL to the remote repository.
-    ///
-    /// # Panics
-    ///
-    /// It is a programming error to call this method on a Local source, and
-    /// this function will panic.
+    /// For a Git or GitHub source this is the URL to the remote repository. For
+    /// a Local source this is None.
     ///
     /// [`Source`]: enum.Source.html
-    fn url(&self) -> String {
+    fn url(&self) -> Option<String> {
         match self {
-            Source::Git { url } => url.clone(),
-            Source::GitHub { repository } => format!("https://{}/{}", GITHUB_HOST, repository),
-            Source::Local { .. } => panic!("a Local Source has no URL"),
+            Source::Git { url, .. } => Some(url.clone()),
+            Source::GitHub { repository, .. } => {
+                Some(format!("https://{}/{}", GITHUB_HOST, repository))
+            },
+            Source::Local { .. } => None,
         }
     }
 
@@ -307,8 +314,14 @@ impl Source {
     ///
     /// [`NormalizedSource`]: struct.NormalizedSource.html
     fn normalize(self) -> NormalizedSource {
+        let url = self.url();
         match self {
-            Source::Git { .. } | Source::GitHub { .. } => NormalizedSource::Git { url: self.url() },
+            Source::Git { revision, .. } | Source::GitHub { revision, .. } => {
+                NormalizedSource::Git {
+                    url: url.unwrap(),
+                    revision,
+                }
+            },
             Source::Local { .. } => NormalizedSource::Local,
         }
     }
@@ -485,15 +498,35 @@ impl Config {
     /// TODO: Download in parallel!
     fn download(plugins: &[NormalizedPlugin]) -> Result<()> {
         for plugin in plugins {
-            if let NormalizedSource::Git { url } = &plugin.source {
-                if let Err(e) = git2::Repository::clone(&url, &plugin.directory) {
-                    if e.code() != git2::ErrorCode::Exists {
-                        return Err(Error::download(e, &url));
-                    } else {
-                        info!("{} is already cloned (required for `{}`)", url, plugin.name);
-                    }
-                } else {
-                    info!("{} cloned (required for `{}`)", url, plugin.name);
+            if let NormalizedSource::Git { url, revision } = &plugin.source {
+                // Clone or open the repository.
+                let repo = match git::Repository::clone(&url, &plugin.directory) {
+                    Ok(repo) => {
+                        info!("{} cloned (required for `{}`)", url, plugin.name);
+                        repo
+                    },
+                    Err(e) => {
+                        if e.code() != git::ErrorCode::Exists {
+                            return Err(Error::git_clone(e, &url));
+                        } else {
+                            info!("{} is already cloned (required for `{}`)", url, plugin.name);
+                            git::Repository::open(&plugin.directory)
+                                .map_err(|e| Error::git_open(e, &plugin.directory))?
+                        }
+                    },
+                };
+
+                // Checkout the configured revision.
+                if let Some(revision) = revision {
+                    let error = |e| Error::git_checkout(e, revision);
+                    let object = repo.revparse_single(revision).map_err(error)?;
+                    repo.set_head_detached(object.id()).map_err(error)?;
+                    repo.reset(&object, git::ResetType::Hard, None)
+                        .map_err(error)?;
+                    info!(
+                        "{} checked out at {} (required for `{}`)",
+                        url, revision, plugin.name
+                    );
                 }
             }
         }
