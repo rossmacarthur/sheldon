@@ -12,11 +12,7 @@ use clap::crate_name;
 use indexmap::IndexMap;
 use log::{debug, info, warn};
 use maplit::hashmap;
-use serde::{
-    de::{self, Deserialize, MapAccess, Visitor},
-    Deserializer,
-};
-use serde_derive::{Deserialize, Serialize};
+use serde::{de, Deserialize, Deserializer, Serialize};
 
 pub use crate::{
     error::{Error, ErrorKind, Result},
@@ -45,7 +41,7 @@ macro_rules! hashmap_into {
 /// [`Template`]: struct.Template.html
 struct TemplateVisitor;
 
-impl<'de> Visitor<'de> for TemplateVisitor {
+impl<'de> de::Visitor<'de> for TemplateVisitor {
     type Value = Template;
 
     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
@@ -61,7 +57,7 @@ impl<'de> Visitor<'de> for TemplateVisitor {
 
     fn visit_map<M>(self, visitor: M) -> result::Result<Self::Value, M::Error>
     where
-        M: MapAccess<'de>,
+        M: de::MapAccess<'de>,
     {
         let LockedTemplate { value, each } =
             Deserialize::deserialize(de::value::MapAccessDeserializer::new(visitor))?;
@@ -84,7 +80,7 @@ const GITHUB_HOST: &str = "github.com";
 /// [`Plugin`]: struct.Plugin.html
 #[derive(Clone, Debug, Deserialize, PartialEq)]
 #[serde(rename_all = "lowercase", tag = "source")]
-pub enum Source {
+enum Source {
     /// A clonable Git repository.
     Git {
         url: String,
@@ -264,7 +260,7 @@ impl Source {
     ///   repository.
     ///
     /// [`Source`]: enum.Source.html
-    pub fn directory(&self, root: &Path) -> Result<PathBuf> {
+    fn directory(&self, root: &Path) -> Result<PathBuf> {
         let root = root.to_str().expect("root directory is not valid UTF-8");
 
         Ok(match self {
