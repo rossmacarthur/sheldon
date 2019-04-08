@@ -2,10 +2,11 @@ mod error;
 mod logging;
 
 use std::{
+    cmp,
     collections::HashMap,
     env, fmt, fs,
     path::{Path, PathBuf},
-    result,
+    result, sync,
 };
 
 use clap::crate_name;
@@ -495,51 +496,73 @@ impl Config {
         Ok(config)
     }
 
-    /// Download all required dependencies for plugins.
-    ///
-    /// TODO: Download in parallel!
-    fn download(plugins: &[NormalizedPlugin]) -> Result<()> {
-        for plugin in plugins {
-            if let NormalizedSource::Git { url, revision } = &plugin.source {
-                // Clone or open the repository.
-                let repo = match git::Repository::clone(&url, &plugin.directory) {
-                    Ok(repo) => {
-                        info!("{} cloned (required for `{}`)", url, plugin.name);
-                        repo
-                    },
-                    Err(e) => {
-                        if e.code() != git::ErrorCode::Exists {
-                            return Err(e).context(lazy!("failed to git clone {}", url));
-                        } else {
-                            info!("{} is already cloned (required for `{}`)", url, plugin.name);
-                            git::Repository::open(&plugin.directory).context(lazy!(
-                                "failed to open repository at `{}`",
-                                plugin.directory.to_string_lossy()
-                            ))?
-                        }
-                    },
-                };
+    /// Download the dependencies for a single plugin.
+    fn download_one(plugin: NormalizedPlugin) -> Result<()> {
+        if let NormalizedSource::Git { url, revision } = &plugin.source {
+            // Clone or open the repository.
+            let repo = match git::Repository::clone(&url, &plugin.directory) {
+                Ok(repo) => {
+                    info!("{} cloned (required for `{}`)", url, plugin.name);
+                    repo
+                },
+                Err(e) => {
+                    if e.code() != git::ErrorCode::Exists {
+                        return Err(e).context(lazy!("failed to git clone {}", url));
+                    } else {
+                        info!("{} is already cloned (required for `{}`)", url, plugin.name);
+                        git::Repository::open(&plugin.directory).context(lazy!(
+                            "failed to open repository at `{}`",
+                            plugin.directory.to_string_lossy()
+                        ))?
+                    }
+                },
+            };
 
-                // Checkout the configured revision.
-                if let Some(revision) = revision {
-                    let object = repo
-                        .revparse_single(revision)
-                        .context(lazy!("failed to find revision `{}`", revision))?;
-                    repo.set_head_detached(object.id())
-                        .context(lazy!("failed to set HEAD to revision `{}`", revision))?;
-                    repo.reset(&object, git::ResetType::Hard, None)
-                        .context(lazy!(
-                            "failed to reset repository to revision `{}`",
-                            revision
-                        ))?;
-                    info!(
-                        "{} checked out at {} (required for `{}`)",
-                        url, revision, plugin.name
-                    );
-                }
+            // Checkout the configured revision.
+            if let Some(revision) = revision {
+                let object = repo
+                    .revparse_single(revision)
+                    .context(lazy!("failed to find revision `{}`", revision))?;
+                repo.set_head_detached(object.id())
+                    .context(lazy!("failed to set HEAD to revision `{}`", revision))?;
+                repo.reset(&object, git::ResetType::Hard, None)
+                    .context(lazy!(
+                        "failed to reset repository to revision `{}`",
+                        revision
+                    ))?;
+                info!(
+                    "{} checked out at {} (required for `{}`)",
+                    url, revision, plugin.name
+                );
             }
         }
         Ok(())
+    }
+
+    /// Download all required dependencies for plugins.
+    fn download(plugins: &[NormalizedPlugin]) -> Result<()> {
+        let workers = cmp::min(plugins.len(), num_cpus::get());
+        let pool = threadpool::ThreadPool::new(workers);
+        let (tx, rx) = sync::mpsc::channel();
+
+        for plugin in plugins {
+            let tx = tx.clone();
+            let plugin = plugin.clone();
+            pool.execute(move || {
+                let result = Self::download_one(plugin);
+                tx.send(result).expect("oops! did main thread die?");
+            })
+        }
+
+        match rx
+            .iter()
+            .take(plugins.len())
+            .filter_map(result::Result::err)
+            .next()
+        {
+            None => Ok(()),
+            Some(e) => Err(e),
+        }
     }
 
     /// Lock this Config.
