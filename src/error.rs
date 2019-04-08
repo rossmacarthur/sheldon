@@ -114,7 +114,7 @@ impl Error {
     }
 
     pub(crate) fn source_is_io_not_found(&self) -> bool {
-        if let Some(error) = self.source().and_then(|e| e.downcast_ref::<io::Error>()) {
+        if let ErrorKind::Io(error) = &self.kind {
             if error.kind() == io::ErrorKind::NotFound {
                 return true;
             }
