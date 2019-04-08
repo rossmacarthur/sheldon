@@ -14,6 +14,7 @@ use log::{debug, info, warn};
 use maplit::hashmap;
 use serde::{de, Deserialize, Deserializer, Serialize};
 
+use crate::error::ResultExt;
 pub use crate::{
     error::{Error, ErrorKind, Result},
     logging::init_logging,
@@ -32,6 +33,11 @@ macro_rules! vec_into {
 /// initialization.
 macro_rules! hashmap_into {
     ($($key:expr => $value:expr),*) => (hashmap!{$($key.into() => $value.into()),*})
+}
+
+/// A simple macro to generate a lazy format!.
+macro_rules! lazy {
+    ($($arg:tt)*) => (|| format!($($arg)*))
 }
 
 /// Visitor to deserialize a [`Template`] as a string or a struct.
@@ -373,7 +379,7 @@ impl NormalizedPlugin {
                         .join(
                             templates
                                 .render_template(u, &data)
-                                .map_err(|e| Error::render(e, u))?,
+                                .context(lazy!("failed to render template `{}`", u))?,
                         )
                         .to_string_lossy(),
                 )
@@ -394,7 +400,7 @@ impl NormalizedPlugin {
                         .join(
                             templates
                                 .render_template(g, &data)
-                                .map_err(|e| Error::render(e, g))?,
+                                .context(lazy!("failed to render template `{}`", g))?,
                         )
                         .to_string_lossy(),
                 )
@@ -480,13 +486,13 @@ impl From<&str> for LockedTemplate {
 impl Config {
     /// Read a Config from the given path.
     fn from_path<P: AsRef<Path>>(path: P) -> Result<Self> {
-        let path = path.as_ref();
-        let manager = toml::from_str(&String::from_utf8_lossy(
-            &fs::read(&path).map_err(|e| Error::deserialize(e, &path))?,
-        ))
-        .map_err(|e| Error::deserialize(e, &path))?;
+        let path = path.as_ref();;
+        let config = toml::from_str(&String::from_utf8_lossy(&fs::read(&path).context(
+            lazy!("failed to read config from `{}`", path.to_string_lossy()),
+        )?))
+        .context(lazy!("failed to deserialize config as TOML"))?;
         debug!("deserialized config from `{}`", path.to_string_lossy());
-        Ok(manager)
+        Ok(config)
     }
 
     /// Download all required dependencies for plugins.
@@ -503,22 +509,29 @@ impl Config {
                     },
                     Err(e) => {
                         if e.code() != git::ErrorCode::Exists {
-                            return Err(Error::git_clone(e, &url));
+                            return Err(e).context(lazy!("failed to git clone {}", url));
                         } else {
                             info!("{} is already cloned (required for `{}`)", url, plugin.name);
-                            git::Repository::open(&plugin.directory)
-                                .map_err(|e| Error::git_open(e, &plugin.directory))?
+                            git::Repository::open(&plugin.directory).context(lazy!(
+                                "failed to open repository at `{}`",
+                                plugin.directory.to_string_lossy()
+                            ))?
                         }
                     },
                 };
 
                 // Checkout the configured revision.
                 if let Some(revision) = revision {
-                    let error = |e| Error::git_checkout(e, revision);
-                    let object = repo.revparse_single(revision).map_err(error)?;
-                    repo.set_head_detached(object.id()).map_err(error)?;
+                    let object = repo
+                        .revparse_single(revision)
+                        .context(lazy!("failed to find revision `{}`", revision))?;
+                    repo.set_head_detached(object.id())
+                        .context(lazy!("failed to set HEAD to revision `{}`", revision))?;
                     repo.reset(&object, git::ResetType::Hard, None)
-                        .map_err(error)?;
+                        .context(lazy!(
+                            "failed to reset repository to revision `{}`",
+                            revision
+                        ))?;
                     info!(
                         "{} checked out at {} (required for `{}`)",
                         url, revision, plugin.name
@@ -567,7 +580,7 @@ impl Config {
             for (name, template) in &templates {
                 templates_
                     .register_template_string(&name, &template.value)
-                    .map_err(|e| Error::template(e, name))?;
+                    .context(lazy!("failed to compile template `{}`", name))?
             }
         }
 
@@ -582,15 +595,15 @@ impl Config {
 impl LockedConfig {
     /// Read a LockedConfig from the given path.
     fn from_path<P: AsRef<Path>>(path: P) -> Result<Self> {
-        let path = path.as_ref();
-        let locked = toml::from_str(&String::from_utf8_lossy(
-            &fs::read(&path).map_err(|e| Error::deserialize(e, &path))?,
-        ))
-        .map_err(|e| Error::deserialize(e, &path))?;
-        debug!(
-            "deserialized locked config from `{}`",
-            path.to_string_lossy()
-        );
+        let path = path.as_ref();;
+        let locked = toml::from_str(&String::from_utf8_lossy(&fs::read(&path).context(
+            lazy!(
+                "failed to read locked config from `{}`",
+                path.to_string_lossy()
+            ),
+        )?))
+        .context(lazy!("failed to deserialize locked config as TOML"))?;
+        debug!("deserialized config from `{}`", path.to_string_lossy());
         Ok(locked)
     }
 
@@ -607,16 +620,23 @@ impl LockedConfig {
 
         if let Some(directory) = path.parent() {
             if !directory.exists() {
-                fs::create_dir_all(directory).map_err(|e| Error::serialize(e, &path))?;
+                fs::create_dir_all(directory).context(lazy!(
+                    "failed to create directory `{}`",
+                    path.to_string_lossy()
+                ))?;
                 debug!("created directory `{}`", directory.to_string_lossy());
             }
         }
 
         fs::write(
             path,
-            &toml::to_string_pretty(&self).map_err(|e| Error::serialize(e, &path))?,
+            &toml::to_string_pretty(&self)
+                .context(lazy!("failed to serialize locked config as TOML"))?,
         )
-        .map_err(|e| Error::serialize(e, &path))?;
+        .context(lazy!(
+            "failed to serialize locked config to `{}`",
+            path.to_string_lossy()
+        ))?;
         debug!("wrote locked config to `{}`", path.to_string_lossy());
         Ok(())
     }
@@ -629,7 +649,7 @@ impl LockedConfig {
         for (name, template) in &self.templates {
             templates
                 .register_template_string(&name, &template.value)
-                .map_err(|e| Error::template(e, name))?;
+                .context(lazy!("failed to compile template `{}`", name))?;
         }
 
         let mut script = String::new();
@@ -658,7 +678,7 @@ impl LockedConfig {
                         script.push_str(
                             &templates
                                 .render(name, &data)
-                                .map_err(|e| Error::render(e, name))?,
+                                .context(lazy!("failed to render template `{}`", name))?,
                         );
                         script.push('\n');
                     }
@@ -666,7 +686,7 @@ impl LockedConfig {
                     script.push_str(
                         &templates
                             .render(name, &data)
-                            .map_err(|e| Error::render(e, name))?,
+                            .context(lazy!("failed to render template `{}`", name))?,
                     );
                     script.push('\n');
                 }

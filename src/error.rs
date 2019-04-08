@@ -1,47 +1,98 @@
 //! Error handling for this crate.
 
-use std::{error::Error as _Error, fmt, io, path::Path, result};
+use std::{error::Error as _Error, fmt, io, result};
+
+use quick_error::quick_error;
 
 /// A custom result type to use in this crate.
 pub type Result<T> = result::Result<T, Error>;
 
-/// The kind of error that occurred.
-#[derive(Copy, Clone, Debug)]
-pub enum ErrorKind {
-    /// Occurs when deserializing fails.
-    Deserialize,
-    /// Occurs when serializing fails.
-    Serialize,
-    /// Occurs when there is an invalid config setting.
-    Config,
-    /// Occurs when there are Git related failures.
-    Git,
-    /// Occurs when a template fails to compile.
-    Template,
-    /// Occurs when a template fails to render.
-    Render,
-    /// Hints that destructuring should not be exhaustive.
-    // Until https://github.com/rust-lang/rust/issues/44109 is stabilized.
-    #[doc(hidden)]
-    __Nonexhaustive,
+/// A trait to allow easy conversion of other `Result`s into our `Result` with a
+/// context.
+pub(crate) trait ResultExt<T, E> {
+    fn context<C, D>(self, c: C) -> Result<T>
+    where
+        C: FnOnce() -> D,
+        D: fmt::Display;
 }
 
-/// An error struct that holds the error kind, a context message, and optionally
-/// a source.
+/// An error that can occur in this crate.
 #[derive(Debug)]
 pub struct Error {
     /// The type of error.
     kind: ErrorKind,
     /// A description of what happened.
     message: String,
-    /// The underlying cause of this error.
-    source: Option<Box<dyn _Error>>,
+}
+
+quick_error! {
+    /// A kind of `Error`.
+    #[derive(Debug)]
+    pub enum ErrorKind {
+        /// Occurs when there is an invalid config setting.
+        Config {}
+        /// Occurs when there is an IO error.
+        Io(err: io::Error) {
+            from()
+            source(err)
+        }
+        /// Occurs when TOML deserialization fails.
+        FromToml(err: toml::de::Error) {
+            from()
+            source(err)
+        }
+        /// Occurs when TOML serialization fails.
+        ToToml(err: toml::ser::Error) {
+            from()
+            source(err)
+        }
+        /// Occurs when there are Git related failures.
+        Git(err: git::Error) {
+            from()
+            source(err)
+        }
+        /// Occurs when a template fails to compile.
+        Template(err: handlebars::TemplateError) {
+            from()
+            source(err)
+        }
+        /// Occurs when a template fails to render.
+        TemplateRender(err: handlebars::TemplateRenderError) {
+            from()
+            source(err)
+        }
+        /// Occurs when a compiled template fails to render.
+        Render(err: handlebars::RenderError) {
+            from()
+            source(err)
+        }
+        /// Hints that destructuring should not be exhaustive.
+        // Until https://github.com/rust-lang/rust/issues/44109 is stabilized.
+        #[doc(hidden)]
+        __Nonexhaustive {}
+    }
+}
+
+impl<T, E> ResultExt<T, E> for result::Result<T, E>
+where
+    E: Into<ErrorKind>,
+{
+    fn context<C, D>(self, c: C) -> Result<T>
+    where
+        C: FnOnce() -> D,
+        D: fmt::Display,
+    {
+        self.map_err(|e| Error {
+            kind: e.into(),
+            message: format!("{}", c()),
+        })
+    }
 }
 
 impl _Error for Error {
     /// The lower-level source of this error, if any.
     fn source(&self) -> Option<&(dyn _Error + 'static)> {
-        self.source.as_ref().map(|e| &**e as &_Error)
+        self.kind.source()
     }
 }
 
@@ -57,47 +108,24 @@ impl fmt::Display for Error {
 }
 
 impl Error {
-    /// Returns the kind of error that occurred.
-    pub fn kind(&self) -> ErrorKind {
-        self.kind
-    }
-
     /// Returns the error message.
     pub fn message(&self) -> &str {
         &self.message
     }
 
     pub(crate) fn source_is_io_not_found(&self) -> bool {
-        if let Some(io_error) = self.source().and_then(|e| e.downcast_ref::<io::Error>()) {
-            if io_error.kind() == io::ErrorKind::NotFound {
+        if let Some(error) = self.source().and_then(|e| e.downcast_ref::<io::Error>()) {
+            if error.kind() == io::ErrorKind::NotFound {
                 return true;
             }
         }
-
         false
-    }
-
-    pub(crate) fn deserialize<E: _Error + 'static>(e: E, path: &Path) -> Self {
-        Error {
-            kind: ErrorKind::Deserialize,
-            message: format!("failed to deserialize from `{}`", path.to_string_lossy()),
-            source: Some(Box::new(e)),
-        }
-    }
-
-    pub(crate) fn serialize<E: _Error + 'static>(e: E, path: &Path) -> Self {
-        Error {
-            kind: ErrorKind::Serialize,
-            message: format!("failed to serialize to `{}`", path.to_string_lossy()),
-            source: Some(Box::new(e)),
-        }
     }
 
     pub(crate) fn config_git(url: &str) -> Self {
         Error {
             kind: ErrorKind::Config,
             message: format!("failed to parse `{}` as a Git URL", url),
-            source: None,
         }
     }
 
@@ -105,50 +133,6 @@ impl Error {
         Error {
             kind: ErrorKind::Config,
             message: format!("failed to parse `{}` as a GitHub repository", repository),
-            source: None,
-        }
-    }
-
-    pub(crate) fn git_clone<E: _Error + 'static>(e: E, url: &str) -> Self {
-        Error {
-            kind: ErrorKind::Git,
-            message: format!("failed to git clone {}", url),
-            source: Some(Box::new(e)),
-        }
-    }
-
-    pub(crate) fn git_open<E: _Error + 'static>(e: E, directory: &Path) -> Self {
-        Error {
-            kind: ErrorKind::Git,
-            message: format!(
-                "failed to open repository at `{}`",
-                directory.to_string_lossy()
-            ),
-            source: Some(Box::new(e)),
-        }
-    }
-
-    pub(crate) fn git_checkout<E: _Error + 'static>(e: E, revision: &str) -> Self {
-        Error {
-            kind: ErrorKind::Git,
-            message: format!("failed to git checkout `{}`", revision),
-            source: Some(Box::new(e)),
-        }
-    }
-
-    pub(crate) fn template<E: _Error + 'static>(e: E, name: &str) -> Self {
-        Error {
-            kind: ErrorKind::Template,
-            message: format!("failed to compile template `{}`", name),
-            source: Some(Box::new(e)),
-        }
-    }
-
-    pub(crate) fn render<E: _Error + 'static>(e: E, name: &str) -> Self {
-        Error {
-            kind: ErrorKind::Render,
-            message: format!("failed to render template `{}`", name),
-            source: Some(Box::new(e)),
         }
     }
 }
