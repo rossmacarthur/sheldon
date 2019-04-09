@@ -18,7 +18,7 @@ A fast, configurable, shell plugin manager.
 - Uses a lock file for much faster loading of plugins.
 - Highly configurable install methods using handlebars templating.
 - Branch/tag/commit support.
-- Downloads plugins in parallel (planned).
+- Downloads plugins in parallel.
 
 ## Getting started
 

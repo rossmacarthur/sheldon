@@ -2,10 +2,11 @@ mod error;
 mod logging;
 
 use std::{
+    cmp,
     collections::HashMap,
     env, fmt, fs,
     path::{Path, PathBuf},
-    result,
+    result, sync,
 };
 
 use clap::crate_name;
@@ -350,6 +351,61 @@ impl Plugin {
 }
 
 impl NormalizedPlugin {
+    /// Whether this plugin requires something to be downloaded.
+    fn requires_download(&self) -> bool {
+        match self.source {
+            NormalizedSource::Git { .. } => true,
+            NormalizedSource::Local { .. } => false,
+        }
+    }
+
+    /// Download this `NormalizedPlugin`
+    fn download(&self) -> Result<()> {
+        match &self.source {
+            NormalizedSource::Git { url, revision } => {
+                // Clone or open the repository.
+                let repo = match git::Repository::clone(&url, &self.directory) {
+                    Ok(repo) => {
+                        info!("{} cloned (required for `{}`)", url, self.name);
+                        repo
+                    },
+                    Err(e) => {
+                        if e.code() != git::ErrorCode::Exists {
+                            return Err(e).context(lazy!("failed to git clone {}", url));
+                        } else {
+                            info!("{} is already cloned (required for `{}`)", url, self.name);
+                            git::Repository::open(&self.directory).context(lazy!(
+                                "failed to open repository at `{}`",
+                                self.directory.to_string_lossy()
+                            ))?
+                        }
+                    },
+                };
+
+                // Checkout the configured revision.
+                if let Some(revision) = revision {
+                    let object = repo
+                        .revparse_single(revision)
+                        .context(lazy!("failed to find revision `{}`", revision))?;
+                    repo.set_head_detached(object.id())
+                        .context(lazy!("failed to set HEAD to revision `{}`", revision))?;
+                    repo.reset(&object, git::ResetType::Hard, None)
+                        .context(lazy!(
+                            "failed to reset repository to revision `{}`",
+                            revision
+                        ))?;
+                    info!(
+                        "{} checked out at {} (required for `{}`)",
+                        url, revision, self.name
+                    );
+                }
+
+                Ok(())
+            },
+            NormalizedSource::Local { .. } => Ok(()),
+        }
+    }
+
     /// Consume the NormalizedPlugin and convert it to a [`LockedPlugin`].
     ///
     /// This main purpose of this method is to determine the exact filenames to
@@ -496,50 +552,32 @@ impl Config {
     }
 
     /// Download all required dependencies for plugins.
-    ///
-    /// TODO: Download in parallel!
     fn download(plugins: &[NormalizedPlugin]) -> Result<()> {
-        for plugin in plugins {
-            if let NormalizedSource::Git { url, revision } = &plugin.source {
-                // Clone or open the repository.
-                let repo = match git::Repository::clone(&url, &plugin.directory) {
-                    Ok(repo) => {
-                        info!("{} cloned (required for `{}`)", url, plugin.name);
-                        repo
-                    },
-                    Err(e) => {
-                        if e.code() != git::ErrorCode::Exists {
-                            return Err(e).context(lazy!("failed to git clone {}", url));
-                        } else {
-                            info!("{} is already cloned (required for `{}`)", url, plugin.name);
-                            git::Repository::open(&plugin.directory).context(lazy!(
-                                "failed to open repository at `{}`",
-                                plugin.directory.to_string_lossy()
-                            ))?
-                        }
-                    },
-                };
+        let downloadable: Vec<_> = plugins.iter().filter(|p| p.requires_download()).collect();
+        let count = downloadable.len();
 
-                // Checkout the configured revision.
-                if let Some(revision) = revision {
-                    let object = repo
-                        .revparse_single(revision)
-                        .context(lazy!("failed to find revision `{}`", revision))?;
-                    repo.set_head_detached(object.id())
-                        .context(lazy!("failed to set HEAD to revision `{}`", revision))?;
-                    repo.reset(&object, git::ResetType::Hard, None)
-                        .context(lazy!(
-                            "failed to reset repository to revision `{}`",
-                            revision
-                        ))?;
-                    info!(
-                        "{} checked out at {} (required for `{}`)",
-                        url, revision, plugin.name
-                    );
+        if count == 0 {
+            Ok(())
+        } else if count == 1 {
+            downloadable[0].download()
+        } else {
+            let workers = cmp::min(downloadable.len(), num_cpus::get());
+            let mut pool = scoped_threadpool::Pool::new(workers as u32);
+            let (tx, rx) = sync::mpsc::channel();
+
+            pool.scoped(|scoped| {
+                for plugin in downloadable {
+                    let tx = tx.clone();
+                    scoped.execute(move || {
+                        tx.send(plugin.download())
+                            .expect("oops! did main thread die?");
+                    })
                 }
-            }
+                scoped.join_all();
+            });
+
+            rx.iter().take(count).collect()
         }
-        Ok(())
     }
 
     /// Lock this Config.
