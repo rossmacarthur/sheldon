@@ -12,7 +12,7 @@ version = "0.2.1"
 
 [dependencies]
 ansi_term = "0.11.0"
-clap = "2.32.0"
+clap = "2.33.0"
 dirs = "1.0.5"
 git = { package = "git2", version = "0.8.0" }
 glob = "0.3.0"
@@ -23,6 +23,6 @@ maplit = "1.0.1"
 num_cpus = "1.10.0"
 quick-error = { package = "quick-error2", version = "2.0.0" }
 scoped_threadpool = "0.1.9"
-serde = { version = "1.0.89", features = ["derive"] }
+serde = { version = "1.0.90", features = ["derive"] }
 toml = "0.5.0"
 url = "1.7.2"
