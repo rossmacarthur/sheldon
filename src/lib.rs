@@ -399,7 +399,7 @@ impl NormalizedPlugin {
                         url, revision, self.name
                     );
                 }
-                println!("{} here", self.name);
+
                 Ok(())
             },
             NormalizedSource::Local { .. } => Ok(()),
@@ -562,17 +562,19 @@ impl Config {
             downloadable[0].download()
         } else {
             let workers = cmp::min(downloadable.len(), num_cpus::get());
-            let pool = threadpool::ThreadPool::new(workers);
+            let mut pool = scoped_threadpool::Pool::new(workers as u32);
             let (tx, rx) = sync::mpsc::channel();
 
-            for plugin in downloadable {
-                let tx = tx.clone();
-                let p = plugin.clone();
-                pool.execute(move || {
-                    let result = p.download();
-                    tx.send(result).expect("oops! did main thread die?");
-                })
-            }
+            pool.scoped(|scoped| {
+                for plugin in downloadable {
+                    let tx = tx.clone();
+                    scoped.execute(move || {
+                        tx.send(plugin.download())
+                            .expect("oops! did main thread die?");
+                    })
+                }
+                scoped.join_all();
+            });
 
             rx.iter().take(count).collect()
         }
