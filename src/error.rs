@@ -7,8 +7,8 @@ use quick_error::quick_error;
 /// A custom result type to use in this crate.
 pub type Result<T> = result::Result<T, Error>;
 
-/// A trait to allow easy conversion of other `Result`s into our [`Result`] with a
-/// context.
+/// A trait to allow easy conversion of other `Result`s into our [`Result`] with
+/// a context.
 ///
 /// [`Result`]: type.Result.html
 pub(crate) trait ResultExt<T, E> {
