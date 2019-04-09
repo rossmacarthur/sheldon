@@ -5,7 +5,6 @@ wrap_comments = true
 condense_wildcard_suffixes = true
 format_strings = true
 merge_imports = true
-match_block_trailing_comma = true
 newline_style = "Unix"
 normalize_comments = true
 reorder_impl_items = true

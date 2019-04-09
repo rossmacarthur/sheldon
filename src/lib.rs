@@ -180,7 +180,7 @@ struct Template {
 
 /// A locked [`Template`].
 ///
-/// This is exactly the same as a `Template` but we don't want to allow string
+/// This is exactly the same as a [`Template`] but we don't want to allow string
 /// deserialization.
 ///
 /// [`Template`]: struct.Template.html
@@ -246,12 +246,11 @@ impl Default for Config {
 }
 
 impl Source {
-    /// Return the directory for this [`Source`].
+    /// Return the directory for this `Source`.
     ///
-    /// For a local source this is simply the directory defined. For a Git
-    /// or GitHub source this is the path to the repository's
-    /// directory where the repository is cloned. It adheres to the following
-    /// format:
+    /// For a `Local` source this is simply the directory defined. For a `Git`
+    /// or `GitHub` source this is the path to the repository's  directory where
+    /// the repository is cloned. It adheres to the following format.
     ///
     /// ```text
     ///   repositories
@@ -265,8 +264,6 @@ impl Source {
     /// - If a Git URL cannot be parsed.
     /// - If a GitHub repository cannot be parsed into a username and
     ///   repository.
-    ///
-    /// [`Source`]: enum.Source.html
     fn directory(&self, root: &Path) -> Result<PathBuf> {
         let root = root.to_str().expect("root directory is not valid UTF-8");
 
@@ -279,7 +276,7 @@ impl Source {
                 let base = vec![root, CLONE_DIRECTORY, parsed.host_str().ok_or_else(error)?];
                 let segments: Vec<_> = parsed.path_segments().ok_or_else(error)?.collect();
                 base.iter().chain(segments.iter()).collect()
-            },
+            }
             Source::GitHub { repository, .. } => {
                 let error = || Error::config_github(repository);
 
@@ -292,28 +289,26 @@ impl Source {
                 [root, CLONE_DIRECTORY, GITHUB_HOST, user, name]
                     .iter()
                     .collect()
-            },
+            }
             Source::Local { directory } => directory.clone(),
         })
     }
 
-    /// Return the URL for this [`Source`].
+    /// Return the URL for this `Source`.
     ///
-    /// For a Git or GitHub source this is the URL to the remote repository. For
-    /// a Local source this is None.
-    ///
-    /// [`Source`]: enum.Source.html
+    /// For a `Git` or `GitHub` source this is the URL to the remote repository.
+    /// For a `Local` source this is None.
     fn url(&self) -> Option<String> {
         match self {
             Source::Git { url, .. } => Some(url.clone()),
             Source::GitHub { repository, .. } => {
                 Some(format!("https://{}/{}", GITHUB_HOST, repository))
-            },
+            }
             Source::Local { .. } => None,
         }
     }
 
-    /// Consume the Source and convert it to a [`NormalizedSource`]
+    /// Consume the `Source` and convert it to a [`NormalizedSource`].
     ///
     /// [`NormalizedSource`]: struct.NormalizedSource.html
     fn normalize(self) -> NormalizedSource {
@@ -324,14 +319,14 @@ impl Source {
                     url: url.unwrap(),
                     revision,
                 }
-            },
+            }
             Source::Local { .. } => NormalizedSource::Local,
         }
     }
 }
 
 impl Plugin {
-    /// Consume the Plugin and convert it to a [`NormalizedPlugin`].
+    /// Consume the `Plugin` and convert it to a [`NormalizedPlugin`].
     ///
     /// # Errors
     ///
@@ -351,7 +346,7 @@ impl Plugin {
 }
 
 impl NormalizedPlugin {
-    /// Whether this plugin requires something to be downloaded.
+    /// Whether this `NormalizedPlugin` requires something to be downloaded.
     fn requires_download(&self) -> bool {
         match self.source {
             NormalizedSource::Git { .. } => true,
@@ -359,7 +354,7 @@ impl NormalizedPlugin {
         }
     }
 
-    /// Download this `NormalizedPlugin`
+    /// Download this `NormalizedPlugin`.
     fn download(&self) -> Result<()> {
         match &self.source {
             NormalizedSource::Git { url, revision } => {
@@ -368,7 +363,7 @@ impl NormalizedPlugin {
                     Ok(repo) => {
                         info!("{} cloned (required for `{}`)", url, self.name);
                         repo
-                    },
+                    }
                     Err(e) => {
                         if e.code() != git::ErrorCode::Exists {
                             return Err(e).context(lazy!("failed to git clone {}", url));
@@ -379,7 +374,7 @@ impl NormalizedPlugin {
                                 self.directory.to_string_lossy()
                             ))?
                         }
-                    },
+                    }
                 };
 
                 // Checkout the configured revision.
@@ -401,12 +396,12 @@ impl NormalizedPlugin {
                 }
 
                 Ok(())
-            },
+            }
             NormalizedSource::Local { .. } => Ok(()),
         }
     }
 
-    /// Consume the NormalizedPlugin and convert it to a [`LockedPlugin`].
+    /// Consume the `NormalizedPlugin` and convert it to a [`LockedPlugin`].
     ///
     /// This main purpose of this method is to determine the exact filenames to
     /// use for a plugin.
@@ -489,7 +484,7 @@ impl Template {
         self
     }
 
-    /// Consume the Template and convert it to a [`LockedTemplate`].
+    /// Consume the `Template` and convert it to a [`LockedTemplate`].
     ///
     /// [`LockedTemplate`]: struct.LockedTemplate.html
     fn lock(self) -> LockedTemplate {
@@ -500,11 +495,12 @@ impl Template {
     }
 }
 
-/// Manually implement `Deserialize` for a [`Template`].
+/// Manually implement [`Deserialize`] for a [`Template`].
 ///
 /// Unfortunately we can't use this https://serde.rs/string-or-struct.html, because
 /// we are storing `Template`s in a map.
 ///
+/// [`Deserialize`]: https://docs.rs/serde/latest/serde/trait.Deserialize.html
 /// [`Template`]: struct.Template.html
 impl<'de> Deserialize<'de> for Template {
     fn deserialize<D>(deserializer: D) -> result::Result<Template, D::Error>
@@ -540,7 +536,7 @@ impl From<&str> for LockedTemplate {
 }
 
 impl Config {
-    /// Read a Config from the given path.
+    /// Read a `Config` from the given path.
     fn from_path<P: AsRef<Path>>(path: P) -> Result<Self> {
         let path = path.as_ref();;
         let config = toml::from_str(&String::from_utf8_lossy(&fs::read(&path).context(
@@ -580,7 +576,7 @@ impl Config {
         }
     }
 
-    /// Lock this Config.
+    /// Lock this `Config`.
     fn lock(self, root: &Path) -> Result<LockedConfig> {
         // Create a new map of normalized plugins
         let mut normalized_plugins = Vec::with_capacity(self.plugins.len());
@@ -631,7 +627,7 @@ impl Config {
 }
 
 impl LockedConfig {
-    /// Read a LockedConfig from the given path.
+    /// Read a `LockedConfig` from the given path.
     fn from_path<P: AsRef<Path>>(path: P) -> Result<Self> {
         let path = path.as_ref();;
         let locked = toml::from_str(&String::from_utf8_lossy(&fs::read(&path).context(
@@ -645,14 +641,14 @@ impl LockedConfig {
         Ok(locked)
     }
 
-    /// Construct a new empty LockedConfig.
+    /// Construct a new empty `LockedConfig`.
     fn new(root: &Path) -> Self {
         Config::default()
             .lock(root)
             .expect("failed to lock default Config")
     }
 
-    /// Write a LockedConfig to the given path.
+    /// Write a `LockedConfig` to the given path.
     fn to_path<P: AsRef<Path>>(&self, path: P) -> Result<()> {
         let path = path.as_ref();
 
@@ -839,7 +835,7 @@ pub fn source(ctx: &Context) -> Result<String> {
             Ok(locked) => {
                 to_path = false;
                 locked
-            },
+            }
             Err(e) => {
                 warn!("{}", e);
                 match Config::from_path(&ctx.config_file) {
@@ -851,9 +847,9 @@ pub fn source(ctx: &Context) -> Result<String> {
                         } else {
                             return Err(e);
                         }
-                    },
+                    }
                 }
-            },
+            }
         }
     };
 
