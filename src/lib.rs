@@ -822,8 +822,10 @@ fn config_file_newer(ctx: &Context) -> bool {
 /// Generate the init shell script.
 ///
 /// - Reads the locked config from the lock file.
-///     - If that fails the config will be read from the config path.
-/// - Prints out the generated shell script.
+/// - If that fails the config will be read from the config path and [locked].
+/// - Generates and returns shell script.
+///
+/// [locked]: fn.lock.html
 pub fn source(ctx: &Context) -> Result<String> {
     let mut to_path = true;
 
