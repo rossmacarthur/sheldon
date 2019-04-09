@@ -7,8 +7,10 @@ use quick_error::quick_error;
 /// A custom result type to use in this crate.
 pub type Result<T> = result::Result<T, Error>;
 
-/// A trait to allow easy conversion of other `Result`s into our `Result` with a
-/// context.
+/// A trait to allow easy conversion of other `Result`s into our [`Result`] with
+/// a context.
+///
+/// [`Result`]: type.Result.html
 pub(crate) trait ResultExt<T, E> {
     fn context<C, D>(self, c: C) -> Result<T>
     where
@@ -26,7 +28,9 @@ pub struct Error {
 }
 
 quick_error! {
-    /// A kind of `Error`.
+    /// A kind of [`Error`].
+    ///
+    /// [`Error`]: struct.Error.html
     #[derive(Debug)]
     pub enum ErrorKind {
         /// Occurs when there is an invalid config setting.
@@ -90,7 +94,7 @@ where
 }
 
 impl _Error for Error {
-    /// The lower-level source of this error, if any.
+    /// The lower-level source of this `Error`, if any.
     fn source(&self) -> Option<&(dyn _Error + 'static)> {
         self.kind.source()
     }
@@ -108,7 +112,7 @@ impl fmt::Display for Error {
 }
 
 impl Error {
-    /// Returns the error message.
+    /// Returns this `Error`'s message.
     pub fn message(&self) -> &str {
         &self.message
     }
