@@ -292,32 +292,19 @@ impl Source {
         })
     }
 
-    /// Return the URL for this `Source`.
-    ///
-    /// [`Source`]: enum.Source.html
-    fn url(&self) -> Result<Option<Url>> {
-        match self {
-            Source::Git { url, .. } => Ok(Some(url.clone())),
-            Source::GitHub { repository, .. } => {
-                let url = Url::parse(&format!("https://{}/{}", GITHUB_HOST, repository))
-                    .context(lazy!("failed to construct GitHub URL using {}", repository))?;
-                Ok(Some(url))
-            }
-            Source::Local { .. } => Ok(None),
-        }
-    }
-
     /// Consume the `Source` and convert it to a [`NormalizedSource`].
     ///
     /// [`NormalizedSource`]: struct.NormalizedSource.html
     fn normalize(self) -> Result<NormalizedSource> {
-        let url = self.url()?;
         match self {
-            Source::Git { revision, .. } | Source::GitHub { revision, .. } => {
-                Ok(NormalizedSource::Git {
-                    url: url.unwrap(),
-                    revision,
-                })
+            Source::Git { url, revision } => Ok(NormalizedSource::Git { url, revision }),
+            Source::GitHub {
+                repository,
+                revision,
+            } => {
+                let url = Url::parse(&format!("https://{}/{}", GITHUB_HOST, repository))
+                    .context(lazy!("failed to construct GitHub URL using {}", repository))?;
+                Ok(NormalizedSource::Git { url, revision })
             }
             Source::Local { .. } => Ok(NormalizedSource::Local),
         }
