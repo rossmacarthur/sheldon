@@ -35,6 +35,11 @@ quick_error! {
     pub enum ErrorKind {
         /// Occurs when there is an invalid config setting.
         Config {}
+        /// Occurs when a URL fails to parse.
+        Url(err: url::ParseError) {
+            from()
+            source(err)
+        }
         /// Occurs when there is an IO error.
         Io(err: io::Error) {
             from()

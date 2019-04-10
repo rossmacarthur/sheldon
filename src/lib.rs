@@ -14,6 +14,8 @@ use indexmap::IndexMap;
 use log::{debug, info, warn};
 use maplit::hashmap;
 use serde::{de, Deserialize, Deserializer, Serialize};
+use url::Url;
+use url_serde;
 
 use crate::error::ResultExt;
 pub use crate::{
@@ -90,7 +92,8 @@ const GITHUB_HOST: &str = "github.com";
 enum Source {
     /// A clonable Git repository.
     Git {
-        url: String,
+        #[serde(with = "url_serde")]
+        url: Url,
         revision: Option<String>,
     },
     /// A GitHub repository, only the the username/repository needs to be
@@ -109,10 +112,7 @@ enum Source {
 #[derive(Clone, Debug, PartialEq)]
 enum NormalizedSource {
     /// A clonable Git repository.
-    Git {
-        url: String,
-        revision: Option<String>,
-    },
+    Git { url: Url, revision: Option<String> },
     /// A local directory.
     Local,
 }
@@ -269,12 +269,10 @@ impl Source {
 
         Ok(match self {
             Source::Git { url, .. } => {
-                let error = || Error::config_git(url);
-
-                // Parse the URL and generate a directory based on the URL.
-                let parsed = url::Url::parse(url).map_err(|_| Error::config_git(url))?;
-                let base = vec![root, CLONE_DIRECTORY, parsed.host_str().ok_or_else(error)?];
-                let segments: Vec<_> = parsed.path_segments().ok_or_else(error)?.collect();
+                // Generate a directory based on the URL.
+                let error = || Error::config_git(&url.to_string());
+                let base = vec![root, CLONE_DIRECTORY, url.host_str().ok_or_else(error)?];
+                let segments: Vec<_> = url.path_segments().ok_or_else(error)?.collect();
                 base.iter().chain(segments.iter()).collect()
             }
             Source::GitHub { repository, .. } => {
@@ -296,31 +294,32 @@ impl Source {
 
     /// Return the URL for this `Source`.
     ///
-    /// For a `Git` or `GitHub` source this is the URL to the remote repository.
-    /// For a `Local` source this is None.
-    fn url(&self) -> Option<String> {
+    /// [`Source`]: enum.Source.html
+    fn url(&self) -> Result<Option<Url>> {
         match self {
-            Source::Git { url, .. } => Some(url.clone()),
+            Source::Git { url, .. } => Ok(Some(url.clone())),
             Source::GitHub { repository, .. } => {
-                Some(format!("https://{}/{}", GITHUB_HOST, repository))
+                let url = Url::parse(&format!("https://{}/{}", GITHUB_HOST, repository))
+                    .context(lazy!("failed to construct GitHub URL using {}", repository))?;
+                Ok(Some(url))
             }
-            Source::Local { .. } => None,
+            Source::Local { .. } => Ok(None),
         }
     }
 
     /// Consume the `Source` and convert it to a [`NormalizedSource`].
     ///
     /// [`NormalizedSource`]: struct.NormalizedSource.html
-    fn normalize(self) -> NormalizedSource {
-        let url = self.url();
+    fn normalize(self) -> Result<NormalizedSource> {
+        let url = self.url()?;
         match self {
             Source::Git { revision, .. } | Source::GitHub { revision, .. } => {
-                NormalizedSource::Git {
+                Ok(NormalizedSource::Git {
                     url: url.unwrap(),
                     revision,
-                }
+                })
             }
-            Source::Local { .. } => NormalizedSource::Local,
+            Source::Local { .. } => Ok(NormalizedSource::Local),
         }
     }
 }
@@ -338,7 +337,7 @@ impl Plugin {
         Ok(NormalizedPlugin {
             name,
             directory: self.source.directory(root)?,
-            source: self.source.normalize(),
+            source: self.source.normalize()?,
             uses: self.uses,
             apply: self.apply.unwrap_or_else(|| apply.to_vec()),
         })
@@ -359,7 +358,7 @@ impl NormalizedPlugin {
         match &self.source {
             NormalizedSource::Git { url, revision } => {
                 // Clone or open the repository.
-                let repo = match git::Repository::clone(&url, &self.directory) {
+                let repo = match git::Repository::clone(&url.to_string(), &self.directory) {
                     Ok(repo) => {
                         info!("{} cloned (required for `{}`)", url, self.name);
                         repo
