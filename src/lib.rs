@@ -4,7 +4,7 @@ mod logging;
 use std::{
     cmp,
     collections::HashMap,
-    env, fmt, fs,
+    env, fmt, fs, io,
     path::{Path, PathBuf},
     result, sync,
 };
@@ -104,6 +104,9 @@ impl<'de> de::Visitor<'de> for TemplateVisitor {
 /// The default clone directory for repositories.
 const CLONE_DIRECTORY: &str = "repositories";
 
+/// The default download directory for remotes.
+const DOWNLOAD_DIRECTORY: &str = "downloads";
+
 /// The GitHub domain host.
 const GITHUB_HOST: &str = "github.com";
 
@@ -125,6 +128,11 @@ enum Source {
         repository: String,
         revision: Option<String>,
     },
+    /// A remote file.
+    Remote {
+        #[serde(with = "url_serde")]
+        url: Url,
+    },
     /// A local directory.
     Local { directory: PathBuf },
 }
@@ -136,6 +144,8 @@ enum Source {
 enum NormalizedSource {
     /// A clonable Git repository.
     Git { url: Url, revision: Option<String> },
+    /// A remote file and its download location.
+    Remote { url: Url, filename: PathBuf },
     /// A local directory.
     Local,
 }
@@ -269,10 +279,119 @@ impl Default for Config {
 }
 
 impl Source {
-    /// Return the directory for this `Source`.
+    /// Consume the `Source::Git` and convert it to a directory and
+    /// [`NormalizedSource`].
     ///
-    /// For a `Local` source this is simply the directory defined. For a `Git`
-    /// or `GitHub` source this is the path to the repository's  directory where
+    /// [`NormalizedSource`]: struct.NormalizedSource.html
+    fn normalize_git(
+        root: &str,
+        url: Url,
+        revision: Option<String>,
+    ) -> Result<(PathBuf, NormalizedSource)> {
+        // A function to generate an error if we need it.
+        let error = || {
+            Error::new(
+                ErrorKind::Config,
+                format!("failed to parse `{}` as a Git URL", url),
+            )
+        };
+
+        // Generate the clone directory.
+        let base = vec![root, CLONE_DIRECTORY, url.host_str().ok_or_else(error)?];
+        let segments: Vec<_> = url.path_segments().ok_or_else(error)?.collect();
+        let directory = base.iter().chain(segments.iter()).collect();
+
+        Ok((directory, NormalizedSource::Git { url, revision }))
+    }
+
+    /// Consume the `Source::GitHub` and convert it to a directory and
+    /// [`NormalizedSource`].
+    ///
+    /// [`NormalizedSource`]: struct.NormalizedSource.html
+    fn normalize_github(
+        root: &str,
+        repository: String,
+        revision: Option<String>,
+    ) -> Result<(PathBuf, NormalizedSource)> {
+        // A function to generate an error if we need it.
+        let error = || {
+            Error::new(
+                ErrorKind::Config,
+                format!("failed to parse `{}` as a GitHub repository", repository),
+            )
+        };
+
+        // Generate the clone directory.
+        let mut repo_split = repository.splitn(2, '/');
+        let user = repo_split.next().ok_or_else(error)?;
+        let name = repo_split.next().ok_or_else(error)?;
+        let directory = [root, CLONE_DIRECTORY, GITHUB_HOST, user, name]
+            .iter()
+            .collect();
+
+        // Generate the URL.
+        let url = Url::parse(&format!("https://{}/{}", GITHUB_HOST, repository))
+            .context(lazy!("failed to construct GitHub URL using {}", repository))?;
+
+        Ok((directory, NormalizedSource::Git { url, revision }))
+    }
+
+    /// Consume the `Source::Remote` and convert it to a directory and
+    /// [`NormalizedSource`].
+    ///
+    /// [`NormalizedSource`]: struct.NormalizedSource.html
+    fn normalize_remote(root: &str, url: Url) -> Result<(PathBuf, NormalizedSource)> {
+        // A function to generate an error if we need it.
+        let error = || {
+            Error::new(
+                ErrorKind::Config,
+                format!("failed to parse host from `{}`", url),
+            )
+        };
+
+        // Generate the download directory.
+        let base = vec![root, DOWNLOAD_DIRECTORY, url.host_str().ok_or_else(error)?];
+        let segments: Vec<_> = url.path_segments().ok_or_else(error)?.collect();
+
+        let (directory, file_base_name): (PathBuf, _) =
+            if let Some((file_base_name, rest)) = segments.split_last() {
+                (base.iter().chain(rest).collect(), *file_base_name)
+            } else {
+                (base.iter().collect(), "index")
+            };
+
+        let mut filename = directory.clone();
+        filename.push(file_base_name);
+
+        Ok((directory, NormalizedSource::Remote { url, filename }))
+    }
+
+    /// Consume the `Source::Local` and convert it to a directory and
+    /// [`NormalizedSource`].
+    ///
+    /// [`NormalizedSource`]: struct.NormalizedSource.html
+    fn normalize_local(directory: PathBuf) -> Result<(PathBuf, NormalizedSource)> {
+        // A function to generate an error if we need it.
+        let error = || {
+            Error::new(
+                ErrorKind::Config,
+                format!(
+                    "failed to expand tilde in `{}`",
+                    directory.to_string_lossy()
+                ),
+            )
+        };
+        let directory = expand_tilde(&directory).ok_or_else(error)?;
+
+        Ok((directory, NormalizedSource::Local))
+    }
+
+    /// Consume the `Source` and convert it to a directory and
+    /// [`NormalizedSource`].
+    ///
+    /// For a `Local` source the directory is simply the directory defined.
+    ///
+    /// For a `Git` or `GitHub` source this is the path to the directory where
     /// the repository is cloned. It adheres to the following format.
     ///
     /// ```text
@@ -282,73 +401,29 @@ impl Source {
     ///           └── pure
     /// ```
     ///
-    /// # Errors
+    /// For a `Remote` source the directory is the path to where the plugin
+    /// will be downloaded. It adheres to the following format.
     ///
-    /// - If a Git URL cannot be parsed.
-    /// - If a GitHub repository cannot be parsed into a username and
-    ///   repository.
-    fn directory(&self, root: &Path) -> Result<PathBuf> {
+    /// ```text
+    ///   downloads
+    ///   └── example.com
+    ///       └── each
+    ///           └── path
+    ///               └── segment
+    /// ```
+    ///
+    /// [`NormalizedSource`]: struct.NormalizedSource.html
+    fn normalize(self, root: &Path) -> Result<(PathBuf, NormalizedSource)> {
         let root = root.to_str().expect("root directory is not valid UTF-8");
 
         match self {
-            Source::Git { url, .. } => {
-                // Generate a directory based on the URL.
-                let error = || {
-                    Error::new(
-                        ErrorKind::Config,
-                        format!("failed to parse `{}` as a Git URL", url),
-                    )
-                };
-
-                let base = vec![root, CLONE_DIRECTORY, url.host_str().ok_or_else(error)?];
-                let segments: Vec<_> = url.path_segments().ok_or_else(error)?.collect();
-                Ok(base.iter().chain(segments.iter()).collect())
-            }
-            Source::GitHub { repository, .. } => {
-                let error = || {
-                    Error::new(
-                        ErrorKind::Config,
-                        format!("failed to parse `{}` as a GitHub repository", repository),
-                    )
-                };
-
-                // Split the GitHub identifier into username and repository name.
-                let mut repo_split = repository.splitn(2, '/');
-                let user = repo_split.next().ok_or_else(error)?;
-                let name = repo_split.next().ok_or_else(error)?;
-
-                // Generate the name of the clone directory.
-                Ok([root, CLONE_DIRECTORY, GITHUB_HOST, user, name]
-                    .iter()
-                    .collect())
-            }
-            Source::Local { directory } => expand_tilde(directory).ok_or_else(|| {
-                Error::new(
-                    ErrorKind::Config,
-                    format!(
-                        "failed to expand tilde in `{}`",
-                        directory.to_string_lossy()
-                    ),
-                )
-            }),
-        }
-    }
-
-    /// Consume the `Source` and convert it to a [`NormalizedSource`].
-    ///
-    /// [`NormalizedSource`]: struct.NormalizedSource.html
-    fn normalize(self) -> Result<NormalizedSource> {
-        match self {
-            Source::Git { url, revision } => Ok(NormalizedSource::Git { url, revision }),
+            Source::Git { url, revision } => Self::normalize_git(root, url, revision),
             Source::GitHub {
                 repository,
                 revision,
-            } => {
-                let url = Url::parse(&format!("https://{}/{}", GITHUB_HOST, repository))
-                    .context(lazy!("failed to construct GitHub URL using {}", repository))?;
-                Ok(NormalizedSource::Git { url, revision })
-            }
-            Source::Local { .. } => Ok(NormalizedSource::Local),
+            } => Self::normalize_github(root, repository, revision),
+            Source::Remote { url } => Self::normalize_remote(root, url),
+            Source::Local { directory } => Self::normalize_local(directory),
         }
     }
 }
@@ -356,17 +431,14 @@ impl Source {
 impl Plugin {
     /// Consume the `Plugin` and convert it to a [`NormalizedPlugin`].
     ///
-    /// # Errors
-    ///
-    /// Any errors that can be returned by the [`Source::directory()`] method.
-    ///
     /// [`NormalizedPlugin`]: struct.NormalizedPlugin.html
     /// [`Source::directory()`]: enum.Source.html#method.directory
     fn normalize(self, name: String, root: &Path, apply: &[String]) -> Result<NormalizedPlugin> {
+        let (directory, source) = self.source.normalize(root)?;
         Ok(NormalizedPlugin {
             name,
-            directory: self.source.directory(root)?,
-            source: self.source.normalize()?,
+            directory,
+            source,
             uses: self.uses,
             apply: self.apply.unwrap_or_else(|| apply.to_vec()),
         })
@@ -374,65 +446,89 @@ impl Plugin {
 }
 
 impl NormalizedPlugin {
+    /// Install a Git `NormalizedPlugin`.
+    fn install_git(&self, url: &Url, revision: &Option<String>) -> Result<()> {
+        // Clone or open the repository.
+        let repo = match git::Repository::clone(&url.to_string(), &self.directory) {
+            Ok(repo) => {
+                info!("{} cloned (required for `{}`)", url, self.name);
+                repo
+            }
+            Err(e) => {
+                if e.code() != git::ErrorCode::Exists {
+                    return Err(e).context(lazy!("failed to git clone `{}`", url));
+                } else {
+                    info!("{} is already cloned (required for `{}`)", url, self.name);
+                    git::Repository::open(&self.directory).context(lazy!(
+                        "failed to open repository at `{}`",
+                        self.directory.to_string_lossy()
+                    ))?
+                }
+            }
+        };
+
+        // Checkout the configured revision.
+        if let Some(revision) = revision {
+            let object = repo
+                .revparse_single(revision)
+                .context(lazy!("failed to find revision `{}`", revision))?;
+            repo.set_head_detached(object.id())
+                .context(lazy!("failed to set HEAD to revision `{}`", revision))?;
+            repo.reset(&object, git::ResetType::Hard, None)
+                .context(lazy!(
+                    "failed to reset repository to revision `{}`",
+                    revision
+                ))?;
+            info!(
+                "{} checked out at {} (required for `{}`)",
+                url, revision, self.name
+            );
+        }
+
+        Ok(())
+    }
+
+    /// Install a Remote `NormalizedPlugin`.
+    fn install_remote(&self, url: &Url, filename: &Path) -> Result<()> {
+        fs::create_dir_all(&self.directory).context(lazy!(
+            "failed to create directory `{}`",
+            &self.directory.to_string_lossy()
+        ))?;
+        let mut response =
+            request::get(url.clone()).context(lazy!("failed to download from `{}`", url))?;
+        let mut out = fs::File::create(filename)
+            .context(lazy!("failed to create `{}`", filename.to_string_lossy()))?;
+        io::copy(&mut response, &mut out).context(lazy!(
+            "failed to copy content to `{}`",
+            filename.to_string_lossy()
+        ))?;
+        Ok(())
+    }
+
+    /// Install a Local `NormalizedPlugin`.
+    fn install_local(&self) -> Result<()> {
+        if fs::metadata(&self.directory)
+            .context(lazy!(
+                "failed to find directory `{}`",
+                self.directory.to_string_lossy()
+            ))?
+            .is_dir()
+        {
+            Ok(())
+        } else {
+            Err(Error::new(
+                ErrorKind::Config,
+                format!("`{}` is not a directory", self.directory.to_string_lossy()),
+            ))
+        }
+    }
+
     /// Install this `NormalizedPlugin`.
     fn install(&self) -> Result<()> {
         match &self.source {
-            NormalizedSource::Git { url, revision } => {
-                // Clone or open the repository.
-                let repo = match git::Repository::clone(&url.to_string(), &self.directory) {
-                    Ok(repo) => {
-                        info!("{} cloned (required for `{}`)", url, self.name);
-                        repo
-                    }
-                    Err(e) => {
-                        if e.code() != git::ErrorCode::Exists {
-                            return Err(e).context(lazy!("failed to git clone {}", url));
-                        } else {
-                            info!("{} is already cloned (required for `{}`)", url, self.name);
-                            git::Repository::open(&self.directory).context(lazy!(
-                                "failed to open repository at `{}`",
-                                self.directory.to_string_lossy()
-                            ))?
-                        }
-                    }
-                };
-
-                // Checkout the configured revision.
-                if let Some(revision) = revision {
-                    let object = repo
-                        .revparse_single(revision)
-                        .context(lazy!("failed to find revision `{}`", revision))?;
-                    repo.set_head_detached(object.id())
-                        .context(lazy!("failed to set HEAD to revision `{}`", revision))?;
-                    repo.reset(&object, git::ResetType::Hard, None)
-                        .context(lazy!(
-                            "failed to reset repository to revision `{}`",
-                            revision
-                        ))?;
-                    info!(
-                        "{} checked out at {} (required for `{}`)",
-                        url, revision, self.name
-                    );
-                }
-
-                Ok(())
-            }
-            NormalizedSource::Local => {
-                if fs::metadata(&self.directory)
-                    .context(lazy!(
-                        "failed to find directory `{}`",
-                        self.directory.to_string_lossy()
-                    ))?
-                    .is_dir()
-                {
-                    Ok(())
-                } else {
-                    Err(Error::new(
-                        ErrorKind::Config,
-                        format!("`{}` is not a directory", self.directory.to_string_lossy()),
-                    ))
-                }
-            }
+            NormalizedSource::Git { url, revision } => self.install_git(url, revision),
+            NormalizedSource::Remote { url, filename } => self.install_remote(url, filename),
+            NormalizedSource::Local => self.install_local(),
         }
     }
 
@@ -476,6 +572,12 @@ impl NormalizedPlugin {
                     filenames.push(p)
                 }
             }
+        } else if let NormalizedPlugin {
+            source: NormalizedSource::Remote { filename, .. },
+            ..
+        } = self
+        {
+            filenames.push(filename);
         // Otherwise we try to figure it out ...
         } else {
             for g in matches {

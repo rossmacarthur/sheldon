@@ -60,6 +60,11 @@ quick_error! {
             from()
             source(err)
         }
+        /// Occurs when a download fails.
+        Download(err: request::Error) {
+            from()
+            source(err)
+        }
         /// Occurs when a template fails to compile.
         Template(err: handlebars::TemplateError) {
             from()

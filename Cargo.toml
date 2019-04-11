@@ -22,6 +22,7 @@ log = "0.4.6"
 maplit = "1.0.1"
 num_cpus = "1.10.0"
 quick-error = { package = "quick-error2", version = "2.0.0" }
+request = { package = "reqwest", version = "0.9.14" }
 scoped_threadpool = "0.1.9"
 serde = { version = "1.0.90", features = ["derive"] }
 toml = "0.5.0"
