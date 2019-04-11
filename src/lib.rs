@@ -43,6 +43,29 @@ macro_rules! lazy {
     ($($arg:tt)*) => (|| format!($($arg)*))
 }
 
+/// Expands the tilde in the given path to the home directory.
+fn expand_tilde<P>(path: P) -> Option<PathBuf>
+where
+    P: AsRef<Path>,
+{
+    let path = path.as_ref();
+
+    if let Ok(path) = path.strip_prefix("~") {
+        let home = dirs::home_dir();
+
+        if path == Path::new("") {
+            home
+        } else {
+            home.map(|mut h| {
+                h.push(path);
+                h
+            })
+        }
+    } else {
+        Some(path.into())
+    }
+}
+
 /// Visitor to deserialize a [`Template`] as a string or a struct.
 ///
 /// From https://stackoverflow.com/questions/54761790.
@@ -267,16 +290,27 @@ impl Source {
     fn directory(&self, root: &Path) -> Result<PathBuf> {
         let root = root.to_str().expect("root directory is not valid UTF-8");
 
-        Ok(match self {
+        match self {
             Source::Git { url, .. } => {
                 // Generate a directory based on the URL.
-                let error = || Error::config_git(&url.to_string());
+                let error = || {
+                    Error::new(
+                        ErrorKind::Config,
+                        format!("failed to parse `{}` as a Git URL", url),
+                    )
+                };
+
                 let base = vec![root, CLONE_DIRECTORY, url.host_str().ok_or_else(error)?];
                 let segments: Vec<_> = url.path_segments().ok_or_else(error)?.collect();
-                base.iter().chain(segments.iter()).collect()
+                Ok(base.iter().chain(segments.iter()).collect())
             }
             Source::GitHub { repository, .. } => {
-                let error = || Error::config_github(repository);
+                let error = || {
+                    Error::new(
+                        ErrorKind::Config,
+                        format!("failed to parse `{}` as a GitHub repository", repository),
+                    )
+                };
 
                 // Split the GitHub identifier into username and repository name.
                 let mut repo_split = repository.splitn(2, '/');
@@ -284,12 +318,20 @@ impl Source {
                 let name = repo_split.next().ok_or_else(error)?;
 
                 // Generate the name of the clone directory.
-                [root, CLONE_DIRECTORY, GITHUB_HOST, user, name]
+                Ok([root, CLONE_DIRECTORY, GITHUB_HOST, user, name]
                     .iter()
-                    .collect()
+                    .collect())
             }
-            Source::Local { directory } => directory.clone(),
-        })
+            Source::Local { directory } => expand_tilde(directory).ok_or_else(|| {
+                Error::new(
+                    ErrorKind::Config,
+                    format!(
+                        "failed to expand tilde in `{}`",
+                        directory.to_string_lossy()
+                    ),
+                )
+            }),
+        }
     }
 
     /// Consume the `Source` and convert it to a [`NormalizedSource`].
@@ -332,16 +374,8 @@ impl Plugin {
 }
 
 impl NormalizedPlugin {
-    /// Whether this `NormalizedPlugin` requires something to be downloaded.
-    fn requires_download(&self) -> bool {
-        match self.source {
-            NormalizedSource::Git { .. } => true,
-            NormalizedSource::Local { .. } => false,
-        }
-    }
-
-    /// Download this `NormalizedPlugin`.
-    fn download(&self) -> Result<()> {
+    /// Install this `NormalizedPlugin`.
+    fn install(&self) -> Result<()> {
         match &self.source {
             NormalizedSource::Git { url, revision } => {
                 // Clone or open the repository.
@@ -383,7 +417,22 @@ impl NormalizedPlugin {
 
                 Ok(())
             }
-            NormalizedSource::Local { .. } => Ok(()),
+            NormalizedSource::Local => {
+                if fs::metadata(&self.directory)
+                    .context(lazy!(
+                        "failed to find directory `{}`",
+                        self.directory.to_string_lossy()
+                    ))?
+                    .is_dir()
+                {
+                    Ok(())
+                } else {
+                    Err(Error::new(
+                        ErrorKind::Config,
+                        format!("`{}` is not a directory", self.directory.to_string_lossy()),
+                    ))
+                }
+            }
         }
     }
 
@@ -422,6 +471,7 @@ impl NormalizedPlugin {
                 )
                 .unwrap()
                 .filter_map(result::Result::ok)
+                // filter out unreadable paths
                 {
                     filenames.push(p)
                 }
@@ -443,6 +493,7 @@ impl NormalizedPlugin {
                 )
                 .unwrap()
                 .filter_map(result::Result::ok)
+                // filter out unreadable paths
                 {
                     filenames.push(p);
                     matched = true;
@@ -535,23 +586,22 @@ impl Config {
 
     /// Download all required dependencies for plugins.
     fn download(plugins: &[NormalizedPlugin]) -> Result<()> {
-        let downloadable: Vec<_> = plugins.iter().filter(|p| p.requires_download()).collect();
-        let count = downloadable.len();
+        let count = plugins.len();
 
         if count == 0 {
             Ok(())
         } else if count == 1 {
-            downloadable[0].download()
+            plugins[0].install()
         } else {
-            let workers = cmp::min(downloadable.len(), num_cpus::get());
+            let workers = cmp::min(plugins.len(), num_cpus::get());
             let mut pool = scoped_threadpool::Pool::new(workers as u32);
             let (tx, rx) = sync::mpsc::channel();
 
             pool.scoped(|scoped| {
-                for plugin in downloadable {
+                for plugin in plugins {
                     let tx = tx.clone();
                     scoped.execute(move || {
-                        tx.send(plugin.download())
+                        tx.send(plugin.install())
                             .expect("oops! did main thread die?");
                     })
                 }
