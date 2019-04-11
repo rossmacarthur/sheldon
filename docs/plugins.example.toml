@@ -10,7 +10,7 @@ match = [
 
 # Global templates to apply by default, if a plugin doesn't provide a `use`
 # field then these will be used.
-apply = ['source', 'PATH']
+apply = ['PATH', 'source']
 
 # Custom user defined templates, the `each` field means that these will be
 # applied for all matched files.
@@ -31,5 +31,9 @@ apply = ['prompt']
 
 [plugins.zsh-autosuggestions]
 source = 'git'
-url = 'https://github.com/zsh-users/zsh-autosuggestions'
-use = ['{{ name }}.plugin.zsh']
+url = 'https://github.com/zsh-users/zsh-autosuggestions' # 'git' sources must provide the Git URL.
+use = ['{{ name }}.plugin.zsh'] # these are the filenames to match on in the plugin directory.
+
+[plugins.myplugin]
+source = 'local'
+directory = "~/.dotfiles/zsh/plugins/pyenv" # 'local' sources must provide the plugin directory.

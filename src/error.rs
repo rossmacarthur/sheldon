@@ -117,6 +117,11 @@ impl fmt::Display for Error {
 }
 
 impl Error {
+    /// Create a new `Error`.
+    pub(crate) fn new(kind: ErrorKind, message: String) -> Error {
+        Error { kind, message }
+    }
+
     /// Returns this `Error`'s message.
     pub fn message(&self) -> &str {
         &self.message
@@ -129,19 +134,5 @@ impl Error {
             }
         }
         false
-    }
-
-    pub(crate) fn config_git(url: &str) -> Self {
-        Error {
-            kind: ErrorKind::Config,
-            message: format!("failed to parse `{}` as a Git URL", url),
-        }
-    }
-
-    pub(crate) fn config_github(repository: &str) -> Self {
-        Error {
-            kind: ErrorKind::Config,
-            message: format!("failed to parse `{}` as a GitHub repository", repository),
-        }
     }
 }
