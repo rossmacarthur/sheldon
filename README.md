@@ -8,17 +8,18 @@ A fast, configurable, shell plugin manager.
 
 ## Features
 
-- Can manage
-  - Remote Git repositories.
-  - GitHub repositories.
-  - Local plugins.
-  - Gist files (planned).
-  - Arbitrary binary downloads (planned).
+- Can manage everything
+  - Any Git repository
+    - Includes branch/tag/commit support.
+    - Includes extra support for GitHub.
+    - Includes extra support for Gist (planned).
+    - Includes extra support for GitLab (planned).
+  - Arbitrary remote files, simply specify the URL.
+  - Local plugins, simply specify the file path.
 - Configuration file using [TOML] syntax.
-- Uses a lock file for much faster loading of plugins.
 - Highly configurable install methods using handlebars templating.
-- Branch/tag/commit support.
-- Downloads plugins in parallel.
+- Super-fast parallel installation.
+- Uses a lock file for much faster loading of plugins.
 
 ## Getting started
 
