@@ -10,9 +10,12 @@ global options.
 
 - [Table of Contents](#table-of-contents)
 - [Plugin sources](#plugin-sources)
-  - [`github`](#github)
-  - [`git`](#git)
-  - [`local`](#local)
+  - [Git](#git)
+    - [`github`](#github)
+    - [`gist`](#gist)
+    - [`git`](#git)
+  - [Remote](#remote)
+  - [Local](#local)
 - [Plugin options](#plugin-options)
   - [`revision`](#revision)
   - [`use`](#use)
@@ -29,23 +32,27 @@ global options.
 ## Plugin sources
 
 A plugin is defined by adding a new unique name to the `plugins` table in the
-[TOML] configuration file
+[TOML] configuration file. A plugin must define the location of the source.
+There are three types of sources, each kind is described below.
 
-There are three supported types of plugins: `github`, `git` and `local`. All git
-sources will be cloned to the **sheldon** root directory with the following
-directory structure
+### Git
 
-```
+Git sources are plugins that are cloned. All git sources will be cloned to the
+**sheldon** root directory with the following directory structure
+
+```text
 repositories
 └── github.com
     └── sindresorhus
         └── pure
 ```
 
-### `github`
+There are three types of Git sources.
+
+#### `github`
 
 A GitHub source must set the `source` field to `github` and specify the
-`repository` to clone, this should be the username or  organization and the
+`repository` to clone, this should be the username or organization and the
 repository name separated by a forward slash, as demonstrated in the example
 below
 
@@ -55,7 +62,18 @@ source = 'github'
 repository = 'sindresorhus/pure'
 ```
 
-### `git`
+#### `gist`
+
+A Gist source must set the `source` field to `gist` and specify the `repository`
+to clone, this should be the hash or username and hash of the Gist to clone.
+
+```toml
+[plugins.docker-destroy-all]
+source = 'gist'
+repository = '579d02802b1cc17baed07753d09f5009'
+```
+
+#### `git`
 
 A Git source must set the `source` field to `git` and specify the `url` to clone
 from.
@@ -66,7 +84,31 @@ source = 'git'
 url = 'https://github.com/sindresorhus/pure'
 ```
 
-### `local`
+### Remote
+
+Remote sources are plugins that are downloaded. All remote sources will be
+downloaded to the **sheldon** root directory with the following directory
+structure
+```
+downloads
+└── example.com
+    └── each
+        └── path
+            └── segment
+```
+
+A Remote source must set the `source` field to `remote` and specify the `url`
+to download from.
+
+```toml
+[plugins.pure]
+source = 'remote'
+url = 'https://github.com/rossmacarthur/pure/raw/master/pure.zsh'
+```
+
+### Local
+
+Local sources are plugins that are local files.
 
 A Local source must set the `source` field to `local` and specify a local
 `directory`. Tildes may be used and will be expanded.
@@ -83,7 +125,7 @@ These are options that are common to multiple types of source.
 
 ### `revision`
 
-*Supported by GitHub and Git source types.*
+*Supported by GitHub, Gist, Git source types.*
 
 The git tag, commit, or branch to checkout after cloning the repository. For
 example
