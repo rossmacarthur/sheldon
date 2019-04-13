@@ -322,11 +322,7 @@ impl Source {
         revision: Option<String>,
     ) -> Result<(PathBuf, NormalizedSource)> {
         let base = vec![root, CLONE_DIRECTORY, GIST_HOST];
-        let directory = base
-            .iter()
-            .map(|x| *x)
-            .chain(repository.split("/"))
-            .collect();
+        let directory = base.iter().cloned().chain(repository.split('/')).collect();
 
         // Generate the URL.
         let url = Url::parse(&format!("https://{}/{}", GIST_HOST, repository))
