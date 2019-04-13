@@ -490,18 +490,25 @@ impl NormalizedPlugin {
 
     /// Install a Remote `NormalizedPlugin`.
     fn install_remote(&self, url: &Url, filename: &Path) -> Result<()> {
-        fs::create_dir_all(&self.directory).context(lazy!(
-            "failed to create directory `{}`",
-            &self.directory.to_string_lossy()
-        ))?;
-        let mut response =
-            request::get(url.clone()).context(lazy!("failed to download from `{}`", url))?;
-        let mut out = fs::File::create(filename)
-            .context(lazy!("failed to create `{}`", filename.to_string_lossy()))?;
-        io::copy(&mut response, &mut out).context(lazy!(
-            "failed to copy content to `{}`",
-            filename.to_string_lossy()
-        ))?;
+        if filename.exists() {
+            info!(
+                "{} is already downloaded (required for `{}`)",
+                url, self.name
+            );
+        } else {
+            fs::create_dir_all(&self.directory).context(lazy!(
+                "failed to create directory `{}`",
+                &self.directory.to_string_lossy()
+            ))?;
+            let mut response =
+                request::get(url.clone()).context(lazy!("failed to download from `{}`", url))?;
+            let mut out = fs::File::create(filename)
+                .context(lazy!("failed to create `{}`", filename.to_string_lossy()))?;
+            io::copy(&mut response, &mut out).context(lazy!(
+                "failed to copy content to `{}`",
+                filename.to_string_lossy()
+            ))?;
+        }
         Ok(())
     }
 
