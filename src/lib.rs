@@ -107,6 +107,9 @@ const CLONE_DIRECTORY: &str = "repositories";
 /// The default download directory for remotes.
 const DOWNLOAD_DIRECTORY: &str = "downloads";
 
+/// The Gist domain host.
+const GIST_HOST: &str = "gist.github.com";
+
 /// The GitHub domain host.
 const GITHUB_HOST: &str = "github.com";
 
@@ -120,6 +123,11 @@ enum Source {
     Git {
         #[serde(with = "url_serde")]
         url: Url,
+        revision: Option<String>,
+    },
+    /// A Gist snippet, only the hash or username/hash needs to be specified.
+    Gist {
+        repository: String,
         revision: Option<String>,
     },
     /// A GitHub repository, only the the username/repository needs to be
@@ -304,6 +312,25 @@ impl Source {
         Ok((directory, NormalizedSource::Git { url, revision }))
     }
 
+    /// Consume the `Source::Gist` and convert it to a directory and
+    /// [`NormalizedSource`].
+    ///
+    /// [`NormalizedSource`]: struct.NormalizedSource.html
+    fn normalize_gist(
+        root: &str,
+        repository: String,
+        revision: Option<String>,
+    ) -> Result<(PathBuf, NormalizedSource)> {
+        let base = vec![root, CLONE_DIRECTORY, GIST_HOST];
+        let directory = base.iter().cloned().chain(repository.split('/')).collect();
+
+        // Generate the URL.
+        let url = Url::parse(&format!("https://{}/{}", GIST_HOST, repository))
+            .context(lazy!("failed to construct Gist URL using {}", repository))?;
+
+        Ok((directory, NormalizedSource::Git { url, revision }))
+    }
+
     /// Consume the `Source::GitHub` and convert it to a directory and
     /// [`NormalizedSource`].
     ///
@@ -418,6 +445,10 @@ impl Source {
 
         match self {
             Source::Git { url, revision } => Self::normalize_git(root, url, revision),
+            Source::Gist {
+                repository,
+                revision,
+            } => Self::normalize_gist(root, repository, revision),
             Source::GitHub {
                 repository,
                 revision,
