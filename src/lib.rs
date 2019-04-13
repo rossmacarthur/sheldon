@@ -491,7 +491,10 @@ impl NormalizedPlugin {
     /// Install a Remote `NormalizedPlugin`.
     fn install_remote(&self, url: &Url, filename: &Path) -> Result<()> {
         if filename.exists() {
-            info!("{} is already downloaded (required for `{}`)", url, self.name);
+            info!(
+                "{} is already downloaded (required for `{}`)",
+                url, self.name
+            );
         } else {
             fs::create_dir_all(&self.directory).context(lazy!(
                 "failed to create directory `{}`",
