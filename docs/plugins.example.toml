@@ -39,6 +39,6 @@ source = 'local'
 directory = "~/.dotfiles/zsh/plugins/pyenv" # 'local' sources must provide the plugin directory.
 
 [plugins.docker-destroy-all]
-source = 'remote'
-url = 'https://gist.github.com/rossmacarthur/579d02802b1cc17baed07753d09f5009/raw'
+source = 'gist'
+repository = '579d02802b1cc17baed07753d09f5009'
 apply = ['function']
