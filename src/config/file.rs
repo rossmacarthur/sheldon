@@ -222,14 +222,12 @@ where
     .sum::<u32>()
         != 1
     {
-        return Err(de::Error::custom(
-            "multiple source types may not be specified",
-        ));
+        return Err(de::Error::custom("multiple source fields specified"));
     }
 
     if inner.reference.is_some() && (inner.remote.is_some() || inner.local.is_some()) {
         return Err(de::Error::custom(
-            "'reference' field is not valid for this source type",
+            "'reference' field is not valid for source type",
         ));
     }
 
@@ -503,7 +501,7 @@ mod tests {
                 }
                 let text = format!("{} = '{}'\n{} = '{}'", a, example_a, b, example_b);
                 let e = toml::from_str::<RawPlugin>(&text).unwrap_err();
-                assert_eq!(e.to_string(), "multiple source types may not be specified",)
+                assert_eq!(e.to_string(), "multiple source fields specified",)
             }
         }
     }
