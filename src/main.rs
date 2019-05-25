@@ -1,5 +1,6 @@
-use std::process;
+use std::{panic, process};
 
+use ansi_term::Color;
 use clap::{
     crate_authors,
     crate_description,
@@ -12,26 +13,23 @@ use clap::{
 };
 
 fn run() -> sheldon::Result<()> {
-    let settings = [
-        AppSettings::ColorNever,
-        AppSettings::DeriveDisplayOrder,
-        AppSettings::DisableVersion,
-    ];
+    let settings = [AppSettings::ColorNever, AppSettings::DeriveDisplayOrder];
 
     let matches = App::new(crate_name!())
         .author(crate_authors!())
         .about(crate_description!())
-        .setting(AppSettings::ColorNever)
-        .setting(AppSettings::DeriveDisplayOrder)
+        .settings(&settings)
         .setting(AppSettings::DisableHelpSubcommand)
+        .setting(AppSettings::SubcommandRequired)
+        .setting(AppSettings::VersionlessSubcommands)
         .help_message("Show this message and exit.")
         .version(crate_version!())
         .version_message("Show the version and exit.")
         .arg(
-            Arg::with_name("verbosity")
-                .short("v")
-                .multiple(true)
-                .help("Set the level of verbosity."),
+            Arg::with_name("quiet")
+                .long("quiet")
+                .short("q")
+                .help("Suppresses any output."),
         )
         .arg(
             Arg::with_name("home")
@@ -60,7 +58,7 @@ fn run() -> sheldon::Result<()> {
         )
         .subcommand(
             SubCommand::with_name("lock")
-                .about("Lock the configuration.")
+                .about("Install the plugins sources and generate the lock file.")
                 .settings(&settings)
                 .arg(
                     Arg::with_name("reinstall")
@@ -80,30 +78,39 @@ fn run() -> sheldon::Result<()> {
                 .arg(
                     Arg::with_name("relock")
                         .long("relock")
-                        .help("Regenerate the plugins lock file."),
+                        .help("Regenerate the lock file."),
                 ),
         )
         .get_matches();
 
-    let app = sheldon::Builder::from_arg_matches(&matches).build();
+    let (subcommand, submatches) = matches.subcommand();
+    let app = sheldon::Builder::from_arg_matches(&matches, submatches.unwrap()).build();
 
-    match matches.subcommand() {
-        ("lock", _) => app.lock()?,
-        ("source", _) => print!("{}", app.source()?),
-        _ => unreachable!(),
+    match subcommand {
+        "lock" => app.lock()?,
+        "source" => print!("{}", app.source()?),
+        _ => unimplemented!(),
     }
 
     Ok(())
 }
 
 fn main() {
-    if let Err(e) = run() {
-        eprintln!(
-            "Error: {}",
-            format!("{}", e)
-                .replace("\n", "\n       ")
-                .replace("Template error: ", "")
-        );
-        process::exit(1);
+    if let Err(_) = panic::catch_unwind(|| {
+        if let Err(e) = run() {
+            eprintln!(
+                "\n{} {}",
+                Color::Red.bold().paint("error:"),
+                format!("{}", e)
+                    .replace("\n", "\n  due to: ")
+                    // .replace("\n", "\n       ")
+                    .replace("Template error: ", "")
+            );
+            process::exit(1);
+        }
+    }) {
+        eprintln!("\nThis is probably a bug, please file an issue at \
+                     https://github.com/rossmacarthur/sheldon/issues.");
+        process::exit(2);
     }
 }

@@ -22,8 +22,8 @@ pub type Result<T> = result::Result<T, Error>;
 pub struct Error {
     /// The type of error.
     kind: ErrorKind,
-    /// A chain of contextual descriptions of what happened.
-    contexts: Vec<String>,
+    /// A chain of descriptions of what happened.
+    messages: Vec<String>,
 }
 
 /// A trait to allow easy conversion of other `Result`s into our [`Result`] with
@@ -31,7 +31,7 @@ pub struct Error {
 ///
 /// [`Result`]: type.Result.html
 pub trait ResultExt<T, E> {
-    fn ctx<C, D>(self, c: C) -> Result<T>
+    fn chain<C, D>(self, c: C) -> Result<T>
     where
         C: FnOnce() -> D,
         D: fmt::Display;
@@ -66,12 +66,12 @@ quick_error! {
             source(err)
         }
         /// Occurs when there are Git related failures.
-        Git(err: git::Error) {
+        Git(err: git2::Error) {
             from()
             source(err)
         }
         /// Occurs when a download fails.
-        Download(err: request::Error) {
+        Download(err: reqwest::Error) {
             from()
             source(err)
         }
@@ -111,36 +111,36 @@ impl<T, E> ResultExt<T, E> for result::Result<T, E>
 where
     E: Into<ErrorKind>,
 {
-    /// Add context to the `Result`.
-    fn ctx<C, D>(self, c: C) -> Result<T>
+    /// Chain a message to the `Result`.
+    fn chain<C, D>(self, c: C) -> Result<T>
     where
         C: FnOnce() -> D,
         D: fmt::Display,
     {
         self.map_err(|e| Error {
             kind: e.into(),
-            contexts: vec![format!("{}", c())],
+            messages: vec![format!("{}", c())],
         })
     }
 }
 
 impl<T> ResultExt<T, Error> for Result<T> {
-    /// Add context to the `Result`.
-    fn ctx<C, D>(self, c: C) -> Result<T>
+    /// Chain a message to the `Result`.
+    fn chain<C, D>(self, c: C) -> Result<T>
     where
         C: FnOnce() -> D,
         D: fmt::Display,
     {
         self.map_err(|mut e| {
-            e.contexts.push(format!("{}", c()));
+            e.messages.push(format!("{}", c()));
             e
         })
     }
 }
 
 impl<T> ResultExt<T, Error> for Option<T> {
-    /// Add context to the `Option`.
-    fn ctx<C, D>(self, c: C) -> Result<T>
+    /// Chain a message to the `Option`.
+    fn chain<C, D>(self, c: C) -> Result<T>
     where
         C: FnOnce() -> D,
         D: fmt::Display,
@@ -160,8 +160,8 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut display = String::new();
 
-        for context in self.contexts.iter().rev() {
-            display.push_str(context);
+        for message in self.messages.iter().rev() {
+            display.push_str(message);
             display.push('\n');
         }
         if let Some(e) = self.source() {
@@ -176,10 +176,10 @@ impl fmt::Display for Error {
 
 impl Error {
     /// Create an `Error` from a custom message.
-    pub(crate) fn custom(context: String) -> Self {
+    pub(crate) fn custom(message: String) -> Self {
         Error {
             kind: ErrorKind::Custom,
-            contexts: vec![context],
+            messages: vec![message],
         }
     }
 }

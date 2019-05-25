@@ -21,7 +21,7 @@ use url::Url;
 
 use crate::{
     config::{Config, GitReference, Plugin, Source, Template},
-    settings::Settings,
+    context::Context,
     Error,
     Result,
     ResultExt,
@@ -42,7 +42,7 @@ const MAX_THREADS: u32 = 8;
 
 /// A locked `GitReference`.
 #[derive(Clone, Debug)]
-struct LockedGitReference(git::Oid);
+struct LockedGitReference(git2::Oid);
 
 /// A locked `Source`.
 #[derive(Clone, Debug)]
@@ -67,7 +67,7 @@ struct LockedPlugin {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct LockedSettings {
+pub struct LockedContext {
     /// The current crate version.
     version: String,
     /// The location of the home directory.
@@ -83,9 +83,9 @@ pub struct LockedSettings {
 /// A locked `Config`.
 #[derive(Debug, Deserialize, Serialize)]
 pub struct LockedConfig {
-    /// The global settings that were used to generated this `LockedConfig`.
+    /// The global context that was used to generated this `LockedConfig`.
     #[serde(flatten)]
-    pub settings: LockedSettings,
+    pub ctx: LockedContext,
     /// A map of name to template.
     templates: IndexMap<String, Template>,
     /// Each locked plugin.
@@ -96,8 +96,8 @@ pub struct LockedConfig {
 // Lock implementations.
 /////////////////////////////////////////////////////////////////////////
 
-impl PartialEq<LockedSettings> for Settings {
-    fn eq(&self, other: &LockedSettings) -> bool {
+impl PartialEq<LockedContext> for Context {
+    fn eq(&self, other: &LockedContext) -> bool {
         self.version == other.version
             && self.home == other.home
             && self.root == other.root
@@ -112,38 +112,52 @@ impl GitReference {
     /// This code is take from [Cargo].
     ///
     /// [Cargo]: https://github.com/rust-lang/cargo/blob/master/src/cargo/sources/git/utils.rs#L207
-    fn lock(&self, repo: &git::Repository) -> Result<LockedGitReference> {
+    fn lock(&self, repo: &git2::Repository) -> Result<LockedGitReference> {
         let reference = match self {
             GitReference::Branch(s) => repo
-                .find_branch(s, git::BranchType::Local)
-                .ctx(s!("failed to find branch `{}`", s))?
+                .find_branch(s, git2::BranchType::Local)
+                .chain(s!("failed to find branch `{}`", s))?
                 .get()
                 .target()
-                .ctx(s!("branch `{}` does not have a target", s))?,
+                .chain(s!("branch `{}` does not have a target", s))?,
             GitReference::Revision(s) => {
                 let obj = repo
                     .revparse_single(s)
-                    .ctx(s!("failed to find revision `{}`", s))?;
+                    .chain(s!("failed to find revision `{}`", s))?;
                 match obj.as_tag() {
                     Some(tag) => tag.target_id(),
                     None => obj.id(),
                 }
             }
-            GitReference::Tag(s) => (|| -> result::Result<_, git::Error> {
+            GitReference::Tag(s) => (|| -> result::Result<_, git2::Error> {
                 let id = repo.refname_to_id(&format!("refs/tags/{}", s))?;
                 let obj = repo.find_object(id, None)?;
-                let obj = obj.peel(git::ObjectType::Commit)?;
+                let obj = obj.peel(git2::ObjectType::Commit)?;
                 Ok(obj.id())
             })()
-            .ctx(s!("failed to find tag `{}`", s))?,
+            .chain(s!("failed to find tag `{}`", s))?,
         };
         Ok(LockedGitReference(reference))
+    }
+}
+
+impl fmt::Display for GitReference {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            GitReference::Branch(s) | GitReference::Revision(s) | GitReference::Tag(s) => {
+                write!(f, "{}", s)
+            }
+        }
     }
 }
 
 impl fmt::Display for Source {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
+            Source::Git {
+                url,
+                reference: Some(reference),
+            } => write!(f, "{}@{}", url, reference),
             Source::Git { url, .. } | Source::Remote { url } => write!(f, "{}", url),
             Source::Local { directory } => write!(f, "{}", directory.display()),
         }
@@ -153,22 +167,39 @@ impl fmt::Display for Source {
 impl Source {
     /// Clone a Git repository and checks it out at a particular revision.
     fn lock_git(
+        ctx: &Context,
         directory: PathBuf,
         url: Url,
         reference: Option<GitReference>,
     ) -> Result<LockedSource> {
+        if ctx.reinstall {
+            if let Err(e) = fs::remove_dir_all(&directory) {
+                if e.kind() != io::ErrorKind::NotFound {
+                    return Err(e)
+                        .chain(s!("failed to remove directory `{}`", &directory.display()));
+                }
+            }
+        }
+
+        let mut cloned = false;
+
         // Clone or open the repository.
-        let repo = match git::Repository::clone(&url.to_string(), &directory) {
-            Ok(repo) => repo,
+        let repo = match git2::Repository::clone(&url.to_string(), &directory) {
+            Ok(repo) => {
+                cloned = true;
+                repo
+            }
             Err(e) => {
-                if e.code() != git::ErrorCode::Exists {
-                    return Err(e).ctx(s!("failed to git clone `{}`", url));
+                if e.code() != git2::ErrorCode::Exists {
+                    return Err(e).chain(s!("failed to git clone `{}`", url));
                 } else {
-                    git::Repository::open(&directory)
-                        .ctx(s!("failed to open repository at `{}`", directory.display()))?
+                    git2::Repository::open(&directory)
+                        .chain(s!("failed to open repository at `{}`", directory.display()))?
                 }
             }
         };
+
+        let status = if cloned { "Cloned" } else { "Checked" };
 
         // Checkout the configured revision.
         if let Some(reference) = reference {
@@ -176,11 +207,15 @@ impl Source {
 
             let obj = repo
                 .find_object(revision.0, None)
-                .ctx(s!("failed to find revision `{}`", revision.0))?;
-            repo.reset(&obj, git::ResetType::Hard, None).ctx(s!(
+                .chain(s!("failed to find revision `{}`", revision.0))?;
+            repo.reset(&obj, git2::ResetType::Hard, None).chain(s!(
                 "failed to reset repository to revision `{}`",
                 revision.0
             ))?;
+
+            ctx.status(status, &format!("{}@{}", &url, reference));
+        } else {
+            ctx.status(status, &url);
         }
 
         Ok(LockedSource {
@@ -190,17 +225,34 @@ impl Source {
     }
 
     /// Downloads a Remote source.
-    fn lock_remote(directory: PathBuf, filename: PathBuf, url: Url) -> Result<LockedSource> {
+    fn lock_remote(
+        ctx: &Context,
+        directory: PathBuf,
+        filename: PathBuf,
+        url: Url,
+    ) -> Result<LockedSource> {
+        if ctx.reinstall {
+            if let Err(e) = fs::remove_file(&filename) {
+                if e.kind() != io::ErrorKind::NotFound {
+                    return Err(e).chain(s!("failed to remove filename `{}`", &filename.display()));
+                }
+            }
+        }
+
         if !filename.exists() {
             fs::create_dir_all(&directory)
-                .ctx(s!("failed to create directory `{}`", directory.display()))?;
+                .chain(s!("failed to create directory `{}`", directory.display()))?;
             let mut response =
-                request::get(url.clone()).ctx(s!("failed to download from `{}`", url))?;
-            let mut out =
-                fs::File::create(&filename).ctx(s!("failed to create `{}`", filename.display()))?;
+                reqwest::get(url.clone()).chain(s!("failed to download `{}`", url))?;
+            let mut out = fs::File::create(&filename)
+                .chain(s!("failed to create `{}`", filename.display()))?;
             io::copy(&mut response, &mut out)
-                .ctx(s!("failed to copy contents to `{}`", filename.display()))?;
+                .chain(s!("failed to copy contents to `{}`", filename.display()))?;
+            ctx.status("Fetched", &url);
+        } else {
+            ctx.status("Checked", &url);
         }
+
         Ok(LockedSource {
             directory,
             filename: Some(filename),
@@ -208,13 +260,14 @@ impl Source {
     }
 
     /// Checks that a Local source directory exists.
-    fn lock_local(settings: &Settings, directory: PathBuf) -> Result<LockedSource> {
-        let directory = settings.expand_tilde(directory);
+    fn lock_local(ctx: &Context, directory: PathBuf) -> Result<LockedSource> {
+        let directory = ctx.expand_tilde(directory);
 
         if fs::metadata(&directory)
-            .ctx(s!("failed to find directory `{}`", directory.display()))?
+            .chain(s!("failed to find directory `{}`", directory.display()))?
             .is_dir()
         {
+            ctx.status("Checked", &directory.display());
             Ok(LockedSource {
                 directory,
                 filename: None,
@@ -225,30 +278,30 @@ impl Source {
     }
 
     /// Install this `Source`.
-    fn lock(self, settings: &Settings) -> Result<LockedSource> {
+    fn lock(self, ctx: &Context) -> Result<LockedSource> {
         match self {
             Source::Git { url, reference } => {
-                let mut directory = settings.root.join(CLONE_DIRECTORY);
-                directory.push(url.host_str().ctx(s!("URL `{}` has no host", url))?);
+                let mut directory = ctx.root.join(CLONE_DIRECTORY);
+                directory.push(url.host_str().chain(s!("URL `{}` has no host", url))?);
                 directory.push(url.path().trim_start_matches('/'));
-                Self::lock_git(directory, url, reference)
+                Self::lock_git(ctx, directory, url, reference)
             }
             Source::Remote { url } => {
-                let mut directory = settings.root.join(DOWNLOAD_DIRECTORY);
-                directory.push(url.host_str().ctx(s!("URL `{}` has no host", url))?);
+                let mut directory = ctx.root.join(DOWNLOAD_DIRECTORY);
+                directory.push(url.host_str().chain(s!("URL `{}` has no host", url))?);
 
                 let segments: Vec<_> = url
                     .path_segments()
-                    .ctx(s!("URL `{}` is cannot-be-a-base", url))?
+                    .chain(s!("URL `{}` is cannot-be-a-base", url))?
                     .collect();
                 let (base, rest) = segments.split_last().unwrap();
                 let base = if *base != "" { *base } else { "index" };
                 directory.push(rest.iter().collect::<PathBuf>());
                 let filename = directory.join(base);
 
-                Self::lock_remote(directory, filename, url)
+                Self::lock_remote(ctx, directory, filename, url)
             }
-            Source::Local { directory } => Self::lock_local(settings, directory),
+            Source::Local { directory } => Self::lock_local(ctx, directory),
         }
     }
 }
@@ -258,10 +311,11 @@ impl Plugin {
         let mut matched = false;
         let pattern = pattern.to_string_lossy();
         let paths: glob::Paths =
-            glob::glob(&pattern).ctx(s!("failed to parse glob pattern `{}`", &pattern))?;
+            glob::glob(&pattern).chain(s!("failed to parse glob pattern `{}`", &pattern))?;
 
         for path in paths {
-            filenames.push(path.ctx(s!("failed to read path matched by pattern `{}`", &pattern))?);
+            filenames
+                .push(path.chain(s!("failed to read path matched by pattern `{}`", &pattern))?);
             matched = true;
         }
 
@@ -271,7 +325,7 @@ impl Plugin {
     /// Consume the `Plugin` and convert it to a `LockedPlugin`.
     fn lock(
         self,
-        settings: &Settings,
+        ctx: &Context,
         source: LockedSource,
         matches: &[String],
         apply: &[String],
@@ -295,14 +349,14 @@ impl Plugin {
 
             // Data to use in template rendering
             let data = hashmap! {
-                "root" => settings
+                "root" => ctx
                     .root
                     .to_str()
-                    .ctx(s!("root directory is not valid UTF-8"))?,
+                    .chain(s!("root directory is not valid UTF-8"))?,
                 "name" => &self.name,
                 "directory" => &directory
                     .to_str()
-                    .ctx(s!("root directory is not valid UTF-8"))?,
+                    .chain(s!("root directory is not valid UTF-8"))?,
             };
 
             // If the plugin defined what files to use, we do all of them.
@@ -310,7 +364,7 @@ impl Plugin {
                 for u in uses {
                     let rendered = templates
                         .render_template(u, &data)
-                        .ctx(s!("failed to render template `{}`", u))?;
+                        .chain(s!("failed to render template `{}`", u))?;
                     let pattern = directory.join(&rendered);
                     if !Self::match_globs(pattern, &mut filenames)? {
                         bail!("failed to find any files matching `{}`", &rendered);
@@ -321,7 +375,7 @@ impl Plugin {
                 for g in matches {
                     let rendered = templates
                         .render_template(g, &data)
-                        .ctx(s!("failed to render template `{}`", g))?;
+                        .chain(s!("failed to render template `{}`", g))?;
                     let pattern = directory.join(rendered);
                     if Self::match_globs(pattern, &mut filenames)? {
                         break;
@@ -339,10 +393,10 @@ impl Plugin {
     }
 }
 
-impl Settings {
-    /// Consume the `Settings` and convert it to a `LockedSettings`.
-    fn lock(self) -> LockedSettings {
-        LockedSettings {
+impl Context {
+    /// Consume the `Context` and convert it to a `LockedContext`.
+    fn lock(self) -> LockedContext {
+        LockedContext {
             version: self.version.to_string(),
             home: self.home,
             root: self.root,
@@ -358,7 +412,7 @@ impl Config {
     /// This method installs all necessary remote dependencies of plugins,
     /// validates that local plugins are present, and checks that templates
     /// can compile.
-    pub fn lock(self, settings: &Settings) -> Result<LockedConfig> {
+    pub fn lock(self, ctx: &Context) -> Result<LockedConfig> {
         // Create a map of unique `Source` to `Vec<Plugin>`
         let mut map = IndexMap::new();
         for (index, plugin) in self.plugins.into_iter().enumerate() {
@@ -385,20 +439,21 @@ impl Config {
                         tx.send((|| {
                             let source_name = format!("{}", source);
                             let source = source
-                                .lock(settings)
-                                .ctx(s!("failed to install source `{}`", source_name))?;
-                            let mut locked = Vec::with_capacity(plugins.len());
+                                .lock(ctx)
+                                .chain(s!("failed to install source `{}`", source_name))?;
 
+                            let mut locked = Vec::with_capacity(plugins.len());
                             for (index, plugin) in plugins {
                                 let name = plugin.name.clone();
 
                                 locked.push((
                                     index,
                                     plugin
-                                        .lock(settings, source.clone(), matches, apply)
-                                        .ctx(s!("failed to install plugin `{}`", name))?,
+                                        .lock(ctx, source.clone(), matches, apply)
+                                        .chain(s!("failed to install plugin `{}`", name))?,
                                 ));
                             }
+
                             Ok(locked)
                         })())
                         .expect("oops! did main thread die?");
@@ -420,7 +475,7 @@ impl Config {
         };
 
         Ok(LockedConfig {
-            settings: settings.clone().lock(),
+            ctx: ctx.clone().lock(),
             templates: self.templates,
             plugins,
         })
@@ -435,21 +490,21 @@ impl LockedConfig {
     {
         let path = path.as_ref();;
         let locked: LockedConfig = toml::from_str(&String::from_utf8_lossy(
-            &fs::read(&path).ctx(s!("failed to read locked config from `{}`", path.display()))?,
+            &fs::read(&path).chain(s!("failed to read locked config from `{}`", path.display()))?,
         ))
-        .ctx(s!("failed to deserialize locked config"))?;
+        .chain(s!("failed to deserialize locked config"))?;
         Ok(locked)
     }
 
     /// Generate the script.
-    pub fn source(&self) -> Result<String> {
+    pub fn source(&self, ctx: &Context) -> Result<String> {
         // Compile the templates
         let mut templates = handlebars::Handlebars::new();
         templates.set_strict_mode(true);
         for (name, template) in &self.templates {
             templates
                 .register_template_string(&name, &template.value)
-                .ctx(s!("failed to compile template `{}`", name))?;
+                .chain(s!("failed to compile template `{}`", name))?;
         }
 
         let mut script = String::new();
@@ -459,26 +514,26 @@ impl LockedConfig {
                 // Data to use in template rendering
                 let mut data = hashmap! {
                     "root" => self
-                        .settings.root
+                        .ctx.root
                         .to_str()
-                        .ctx(s!("root directory is not valid UTF-8"))?,
+                        .chain(s!("root directory is not valid UTF-8"))?,
                     "name" => &plugin.name,
                     "directory" => plugin
                         .directory
                         .to_str()
-                        .ctx(s!("root directory is not valid UTF-8"))?,
+                        .chain(s!("root directory is not valid UTF-8"))?,
                 };
 
                 if self.templates[name].each {
                     for filename in &plugin.filenames {
                         data.insert(
                             "filename",
-                            filename.to_str().ctx(s!("filename is not valid UTF-8"))?,
+                            filename.to_str().chain(s!("filename is not valid UTF-8"))?,
                         );
                         script.push_str(
                             &templates
                                 .render(name, &data)
-                                .ctx(s!("failed to render template `{}`", name))?,
+                                .chain(s!("failed to render template `{}`", name))?,
                         );
                         script.push('\n');
                     }
@@ -486,11 +541,12 @@ impl LockedConfig {
                     script.push_str(
                         &templates
                             .render(name, &data)
-                            .ctx(s!("failed to render template `{}`", name))?,
+                            .chain(s!("failed to render template `{}`", name))?,
                     );
                     script.push('\n');
                 }
             }
+            ctx.status("Rendered", &plugin.name);
         }
 
         Ok(script)
@@ -505,9 +561,9 @@ impl LockedConfig {
 
         fs::write(
             path,
-            &toml::to_string(&self).ctx(s!("failed to serialize locked config"))?,
+            &toml::to_string(&self).chain(s!("failed to serialize locked config"))?,
         )
-        .ctx(s!("failed to write locked config to `{}`", path.display()))?;
+        .chain(s!("failed to write locked config to `{}`", path.display()))?;
 
         Ok(())
     }
@@ -595,7 +651,7 @@ mod tests {
         let directory = temp.path();
         git_create_test_repo(&directory);
         let hash = git_get_last_commit(&directory);
-        let repo = git::Repository::open(directory).unwrap();
+        let repo = git2::Repository::open(directory).unwrap();
 
         let reference = GitReference::Tag("derp".to_string());
         let locked = reference.lock(&repo).unwrap();
@@ -609,7 +665,7 @@ mod tests {
         let directory = temp.path();
         git_create_test_repo(&directory);
         let hash = git_get_last_commit(&directory);
-        let repo = git::Repository::open(directory).unwrap();
+        let repo = git2::Repository::open(directory).unwrap();
 
         let reference = GitReference::Branch("master".to_string());
         let locked = reference.lock(&repo).unwrap();
@@ -623,7 +679,7 @@ mod tests {
         let directory = temp.path();
         git_create_test_repo(&directory);
         let hash = git_get_last_commit(&directory);
-        let repo = git::Repository::open(directory).unwrap();
+        let repo = git2::Repository::open(directory).unwrap();
 
         let reference = GitReference::Revision(hash.clone());
         let locked = reference.lock(&repo).unwrap();
@@ -637,6 +693,7 @@ mod tests {
         let directory = temp.path();
 
         let locked = Source::lock_git(
+            &create_test_context(&directory.to_string_lossy()),
             directory.to_path_buf(),
             Url::parse("https://github.com/rossmacarthur/sheldon").unwrap(),
             None,
@@ -658,6 +715,7 @@ mod tests {
         let directory = temp.path();
 
         let locked = Source::lock_git(
+            &create_test_context(&directory.to_string_lossy()),
             directory.to_path_buf(),
             Url::parse("https://github.com/rossmacarthur/sheldon").unwrap(),
             Some(GitReference::Tag("0.2.0".to_string())),
@@ -680,6 +738,7 @@ mod tests {
         let filename = directory.join("test.txt");
 
         let locked = Source::lock_remote(
+            &create_test_context(&directory.to_string_lossy()),
             directory.to_path_buf(),
             filename.clone(),
             Url::parse("https://github.com/rossmacarthur/sheldon/raw/0.3.0/LICENSE-MIT").unwrap(),
@@ -694,9 +753,9 @@ mod tests {
         )
     }
 
-    fn create_test_settings(root: &str) -> Settings {
+    fn create_test_context(root: &str) -> Context {
         let root = PathBuf::from(root);
-        Settings {
+        Context {
             version: clap::crate_version!(),
             home: "/".into(),
             config_file: root.join("config.toml"),
@@ -704,6 +763,7 @@ mod tests {
             root,
             reinstall: false,
             relock: false,
+            quiet: true,
         }
     }
 
@@ -728,7 +788,7 @@ mod tests {
         };
         let locked = plugin
             .lock(
-                &create_test_settings(&root.to_string_lossy()),
+                &create_test_context(&root.to_string_lossy()),
                 LockedSource {
                     directory: directory.clone(),
                     filename: None,
@@ -772,7 +832,7 @@ mod tests {
         };
         let locked = plugin
             .lock(
-                &create_test_settings(&root.to_string_lossy()),
+                &create_test_context(&root.to_string_lossy()),
                 LockedSource {
                     directory: directory.clone(),
                     filename: None,
@@ -803,7 +863,7 @@ mod tests {
         };
         let locked = plugin
             .lock(
-                &create_test_settings("/home/test"),
+                &create_test_context("/home/test"),
                 LockedSource {
                     directory: "/home/test/downloads/ross.macarthur.io".into(),
                     filename: Some("/home/test/downloads/ross.macarthur.io/test.html".into()),
@@ -832,7 +892,7 @@ mod tests {
         let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         let temp = tempfile::tempdir().unwrap();
         let root = temp.path();
-        let settings = Settings {
+        let ctx = Context {
             version: clap::crate_version!(),
             home: "/".into(),
             root: root.to_path_buf(),
@@ -840,14 +900,15 @@ mod tests {
             lock_file: root.join("plugins.lock"),
             reinstall: false,
             relock: false,
+            quiet: true,
         };
         let pyenv_dir = root.join("pyenv");
         fs::create_dir(&pyenv_dir).unwrap();
 
-        let mut config = Config::from_path(&settings.config_file).unwrap();
+        let mut config = Config::from_path(&ctx.config_file).unwrap();
         config.plugins[2].source = Source::Local {
             directory: pyenv_dir,
         };
-        config.lock(&settings).unwrap();
+        config.lock(&ctx).unwrap();
     }
 }

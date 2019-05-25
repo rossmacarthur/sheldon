@@ -14,15 +14,14 @@ version = "0.3.0"
 ansi_term = "0.11.0"
 clap = "2.33.0"
 dirs = "1.0.5"
-git = { package = "git2", version = "0.8.0" }
+git2 = "0.8.0"
 glob = "0.3.0"
 handlebars = "1.1.0"
 indexmap = { version = "1.0.2", features = ["serde-1"] }
 itertools = "0.8.0"
-log = "0.4.6"
 maplit = "1.0.1"
 quick-error = { package = "quick-error2", version = "2.0.1" }
-request = { package = "reqwest", version = "0.9.17" }
+reqwest = "0.9.17"
 scoped_threadpool = "0.1.9"
 serde = { version = "1.0.91", features = ["derive"] }
 toml = "0.5.1"
