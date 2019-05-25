@@ -1,30 +1,40 @@
-//! Error handling for this crate.
+//! Error handling.
 
-use std::{error::Error as _Error, fmt, io, result};
+use std::{error::Error as Error_, fmt, io, result};
 
 use quick_error::quick_error;
 
+/// A simple macro to generate a lazy format!.
+macro_rules! s {
+    ($($arg:tt)*) => (|| format!($($arg)*))
+}
+
+/// A simple macro to return a text only `Error`.
+macro_rules! bail {
+    ($fmt:expr, $($arg:tt)+) => { return Err(Error::custom(format!($fmt, $($arg)+))); }
+}
+
 /// A custom result type to use in this crate.
 pub type Result<T> = result::Result<T, Error>;
-
-/// A trait to allow easy conversion of other `Result`s into our [`Result`] with
-/// a context.
-///
-/// [`Result`]: type.Result.html
-pub(crate) trait ResultExt<T, E> {
-    fn context<C, D>(self, c: C) -> Result<T>
-    where
-        C: FnOnce() -> D,
-        D: fmt::Display;
-}
 
 /// An error that can occur in this crate.
 #[derive(Debug)]
 pub struct Error {
     /// The type of error.
     kind: ErrorKind,
-    /// A description of what happened.
-    message: String,
+    /// A chain of contextual descriptions of what happened.
+    contexts: Vec<String>,
+}
+
+/// A trait to allow easy conversion of other `Result`s into our [`Result`] with
+/// a contextual message.
+///
+/// [`Result`]: type.Result.html
+pub trait ResultExt<T, E> {
+    fn ctx<C, D>(self, c: C) -> Result<T>
+    where
+        C: FnOnce() -> D,
+        D: fmt::Display;
 }
 
 quick_error! {
@@ -33,8 +43,8 @@ quick_error! {
     /// [`Error`]: struct.Error.html
     #[derive(Debug)]
     pub enum ErrorKind {
-        /// Occurs when there is an invalid config setting.
-        Config {}
+        /// Occurs when we create an `ErrorKind` from a string.
+        Custom {}
         /// Occurs when a URL fails to parse.
         Url(err: url::ParseError) {
             from()
@@ -65,6 +75,16 @@ quick_error! {
             from()
             source(err)
         }
+        /// Occurs when a glob pattern fails to parse.
+        Glob(err: glob::GlobError) {
+            from()
+            source(err)
+        }
+        /// Occurs when a glob pattern fails to parse.
+        Pattern(err: glob::PatternError) {
+            from()
+            source(err)
+        }
         /// Occurs when a template fails to compile.
         Template(err: handlebars::TemplateError) {
             from()
@@ -91,53 +111,75 @@ impl<T, E> ResultExt<T, E> for result::Result<T, E>
 where
     E: Into<ErrorKind>,
 {
-    fn context<C, D>(self, c: C) -> Result<T>
+    /// Add context to the `Result`.
+    fn ctx<C, D>(self, c: C) -> Result<T>
     where
         C: FnOnce() -> D,
         D: fmt::Display,
     {
         self.map_err(|e| Error {
             kind: e.into(),
-            message: format!("{}", c()),
+            contexts: vec![format!("{}", c())],
         })
     }
 }
 
-impl _Error for Error {
+impl<T> ResultExt<T, Error> for Result<T> {
+    /// Add context to the `Result`.
+    fn ctx<C, D>(self, c: C) -> Result<T>
+    where
+        C: FnOnce() -> D,
+        D: fmt::Display,
+    {
+        self.map_err(|mut e| {
+            e.contexts.push(format!("{}", c()));
+            e
+        })
+    }
+}
+
+impl<T> ResultExt<T, Error> for Option<T> {
+    /// Add context to the `Option`.
+    fn ctx<C, D>(self, c: C) -> Result<T>
+    where
+        C: FnOnce() -> D,
+        D: fmt::Display,
+    {
+        self.ok_or_else(|| Error::custom(format!("{}", c())))
+    }
+}
+
+impl Error_ for Error {
     /// The lower-level source of this `Error`, if any.
-    fn source(&self) -> Option<&(dyn _Error + 'static)> {
+    fn source(&self) -> Option<&(dyn Error_ + 'static)> {
         self.kind.source()
     }
 }
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let due_to = if let Some(e) = self.source() {
-            format!("\ndue to: {}", e)
-        } else {
-            String::new()
-        };
-        write!(f, "{}{}", self.message, due_to)
+        let mut display = String::new();
+
+        for context in self.contexts.iter().rev() {
+            display.push_str(context);
+            display.push('\n');
+        }
+        if let Some(e) = self.source() {
+            display.push_str(&format!("{}", e))
+        }
+
+        write!(f, "{}", display.trim_end())?;
+
+        Ok(())
     }
 }
 
 impl Error {
-    /// Create a new `Error`.
-    pub(crate) fn new(kind: ErrorKind, message: String) -> Error {
-        Error { kind, message }
-    }
-
-    /// Returns this `Error`'s message.
-    pub fn message(&self) -> &str {
-        &self.message
-    }
-
-    pub(crate) fn source_is_io_not_found(&self) -> bool {
-        if let ErrorKind::Io(error) = &self.kind {
-            if error.kind() == io::ErrorKind::NotFound {
-                return true;
-            }
+    /// Create an `Error` from a custom message.
+    pub(crate) fn custom(context: String) -> Self {
+        Error {
+            kind: ErrorKind::Custom,
+            contexts: vec![context],
         }
-        false
     }
 }
