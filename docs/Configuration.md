@@ -1,10 +1,8 @@
 # Configuration
 
-See an example config file [here](plugins.example.toml).
-
-The plugins file follows the [TOML] file format. Its fields are described in
-this section. It consists of a list of plugins, a list of templates, and a few
-global options.
+The config file follows a [TOML] file format. Its fields are described in this
+section. It consists of a list of plugins, a list of templates, and a few global
+options. See an example config file [here](plugins.example.toml).
 
 ## Table of Contents
 
@@ -14,10 +12,10 @@ global options.
     - [`github`](#github)
     - [`gist`](#gist)
     - [`git`](#git)
+    - [Specifying the branch / tag / commit](#specifying-the-branch--tag--commit)
   - [Remote](#remote)
   - [Local](#local)
 - [Plugin options](#plugin-options)
-  - [`revision`](#revision)
   - [`use`](#use)
   - [`apply`](#apply)
 - [Templates](#templates)
@@ -28,126 +26,92 @@ global options.
   - [`match`](#match)
   - [`apply`](#apply-1)
 
-
 ## Plugin sources
 
 A plugin is defined by adding a new unique name to the `plugins` table in the
 [TOML] configuration file. A plugin must define the location of the source.
-There are three types of sources, each kind is described below.
+There are three types of sources, each kind is described below. A plugin may
+only specify _one_ source type.
 
 ### Git
 
-Git sources are plugins that are cloned. All git sources will be cloned to the
-**sheldon** root directory with the following directory structure
-
-```text
-repositories
-└── github.com
-    └── sindresorhus
-        └── pure
-```
-
-There are three types of Git sources.
+Git sources specify a remote Git repository that will be cloned to the
+**sheldon** root directory. There are three flavors of Git sources.
 
 #### `github`
 
-A GitHub source must set the `source` field to `github` and specify the
-`repository` to clone, this should be the username or organization and the
-repository name separated by a forward slash, as demonstrated in the example
-below
+A GitHub source must set the `github` field and specify the repository. This
+should be the username or organization and the repository name separated by a
+forward slash.
 
 ```toml
 [plugins.pure]
-source = 'github'
-repository = 'sindresorhus/pure'
+github = 'sindresorhus/pure'
 ```
 
 #### `gist`
 
-A Gist source must set the `source` field to `gist` and specify the `repository`
-to clone, this should be the hash or username and hash of the Gist to clone.
+A Gist source must set the `gist` field and specify the repository. This should
+be the hash or username and hash of the Gist.
 
 ```toml
-[plugins.docker-destroy-all]
-source = 'gist'
-repository = '579d02802b1cc17baed07753d09f5009'
+[plugins.pure]
+gist = '579d02802b1cc17baed07753d09f5009'
 ```
 
 #### `git`
 
-A Git source must set the `source` field to `git` and specify the `url` to clone
-from.
+A Git source must set the `git` field and specify the URL.
 
 ```toml
 [plugins.pure]
-source = 'git'
-url = 'https://github.com/sindresorhus/pure'
+git = 'https://github.com/sindresorhus/pure'
+```
+
+#### Specifying the branch / tag / commit
+
+All Git sources also allow setting of one of the `branch`, `tag` or `revision`
+fields. **sheldon** will then checkout the repository at this reference.
+
+```toml
+[plugins.pure]
+github = 'sindresorhus/pure'
+tag = '1.9.0'
 ```
 
 ### Remote
 
-Remote sources are plugins that are downloaded. All remote sources will be
-downloaded to the **sheldon** root directory with the following directory
-structure
-```
-downloads
-└── example.com
-    └── each
-        └── path
-            └── segment
-```
-
-A Remote source must set the `source` field to `remote` and specify the `url`
-to download from.
+Remote sources specify a remote file that will be downloaded to the **sheldon**
+root directory. A Remote source must set the  `remote` field and specify the
+URL.
 
 ```toml
 [plugins.pure]
-source = 'remote'
-url = 'https://github.com/rossmacarthur/pure/raw/master/pure.zsh'
+remote = 'https://github.com/rossmacarthur/pure/raw/master/pure.zsh'
 ```
 
 ### Local
 
-Local sources are plugins that are local files.
-
-A Local source must set the `source` field to `local` and specify a local
-`directory`. Tildes may be used and will be expanded.
+Local sources reference local directories. A Local source must set the `local`
+field and specify a `directory`. Tildes may be used and will be expanded to the
+current user's home directory.
 
 ```toml
 [plugins.pure]
-source = 'local'
-directory = '~/Downloads/repositories/pure'
+local = '~/Downloads/repositories/pure'
 ```
 
 ## Plugin options
 
-These are options that are common to multiple types of source.
-
-### `revision`
-
-*Supported by GitHub, Gist, Git source types.*
-
-The git tag, commit, or branch to checkout after cloning the repository. For
-example
-
-```toml
-[plugins.pure]
-source = 'github'
-repository = 'sindresorhus/pure'
-revision = 'v1.9.0'
-```
+These are options that are common to all plugins.
 
 ### `use`
 
-*Supported by all source types.*
-
-A list of files / globs to use. The plugin templates will be applied to *all*
-files that match the given patterns. For example
+A list of files / globs to use in the plugin's source directory.
 
 ```toml
 [plugins.pure]
-source = 'github'
-repository = 'sindresorhus/pure'
+github = 'sindresorhus/pure'
 use = ['*.zsh']
 ```
 
@@ -156,15 +120,12 @@ that matches any files will be used.
 
 ### `apply`
 
-*Supported by all source types.*
-
 A list of template names to apply to this plugin. This defaults to the global
 [`apply`](#apply-1).
 
 ```toml
 [plugins.pure]
-source = 'github'
-repository = 'sindresorhus/pure'
+github = 'sindresorhus/pure'
 apply = ['source', 'PATH']
 ```
 
@@ -219,8 +180,9 @@ the built in ones.
 
 Plugins all have the following information that can be used in templates
 
-- **A unique name.** This is completely arbitrary, but it is often the name of
-  the plugin. This name can be used in templates with `{{ name }}`.
+- **A unique name.** This is completely arbitrary, and it is the value specified
+  for the plugin in the plugins table. However, it is often the name of the
+  plugin, so it can be useful to use this name in templates with `{{ name }}`.
 - **A directory.** In git sources this is the location of the cloned repository,
   for local sources, it is the `directory` specified. This `directory` can be
   used in templates with `{{ directory }}`.
@@ -236,20 +198,19 @@ You can use the following global information in templates
 ### Example: symlinking files
 
 Lets say we would like a template to symlink files into the `~/.zsh/functions`
-directory. We could create a new template with name **symlink**, like this
+directory. We could create a new template with name **function**, like this
 
 ```toml
 [templates]
-symlink = { value = 'ln -sf "{{ filename }}" "~/.zsh/functions/{{ name }}"', each = true }
+function = { value = 'ln -sf "{{ filename }}" "~/.zsh/functions/{{ name }}"', each = true }
 ```
 
-You can then apply it to the plugin like this
+It can then be applied to the plugin like this
 
 ```toml
 [plugins.pure]
-source = 'github'
-repository = 'sindresorhus/pure'
-actions = ['symlink']
+github = 'sindresorhus/pure'
+apply = ['function']
 ```
 
 ### Example: overriding the PATH template
@@ -267,13 +228,11 @@ You can then apply it to the plugin like this
 
 ```toml
 [plugins.pure]
-source = 'github'
-repository = 'sindresorhus/pure'
-actions = ['source', 'PATH']
+github = 'sindresorhus/pure'
+apply = ['source', 'PATH']
 ```
 
-**Note:** this would change the behaviour of **PATH** for *all* plugins using
-it.
+**Note:** this would change the behavior of **PATH** for *all* plugins using it.
 
 ## Global options
 

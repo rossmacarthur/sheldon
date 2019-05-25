@@ -1,1039 +1,364 @@
+//! A fast, configurable, shell plugin manager.
+//!
+//! # Features
+//!
+//! - Can manage almost anything.
+//!   - Any public Git repository.
+//!     - Branch/tag/commit support.
+//!     - Extra support for GitHub repositories.
+//!     - Extra support for Gists.
+//!   - Arbitrary remote files, simply specify the URL.
+//!   - Local plugins, simply specify the directory path.
+//! - Highly configurable install methods using [handlebars] templating.
+//! - Super-fast parallel installation.
+//! - Configuration file using [TOML] syntax.
+//! - Uses a lock file for much faster loading of plugins.
+//!
+//! # Getting started
+//!
+//! You can install the `sheldon` command line tool using
+//!
+//! ```sh
+//! cargo install sheldon
+//! ```
+//!
+//! Create a configuration file at `~/.zsh/plugins.toml`.
+//!
+//! ```toml
+//! [plugins.oh-my-zsh]
+//! source = 'github'
+//! repository = 'robbyrussell/oh-my-zsh'
+//! ```
+//!
+//! Read up more about configuration [here][configuration].
+//!
+//! You can then use the source command to generate the script
+//!
+//! ```sh
+//! # ~/.zshrc
+//! source <(sheldon source)
+//! ```
+//!
+//! [configuration]: https://github.com/rossmacarthur/sheldon/blob/master/docs/Configuration.md
+//! [handlebars]: http://handlebarsjs.com
+//! [toml]: https://github.com/toml-lang/toml
+
+#![recursion_limit = "128"]
+
+#[macro_use]
 mod error;
-mod logging;
+#[macro_use]
+mod util;
+
+mod config;
+mod lock;
 
 use std::{
-    cmp,
-    collections::HashMap,
-    env, fmt, fs, io,
+    env,
     path::{Path, PathBuf},
-    result, sync,
 };
 
-use clap::crate_name;
-use indexmap::IndexMap;
-use log::{debug, info, warn};
-use maplit::hashmap;
-use serde::{de, Deserialize, Deserializer, Serialize};
-use url::Url;
-use url_serde;
+use clap::crate_version;
 
-use crate::error::ResultExt;
-pub use crate::{
-    error::{Error, ErrorKind, Result},
-    logging::init_logging,
+pub use crate::error::{Error, ErrorKind, Result};
+use crate::{
+    config::Config,
+    error::ResultExt,
+    lock::LockedConfig,
+    settings::Settings,
+    util::PathExt,
 };
 
-/////////////////////////////////////////////////////////////////////////
-// Utilities
-/////////////////////////////////////////////////////////////////////////
+mod settings {
+    use std::path::PathBuf;
 
-/// A simple macro to call .into() on each element in a vec! initialization.
-macro_rules! vec_into {
-    ($($i:expr),*) => (vec![$($i.into()),*]);
-}
+    /// Global settings for use over the entire program.
+    #[derive(Clone, Debug)]
+    pub struct Settings {
+        /// The current crate version.
+        pub version: &'static str,
+        /// The location of the home directory.
+        pub home: PathBuf,
+        /// The location of the root directory.
+        pub root: PathBuf,
+        /// The location of the config file.
+        pub config_file: PathBuf,
+        /// The location of the lock file.
+        pub lock_file: PathBuf,
+        /// Whether to reinstall plugin sources.
+        pub reinstall: bool,
+        /// Whether to regenerate the plugins lock file.
+        pub relock: bool,
+    }
 
-/// A simple macro to call .into() on each key and value in a hashmap!
-/// initialization.
-macro_rules! hashmap_into {
-    ($($key:expr => $value:expr),*) => (hashmap!{$($key.into() => $value.into()),*})
-}
-
-/// A simple macro to generate a lazy format!.
-macro_rules! lazy {
-    ($($arg:tt)*) => (|| format!($($arg)*))
-}
-
-/// Expands the tilde in the given path to the home directory.
-fn expand_tilde<P>(path: P) -> Option<PathBuf>
-where
-    P: AsRef<Path>,
-{
-    let path = path.as_ref();
-
-    if let Ok(path) = path.strip_prefix("~") {
-        let home = dirs::home_dir();
-
-        if path == Path::new("") {
-            home
-        } else {
-            home.map(|mut h| {
-                h.push(path);
-                h
-            })
+    impl Settings {
+        /// Expands the tilde in the given path to the configured user's home
+        /// directory.
+        pub fn expand_tilde(&self, path: PathBuf) -> PathBuf {
+            crate::util::expand_tilde_with(path, &self.home)
         }
-    } else {
-        Some(path.into())
     }
 }
 
-/// Visitor to deserialize a [`Template`] as a string or a struct.
+/// A builder that is used to construct a [`Sheldon`] with specific settings.
 ///
-/// From https://stackoverflow.com/questions/54761790.
+/// Settings are set using the "builder pattern". All settings are optional and
+/// may be given in any order. When the [`build()`] method is called the
+/// `Builder` is consumed, defaults are applied for settings that aren't
+/// given, and a [`Sheldon`] object is then generated.
 ///
-/// [`Template`]: struct.Template.html
-struct TemplateVisitor;
+/// [`build()`]: struct.Builder.html#method.build
+/// [`Sheldon`]: struct.Sheldon.html
+#[derive(Debug, Default)]
+pub struct Builder {
+    home: Option<PathBuf>,
+    root: Option<PathBuf>,
+    config_file: Option<PathBuf>,
+    lock_file: Option<PathBuf>,
+    reinstall: bool,
+    relock: bool,
+}
 
-impl<'de> de::Visitor<'de> for TemplateVisitor {
-    type Value = Template;
+/// The main application.
+///
+/// This struct is can be created in two ways. Either using the `Default`
+/// implementation or with the [`Builder`].
+///
+/// # Examples
+///
+/// Using the default settings
+///
+/// ```rust,ignore
+/// let app = sheldon::Sheldon::default();
+///
+/// println!("{}", app.source()?);
+/// ```
+///
+/// Or with the [`Builder`].
+///
+/// ```rust,ignore
+/// let app = sheldon::Builder::default()
+///     .root("~/.config/sheldon")
+///     .config_file("~/.plugins.toml")
+///     .lock_file("~/.config/sheldon/plugins.lock")
+///     .reinstall(true)
+///     .relock(false)
+///     .build();
+///
+/// println!("{}", app.source()?);
+/// ```
+///
+/// [`Builder`]: struct.Builder.html
+#[derive(Debug)]
+pub struct Sheldon {
+    settings: Settings,
+}
 
-    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        formatter.write_str("string or map")
-    }
-
-    fn visit_str<E>(self, value: &str) -> result::Result<Self::Value, E>
+impl Builder {
+    /// Set the current user's home directory.
+    ///
+    /// If not given, this setting is determined automatically using
+    /// [`dirs::home_dir()`]. You should only have to set this setting if your
+    /// operating system is unusual.
+    ///
+    /// This directory will be used to automatically determine defaults for
+    /// other settings and to expand tildes in paths given in the config file.
+    ///
+    /// [`dirs::home_dir()`]: ../dirs/fn.home_dir.html
+    pub fn home<P>(mut self, home: P) -> Self
     where
-        E: de::Error,
+        P: Into<PathBuf>,
     {
-        Ok(From::from(value))
-    }
-
-    fn visit_map<M>(self, visitor: M) -> result::Result<Self::Value, M::Error>
-    where
-        M: de::MapAccess<'de>,
-    {
-        let LockedTemplate { value, each } =
-            Deserialize::deserialize(de::value::MapAccessDeserializer::new(visitor))?;
-        Ok(Template { value, each })
-    }
-}
-
-/////////////////////////////////////////////////////////////////////////
-// Configuration definitions
-/////////////////////////////////////////////////////////////////////////
-
-/// The default clone directory for repositories.
-const CLONE_DIRECTORY: &str = "repositories";
-
-/// The default download directory for remotes.
-const DOWNLOAD_DIRECTORY: &str = "downloads";
-
-/// The Gist domain host.
-const GIST_HOST: &str = "gist.github.com";
-
-/// The GitHub domain host.
-const GITHUB_HOST: &str = "github.com";
-
-/// The source type for a [`Plugin`].
-///
-/// [`Plugin`]: struct.Plugin.html
-#[derive(Clone, Debug, Deserialize, PartialEq)]
-#[serde(rename_all = "lowercase", tag = "source")]
-enum Source {
-    /// A clonable Git repository.
-    Git {
-        #[serde(with = "url_serde")]
-        url: Url,
-        revision: Option<String>,
-    },
-    /// A Gist snippet, only the hash or username/hash needs to be specified.
-    Gist {
-        repository: String,
-        revision: Option<String>,
-    },
-    /// A GitHub repository, only the the username/repository needs to be
-    /// specified.
-    GitHub {
-        repository: String,
-        revision: Option<String>,
-    },
-    /// A remote file.
-    Remote {
-        #[serde(with = "url_serde")]
-        url: Url,
-    },
-    /// A local directory.
-    Local { directory: PathBuf },
-}
-
-/// The source type for a [`NormalizedPlugin`].
-///
-/// [`NormalizedPlugin`]: struct.NormalizedPlugin.html
-#[derive(Clone, Debug, PartialEq)]
-enum NormalizedSource {
-    /// A clonable Git repository.
-    Git { url: Url, revision: Option<String> },
-    /// A remote file and its download location.
-    Remote { url: Url, filename: PathBuf },
-    /// A local directory.
-    Local,
-}
-
-/// A configured shell plugin.
-// Note: we would want to use #[serde(deny_unknown_fields)] here but it doesn't
-// work with a flattened internally-tagged enum.
-// See https://github.com/serde-rs/serde/issues/1358.
-#[derive(Clone, Debug, Deserialize, PartialEq)]
-struct Plugin {
-    /// Specifies how to retrieve this plugin.
-    #[serde(flatten)]
-    source: Source,
-    /// Which files to use in this plugin's directory. If this is `None` then
-    /// this will figured out based on the global [`matches`] field.
-    ///
-    /// [`matches`]: struct.Config.html#structconfig.matches
-    #[serde(rename = "use")]
-    uses: Option<Vec<String>>,
-    /// What templates to apply to each matched file. If this is `None` then the
-    /// default templates will be applied.
-    apply: Option<Vec<String>>,
-}
-
-/// A normalized [`Plugin`].
-///
-/// [`Plugin`]: struct.Plugin.html
-#[derive(Clone, Debug, PartialEq)]
-struct NormalizedPlugin {
-    /// The name of this plugin.
-    name: String,
-    /// Specifies how to retrieve this plugin.
-    source: NormalizedSource,
-    /// The directory that this plugin resides in.
-    directory: PathBuf,
-    /// What files to use in the plugin's directory.
-    uses: Option<Vec<String>>,
-    /// What templates to apply to each matched file.
-    apply: Vec<String>,
-}
-
-/// A locked [`Plugin`].
-///
-/// [`Plugin`]: struct.Plugin.html
-#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
-struct LockedPlugin {
-    /// The name of this plugin.
-    name: String,
-    /// The directory that this plugin resides in.
-    directory: PathBuf,
-    /// The filenames to use in the directory.
-    filenames: Vec<PathBuf>,
-    /// What templates to apply to each filename..
-    apply: Vec<String>,
-}
-
-/// A wrapper around a template string.
-#[derive(Clone, Debug, PartialEq, Serialize)]
-struct Template {
-    /// The actual template string.
-    value: String,
-    /// Whether this template should be applied to each filename.
-    each: bool,
-}
-
-/// A locked [`Template`].
-///
-/// This is exactly the same as a [`Template`] but we don't want to allow string
-/// deserialization.
-///
-/// [`Template`]: struct.Template.html
-#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
-struct LockedTemplate {
-    /// The actual template string.
-    value: String,
-    /// Whether this template should be applied to each filename.
-    each: bool,
-}
-
-/// The contents of a configuration file.
-#[derive(Clone, Debug, Deserialize, PartialEq)]
-#[serde(default, deny_unknown_fields)]
-struct Config {
-    /// Which files to match and use in a plugin's directory.
-    #[serde(rename = "match")]
-    matches: Vec<String>,
-    /// The default list of template names to apply to each matched file.
-    apply: Vec<String>,
-    /// A map of name to template string.
-    templates: HashMap<String, Template>,
-    /// Each configured plugin.
-    plugins: IndexMap<String, Plugin>,
-}
-
-/// A locked [`Config`].
-///
-/// [`Config`]: struct.Config.html
-#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
-struct LockedConfig {
-    /// The root folder used.
-    root: PathBuf,
-    /// A map of name to template.
-    templates: HashMap<String, LockedTemplate>,
-    /// Each locked plugin.
-    plugins: Vec<LockedPlugin>,
-}
-
-/////////////////////////////////////////////////////////////////////////
-// Configuration implementations
-/////////////////////////////////////////////////////////////////////////
-
-impl Default for Config {
-    /// Returns the default `Config`.
-    fn default() -> Self {
-        Config {
-            templates: HashMap::new(),
-            matches: vec_into![
-                "{{ name }}.plugin.zsh",
-                "{{ name }}.zsh",
-                "{{ name }}.sh",
-                "{{ name }}.zsh-theme",
-                "*.plugin.zsh",
-                "*.zsh",
-                "*.sh",
-                "*.zsh-theme"
-            ],
-            apply: vec_into!["source"],
-            plugins: IndexMap::new(),
-        }
-    }
-}
-
-impl Source {
-    /// Consume the `Source::Git` and convert it to a directory and
-    /// [`NormalizedSource`].
-    ///
-    /// [`NormalizedSource`]: struct.NormalizedSource.html
-    fn normalize_git(
-        root: &str,
-        url: Url,
-        revision: Option<String>,
-    ) -> Result<(PathBuf, NormalizedSource)> {
-        // A function to generate an error if we need it.
-        let error = || {
-            Error::new(
-                ErrorKind::Config,
-                format!("failed to parse `{}` as a Git URL", url),
-            )
-        };
-
-        // Generate the clone directory.
-        let base = vec![root, CLONE_DIRECTORY, url.host_str().ok_or_else(error)?];
-        let segments: Vec<_> = url.path_segments().ok_or_else(error)?.collect();
-        let directory = base.iter().chain(segments.iter()).collect();
-
-        Ok((directory, NormalizedSource::Git { url, revision }))
-    }
-
-    /// Consume the `Source::Gist` and convert it to a directory and
-    /// [`NormalizedSource`].
-    ///
-    /// [`NormalizedSource`]: struct.NormalizedSource.html
-    fn normalize_gist(
-        root: &str,
-        repository: String,
-        revision: Option<String>,
-    ) -> Result<(PathBuf, NormalizedSource)> {
-        let base = vec![root, CLONE_DIRECTORY, GIST_HOST];
-        let directory = base.iter().cloned().chain(repository.split('/')).collect();
-
-        // Generate the URL.
-        let url = Url::parse(&format!("https://{}/{}", GIST_HOST, repository))
-            .context(lazy!("failed to construct Gist URL using {}", repository))?;
-
-        Ok((directory, NormalizedSource::Git { url, revision }))
-    }
-
-    /// Consume the `Source::GitHub` and convert it to a directory and
-    /// [`NormalizedSource`].
-    ///
-    /// [`NormalizedSource`]: struct.NormalizedSource.html
-    fn normalize_github(
-        root: &str,
-        repository: String,
-        revision: Option<String>,
-    ) -> Result<(PathBuf, NormalizedSource)> {
-        // A function to generate an error if we need it.
-        let error = || {
-            Error::new(
-                ErrorKind::Config,
-                format!("failed to parse `{}` as a GitHub repository", repository),
-            )
-        };
-
-        // Generate the clone directory.
-        let mut repo_split = repository.splitn(2, '/');
-        let user = repo_split.next().ok_or_else(error)?;
-        let name = repo_split.next().ok_or_else(error)?;
-        let directory = [root, CLONE_DIRECTORY, GITHUB_HOST, user, name]
-            .iter()
-            .collect();
-
-        // Generate the URL.
-        let url = Url::parse(&format!("https://{}/{}", GITHUB_HOST, repository))
-            .context(lazy!("failed to construct GitHub URL using {}", repository))?;
-
-        Ok((directory, NormalizedSource::Git { url, revision }))
-    }
-
-    /// Consume the `Source::Remote` and convert it to a directory and
-    /// [`NormalizedSource`].
-    ///
-    /// [`NormalizedSource`]: struct.NormalizedSource.html
-    fn normalize_remote(root: &str, url: Url) -> Result<(PathBuf, NormalizedSource)> {
-        // A function to generate an error if we need it.
-        let error = || {
-            Error::new(
-                ErrorKind::Config,
-                format!("failed to parse host from `{}`", url),
-            )
-        };
-
-        // Generate the download directory.
-        let base = vec![root, DOWNLOAD_DIRECTORY, url.host_str().ok_or_else(error)?];
-        let segments: Vec<_> = url.path_segments().ok_or_else(error)?.collect();
-
-        let (directory, file_base_name): (PathBuf, _) =
-            if let Some((file_base_name, rest)) = segments.split_last() {
-                (base.iter().chain(rest).collect(), *file_base_name)
-            } else {
-                (base.iter().collect(), "index")
-            };
-
-        let mut filename = directory.clone();
-        filename.push(file_base_name);
-
-        Ok((directory, NormalizedSource::Remote { url, filename }))
-    }
-
-    /// Consume the `Source::Local` and convert it to a directory and
-    /// [`NormalizedSource`].
-    ///
-    /// [`NormalizedSource`]: struct.NormalizedSource.html
-    fn normalize_local(directory: PathBuf) -> Result<(PathBuf, NormalizedSource)> {
-        // A function to generate an error if we need it.
-        let error = || {
-            Error::new(
-                ErrorKind::Config,
-                format!(
-                    "failed to expand tilde in `{}`",
-                    directory.to_string_lossy()
-                ),
-            )
-        };
-        let directory = expand_tilde(&directory).ok_or_else(error)?;
-
-        Ok((directory, NormalizedSource::Local))
-    }
-
-    /// Consume the `Source` and convert it to a directory and
-    /// [`NormalizedSource`].
-    ///
-    /// For a `Local` source the directory is simply the directory defined.
-    ///
-    /// For a `Git` or `GitHub` source this is the path to the directory where
-    /// the repository is cloned. It adheres to the following format.
-    ///
-    /// ```text
-    ///   repositories
-    ///   └── github.com
-    ///       └── rossmacarthur
-    ///           └── pure
-    /// ```
-    ///
-    /// For a `Remote` source the directory is the path to where the plugin
-    /// will be downloaded. It adheres to the following format.
-    ///
-    /// ```text
-    ///   downloads
-    ///   └── example.com
-    ///       └── each
-    ///           └── path
-    ///               └── segment
-    /// ```
-    ///
-    /// [`NormalizedSource`]: struct.NormalizedSource.html
-    fn normalize(self, root: &Path) -> Result<(PathBuf, NormalizedSource)> {
-        let root = root.to_str().expect("root directory is not valid UTF-8");
-
-        match self {
-            Source::Git { url, revision } => Self::normalize_git(root, url, revision),
-            Source::Gist {
-                repository,
-                revision,
-            } => Self::normalize_gist(root, repository, revision),
-            Source::GitHub {
-                repository,
-                revision,
-            } => Self::normalize_github(root, repository, revision),
-            Source::Remote { url } => Self::normalize_remote(root, url),
-            Source::Local { directory } => Self::normalize_local(directory),
-        }
-    }
-}
-
-impl Plugin {
-    /// Consume the `Plugin` and convert it to a [`NormalizedPlugin`].
-    ///
-    /// [`NormalizedPlugin`]: struct.NormalizedPlugin.html
-    /// [`Source::directory()`]: enum.Source.html#method.directory
-    fn normalize(self, name: String, root: &Path, apply: &[String]) -> Result<NormalizedPlugin> {
-        let (directory, source) = self.source.normalize(root)?;
-        Ok(NormalizedPlugin {
-            name,
-            directory,
-            source,
-            uses: self.uses,
-            apply: self.apply.unwrap_or_else(|| apply.to_vec()),
-        })
-    }
-}
-
-impl NormalizedPlugin {
-    /// Install a Git `NormalizedPlugin`.
-    fn install_git(&self, url: &Url, revision: &Option<String>) -> Result<()> {
-        // Clone or open the repository.
-        let repo = match git::Repository::clone(&url.to_string(), &self.directory) {
-            Ok(repo) => {
-                info!("{} cloned (required for `{}`)", url, self.name);
-                repo
-            }
-            Err(e) => {
-                if e.code() != git::ErrorCode::Exists {
-                    return Err(e).context(lazy!("failed to git clone `{}`", url));
-                } else {
-                    info!("{} is already cloned (required for `{}`)", url, self.name);
-                    git::Repository::open(&self.directory).context(lazy!(
-                        "failed to open repository at `{}`",
-                        self.directory.to_string_lossy()
-                    ))?
-                }
-            }
-        };
-
-        // Checkout the configured revision.
-        if let Some(revision) = revision {
-            let object = repo
-                .revparse_single(revision)
-                .context(lazy!("failed to find revision `{}`", revision))?;
-            repo.set_head_detached(object.id())
-                .context(lazy!("failed to set HEAD to revision `{}`", revision))?;
-            repo.reset(&object, git::ResetType::Hard, None)
-                .context(lazy!(
-                    "failed to reset repository to revision `{}`",
-                    revision
-                ))?;
-            info!(
-                "{} checked out at {} (required for `{}`)",
-                url, revision, self.name
-            );
-        }
-
-        Ok(())
-    }
-
-    /// Install a Remote `NormalizedPlugin`.
-    fn install_remote(&self, url: &Url, filename: &Path) -> Result<()> {
-        if filename.exists() {
-            info!(
-                "{} is already downloaded (required for `{}`)",
-                url, self.name
-            );
-        } else {
-            fs::create_dir_all(&self.directory).context(lazy!(
-                "failed to create directory `{}`",
-                &self.directory.to_string_lossy()
-            ))?;
-            let mut response =
-                request::get(url.clone()).context(lazy!("failed to download from `{}`", url))?;
-            let mut out = fs::File::create(filename)
-                .context(lazy!("failed to create `{}`", filename.to_string_lossy()))?;
-            io::copy(&mut response, &mut out).context(lazy!(
-                "failed to copy content to `{}`",
-                filename.to_string_lossy()
-            ))?;
-        }
-        Ok(())
-    }
-
-    /// Install a Local `NormalizedPlugin`.
-    fn install_local(&self) -> Result<()> {
-        if fs::metadata(&self.directory)
-            .context(lazy!(
-                "failed to find directory `{}`",
-                self.directory.to_string_lossy()
-            ))?
-            .is_dir()
-        {
-            Ok(())
-        } else {
-            Err(Error::new(
-                ErrorKind::Config,
-                format!("`{}` is not a directory", self.directory.to_string_lossy()),
-            ))
-        }
-    }
-
-    /// Install this `NormalizedPlugin`.
-    fn install(&self) -> Result<()> {
-        match &self.source {
-            NormalizedSource::Git { url, revision } => self.install_git(url, revision),
-            NormalizedSource::Remote { url, filename } => self.install_remote(url, filename),
-            NormalizedSource::Local => self.install_local(),
-        }
-    }
-
-    /// Consume the `NormalizedPlugin` and convert it to a [`LockedPlugin`].
-    ///
-    /// This main purpose of this method is to determine the exact filenames to
-    /// use for a plugin.
-    ///
-    /// [`LockedPlugin`]: struct.LockedPlugin.html
-    fn lock(self, root: &Path, matches: &[String]) -> Result<LockedPlugin> {
-        // Determine all the filenames
-        let mut filenames = Vec::new();
-
-        // Data to use in template rendering
-        let data = hashmap! {
-            "root" => root.to_str().expect("root directory is not valid UTF-8"),
-            "name" => &self.name,
-            "directory" => self.directory.to_str().expect("plugin directory is not valid UTF-8"),
-        };
-
-        let mut templates = handlebars::Handlebars::new();
-        templates.set_strict_mode(true);
-
-        // If the plugin defined what files to use, we do all of them.
-        if let Some(uses) = &self.uses {
-            for u in uses {
-                for p in glob::glob(
-                    &self
-                        .directory
-                        .join(
-                            templates
-                                .render_template(u, &data)
-                                .context(lazy!("failed to render template `{}`", u))?,
-                        )
-                        .to_string_lossy(),
-                )
-                .unwrap()
-                .filter_map(result::Result::ok)
-                // filter out unreadable paths
-                {
-                    filenames.push(p)
-                }
-            }
-        } else if let NormalizedPlugin {
-            source: NormalizedSource::Remote { filename, .. },
-            ..
-        } = self
-        {
-            filenames.push(filename);
-        // Otherwise we try to figure it out ...
-        } else {
-            for g in matches {
-                let mut matched = false;
-
-                for p in glob::glob(
-                    &self
-                        .directory
-                        .join(
-                            templates
-                                .render_template(g, &data)
-                                .context(lazy!("failed to render template `{}`", g))?,
-                        )
-                        .to_string_lossy(),
-                )
-                .unwrap()
-                .filter_map(result::Result::ok)
-                // filter out unreadable paths
-                {
-                    filenames.push(p);
-                    matched = true;
-                }
-
-                if matched {
-                    break;
-                }
-            }
-        }
-
-        Ok(LockedPlugin {
-            name: self.name,
-            directory: self.directory,
-            filenames,
-            apply: self.apply,
-        })
-    }
-}
-
-impl Template {
-    /// Update whether this `Template` should be applied to all files or not.
-    fn each(mut self, each: bool) -> Self {
-        self.each = each;
+        self.home = Some(home.into());
         self
     }
 
-    /// Consume the `Template` and convert it to a [`LockedTemplate`].
+    /// Set the root directory.
     ///
-    /// [`LockedTemplate`]: struct.LockedTemplate.html
-    fn lock(self) -> LockedTemplate {
-        LockedTemplate {
-            value: self.value,
-            each: self.each,
-        }
-    }
-}
-
-/// Manually implement [`Deserialize`] for a [`Template`].
-///
-/// Unfortunately we can't use this https://serde.rs/string-or-struct.html, because
-/// we are storing `Template`s in a map.
-///
-/// [`Deserialize`]: https://docs.rs/serde/latest/serde/trait.Deserialize.html
-/// [`Template`]: struct.Template.html
-impl<'de> Deserialize<'de> for Template {
-    fn deserialize<D>(deserializer: D) -> result::Result<Template, D::Error>
+    /// If not given, this setting is determined using the following priority:
+    /// - The value of the `SHELDON_ROOT` environment variable.
+    /// - The `.zsh` directory in the home directory.
+    ///
+    /// This directory will be used to automatically determine defaults for the
+    /// config file and the lock file.
+    pub fn root<P>(mut self, root: P) -> Self
     where
-        D: Deserializer<'de>,
+        P: Into<PathBuf>,
     {
-        deserializer.deserialize_any(TemplateVisitor)
+        self.root = Some(root.into());
+        self
     }
-}
 
-impl From<String> for Template {
-    fn from(s: String) -> Self {
-        Template {
-            value: s,
-            each: false,
+    /// Set the location of the config file.
+    ///
+    /// If not given, this setting is determined using the following priority:
+    /// - The value of the `SHELDON_CONFIG_FILE` environment variable.
+    /// - The `plugins.toml` file in the root directory.
+    ///
+    /// This filename will be used to automatically determine the default
+    /// location of the lock file.
+    pub fn config_file<P>(mut self, config_file: P) -> Self
+    where
+        P: Into<PathBuf>,
+    {
+        self.config_file = Some(config_file.into());
+        self
+    }
+
+    /// Set the location of the lock file.
+    ///
+    /// If not given, this setting is determined using the following priority:
+    /// - The value of the `SHELDON_LOCK_FILE` environment variable.
+    /// - The name of the config file with the extension replaced (or added)
+    ///   with `.lock`.
+    pub fn lock_file<P>(mut self, lock_file: P) -> Self
+    where
+        P: Into<PathBuf>,
+    {
+        self.lock_file = Some(lock_file.into());
+        self
+    }
+
+    /// Whether to reinstall plugin sources. This defaults to `false`.
+    pub fn reinstall(mut self, reinstall: bool) -> Self {
+        self.reinstall = reinstall;
+        self
+    }
+
+    /// Whether to relock plugins even if a lock file is found. This defaults to
+    /// `false`.
+    pub fn relock(mut self, relock: bool) -> Self {
+        self.relock = relock;
+        self
+    }
+
+    /// Create a new `Builder` using parsed command line arguments.
+    #[doc(hidden)]
+    pub fn from_arg_matches(matches: &clap::ArgMatches) -> Self {
+        Self {
+            home: matches.value_of("home").map(|s| s.into()),
+            root: matches.value_of("root").map(|s| s.into()),
+            config_file: matches.value_of("config_file").map(|s| s.into()),
+            lock_file: matches.value_of("lock_file").map(|s| s.into()),
+            reinstall: matches.is_present("reinstall"),
+            relock: matches.is_present("relock"),
+        }
+    }
+
+    /// Consume the `Builder`, apply default settings, and create a new
+    /// [`Sheldon`].
+    ///
+    /// [`Sheldon`]: struct.Sheldon.html
+    pub fn build(self) -> Sheldon {
+        let home = self.home.unwrap_or_else(|| {
+            dirs::home_dir().expect("failed to determine the current user's home directory")
+        });
+
+        fn process<F>(opt: Option<PathBuf>, home: &Path, var: &str, f: F) -> PathBuf
+        where
+            F: FnOnce() -> PathBuf,
+        {
+            opt.map(|p| util::expand_tilde_with(p, home))
+                .unwrap_or_else(|| {
+                    env::var(var)
+                        .and_then(|v| Ok(v.into()))
+                        .unwrap_or_else(|_| f())
+                })
+        }
+
+        let root = process(self.root, &home, "SHELDON_ROOT", || home.join(".zsh"));
+
+        let config_file = process(self.config_file, &home, "SHELDON_CONFIG_FILE", || {
+            root.join("plugins.toml")
+        });
+
+        let lock_file = process(self.lock_file, &home, "SHELDON_LOCK_FILE", || {
+            config_file.with_extension("lock")
+        });
+
+        Sheldon {
+            settings: Settings {
+                version: crate_version!(),
+                home,
+                root,
+                config_file,
+                lock_file,
+                reinstall: self.reinstall,
+                relock: self.relock,
+            },
         }
     }
 }
 
-impl From<&str> for Template {
-    fn from(s: &str) -> Self {
-        s.to_string().into()
+impl Default for Sheldon {
+    /// Create a new `Sheldon` with the default settings.
+    ///
+    /// To create a `Sheldon` with modified settings you should use the
+    /// [`Builder`].
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// let app = sheldon::Sheldon::default();
+    /// ```
+    ///
+    /// [`Builder`]: struct.Builder.html
+    fn default() -> Self {
+        Builder::default().build()
     }
 }
 
-impl From<&str> for LockedTemplate {
-    fn from(s: &str) -> Self {
-        LockedTemplate {
-            value: s.to_string(),
-            each: false,
-        }
-    }
-}
-
-impl Config {
-    /// Read a `Config` from the given path.
-    fn from_path<P: AsRef<Path>>(path: P) -> Result<Self> {
-        let path = path.as_ref();;
-        let config = toml::from_str(&String::from_utf8_lossy(&fs::read(&path).context(
-            lazy!("failed to read config from `{}`", path.to_string_lossy()),
-        )?))
-        .context(lazy!("failed to deserialize config as TOML"))?;
-        debug!("deserialized config from `{}`", path.to_string_lossy());
-        Ok(config)
+impl Sheldon {
+    /// Reads the config from the config file path, locks it, and returns the
+    /// locked config.
+    fn locked(&self) -> Result<LockedConfig> {
+        Ok(Config::from_path(&self.settings.config_file)
+            .ctx(s!("failed to load config file"))?
+            .lock(&self.settings)
+            .ctx(s!("failed to lock config"))?)
     }
 
-    /// Download all required dependencies for plugins.
-    fn download(plugins: &[NormalizedPlugin]) -> Result<()> {
-        let count = plugins.len();
+    /// Locks the config and writes it to the lock file.
+    pub fn lock(&self) -> Result<()> {
+        Ok(self
+            .locked()?
+            .to_path(&self.settings.lock_file)
+            .ctx(s!("failed to write lock file"))?)
+    }
 
-        if count == 0 {
-            Ok(())
-        } else if count == 1 {
-            plugins[0].install()
+    /// Generates the script.
+    pub fn source(&self) -> Result<String> {
+        let mut to_path = true;
+
+        let locked = if self.settings.relock
+            || self
+                .settings
+                .config_file
+                .newer_than(&self.settings.lock_file)
+        {
+            self.locked()?
         } else {
-            let workers = cmp::min(plugins.len(), num_cpus::get());
-            let mut pool = scoped_threadpool::Pool::new(workers as u32);
-            let (tx, rx) = sync::mpsc::channel();
-
-            pool.scoped(|scoped| {
-                for plugin in plugins {
-                    let tx = tx.clone();
-                    scoped.execute(move || {
-                        tx.send(plugin.install())
-                            .expect("oops! did main thread die?");
-                    })
+            match LockedConfig::from_path(&self.settings.lock_file) {
+                Ok(locked) => {
+                    if self.settings == locked.settings {
+                        to_path = false;
+                        locked
+                    } else {
+                        self.locked()?
+                    }
                 }
-                scoped.join_all();
-            });
-
-            rx.iter().take(count).collect()
-        }
-    }
-
-    /// Lock this `Config`.
-    fn lock(self, root: &Path) -> Result<LockedConfig> {
-        // Create a new map of normalized plugins
-        let mut normalized_plugins = Vec::with_capacity(self.plugins.len());
-        for (name, plugin) in self.plugins {
-            normalized_plugins.push(plugin.normalize(name, root, &self.apply)?);
-        }
-
-        // Clone all repositories
-        Self::download(&normalized_plugins)?;
-
-        // Create a new map of locked plugins
-        let mut locked_plugins = Vec::with_capacity(normalized_plugins.len());
-
-        for plugin in normalized_plugins {
-            locked_plugins.push(plugin.lock(root, &self.matches)?);
-        }
-
-        // Determine the templates.
-        let mut templates = hashmap_into! {
-            "PATH" => "export PATH=\"{{ directory }}:$PATH\"",
-            "path" => "path=( \"{{ directory }}\" $path )",
-            "fpath" => "fpath=( \"{{ directory }}\" $fpath )",
-            "source" => Template::from("source \"{{ filename }}\"").each(true).lock()
+                Err(_) => self.locked()?,
+            }
         };
 
-        // Add custom user templates.
-        for (name, template) in self.templates {
-            templates.insert(name, template.lock());
-        }
+        let script = locked.source().ctx(s!("failed to render source"))?;
 
-        // Check that the templates can be compiled.
-        {
-            let mut templates_ = handlebars::Handlebars::new();
-            templates_.set_strict_mode(true);
-            for (name, template) in &templates {
-                templates_
-                    .register_template_string(&name, &template.value)
-                    .context(lazy!("failed to compile template `{}`", name))?
-            }
-        }
-
-        Ok(LockedConfig {
-            root: root.to_path_buf(),
-            templates,
-            plugins: locked_plugins,
-        })
-    }
-}
-
-impl LockedConfig {
-    /// Read a `LockedConfig` from the given path.
-    fn from_path<P: AsRef<Path>>(path: P) -> Result<Self> {
-        let path = path.as_ref();;
-        let locked = toml::from_str(&String::from_utf8_lossy(&fs::read(&path).context(
-            lazy!(
-                "failed to read locked config from `{}`",
-                path.to_string_lossy()
-            ),
-        )?))
-        .context(lazy!("failed to deserialize locked config as TOML"))?;
-        debug!("deserialized config from `{}`", path.to_string_lossy());
-        Ok(locked)
-    }
-
-    /// Construct a new empty `LockedConfig`.
-    fn new(root: &Path) -> Self {
-        Config::default()
-            .lock(root)
-            .expect("failed to lock default Config")
-    }
-
-    /// Write a `LockedConfig` to the given path.
-    fn to_path<P: AsRef<Path>>(&self, path: P) -> Result<()> {
-        let path = path.as_ref();
-
-        if let Some(directory) = path.parent() {
-            if !directory.exists() {
-                fs::create_dir_all(directory).context(lazy!(
-                    "failed to create directory `{}`",
-                    path.to_string_lossy()
-                ))?;
-                debug!("created directory `{}`", directory.to_string_lossy());
-            }
-        }
-
-        fs::write(
-            path,
-            &toml::to_string_pretty(&self)
-                .context(lazy!("failed to serialize locked config as TOML"))?,
-        )
-        .context(lazy!(
-            "failed to serialize locked config to `{}`",
-            path.to_string_lossy()
-        ))?;
-        debug!("wrote locked config to `{}`", path.to_string_lossy());
-        Ok(())
-    }
-
-    /// Generate the shell script.
-    fn source(&self) -> Result<String> {
-        // Compile the templates
-        let mut templates = handlebars::Handlebars::new();
-        templates.set_strict_mode(true);
-        for (name, template) in &self.templates {
-            templates
-                .register_template_string(&name, &template.value)
-                .context(lazy!("failed to compile template `{}`", name))?;
-        }
-
-        let mut script = String::new();
-
-        for plugin in &self.plugins {
-            for name in &plugin.apply {
-                // Data to use in template rendering
-                let mut data = hashmap! {
-                    "root" => self
-                        .root
-                        .to_str()
-                        .expect("root directory is not valid UTF-8"),
-                    "name" => &plugin.name,
-                    "directory" => plugin
-                        .directory
-                        .to_str()
-                        .expect("plugin directory is not valid UTF-8"),
-                };
-
-                if self.templates[name].each {
-                    for filename in &plugin.filenames {
-                        data.insert(
-                            "filename",
-                            filename.to_str().expect("filename is not valid UTF-8"),
-                        );
-                        script.push_str(
-                            &templates
-                                .render(name, &data)
-                                .context(lazy!("failed to render template `{}`", name))?,
-                        );
-                        script.push('\n');
-                    }
-                } else {
-                    script.push_str(
-                        &templates
-                            .render(name, &data)
-                            .context(lazy!("failed to render template `{}`", name))?,
-                    );
-                    script.push('\n');
-                }
-            }
+        if to_path {
+            locked
+                .to_path(&self.settings.lock_file)
+                .ctx(s!("failed to write lock file"))?;
         }
 
         Ok(script)
     }
-}
-
-/////////////////////////////////////////////////////////////////////////
-// Entry functions
-/////////////////////////////////////////////////////////////////////////
-
-/// General contextual information.
-pub struct Context {
-    root: PathBuf,
-    config_file: PathBuf,
-    lock_file: PathBuf,
-}
-
-impl Default for Context {
-    fn default() -> Self {
-        Self::defaults(None, None)
-    }
-}
-
-impl Context {
-    /// Determine the root directory and config file location.
-    ///
-    /// The root directory is determined using the following priority:
-    /// - The given root value.
-    /// - **Or** the environment variable `SHELDON_ROOT`.
-    /// - **Or** the default root directory which is `$HOME/.zsh`.
-    ///
-    /// The config file path is determined using the following priority:
-    /// - The given config file path.
-    /// - **Or**`{{ root }}/plugins.toml`
-    pub fn defaults(root: Option<&str>, config_file: Option<&str>) -> Self {
-        let root = root.and_then(|s| Some(s.into())).unwrap_or_else(|| {
-            env::var(format!("{}_ROOT", crate_name!().to_uppercase()))
-                .and_then(|r| Ok(r.into()))
-                .unwrap_or_else(|_| {
-                    let mut root = dirs::home_dir().expect("failed to determine $HOME");
-                    root.push(".zsh");
-                    root
-                })
-        });
-        debug!("using root directory `{}`", root.to_string_lossy());
-
-        let config_file = config_file.and_then(|s| Some(s.into())).unwrap_or_else(|| {
-            let mut config_file = root.clone();
-            config_file.push("plugins.toml");
-            config_file
-        });
-        debug!("using config file `{}`", config_file.to_string_lossy());
-
-        let lock_file: PathBuf = format!(
-            "{}{}",
-            config_file.to_string_lossy().trim_end_matches(".toml"),
-            ".lock"
-        )
-        .into();
-        debug!("using lock file `{}`", lock_file.to_string_lossy());
-
-        Context {
-            root,
-            config_file,
-            lock_file,
-        }
-    }
-}
-
-/// Prepare a configuration for sourcing.
-///
-/// - Reads the config from the config file.
-/// - Downloads all plugin dependencies.
-/// - Generates a locked config.
-/// - Writes the locked config to the lock file.
-pub fn lock(ctx: &Context) -> Result<()> {
-    Config::from_path(&ctx.config_file)?
-        .lock(&ctx.root)?
-        .to_path(&ctx.lock_file)?;
-    Ok(())
-}
-
-/// Check if the config file is newer than the lock file.
-fn config_file_newer(ctx: &Context) -> bool {
-    let config_time = fs::metadata(&ctx.config_file)
-        .ok()
-        .and_then(|m| m.modified().ok());
-    let lock_time = fs::metadata(&ctx.lock_file)
-        .ok()
-        .and_then(|m| m.modified().ok());
-
-    lock_time.is_some() && config_time.is_some() && config_time.unwrap() > lock_time.unwrap()
-}
-
-/// Generate the init shell script.
-///
-/// - Reads the locked config from the lock file.
-/// - If that fails the config will be read from the config path and [locked].
-/// - Generates and returns shell script.
-///
-/// [locked]: fn.lock.html
-pub fn source(ctx: &Context) -> Result<String> {
-    let mut to_path = true;
-
-    let locked = if config_file_newer(ctx) {
-        info!("loaded new config");
-        Config::from_path(&ctx.config_file)?.lock(&ctx.root)?
-    } else {
-        match LockedConfig::from_path(&ctx.lock_file) {
-            Ok(locked) => {
-                to_path = false;
-                locked
-            }
-            Err(e) => {
-                warn!("{}", e);
-                match Config::from_path(&ctx.config_file) {
-                    Ok(config) => config.lock(&ctx.root)?,
-                    Err(e) => {
-                        if e.source_is_io_not_found() {
-                            warn!("{}", e);
-                            LockedConfig::new(&ctx.root)
-                        } else {
-                            return Err(e);
-                        }
-                    }
-                }
-            }
-        }
-    };
-
-    if to_path {
-        locked.to_path(&ctx.lock_file)?;
-    }
-
-    locked.source()
 }

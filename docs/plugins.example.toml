@@ -1,4 +1,5 @@
-# Example ~/.zsh/plugins.toml file.
+# Example ~/.zsh/plugins.toml file
+# --------------------------------
 
 # Global matches, if a plugin doesn't provide a `use` field then the first one
 # of the following that matches more than zero files will be used.
@@ -8,7 +9,7 @@ match = [
   '*.sh',
 ]
 
-# Global templates to apply by default, if a plugin doesn't provide a `use`
+# Global templates to apply by default, if a plugin doesn't provide an `apply`
 # field then these will be used.
 apply = ['PATH', 'source']
 
@@ -19,26 +20,28 @@ function = { value = 'ln -sf "{{ filename }}" "{{ root }}/functions/{{ name }}"'
 prompt = { value = 'ln -sf "{{ filename }}" "{{ root }}/functions/prompt_{{ name }}_setup"', each = true }
 
 [plugins.async]
-source = 'github'  # the source type: one of 'git', 'github', or 'local'.
-repository = 'mafredri/zsh-async'  # the GitHub repository in the form {username}/{repository}.
-revision = 'v1.7.1'  # this can be a branch or a commit or a tag to checkout.
-apply = ['function']  # these are the templates that will be applied to this plugin.
+# `github` sources provide the repository in the form {username}/{repository}.
+github = 'mafredri/zsh-async'
+# `github', `git`, or `gist` sources may provide a `branch`, `tag`, or
+# `revision` field.
+tag = 'v1.7.1'
+# All plugins can specify the template names that will be applied.
+apply = ['function']
 
 [plugins.pure]
-source = 'github'
-repository = 'sindresorhus/pure'
+# `git` sources must provide the Git URL.
+git = 'https://github.com/sindresorhus/pure'
+# All plugins can specify the template names that will be applied.
 apply = ['prompt']
+# All plugins can specify which files templates should be applied to.
+use = ['{{ name }}.zsh']
 
-[plugins.zsh-autosuggestions]
-source = 'git'
-url = 'https://github.com/zsh-users/zsh-autosuggestions' # 'git' sources must provide the Git URL.
-use = ['{{ name }}.plugin.zsh'] # these are the filenames to match on in the plugin directory.
-
-[plugins.myplugin]
-source = 'local'
-directory = "~/.dotfiles/zsh/plugins/pyenv" # 'local' sources must provide the plugin directory.
+[plugins.pyenv]
+# `local` sources must provide the path to the source directory.
+local = '~/.dotfiles/zsh/plugins/pyenv'
 
 [plugins.docker-destroy-all]
-source = 'gist'
-repository = '579d02802b1cc17baed07753d09f5009'
-apply = ['function']
+# `gist` sources must be provide the Gist identifier.
+gist = '79ee61f7c140c63d2786'
+# All plugins can specify the template names that will be applied.
+apply = ['PATH']
