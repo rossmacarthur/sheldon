@@ -32,8 +32,7 @@ Create a configuration file at `~/.zsh/plugins.toml`.
 
 ```toml
 [plugins.oh-my-zsh]
-source = 'github'
-repository = 'robbyrussell/oh-my-zsh'
+github = 'robbyrussell/oh-my-zsh'
 ```
 
 Read up more about configuration [here][configuration].
