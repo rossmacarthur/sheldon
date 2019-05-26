@@ -103,7 +103,6 @@ fn main() {
                 Color::Red.bold().paint("error:"),
                 format!("{}", e)
                     .replace("\n", "\n  due to: ")
-                    // .replace("\n", "\n       ")
                     .replace("Template error: ", "")
             );
             process::exit(1);
