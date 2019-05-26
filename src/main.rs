@@ -89,7 +89,7 @@ fn run() -> sheldon::Result<()> {
     match subcommand {
         "lock" => app.lock()?,
         "source" => print!("{}", app.source()?),
-        _ => unimplemented!(),
+        _ => unreachable!(),
     }
 
     Ok(())
