@@ -96,7 +96,7 @@ fn run() -> sheldon::Result<()> {
 }
 
 fn main() {
-    if let Err(_) = panic::catch_unwind(|| {
+    let run = || {
         if let Err(e) = run() {
             eprintln!(
                 "\n{} {}",
@@ -108,7 +108,9 @@ fn main() {
             );
             process::exit(1);
         }
-    }) {
+    };
+
+    if panic::catch_unwind(run).is_err() {
         eprintln!("\nThis is probably a bug, please file an issue at \
                      https://github.com/rossmacarthur/sheldon/issues.");
         process::exit(2);
