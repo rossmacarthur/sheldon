@@ -26,8 +26,7 @@
 //!
 //! ```toml
 //! [plugins.oh-my-zsh]
-//! source = 'github'
-//! repository = 'robbyrussell/oh-my-zsh'
+//! github = 'robbyrussell/oh-my-zsh'
 //! ```
 //!
 //! Read up more about configuration [here][configuration].
@@ -63,18 +62,20 @@ use clap::crate_version;
 pub use crate::error::{Error, ErrorKind, Result};
 use crate::{
     config::Config,
+    context::Context,
     error::ResultExt,
     lock::LockedConfig,
-    settings::Settings,
     util::PathExt,
 };
 
-mod settings {
-    use std::path::PathBuf;
+mod context {
+    use std::{fmt, path::PathBuf};
 
-    /// Global settings for use over the entire program.
+    use ansi_term::Color;
+
+    /// Global contextual information for use over the entire program.
     #[derive(Clone, Debug)]
-    pub struct Settings {
+    pub struct Context {
         /// The current crate version.
         pub version: &'static str,
         /// The location of the home directory.
@@ -89,13 +90,31 @@ mod settings {
         pub reinstall: bool,
         /// Whether to regenerate the plugins lock file.
         pub relock: bool,
+        /// Whether to suppress output.
+        pub quiet: bool,
     }
 
-    impl Settings {
+    impl Context {
         /// Expands the tilde in the given path to the configured user's home
         /// directory.
         pub fn expand_tilde(&self, path: PathBuf) -> PathBuf {
             crate::util::expand_tilde_with(path, &self.home)
+        }
+
+        pub fn header(&self, title: &str, message: &dyn fmt::Display) {
+            if !self.quiet {
+                eprintln!("{} {}", Color::Purple.bold().paint(title), message);
+            }
+        }
+
+        pub fn status(&self, title: &str, message: &dyn fmt::Display) {
+            if !self.quiet {
+                eprintln!(
+                    "{} {}",
+                    Color::Cyan.bold().paint(format!("{: >10}", title)),
+                    message
+                );
+            }
         }
     }
 }
@@ -117,6 +136,7 @@ pub struct Builder {
     lock_file: Option<PathBuf>,
     reinstall: bool,
     relock: bool,
+    quiet: bool,
 }
 
 /// The main application.
@@ -151,7 +171,7 @@ pub struct Builder {
 /// [`Builder`]: struct.Builder.html
 #[derive(Debug)]
 pub struct Sheldon {
-    settings: Settings,
+    ctx: Context,
 }
 
 impl Builder {
@@ -232,16 +252,23 @@ impl Builder {
         self
     }
 
+    /// Whether to suppress output. This defaults to `false`.
+    pub fn quiet(mut self, quiet: bool) -> Self {
+        self.quiet = quiet;
+        self
+    }
+
     /// Create a new `Builder` using parsed command line arguments.
     #[doc(hidden)]
-    pub fn from_arg_matches(matches: &clap::ArgMatches) -> Self {
+    pub fn from_arg_matches(matches: &clap::ArgMatches, submatches: &clap::ArgMatches) -> Self {
         Self {
             home: matches.value_of("home").map(|s| s.into()),
             root: matches.value_of("root").map(|s| s.into()),
             config_file: matches.value_of("config_file").map(|s| s.into()),
             lock_file: matches.value_of("lock_file").map(|s| s.into()),
-            reinstall: matches.is_present("reinstall"),
-            relock: matches.is_present("relock"),
+            reinstall: submatches.is_present("reinstall"),
+            relock: submatches.is_present("reinstall") || submatches.is_present("relock"),
+            quiet: matches.is_present("quiet"),
         }
     }
 
@@ -277,7 +304,7 @@ impl Builder {
         });
 
         Sheldon {
-            settings: Settings {
+            ctx: Context {
                 version: crate_version!(),
                 home,
                 root,
@@ -285,6 +312,7 @@ impl Builder {
                 lock_file,
                 reinstall: self.reinstall,
                 relock: self.relock,
+                quiet: self.quiet,
             },
         }
     }
@@ -312,36 +340,34 @@ impl Sheldon {
     /// Reads the config from the config file path, locks it, and returns the
     /// locked config.
     fn locked(&self) -> Result<LockedConfig> {
-        Ok(Config::from_path(&self.settings.config_file)
-            .ctx(s!("failed to load config file"))?
-            .lock(&self.settings)
-            .ctx(s!("failed to lock config"))?)
+        let path = &self.ctx.config_file;
+        let config = Config::from_path(&path).chain(s!("failed to load config file"))?;
+        self.ctx.header("Loaded", &path.display());
+        let locked = config.lock(&self.ctx).chain(s!("failed to lock config"))?;
+        self.ctx.header("Locked", &self.ctx.lock_file.display());
+        Ok(locked)
     }
 
     /// Locks the config and writes it to the lock file.
     pub fn lock(&self) -> Result<()> {
         Ok(self
             .locked()?
-            .to_path(&self.settings.lock_file)
-            .ctx(s!("failed to write lock file"))?)
+            .to_path(&self.ctx.lock_file)
+            .chain(s!("failed to write lock file"))?)
     }
 
     /// Generates the script.
     pub fn source(&self) -> Result<String> {
         let mut to_path = true;
 
-        let locked = if self.settings.relock
-            || self
-                .settings
-                .config_file
-                .newer_than(&self.settings.lock_file)
-        {
+        let locked = if self.ctx.relock || self.ctx.config_file.newer_than(&self.ctx.lock_file) {
             self.locked()?
         } else {
-            match LockedConfig::from_path(&self.settings.lock_file) {
+            match LockedConfig::from_path(&self.ctx.lock_file) {
                 Ok(locked) => {
-                    if self.settings == locked.settings {
+                    if self.ctx == locked.ctx {
                         to_path = false;
+                        self.ctx.header("Unlocked", &self.ctx.lock_file.display());
                         locked
                     } else {
                         self.locked()?
@@ -351,12 +377,14 @@ impl Sheldon {
             }
         };
 
-        let script = locked.source().ctx(s!("failed to render source"))?;
+        let script = locked
+            .source(&self.ctx)
+            .chain(s!("failed to render source"))?;
 
         if to_path {
             locked
-                .to_path(&self.settings.lock_file)
-                .ctx(s!("failed to write lock file"))?;
+                .to_path(&self.ctx.lock_file)
+                .chain(s!("failed to write lock file"))?;
         }
 
         Ok(script)

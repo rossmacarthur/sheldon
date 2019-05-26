@@ -41,7 +41,7 @@ You can then use the source command to generate the script
 
 ```sh
 # ~/.zshrc
-source <(sheldon source)
+source <(sheldon --quiet source)
 ```
 
 ## License

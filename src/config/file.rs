@@ -279,13 +279,13 @@ impl RawPluginInner {
                 url
             } else if let Some(repository) = self.gist {
                 Url::parse(&format!("https://{}/{}", GIST_HOST, repository))
-                    .ctx(s!("failed to construct Gist URL using `{}`", repository))?
+                    .chain(s!("failed to construct Gist URL using `{}`", repository))?
             } else if let Some(repository) = self.github {
                 Url::parse(&format!(
                     "https://{}/{}/{}",
                     GITHUB_HOST, repository.username, repository.repository
                 ))
-                .ctx(s!("failed to construct GitHub URL using `{}`", repository))?
+                .chain(s!("failed to construct GitHub URL using `{}`", repository))?
             } else {
                 // This assumes `deserialize_raw_plugin_inner()` validated correctly.
                 unreachable!()
@@ -322,9 +322,9 @@ impl RawConfig {
         P: AsRef<Path>,
     {
         let path = path.as_ref();
-        let contents = fs::read(&path).ctx(s!("failed to read from `{}`", path.display()))?;
+        let contents = fs::read(&path).chain(s!("failed to read from `{}`", path.display()))?;
         let config: RawConfig = toml::from_str(&String::from_utf8_lossy(&contents))
-            .ctx(s!("failed to deserialize contents as TOML"))?;
+            .chain(s!("failed to deserialize contents as TOML"))?;
         Ok(config)
     }
 
@@ -344,7 +344,7 @@ impl RawConfig {
             for (name, template) in &templates {
                 handlebars
                     .register_template_string(&name, &template.value)
-                    .ctx(s!("failed to compile template `{}`", name))?
+                    .chain(s!("failed to compile template `{}`", name))?
             }
         }
 
@@ -376,7 +376,7 @@ impl RawConfig {
             normalized_plugins.push(
                 inner
                     .normalize(name.clone(), &templates)
-                    .ctx(s!("failed to normalize plugin `{}`", name))?,
+                    .chain(s!("failed to normalize plugin `{}`", name))?,
             );
         }
 
