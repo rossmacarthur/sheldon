@@ -58,6 +58,8 @@ pub struct Plugin {
     pub name: String,
     /// Specifies how to retrieve this plugin.
     pub source: Source,
+    /// Which directory to use in this plugin.
+    pub directory: Option<String>,
     /// What files to use in the plugin's directory.
     pub uses: Option<Vec<String>>,
     /// What templates to apply to each matched file.

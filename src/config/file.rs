@@ -56,6 +56,8 @@ struct RawPluginInner {
     /// The Git reference to checkout.
     #[serde(flatten)]
     reference: Option<GitReference>,
+    /// Which directory to use in this plugin.
+    directory: Option<String>,
     /// Which files to use in this plugin's directory. If this is `None` then
     /// this will figured out based on the global `matches` field.
     #[serde(rename = "use")]
@@ -309,6 +311,7 @@ impl RawPluginInner {
         Ok(Plugin {
             name,
             source,
+            directory: self.directory,
             uses: self.uses,
             apply: self.apply,
         })
