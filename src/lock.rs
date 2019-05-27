@@ -342,22 +342,35 @@ impl Plugin {
                 apply: self.apply.unwrap_or_else(|| apply.to_vec()),
             }
         } else {
-            let LockedSource { directory, .. } = source;
-            let mut filenames = Vec::new();
+            // Handlebars instance to do the rendering
             let mut templates = handlebars::Handlebars::new();
             templates.set_strict_mode(true);
 
             // Data to use in template rendering
-            let data = hashmap! {
+            let mut data = hashmap! {
                 "root" => ctx
                     .root
                     .to_str()
                     .chain(s!("root directory is not valid UTF-8"))?,
-                "name" => &self.name,
-                "directory" => &directory
-                    .to_str()
-                    .chain(s!("root directory is not valid UTF-8"))?,
+                "name" => &self.name
             };
+
+            let directory = if let Some(directory) = self.directory {
+                let rendered = templates
+                    .render_template(&directory, &data)
+                    .chain(s!("failed to render template `{}`", directory))?;
+                source.directory.join(rendered)
+            } else {
+                source.directory
+            };
+            data.insert(
+                "directory",
+                &directory
+                    .to_str()
+                    .chain(s!("directory is not valid UTF-8"))?,
+            );
+
+            let mut filenames = Vec::new();
 
             // If the plugin defined what files to use, we do all of them.
             if let Some(uses) = &self.uses {
@@ -783,6 +796,7 @@ mod tests {
                 url: Url::parse("https://github.com/rossmacarthur/sheldon").unwrap(),
                 reference: None,
             },
+            directory: None,
             uses: Some(vec!["*.txt".into(), "{{ name }}.html".into()]),
             apply: None,
         };
@@ -827,6 +841,7 @@ mod tests {
                 url: Url::parse("https://github.com/rossmacarthur/sheldon").unwrap(),
                 reference: None,
             },
+            directory: None,
             uses: None,
             apply: None,
         };
@@ -858,6 +873,7 @@ mod tests {
             source: Source::Remote {
                 url: Url::parse("https://ross.macarthur.io/test.html").unwrap(),
             },
+            directory: None,
             uses: None,
             apply: None,
         };
