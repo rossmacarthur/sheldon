@@ -1,8 +1,7 @@
 //! The config file.
 
 use std::{
-    fmt,
-    fs,
+    fmt, fs,
     path::{Path, PathBuf},
     result,
 };
@@ -13,9 +12,7 @@ use url::Url;
 
 use crate::{
     config::{Config, GitReference, Plugin, Source, Template},
-    Error,
-    Result,
-    ResultExt,
+    Error, Result, ResultExt,
 };
 
 /// The Gist domain host.
@@ -302,7 +299,9 @@ impl RawPluginInner {
         // Check whether the specifed templates actually exist.
         if let Some(apply) = &self.apply {
             for name in apply {
-                if !templates.contains_key(name) {
+                if !crate::lock::DEFAULT_TEMPLATES.contains_key(name)
+                    && !templates.contains_key(name)
+                {
                     bail!("unknown template `{}`", name);
                 }
             }
@@ -336,7 +335,7 @@ impl RawConfig {
         let Self {
             matches,
             apply,
-            mut templates,
+            templates,
             plugins,
         } = self;
 
@@ -351,23 +350,9 @@ impl RawConfig {
             }
         }
 
-        // Add the default templates.
-        templates
-            .entry("PATH".into())
-            .or_insert_with(|| "export PATH=\"{{ directory }}:$PATH\"".into());
-        templates
-            .entry("path".into())
-            .or_insert_with(|| "path=( \"{{ directory }}\" $path )".into());
-        templates
-            .entry("fpath".into())
-            .or_insert_with(|| "fpath=( \"{{ directory }}\" $fpath )".into());
-        templates
-            .entry("source".into())
-            .or_insert_with(|| Template::from("source \"{{ filename }}\"").each(true));
-
         // Check whether the specifed templates actually exist.
         for name in &apply {
-            if !templates.contains_key(name) {
+            if !crate::lock::DEFAULT_TEMPLATES.contains_key(name) && !templates.contains_key(name) {
                 bail!("unknown template `{}`", name);
             }
         }

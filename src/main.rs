@@ -2,17 +2,38 @@ use std::{panic, process};
 
 use ansi_term::Color;
 use clap::{
-    crate_authors,
-    crate_description,
-    crate_name,
-    crate_version,
-    App,
-    AppSettings,
-    Arg,
+    crate_authors, crate_description, crate_name, crate_version, App, AppSettings, Arg, ArgMatches,
     SubCommand,
 };
 
-fn run() -> sheldon::Result<()> {
+fn run_subcommand(matches: ArgMatches) {
+    if let Err(e) = || -> sheldon::Result<()> {
+        let (subcommand, submatches) = matches.subcommand();
+        let app = sheldon::Builder::from_arg_matches(&matches, submatches.unwrap()).build();
+
+        match subcommand {
+            "lock" => app.lock()?,
+            "source" => print!("{}", app.source()?),
+            _ => unreachable!(),
+        }
+
+        Ok(())
+    }() {
+        let as_string = format!("{}", e)
+            .replace("\n", "\n  due to: ")
+            .replace("Template error: ", "");
+
+        if matches.is_present("no-color") {
+            eprintln!("\n[ERROR] {}", as_string);
+        } else {
+            eprintln!("\n{} {}", Color::Red.bold().paint("error:"), as_string);
+        }
+
+        process::exit(1);
+    }
+}
+
+fn main() {
     let settings = [AppSettings::ColorNever, AppSettings::DeriveDisplayOrder];
 
     let matches = App::new(crate_name!())
@@ -30,6 +51,11 @@ fn run() -> sheldon::Result<()> {
                 .long("quiet")
                 .short("q")
                 .help("Suppresses any output."),
+        )
+        .arg(
+            Arg::with_name("no-color")
+                .long("no-color")
+                .help("Do not use ANSI colored output."),
         )
         .arg(
             Arg::with_name("home")
@@ -83,35 +109,11 @@ fn run() -> sheldon::Result<()> {
         )
         .get_matches();
 
-    let (subcommand, submatches) = matches.subcommand();
-    let app = sheldon::Builder::from_arg_matches(&matches, submatches.unwrap()).build();
-
-    match subcommand {
-        "lock" => app.lock()?,
-        "source" => print!("{}", app.source()?),
-        _ => unreachable!(),
-    }
-
-    Ok(())
-}
-
-fn main() {
-    let run = || {
-        if let Err(e) = run() {
-            eprintln!(
-                "\n{} {}",
-                Color::Red.bold().paint("error:"),
-                format!("{}", e)
-                    .replace("\n", "\n  due to: ")
-                    .replace("Template error: ", "")
-            );
-            process::exit(1);
-        }
-    };
-
-    if panic::catch_unwind(run).is_err() {
-        eprintln!("\nThis is probably a bug, please file an issue at \
-                     https://github.com/rossmacarthur/sheldon/issues.");
+    if panic::catch_unwind(|| run_subcommand(matches)).is_err() {
+        eprintln!(
+            "\nThis is probably a bug, please file an issue at \
+             https://github.com/rossmacarthur/sheldon/issues."
+        );
         process::exit(2);
     }
 }
