@@ -8,12 +8,12 @@ license = "Apache-2.0/MIT"
 name = "sheldon"
 readme = "README.md"
 repository = "https://github.com/rossmacarthur/sheldon"
-version = "0.4.0"
+version = "0.4.1"
 
 [dependencies]
 ansi_term = "0.11.0"
 clap = "2.33.0"
-dirs = "2.0.0"
+dirs = "2.0.1"
 git2 = "0.8.0"
 glob = "0.3.0"
 handlebars = "1.1.0"
@@ -24,7 +24,7 @@ maplit = "1.0.1"
 quick-error = { package = "quick-error2", version = "2.0.1" }
 reqwest = "0.9.17"
 scoped_threadpool = "0.1.9"
-serde = { version = "1.0.91", features = ["derive"] }
+serde = { version = "1.0.92", features = ["derive"] }
 toml = "0.5.1"
 url = "1.7.2"
 url_serde = "0.2.0"
@@ -32,5 +32,5 @@ url_serde = "0.2.0"
 [dev-dependencies]
 assert_cmd = "0.11.1"
 assert_fs = "0.11.3"
-tempfile = "3.0.8"
 predicates = "1.0.1"
+tempfile = "3.0.8"
