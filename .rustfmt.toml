@@ -9,7 +9,6 @@ wrap_comments = true
 condense_wildcard_suffixes = true
 format_strings = true
 merge_imports = true
-imports_layout = "HorizontalVertical"
 normalize_comments = true
 normalize_doc_attributes = true
 reorder_impl_items = true

@@ -65,7 +65,7 @@ use crate::{
     context::Context,
     error::ResultExt,
     lock::LockedConfig,
-    util::PathExt,
+    util::{PathBufExt, PathExt},
 };
 
 mod context {
@@ -73,9 +73,15 @@ mod context {
 
     use ansi_term::Color;
 
+    use crate::util::PathBufExt;
+
     /// Global contextual information for use over the entire program.
     #[derive(Clone, Debug)]
     pub struct Context {
+        /// Whether to suppress output.
+        pub quiet: bool,
+        /// Whether to not use ANSI color codes.
+        pub no_color: bool,
         /// The current crate version.
         pub version: &'static str,
         /// The location of the home directory.
@@ -90,30 +96,48 @@ mod context {
         pub reinstall: bool,
         /// Whether to regenerate the plugins lock file.
         pub relock: bool,
-        /// Whether to suppress output.
-        pub quiet: bool,
     }
 
     impl Context {
         /// Expands the tilde in the given path to the configured user's home
         /// directory.
         pub fn expand_tilde(&self, path: PathBuf) -> PathBuf {
-            crate::util::expand_tilde_with(path, &self.home)
+            path.expand_tilde(&self.home)
         }
 
-        pub fn header(&self, title: &str, message: &dyn fmt::Display) {
+        /// Replaces the home directory in the given path to a tilde.
+        pub fn replace_home<P>(&self, path: P) -> PathBuf
+        where
+            P: Into<PathBuf>,
+        {
+            path.into().replace_home(&self.home)
+        }
+
+        pub fn header(&self, header: &str, message: &dyn fmt::Display) {
             if !self.quiet {
-                eprintln!("{} {}", Color::Purple.bold().paint(title), message);
+                if self.no_color {
+                    eprintln!("[{}] {}", header.to_uppercase(), message);
+                } else {
+                    eprintln!("{} {}", Color::Purple.bold().paint(header), message);
+                }
             }
         }
 
-        pub fn status(&self, title: &str, message: &dyn fmt::Display) {
+        pub fn status(&self, status: &str, message: &dyn fmt::Display) {
             if !self.quiet {
-                eprintln!(
-                    "{} {}",
-                    Color::Cyan.bold().paint(format!("{: >10}", title)),
-                    message
-                );
+                if self.no_color {
+                    eprintln!(
+                        "{: >12} {}",
+                        format!("[{}]", status.to_uppercase()),
+                        message
+                    )
+                } else {
+                    eprintln!(
+                        "{} {}",
+                        Color::Cyan.bold().paint(format!("{: >10}", status)),
+                        message
+                    );
+                }
             }
         }
     }
@@ -130,13 +154,14 @@ mod context {
 /// [`Sheldon`]: struct.Sheldon.html
 #[derive(Debug, Default)]
 pub struct Builder {
+    quiet: bool,
+    no_color: bool,
     home: Option<PathBuf>,
     root: Option<PathBuf>,
     config_file: Option<PathBuf>,
     lock_file: Option<PathBuf>,
     reinstall: bool,
     relock: bool,
-    quiet: bool,
 }
 
 /// The main application.
@@ -162,7 +187,6 @@ pub struct Builder {
 ///     .config_file("~/.plugins.toml")
 ///     .lock_file("~/.config/sheldon/plugins.lock")
 ///     .reinstall(true)
-///     .relock(false)
 ///     .build();
 ///
 /// println!("{}", app.source()?);
@@ -258,17 +282,24 @@ impl Builder {
         self
     }
 
+    /// Whether to output ANSI color codes. This defaults to `false`.
+    pub fn no_color(mut self, no_color: bool) -> Self {
+        self.no_color = no_color;
+        self
+    }
+
     /// Create a new `Builder` using parsed command line arguments.
     #[doc(hidden)]
     pub fn from_arg_matches(matches: &clap::ArgMatches, submatches: &clap::ArgMatches) -> Self {
         Self {
+            quiet: matches.is_present("quiet"),
+            no_color: matches.is_present("no-color"),
             home: matches.value_of("home").map(|s| s.into()),
             root: matches.value_of("root").map(|s| s.into()),
             config_file: matches.value_of("config_file").map(|s| s.into()),
             lock_file: matches.value_of("lock_file").map(|s| s.into()),
             reinstall: submatches.is_present("reinstall"),
             relock: submatches.is_present("reinstall") || submatches.is_present("relock"),
-            quiet: matches.is_present("quiet"),
         }
     }
 
@@ -285,12 +316,11 @@ impl Builder {
         where
             F: FnOnce() -> PathBuf,
         {
-            opt.map(|p| util::expand_tilde_with(p, home))
-                .unwrap_or_else(|| {
-                    env::var(var)
-                        .and_then(|v| Ok(v.into()))
-                        .unwrap_or_else(|_| f())
-                })
+            opt.map(|p| p.expand_tilde(home)).unwrap_or_else(|| {
+                env::var(var)
+                    .and_then(|v| Ok(v.into()))
+                    .unwrap_or_else(|_| f())
+            })
         }
 
         let root = process(self.root, &home, "SHELDON_ROOT", || home.join(".zsh"));
@@ -305,6 +335,8 @@ impl Builder {
 
         Sheldon {
             ctx: Context {
+                quiet: self.quiet,
+                no_color: self.no_color,
                 version: crate_version!(),
                 home,
                 root,
@@ -312,7 +344,6 @@ impl Builder {
                 lock_file,
                 reinstall: self.reinstall,
                 relock: self.relock,
-                quiet: self.quiet,
             },
         }
     }
@@ -342,9 +373,13 @@ impl Sheldon {
     fn locked(&self) -> Result<LockedConfig> {
         let path = &self.ctx.config_file;
         let config = Config::from_path(&path).chain(s!("failed to load config file"))?;
-        self.ctx.header("Loaded", &path.display());
+        self.ctx
+            .header("Loaded", &self.ctx.replace_home(path).display());
         let locked = config.lock(&self.ctx).chain(s!("failed to lock config"))?;
-        self.ctx.header("Locked", &self.ctx.lock_file.display());
+        self.ctx.header(
+            "Locked",
+            &self.ctx.replace_home(&self.ctx.lock_file).display(),
+        );
         Ok(locked)
     }
 
@@ -367,7 +402,10 @@ impl Sheldon {
                 Ok(locked) => {
                     if self.ctx == locked.ctx {
                         to_path = false;
-                        self.ctx.header("Unlocked", &self.ctx.lock_file.display());
+                        self.ctx.header(
+                            "Unlocked",
+                            &self.ctx.replace_home(&self.ctx.lock_file).display(),
+                        );
                         locked
                     } else {
                         self.locked()?

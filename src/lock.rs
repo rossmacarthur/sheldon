@@ -5,16 +5,15 @@
 
 use std::{
     cmp,
-    fmt,
-    fs,
-    io,
+    collections::HashMap,
+    fmt, fs, io,
     path::{Path, PathBuf},
-    result,
-    sync,
+    result, sync,
 };
 
-use indexmap::IndexMap;
+use indexmap::{indexmap, IndexMap};
 use itertools::Itertools;
+use lazy_static::lazy_static;
 use maplit::hashmap;
 use serde::{Deserialize, Serialize};
 use url::Url;
@@ -22,9 +21,7 @@ use url::Url;
 use crate::{
     config::{Config, GitReference, Plugin, Source, Template},
     context::Context,
-    Error,
-    Result,
-    ResultExt,
+    Error, Result, ResultExt,
 };
 
 /// The default clone directory for `Git` sources.
@@ -35,6 +32,21 @@ const DOWNLOAD_DIRECTORY: &str = "downloads";
 
 /// The maximmum number of threads to use while downloading sources.
 const MAX_THREADS: u32 = 8;
+
+lazy_static! {
+    /// The default template names to apply.
+    pub static ref DEFAULT_APPLY: Vec<String> = vec_into!["source"];
+}
+
+lazy_static! {
+    /// The default templates.
+    pub static ref DEFAULT_TEMPLATES: IndexMap<String, Template> = indexmap_into! {
+        "PATH" => "export PATH=\"{{ directory }}:$PATH\"",
+        "path" => "path=( \"{{ directory }}\" $path )",
+        "fpath" => "fpath=( \"{{ directory }}\" $fpath )",
+        "source" => Template::from("source \"{{ filename }}\"").each(true)
+    };
+}
 
 /////////////////////////////////////////////////////////////////////////
 // Locked configuration definitions
@@ -86,10 +98,13 @@ pub struct LockedConfig {
     /// The global context that was used to generated this `LockedConfig`.
     #[serde(flatten)]
     pub ctx: LockedContext,
-    /// A map of name to template.
-    templates: IndexMap<String, Template>,
     /// Each locked plugin.
     plugins: Vec<LockedPlugin>,
+    /// A map of name to template.
+    ///
+    /// Note: this field must come last in the struct for it to serialize
+    /// properly.
+    templates: IndexMap<String, Template>,
 }
 
 /////////////////////////////////////////////////////////////////////////
@@ -267,7 +282,7 @@ impl Source {
             .chain(s!("failed to find directory `{}`", directory.display()))?
             .is_dir()
         {
-            ctx.status("Checked", &directory.display());
+            ctx.status("Checked", &ctx.replace_home(&directory).display());
             Ok(LockedSource {
                 directory,
                 filename: None,
@@ -435,7 +450,7 @@ impl Config {
         }
 
         let matches = &self.matches;
-        let apply = &self.apply;
+        let apply = &self.apply.as_ref().unwrap_or(&*DEFAULT_APPLY);
         let count = map.len();
 
         let plugins = if count == 0 {
@@ -511,10 +526,20 @@ impl LockedConfig {
 
     /// Generate the script.
     pub fn source(&self, ctx: &Context) -> Result<String> {
+        // Collaborate the default templates and the configured ones.
+        let mut templates_map: HashMap<&str, &Template> =
+            HashMap::with_capacity(DEFAULT_TEMPLATES.len() + self.templates.len());
+        for (name, template) in DEFAULT_TEMPLATES.iter() {
+            templates_map.insert(name, template);
+        }
+        for (name, template) in &self.templates {
+            templates_map.insert(name, template);
+        }
+
         // Compile the templates
         let mut templates = handlebars::Handlebars::new();
         templates.set_strict_mode(true);
-        for (name, template) in &self.templates {
+        for (name, template) in &templates_map {
             templates
                 .register_template_string(&name, &template.value)
                 .chain(s!("failed to compile template `{}`", name))?;
@@ -537,7 +562,7 @@ impl LockedConfig {
                         .chain(s!("root directory is not valid UTF-8"))?,
                 };
 
-                if self.templates[name].each {
+                if templates_map.get(name.as_str()).unwrap().each {
                     for filename in &plugin.filenames {
                         data.insert(
                             "filename",
@@ -769,6 +794,8 @@ mod tests {
     fn create_test_context(root: &str) -> Context {
         let root = PathBuf::from(root);
         Context {
+            quiet: true,
+            no_color: true,
             version: clap::crate_version!(),
             home: "/".into(),
             config_file: root.join("config.toml"),
@@ -776,7 +803,6 @@ mod tests {
             root,
             reinstall: false,
             relock: false,
-            quiet: true,
         }
     }
 
@@ -909,6 +935,8 @@ mod tests {
         let temp = tempfile::tempdir().unwrap();
         let root = temp.path();
         let ctx = Context {
+            quiet: true,
+            no_color: true,
             version: clap::crate_version!(),
             home: "/".into(),
             root: root.to_path_buf(),
@@ -916,7 +944,6 @@ mod tests {
             lock_file: root.join("plugins.lock"),
             reinstall: false,
             relock: false,
-            quiet: true,
         };
         let pyenv_dir = root.join("pyenv");
         fs::create_dir(&pyenv_dir).unwrap();

@@ -72,7 +72,7 @@ pub struct Config {
     /// Which files to match and use in a plugin's directory.
     pub matches: Vec<String>,
     /// The default list of template names to apply to each matched file.
-    pub apply: Vec<String>,
+    pub apply: Option<Vec<String>>,
     /// A map of name to template string.
     pub templates: IndexMap<String, Template>,
     /// Each configured plugin.
