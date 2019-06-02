@@ -34,6 +34,11 @@ const DOWNLOAD_DIRECTORY: &str = "downloads";
 const MAX_THREADS: u32 = 8;
 
 lazy_static! {
+    /// The default template names to apply.
+    pub static ref DEFAULT_APPLY: Vec<String> = vec_into!["source"];
+}
+
+lazy_static! {
     /// The default templates.
     pub static ref DEFAULT_TEMPLATES: IndexMap<String, Template> = indexmap_into! {
         "PATH" => "export PATH=\"{{ directory }}:$PATH\"",
@@ -42,6 +47,7 @@ lazy_static! {
         "source" => Template::from("source \"{{ filename }}\"").each(true)
     };
 }
+
 
 /////////////////////////////////////////////////////////////////////////
 // Locked configuration definitions
@@ -445,7 +451,7 @@ impl Config {
         }
 
         let matches = &self.matches;
-        let apply = &self.apply;
+        let apply = &self.apply.as_ref().unwrap_or(&*DEFAULT_APPLY);
         let count = map.len();
 
         let plugins = if count == 0 {

@@ -82,7 +82,7 @@ pub struct RawConfig {
     #[serde(rename = "match")]
     matches: Vec<String>,
     /// The default list of template names to apply to each matched file.
-    apply: Vec<String>,
+    apply: Option<Vec<String>>,
     /// A map of name to template string.
     templates: IndexMap<String, Template>,
     /// A map of name to plugin.
@@ -237,7 +237,6 @@ impl Default for RawConfig {
     /// Returns the default `RawConfig`.
     fn default() -> Self {
         RawConfig {
-            templates: IndexMap::new(),
             matches: vec_into![
                 "{{ name }}.plugin.zsh",
                 "{{ name }}.zsh",
@@ -248,7 +247,8 @@ impl Default for RawConfig {
                 "*.sh",
                 "*.zsh-theme"
             ],
-            apply: vec_into!["source"],
+            apply: None,
+            templates: IndexMap::new(),
             plugins: IndexMap::new(),
         }
     }
@@ -257,6 +257,22 @@ impl Default for RawConfig {
 /////////////////////////////////////////////////////////////////////////
 // Normalization implementations
 /////////////////////////////////////////////////////////////////////////
+
+// Check whether the specifed templates actually exist.
+fn validate_template_names(
+    apply: &Option<Vec<String>>,
+    templates: &IndexMap<String, Template>,
+) -> Result<()> {
+    if let Some(apply) = apply {
+        for name in apply {
+            if !crate::lock::DEFAULT_TEMPLATES.contains_key(name) && !templates.contains_key(name) {
+                bail!("unknown template `{}`", name);
+            }
+        }
+    }
+    Ok(())
+}
+
 
 impl fmt::Display for GitHubRepository {
     /// Displays a `GitHubRepository` as "{username}/{repository}".
@@ -296,16 +312,7 @@ impl RawPluginInner {
             }
         };
 
-        // Check whether the specifed templates actually exist.
-        if let Some(apply) = &self.apply {
-            for name in apply {
-                if !crate::lock::DEFAULT_TEMPLATES.contains_key(name)
-                    && !templates.contains_key(name)
-                {
-                    bail!("unknown template `{}`", name);
-                }
-            }
-        }
+        validate_template_names(&self.apply, templates)?;
 
         Ok(Plugin {
             name,
@@ -350,12 +357,7 @@ impl RawConfig {
             }
         }
 
-        // Check whether the specifed templates actually exist.
-        for name in &apply {
-            if !crate::lock::DEFAULT_TEMPLATES.contains_key(name) && !templates.contains_key(name) {
-                bail!("unknown template `{}`", name);
-            }
-        }
+        validate_template_names(&apply, &templates)?;
 
         // Normalize the plugins.
         let mut normalized_plugins = Vec::with_capacity(plugins.len());
