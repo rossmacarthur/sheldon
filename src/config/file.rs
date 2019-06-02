@@ -273,7 +273,6 @@ fn validate_template_names(
     Ok(())
 }
 
-
 impl fmt::Display for GitHubRepository {
     /// Displays a `GitHubRepository` as "{username}/{repository}".
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
