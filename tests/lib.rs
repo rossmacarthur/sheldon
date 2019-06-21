@@ -19,6 +19,7 @@ impl Sheldon for Command {
         command
             .env("HOME", root.as_ref())
             .env("SHELDON_ROOT", root.as_ref())
+            .arg("--verbose")
             .arg("--no-color");
         command
     }

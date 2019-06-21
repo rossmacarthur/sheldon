@@ -21,7 +21,7 @@ use url::Url;
 use crate::{
     config::{Config, GitReference, Plugin, Source, Template},
     context::Context,
-    Error, Result, ResultExt,
+    Result, ResultExt,
 };
 
 /// The default clone directory for `Git` sources.
@@ -584,7 +584,7 @@ impl LockedConfig {
                     script.push('\n');
                 }
             }
-            ctx.status("Rendered", &plugin.name);
+            ctx.status_v("Rendered", &plugin.name);
         }
 
         Ok(script)
@@ -794,7 +794,7 @@ mod tests {
     fn create_test_context(root: &str) -> Context {
         let root = PathBuf::from(root);
         Context {
-            quiet: true,
+            verbosity: crate::Verbosity::Quiet,
             no_color: true,
             version: clap::crate_version!(),
             home: "/".into(),
@@ -935,7 +935,7 @@ mod tests {
         let temp = tempfile::tempdir().unwrap();
         let root = temp.path();
         let ctx = Context {
-            quiet: true,
+            verbosity: crate::Verbosity::Quiet,
             no_color: true,
             version: clap::crate_version!(),
             home: "/".into(),

@@ -53,6 +53,12 @@ fn main() {
                 .help("Suppresses any output."),
         )
         .arg(
+            Arg::with_name("verbose")
+                .long("verbose")
+                .short("v")
+                .help("Use verbose output."),
+        )
+        .arg(
             Arg::with_name("no-color")
                 .long("no-color")
                 .help("Do not use ANSI colored output."),

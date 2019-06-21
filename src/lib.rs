@@ -62,7 +62,7 @@ use clap::crate_version;
 pub use crate::error::{Error, ErrorKind, Result};
 use crate::{
     config::Config,
-    context::Context,
+    context::{Context, Verbosity},
     error::ResultExt,
     lock::LockedConfig,
     util::{PathBufExt, PathExt},
@@ -75,11 +75,19 @@ mod context {
 
     use crate::util::PathBufExt;
 
+    /// The requested verbosity of output.
+    #[derive(Clone, Copy, Debug, PartialEq)]
+    pub enum Verbosity {
+        Quiet,
+        Normal,
+        Verbose,
+    }
+
     /// Global contextual information for use over the entire program.
     #[derive(Clone, Debug)]
     pub struct Context {
-        /// Whether to suppress output.
-        pub quiet: bool,
+        /// The requested verbosity of output.
+        pub verbosity: Verbosity,
         /// Whether to not use ANSI color codes.
         pub no_color: bool,
         /// The current crate version.
@@ -98,6 +106,12 @@ mod context {
         pub relock: bool,
     }
 
+    impl Default for Verbosity {
+        fn default() -> Self {
+            Verbosity::Normal
+        }
+    }
+
     impl Context {
         /// Expands the tilde in the given path to the configured user's home
         /// directory.
@@ -113,31 +127,51 @@ mod context {
             path.into().replace_home(&self.home)
         }
 
+        fn _header(&self, header: &str, message: &dyn fmt::Display) {
+            if self.no_color {
+                eprintln!("[{}] {}", header.to_uppercase(), message);
+            } else {
+                eprintln!("{} {}", Color::Purple.bold().paint(header), message);
+            }
+        }
+
+        fn _status(&self, status: &str, message: &dyn fmt::Display) {
+            if self.no_color {
+                eprintln!(
+                    "{: >12} {}",
+                    format!("[{}]", status.to_uppercase()),
+                    message
+                )
+            } else {
+                eprintln!(
+                    "{} {}",
+                    Color::Cyan.bold().paint(format!("{: >10}", status)),
+                    message
+                );
+            }
+        }
+
         pub fn header(&self, header: &str, message: &dyn fmt::Display) {
-            if !self.quiet {
-                if self.no_color {
-                    eprintln!("[{}] {}", header.to_uppercase(), message);
-                } else {
-                    eprintln!("{} {}", Color::Purple.bold().paint(header), message);
-                }
+            if self.verbosity != Verbosity::Quiet {
+                self._header(header, message);
+            }
+        }
+
+        pub fn header_v(&self, header: &str, message: &dyn fmt::Display) {
+            if self.verbosity == Verbosity::Verbose {
+                self._header(header, message);
             }
         }
 
         pub fn status(&self, status: &str, message: &dyn fmt::Display) {
-            if !self.quiet {
-                if self.no_color {
-                    eprintln!(
-                        "{: >12} {}",
-                        format!("[{}]", status.to_uppercase()),
-                        message
-                    )
-                } else {
-                    eprintln!(
-                        "{} {}",
-                        Color::Cyan.bold().paint(format!("{: >10}", status)),
-                        message
-                    );
-                }
+            if self.verbosity != Verbosity::Quiet {
+                self._status(status, message);
+            }
+        }
+
+        pub fn status_v(&self, status: &str, message: &dyn fmt::Display) {
+            if self.verbosity == Verbosity::Verbose {
+                self._status(status, message);
             }
         }
     }
@@ -155,6 +189,7 @@ mod context {
 #[derive(Debug, Default)]
 pub struct Builder {
     quiet: bool,
+    verbose: bool,
     no_color: bool,
     home: Option<PathBuf>,
     root: Option<PathBuf>,
@@ -187,6 +222,7 @@ pub struct Builder {
 ///     .config_file("~/.plugins.toml")
 ///     .lock_file("~/.config/sheldon/plugins.lock")
 ///     .reinstall(true)
+///     .verbose(true)
 ///     .build();
 ///
 /// println!("{}", app.source()?);
@@ -282,6 +318,12 @@ impl Builder {
         self
     }
 
+    /// Whether to enable verbose output. This defaults to `false`.
+    pub fn verbose(mut self, verbose: bool) -> Self {
+        self.verbose = verbose;
+        self
+    }
+
     /// Whether to output ANSI color codes. This defaults to `false`.
     pub fn no_color(mut self, no_color: bool) -> Self {
         self.no_color = no_color;
@@ -293,6 +335,7 @@ impl Builder {
     pub fn from_arg_matches(matches: &clap::ArgMatches, submatches: &clap::ArgMatches) -> Self {
         Self {
             quiet: matches.is_present("quiet"),
+            verbose: matches.is_present("verbose"),
             no_color: matches.is_present("no-color"),
             home: matches.value_of("home").map(|s| s.into()),
             root: matches.value_of("root").map(|s| s.into()),
@@ -333,9 +376,20 @@ impl Builder {
             config_file.with_extension("lock")
         });
 
+        let verbosity = {
+            use Verbosity::*;
+            if self.quiet {
+                Quiet
+            } else if self.verbose {
+                Verbose
+            } else {
+                Normal
+            }
+        };
+
         Sheldon {
             ctx: Context {
-                quiet: self.quiet,
+                verbosity,
                 no_color: self.no_color,
                 version: crate_version!(),
                 home,
@@ -402,7 +456,7 @@ impl Sheldon {
                 Ok(locked) => {
                     if self.ctx == locked.ctx {
                         to_path = false;
-                        self.ctx.header(
+                        self.ctx.header_v(
                             "Unlocked",
                             &self.ctx.replace_home(&self.ctx.lock_file).display(),
                         );
