@@ -11,7 +11,9 @@ macro_rules! s {
 
 /// A simple macro to return a text only `Error`.
 macro_rules! bail {
-    ($fmt:expr, $($arg:tt)+) => { return Err(Error::custom(format!($fmt, $($arg)+))); }
+    ($fmt:expr, $($arg:tt)+) => {
+        return Err(crate::error::Error::custom(format!($fmt, $($arg)+)));
+    }
 }
 
 /// A custom result type to use in this crate.

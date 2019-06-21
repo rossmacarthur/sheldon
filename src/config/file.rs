@@ -12,7 +12,7 @@ use url::Url;
 
 use crate::{
     config::{Config, GitReference, Plugin, Source, Template},
-    Error, Result, ResultExt,
+    Result, ResultExt,
 };
 
 /// The Gist domain host.
