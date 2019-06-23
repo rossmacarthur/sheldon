@@ -1,0 +1,8 @@
+version = "{{ version }}"
+home = "{{ root }}"
+root = "{{ root }}"
+config_file = "{{ config_file }}"
+lock_file = "{{ lock_file }}"
+plugins = []
+
+[templates]

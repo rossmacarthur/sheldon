@@ -130,7 +130,7 @@ impl GitReference {
     fn lock(&self, repo: &git2::Repository) -> Result<LockedGitReference> {
         let reference = match self {
             GitReference::Branch(s) => repo
-                .find_branch(s, git2::BranchType::Local)
+                .find_branch(&format!("origin/{}", s), git2::BranchType::Remote)
                 .chain(s!("failed to find branch `{}`", s))?
                 .get()
                 .target()
@@ -624,6 +624,21 @@ mod tests {
             .arg("init")
             .output()
             .unwrap();
+        Command::new("git")
+            .arg("-C")
+            .arg(&directory)
+            .arg("remote")
+            .arg("add")
+            .arg("origin")
+            .arg("https://github.com/rossmacarthur/sheldon-test")
+            .output()
+            .unwrap();
+        Command::new("git")
+            .arg("-C")
+            .arg(&directory)
+            .arg("fetch")
+            .output()
+            .unwrap();
         Command::new("touch")
             .arg(directory.join("test.txt"))
             .output()
@@ -666,6 +681,21 @@ mod tests {
         stdout.trim().trim_matches('"').to_string()
     }
 
+    fn git_get_last_origin_commit(directory: &Path) -> String {
+        let output = Command::new("git")
+            .arg("-C")
+            .arg(directory)
+            .arg("log")
+            .arg("-n")
+            .arg("1")
+            .arg("--pretty=format:\"%H\"")
+            .arg("origin/master")
+            .output()
+            .unwrap();
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        stdout.trim().trim_matches('"').to_string()
+    }
+
     fn git_status(directory: &Path) -> String {
         let output = Command::new("git")
             .arg("-C")
@@ -702,7 +732,7 @@ mod tests {
         let temp = tempfile::tempdir().unwrap();
         let directory = temp.path();
         git_create_test_repo(&directory);
-        let hash = git_get_last_commit(&directory);
+        let hash = git_get_last_origin_commit(&directory);
         let repo = git2::Repository::open(directory).unwrap();
 
         let reference = GitReference::Branch("master".to_string());
