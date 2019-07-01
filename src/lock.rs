@@ -617,13 +617,12 @@ mod tests {
     use std::{fs, io::Read, process::Command};
     use url::Url;
 
-    fn git_create_test_repo(directory: &Path) {
+    fn git_create_test_repo(directory: &Path) -> io::Result<()> {
         Command::new("git")
             .arg("-C")
             .arg(&directory)
             .arg("init")
-            .output()
-            .unwrap();
+            .output()?;
         Command::new("git")
             .arg("-C")
             .arg(&directory)
@@ -631,40 +630,35 @@ mod tests {
             .arg("add")
             .arg("origin")
             .arg("https://github.com/rossmacarthur/sheldon-test")
-            .output()
-            .unwrap();
+            .output()?;
         Command::new("git")
             .arg("-C")
             .arg(&directory)
             .arg("fetch")
-            .output()
-            .unwrap();
+            .output()?;
         Command::new("touch")
             .arg(directory.join("test.txt"))
-            .output()
-            .unwrap();
+            .output()?;
         Command::new("git")
             .arg("-C")
             .arg(directory)
             .arg("add")
             .arg(".")
-            .output()
-            .unwrap();
+            .output()?;
         Command::new("git")
             .arg("-C")
             .arg(directory)
             .arg("commit")
             .arg("-m")
             .arg("Initial commit")
-            .output()
-            .unwrap();
+            .output()?;
         Command::new("git")
             .arg("-C")
             .arg(directory)
             .arg("tag")
             .arg("derp")
-            .output()
-            .unwrap();
+            .output()?;
+        Ok(())
     }
 
     fn git_get_last_commit(directory: &Path) -> String {
@@ -715,9 +709,9 @@ mod tests {
 
     #[test]
     fn git_reference_lock_tag() {
-        let temp = tempfile::tempdir().unwrap();
+        let temp = tempfile::tempdir().expect("create temporary directory");
         let directory = temp.path();
-        git_create_test_repo(&directory);
+        git_create_test_repo(&directory).expect("create test git repository");
         let hash = git_get_last_commit(&directory);
         let repo = git2::Repository::open(directory).unwrap();
 
@@ -729,9 +723,9 @@ mod tests {
 
     #[test]
     fn git_reference_lock_branch() {
-        let temp = tempfile::tempdir().unwrap();
+        let temp = tempfile::tempdir().expect("create temporary directory");
         let directory = temp.path();
-        git_create_test_repo(&directory);
+        git_create_test_repo(&directory).expect("create test git repository");
         let hash = git_get_last_origin_commit(&directory);
         let repo = git2::Repository::open(directory).unwrap();
 
@@ -743,9 +737,9 @@ mod tests {
 
     #[test]
     fn git_reference_lock_revision() {
-        let temp = tempfile::tempdir().unwrap();
+        let temp = tempfile::tempdir().expect("create temporary directory");
         let directory = temp.path();
-        git_create_test_repo(&directory);
+        git_create_test_repo(&directory).expect("create test git repository");
         let hash = git_get_last_commit(&directory);
         let repo = git2::Repository::open(directory).unwrap();
 
@@ -757,7 +751,7 @@ mod tests {
 
     #[test]
     fn source_lock_git() {
-        let temp = tempfile::tempdir().unwrap();
+        let temp = tempfile::tempdir().expect("create temporary directory");
         let directory = temp.path();
 
         let locked = Source::lock_git(
@@ -779,7 +773,7 @@ mod tests {
 
     #[test]
     fn source_lock_git_with_reference() {
-        let temp = tempfile::tempdir().unwrap();
+        let temp = tempfile::tempdir().expect("create temporary directory");
         let directory = temp.path();
 
         let locked = Source::lock_git(
@@ -801,7 +795,7 @@ mod tests {
     #[test]
     fn source_lock_remote() {
         let manifest_dir: PathBuf = env!("CARGO_MANIFEST_DIR").into();
-        let temp = tempfile::tempdir().unwrap();
+        let temp = tempfile::tempdir().expect("create temporary directory");
         let directory = temp.path();
         let filename = directory.join("test.txt");
 
@@ -838,7 +832,7 @@ mod tests {
 
     #[test]
     fn plugin_lock_git_with_uses() {
-        let temp = tempfile::tempdir().unwrap();
+        let temp = tempfile::tempdir().expect("create temporary directory");
         let root = temp.path();
         let directory = root.join("repositories/github.com/rossmacarthur/sheldon");
         fs::create_dir_all(&directory).unwrap();
@@ -883,7 +877,7 @@ mod tests {
 
     #[test]
     fn plugin_lock_git_with_matches() {
-        let temp = tempfile::tempdir().unwrap();
+        let temp = tempfile::tempdir().expect("create temporary directory");
         let root = temp.path();
         let directory = root.join("repositories/github.com/rossmacarthur/sheldon");
         fs::create_dir_all(&directory).unwrap();
@@ -962,7 +956,7 @@ mod tests {
     #[test]
     fn config_lock_example_config() {
         let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        let temp = tempfile::tempdir().unwrap();
+        let temp = tempfile::tempdir().expect("create temporary directory");
         let root = temp.path();
         let ctx = Context {
             verbosity: crate::Verbosity::Quiet,

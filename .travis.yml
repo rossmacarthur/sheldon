@@ -1,21 +1,57 @@
 language: rust
+sudo: required
+cache: cargo
 
-rust:
-  - stable
-  - beta
-  - nightly
+env:
+  global:
+    - CRATE=sheldon
 
-# install rustfmt (nightly only) and clippy
-before_script:
-  - cargo install --force cargo-ci
-  - cargo ci --only nightly rustup component add rustfmt
-  - cargo ci --skip nightly rustup component add clippy
+matrix:
+  include:
+    # Linux
+    - dist: xenial
+      env: TARGET=x86_64-unknown-linux-gnu
+      rust: stable
+    - dist: xenial
+      env: TARGET=x86_64-unknown-linux-gnu
+      rust: beta
+    - dist: xenial
+      env: TARGET=x86_64-unknown-linux-gnu
+      rust: nightly
 
-# the primary test script
+    # OS X
+    - os: osx
+      env: TARGET=x86_64-apple-darwin
+      rust: stable
+    - os: osx
+      env: TARGET=x86_64-apple-darwin
+      rust: beta
+    - os: osx
+      env: TARGET=x86_64-apple-darwin
+      rust: nightly
+
+before_install:
+  - rustup self update
+
+install:
+  - rustup component add rustfmt
+  - rustup component add clippy
+
 script:
-  - cargo ci clean --verbose
-  - cargo ci --only nightly fmt -- --check
-  - cargo ci --only nightly build
-  - cargo ci --skip nightly clippy --verbose --all --all-targets --all-features -- -D warnings
-  - cargo ci test --verbose --all --all-features
-  - cargo ci --only stable git diff --exit-code
+  - bash ci/script.sh
+
+before_cache:
+  - chmod -R a+r $HOME/.cargo
+
+before_deploy:
+  - bash ci/before_deploy.sh
+
+deploy:
+  provider: releases
+  skip_cleanup: true
+  on:
+    condition: $TRAVIS_RUST_VERSION = stable
+    tags: true
+  api_key:
+    secure: VjnzZl3Vbf+qPAfv+JM0CrMg7fEXL0nSas691qMiQxHbOgk0xO6mguW6LOOMIuQSYfrBa62AcvaaA/1QozeR6ADft0h4OfVTMxe5iYKMe+HaMSLN6VQ/GkmjB2Qlco0IHK+wrD/m2zQWNIoTNavfwx6DECUhta1WSYlpXyECsXi/nr5FeNCUuX4eD6BOVPpqpzDeWMmgAXaAoPJqbkTdW0OqvAeLfqmzsdAkMefTwOJIzAPtVR7vMZk7APXQcOlAzIH2E1e7jD2Vj/heMkqPtHs8QFbZGe71TnzS1SlVLkOU8ZHw8YRtY5MCUlt1mMcWV9ye2AHaiWsDNBhgn21oOBMKGIex92g36vyxDG2SGCOL+DCnxWTVnUOg2ZzIfoMyvHJNpGwLY7GZ1Z07vgzVlxZRyp8qF2OrqDbthtvL62afZjAFMBlEKftW1rQKCQ9QEfYSUmwn5vUFklwcVHYHuiVGb2m6z3ChOITqcmJWH/KiZPu8U9E+6dQ8zNYKi9mk+Eouvxw4jv/IjIFOEcX8zVmpXQ+2NIyoUUp7EEHsvY6D159bCkGdAsB7wu6XXFvP+GuJlQDtrCKVXXXHL3dqPR4lW+s74yyzyrsGvxh4oT3ucsp7c2E3DOk+mYGkUxCBbDFXi5y6ysqQjqhi9caHhGg547RsDbTV69N1yX577mI=
+  file: $CRATE-$TRAVIS_TAG-$TARGET
