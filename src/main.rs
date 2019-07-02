@@ -50,7 +50,7 @@ fn main() {
             Arg::with_name("quiet")
                 .long("quiet")
                 .short("q")
-                .help("Suppresses any output."),
+                .help("Suppress any informational output."),
         )
         .arg(
             Arg::with_name("verbose")

@@ -1,46 +1,15 @@
 //! A fast, configurable, shell plugin manager.
 //!
-//! # Features
-//!
-//! - Can manage almost anything.
-//!   - Any public Git repository.
-//!     - Branch/tag/commit support.
-//!     - Extra support for GitHub repositories.
-//!     - Extra support for Gists.
-//!   - Arbitrary remote files, simply specify the URL.
-//!   - Local plugins, simply specify the directory path.
-//! - Highly configurable install methods using [handlebars] templating.
-//! - Super-fast parallel installation.
-//! - Configuration file using [TOML] syntax.
-//! - Uses a lock file for much faster loading of plugins.
-//!
-//! # Getting started
-//!
-//! You can install the `sheldon` command line tool using
+//! This crate provides a command line interface and is not intended to be used as a library. You
+//! can install the `sheldon` command line tool using
 //!
 //! ```sh
 //! cargo install sheldon
 //! ```
 //!
-//! Create a configuration file at `~/.zsh/plugins.toml`.
+//! Read up more at the project homepage [here][homepage].
 //!
-//! ```toml
-//! [plugins.oh-my-zsh]
-//! github = 'robbyrussell/oh-my-zsh'
-//! ```
-//!
-//! Read up more about configuration [here][configuration].
-//!
-//! You can then use the source command to generate the script
-//!
-//! ```sh
-//! # ~/.zshrc
-//! source <(sheldon source)
-//! ```
-//!
-//! [configuration]: https://github.com/rossmacarthur/sheldon/blob/master/docs/Configuration.md
-//! [handlebars]: http://handlebarsjs.com
-//! [toml]: https://github.com/toml-lang/toml
+//! [homepage]: https://github.com/rossmacarthur/sheldon#sheldon
 
 #![recursion_limit = "128"]
 
