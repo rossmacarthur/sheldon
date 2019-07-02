@@ -111,8 +111,8 @@ pub struct LockedConfig {
 // Lock implementations.
 /////////////////////////////////////////////////////////////////////////
 
-impl PartialEq<LockedContext> for Context {
-    fn eq(&self, other: &LockedContext) -> bool {
+impl PartialEq<Context> for LockedContext {
+    fn eq(&self, other: &Context) -> bool {
         self.version == other.version
             && self.home == other.home
             && self.root == other.root
@@ -522,6 +522,24 @@ impl LockedConfig {
         ))
         .chain(s!("failed to deserialize locked config"))?;
         Ok(locked)
+    }
+
+    /// Verify that the `LockedConfig` is okay.
+    pub fn verify(&self, ctx: &Context) -> bool {
+        if &self.ctx != ctx {
+            return false;
+        }
+        for plugin in &self.plugins {
+            if !plugin.directory.exists() {
+                return false;
+            }
+            for filename in &plugin.filenames {
+                if !filename.exists() {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     /// Generate the script.

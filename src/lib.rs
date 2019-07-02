@@ -454,7 +454,7 @@ impl Sheldon {
         } else {
             match LockedConfig::from_path(&self.ctx.lock_file) {
                 Ok(locked) => {
-                    if self.ctx == locked.ctx {
+                    if locked.verify(&self.ctx) {
                         to_path = false;
                         self.ctx.header_v(
                             "Unlocked",
