@@ -539,7 +539,7 @@ impl LockedConfig {
                 }
             }
         }
-        return true;
+        true
     }
 
     /// Generate the script.
