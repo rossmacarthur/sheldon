@@ -1,7 +1,7 @@
 //! A fast, configurable, shell plugin manager.
 //!
-//! This crate provides a command line interface and is not intended to be used as a library. You
-//! can install the `sheldon` command line tool using
+//! This crate provides a command line interface and is not intended to be used
+//! as a library. You can install the `sheldon` command line tool using
 //!
 //! ```sh
 //! cargo install sheldon
