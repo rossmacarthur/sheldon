@@ -6,17 +6,6 @@ use std::{
     time,
 };
 
-/// A macro to call .into() on each element in a vec! initialization.
-macro_rules! vec_into {
-    ($($i:expr),*) => (vec![$($i.into()),*]);
-}
-
-/// A simple macro to call .into() on each key and value in a hashmap!
-/// initialization.
-macro_rules! indexmap_into {
-    ($($key:expr => $value:expr),*) => (indexmap!{$($key.into() => $value.into()),*})
-}
-
 /// An extension trait for [`Path`] types.
 ///
 /// [`Path`]: https://doc.rust-lang.org/std/path/struct.Path.html

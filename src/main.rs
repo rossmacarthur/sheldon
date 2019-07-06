@@ -1,37 +1,8 @@
 use std::{panic, process};
 
-use ansi_term::Color;
 use clap::{
-    crate_authors, crate_description, crate_name, crate_version, App, AppSettings, Arg, ArgMatches,
-    SubCommand,
+    crate_authors, crate_description, crate_name, crate_version, App, AppSettings, Arg, SubCommand,
 };
-
-fn run_subcommand(matches: ArgMatches) {
-    if let Err(e) = || -> sheldon::Result<()> {
-        let (subcommand, submatches) = matches.subcommand();
-        let app = sheldon::Builder::from_arg_matches(&matches, submatches.unwrap()).build();
-
-        match subcommand {
-            "lock" => app.lock()?,
-            "source" => print!("{}", app.source()?),
-            _ => unreachable!(),
-        }
-
-        Ok(())
-    }() {
-        let as_string = format!("{}", e)
-            .replace("\n", "\n  due to: ")
-            .replace("Template error: ", "");
-
-        if matches.is_present("no-color") {
-            eprintln!("\n[ERROR] {}", as_string);
-        } else {
-            eprintln!("\n{} {}", Color::Red.bold().paint("error:"), as_string);
-        }
-
-        process::exit(1);
-    }
-}
 
 fn main() {
     let settings = [AppSettings::ColorNever, AppSettings::DeriveDisplayOrder];
@@ -115,7 +86,18 @@ fn main() {
         )
         .get_matches();
 
-    if panic::catch_unwind(|| run_subcommand(matches)).is_err() {
+    let run_command = || {
+        let (subcommand, submatches) = matches.subcommand();
+        if sheldon::Builder::from_clap(&matches, subcommand, submatches.unwrap())
+            .build()
+            .run()
+            .is_err()
+        {
+            process::exit(1);
+        }
+    };
+
+    if panic::catch_unwind(run_command).is_err() {
         eprintln!(
             "\nThis is probably a bug, please file an issue at \
              https://github.com/rossmacarthur/sheldon/issues."

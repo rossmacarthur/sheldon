@@ -1,0 +1,6 @@
+[LOADED] ~/plugins.toml
+    [CLONED] https://github.com/rossmacarthur/sheldon-test
+
+[ERROR] failed to install source `https://github.com/rossmacarthur/sheldon-bad-url`
+  due to: failed to git clone `https://github.com/rossmacarthur/sheldon-bad-url`
+  due to: authentication required but no callback set; class=Net (12)
