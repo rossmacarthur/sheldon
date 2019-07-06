@@ -14,12 +14,13 @@
 #![recursion_limit = "128"]
 
 #[macro_use]
-mod error;
-#[macro_use]
-mod util;
+mod _macros;
 
 mod config;
+mod context;
+mod error;
 mod lock;
+mod util;
 
 use std::{
     env,
@@ -28,123 +29,17 @@ use std::{
 
 use clap::crate_version;
 
-pub use crate::error::{Error, ErrorKind, Result};
 use crate::{
     config::Config,
-    context::{Context, Verbosity},
+    context::Context,
     error::ResultExt,
     lock::LockedConfig,
     util::{PathBufExt, PathExt},
 };
-
-mod context {
-    use std::{fmt, path::PathBuf};
-
-    use ansi_term::Color;
-
-    use crate::util::PathBufExt;
-
-    /// The requested verbosity of output.
-    #[derive(Clone, Copy, Debug, PartialEq)]
-    pub enum Verbosity {
-        Quiet,
-        Normal,
-        Verbose,
-    }
-
-    /// Global contextual information for use over the entire program.
-    #[derive(Clone, Debug)]
-    pub struct Context {
-        /// The requested verbosity of output.
-        pub verbosity: Verbosity,
-        /// Whether to not use ANSI color codes.
-        pub no_color: bool,
-        /// The current crate version.
-        pub version: &'static str,
-        /// The location of the home directory.
-        pub home: PathBuf,
-        /// The location of the root directory.
-        pub root: PathBuf,
-        /// The location of the config file.
-        pub config_file: PathBuf,
-        /// The location of the lock file.
-        pub lock_file: PathBuf,
-        /// Whether to reinstall plugin sources.
-        pub reinstall: bool,
-        /// Whether to regenerate the plugins lock file.
-        pub relock: bool,
-    }
-
-    impl Default for Verbosity {
-        fn default() -> Self {
-            Verbosity::Normal
-        }
-    }
-
-    impl Context {
-        /// Expands the tilde in the given path to the configured user's home
-        /// directory.
-        pub fn expand_tilde(&self, path: PathBuf) -> PathBuf {
-            path.expand_tilde(&self.home)
-        }
-
-        /// Replaces the home directory in the given path to a tilde.
-        pub fn replace_home<P>(&self, path: P) -> PathBuf
-        where
-            P: Into<PathBuf>,
-        {
-            path.into().replace_home(&self.home)
-        }
-
-        fn _header(&self, header: &str, message: &dyn fmt::Display) {
-            if self.no_color {
-                eprintln!("[{}] {}", header.to_uppercase(), message);
-            } else {
-                eprintln!("{} {}", Color::Purple.bold().paint(header), message);
-            }
-        }
-
-        fn _status(&self, status: &str, message: &dyn fmt::Display) {
-            if self.no_color {
-                eprintln!(
-                    "{: >12} {}",
-                    format!("[{}]", status.to_uppercase()),
-                    message
-                )
-            } else {
-                eprintln!(
-                    "{} {}",
-                    Color::Cyan.bold().paint(format!("{: >10}", status)),
-                    message
-                );
-            }
-        }
-
-        pub fn header(&self, header: &str, message: &dyn fmt::Display) {
-            if self.verbosity != Verbosity::Quiet {
-                self._header(header, message);
-            }
-        }
-
-        pub fn header_v(&self, header: &str, message: &dyn fmt::Display) {
-            if self.verbosity == Verbosity::Verbose {
-                self._header(header, message);
-            }
-        }
-
-        pub fn status(&self, status: &str, message: &dyn fmt::Display) {
-            if self.verbosity != Verbosity::Quiet {
-                self._status(status, message);
-            }
-        }
-
-        pub fn status_v(&self, status: &str, message: &dyn fmt::Display) {
-            if self.verbosity == Verbosity::Verbose {
-                self._status(status, message);
-            }
-        }
-    }
-}
+pub use crate::{
+    context::{Command, Verbosity},
+    error::{Error, ErrorKind, Result},
+};
 
 /// A builder that is used to construct a [`Sheldon`] with specific settings.
 ///
@@ -157,13 +52,13 @@ mod context {
 /// [`Sheldon`]: struct.Sheldon.html
 #[derive(Debug, Default)]
 pub struct Builder {
-    quiet: bool,
-    verbose: bool,
+    verbosity: Verbosity,
     no_color: bool,
     home: Option<PathBuf>,
     root: Option<PathBuf>,
     config_file: Option<PathBuf>,
     lock_file: Option<PathBuf>,
+    command: Command,
     reinstall: bool,
     relock: bool,
 }
@@ -173,30 +68,6 @@ pub struct Builder {
 /// This struct is can be created in two ways. Either using the `Default`
 /// implementation or with the [`Builder`].
 ///
-/// # Examples
-///
-/// Using the default settings
-///
-/// ```rust,ignore
-/// let app = sheldon::Sheldon::default();
-///
-/// println!("{}", app.source()?);
-/// ```
-///
-/// Or with the [`Builder`].
-///
-/// ```rust,ignore
-/// let app = sheldon::Builder::default()
-///     .root("~/.config/sheldon")
-///     .config_file("~/.plugins.toml")
-///     .lock_file("~/.config/sheldon/plugins.lock")
-///     .reinstall(true)
-///     .verbose(true)
-///     .build();
-///
-/// println!("{}", app.source()?);
-/// ```
-///
 /// [`Builder`]: struct.Builder.html
 #[derive(Debug)]
 pub struct Sheldon {
@@ -204,6 +75,19 @@ pub struct Sheldon {
 }
 
 impl Builder {
+    /// Set the verbosity level. This defaults to `Verbosity::Normal`.
+    pub fn verbosity(mut self, verbosity: Verbosity) -> Self {
+        self.verbosity = verbosity;
+        self
+    }
+
+    /// Whether to suppress the use of ANSI color codes. This defaults to
+    /// `false`.
+    pub fn no_color(mut self, no_color: bool) -> Self {
+        self.no_color = no_color;
+        self
+    }
+
     /// Set the current user's home directory.
     ///
     /// If not given, this setting is determined automatically using
@@ -268,6 +152,12 @@ impl Builder {
         self
     }
 
+    /// Set the command to run. This defaults to `Command::Source`.
+    pub fn command(mut self, command: Command) -> Self {
+        self.command = command;
+        self
+    }
+
     /// Whether to reinstall plugin sources. This defaults to `false`.
     pub fn reinstall(mut self, reinstall: bool) -> Self {
         self.reinstall = reinstall;
@@ -281,35 +171,35 @@ impl Builder {
         self
     }
 
-    /// Whether to suppress output. This defaults to `false`.
-    pub fn quiet(mut self, quiet: bool) -> Self {
-        self.quiet = quiet;
-        self
-    }
-
-    /// Whether to enable verbose output. This defaults to `false`.
-    pub fn verbose(mut self, verbose: bool) -> Self {
-        self.verbose = verbose;
-        self
-    }
-
-    /// Whether to output ANSI color codes. This defaults to `false`.
-    pub fn no_color(mut self, no_color: bool) -> Self {
-        self.no_color = no_color;
-        self
-    }
-
     /// Create a new `Builder` using parsed command line arguments.
     #[doc(hidden)]
-    pub fn from_arg_matches(matches: &clap::ArgMatches, submatches: &clap::ArgMatches) -> Self {
+    pub fn from_clap(
+        matches: &clap::ArgMatches,
+        subcommand: &str,
+        submatches: &clap::ArgMatches,
+    ) -> Self {
+        let verbosity = if matches.is_present("quiet") {
+            Verbosity::Quiet
+        } else if matches.is_present("verbose") {
+            Verbosity::Verbose
+        } else {
+            Verbosity::Normal
+        };
+
+        let command = match subcommand {
+            "lock" => Command::Lock,
+            "source" => Command::Source,
+            _ => panic!("unrecognized command `{}`", subcommand),
+        };
+
         Self {
-            quiet: matches.is_present("quiet"),
-            verbose: matches.is_present("verbose"),
+            verbosity,
             no_color: matches.is_present("no-color"),
             home: matches.value_of("home").map(|s| s.into()),
             root: matches.value_of("root").map(|s| s.into()),
             config_file: matches.value_of("config_file").map(|s| s.into()),
             lock_file: matches.value_of("lock_file").map(|s| s.into()),
+            command,
             reinstall: submatches.is_present("reinstall"),
             relock: submatches.is_present("reinstall") || submatches.is_present("relock"),
         }
@@ -345,26 +235,16 @@ impl Builder {
             config_file.with_extension("lock")
         });
 
-        let verbosity = {
-            use Verbosity::*;
-            if self.quiet {
-                Quiet
-            } else if self.verbose {
-                Verbose
-            } else {
-                Normal
-            }
-        };
-
         Sheldon {
             ctx: Context {
-                verbosity,
-                no_color: self.no_color,
                 version: crate_version!(),
+                verbosity: self.verbosity,
+                no_color: self.no_color,
                 home,
                 root,
                 config_file,
                 lock_file,
+                command: self.command,
                 reinstall: self.reinstall,
                 relock: self.relock,
             },
@@ -398,24 +278,32 @@ impl Sheldon {
         let config = Config::from_path(&path).chain(s!("failed to load config file"))?;
         self.ctx
             .header("Loaded", &self.ctx.replace_home(path).display());
-        let locked = config.lock(&self.ctx).chain(s!("failed to lock config"))?;
-        self.ctx.header(
-            "Locked",
-            &self.ctx.replace_home(&self.ctx.lock_file).display(),
-        );
-        Ok(locked)
+        config.lock(&self.ctx)
     }
 
     /// Locks the config and writes it to the lock file.
-    pub fn lock(&self) -> Result<()> {
-        Ok(self
-            .locked()?
-            .to_path(&self.ctx.lock_file)
-            .chain(s!("failed to write lock file"))?)
+    fn lock(&self) -> Result<()> {
+        let mut locked = self.locked()?;
+
+        if let Some(last) = locked.errors.pop() {
+            for err in locked.errors {
+                self.ctx.error(&err)
+            }
+            Err(last)
+        } else {
+            locked
+                .to_path(&self.ctx.lock_file)
+                .chain(s!("failed to write lock file"))?;
+            self.ctx.header(
+                "Locked",
+                &self.ctx.replace_home(&self.ctx.lock_file).display(),
+            );
+            Ok(())
+        }
     }
 
     /// Generates the script.
-    pub fn source(&self) -> Result<String> {
+    fn source(&self) -> Result<()> {
         let mut to_path = true;
 
         let locked = if self.ctx.relock || self.ctx.config_file.newer_than(&self.ctx.lock_file) {
@@ -442,12 +330,39 @@ impl Sheldon {
             .source(&self.ctx)
             .chain(s!("failed to render source"))?;
 
-        if to_path {
+        for err in &locked.errors {
+            self.ctx.error(&err);
+        }
+
+        if to_path && locked.errors.is_empty() {
             locked
                 .to_path(&self.ctx.lock_file)
                 .chain(s!("failed to write lock file"))?;
+            self.ctx.header(
+                "Locked",
+                &self.ctx.replace_home(&self.ctx.lock_file).display(),
+            );
         }
 
-        Ok(script)
+        print!("{}", script);
+        Ok(())
+    }
+
+    /// Run the configured command.
+    fn run_command(&self) -> Result<()> {
+        match self.ctx.command {
+            Command::Lock => self.lock(),
+            Command::Source => self.source(),
+        }
+    }
+
+    /// Execute based on the configured settings. Returns true on success.
+    pub fn run(&self) -> Result<()> {
+        if let Err(e) = self.run_command() {
+            self.ctx.error(&e);
+            Err(e)
+        } else {
+            Ok(())
+        }
     }
 }

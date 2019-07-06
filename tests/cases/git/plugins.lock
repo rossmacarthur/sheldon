@@ -6,8 +6,8 @@ lock_file = "{{ lock_file }}"
 
 [[plugins]]
 name = "test"
-directory = "{directory}"
-filenames = ["{filename}"]
+directory = "{{ root }}/repositories/github.com/rossmacarthur/sheldon-test"
+filenames = ["{{ root }}/repositories/github.com/rossmacarthur/sheldon-test/test.plugin.zsh"]
 apply = ["source"]
 
 [templates]

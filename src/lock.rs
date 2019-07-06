@@ -21,7 +21,7 @@ use url::Url;
 use crate::{
     config::{Config, GitReference, Plugin, Source, Template},
     context::Context,
-    Result, ResultExt,
+    Error, Result, ResultExt,
 };
 
 /// The default clone directory for `Git` sources.
@@ -105,6 +105,9 @@ pub struct LockedConfig {
     /// Note: this field must come last in the struct for it to serialize
     /// properly.
     templates: IndexMap<String, Template>,
+    /// Any errors that occurred while generating this `LockedConfig`.
+    #[serde(skip)]
+    pub errors: Vec<Error>,
 }
 
 /////////////////////////////////////////////////////////////////////////
@@ -452,6 +455,7 @@ impl Config {
         let matches = &self.matches;
         let apply = &self.apply.as_ref().unwrap_or(&*DEFAULT_APPLY);
         let count = map.len();
+        let mut errors = Vec::new();
 
         let plugins = if count == 0 {
             Vec::new()
@@ -473,12 +477,11 @@ impl Config {
                             let mut locked = Vec::with_capacity(plugins.len());
                             for (index, plugin) in plugins {
                                 let name = plugin.name.clone();
-
                                 locked.push((
                                     index,
                                     plugin
                                         .lock(ctx, source.clone(), matches, apply)
-                                        .chain(s!("failed to install plugin `{}`", name))?,
+                                        .chain(s!("failed to install plugin `{}`", name)),
                                 ));
                             }
 
@@ -490,21 +493,46 @@ impl Config {
                 scoped.join_all();
             });
 
-            rx.iter()
+            rx
+                .iter()
+                // all threads must send a response
                 .take(count)
-                .collect::<Result<Vec<_>>>()?
-                .into_iter()
-                .flatten()
+                // collect into a `Vec<_>`
                 .collect::<Vec<_>>()
+                // iterate over the `Vec<Result<_>>`
                 .into_iter()
+                // log messages for `Err`s and filter them out
+                .filter_map(|result| match result {
+                    Ok(ok) => Some(ok),
+                    Err(err) => {
+                        errors.push(err);
+                        None
+                    }
+                })
+                // flatten the `Iter<Vec<_>>`
+                .flatten()
+                // collect into a `Vec<_>`
+                .collect::<Vec<_>>()
+                // iterate over the `Vec<(index, Result<LockedPlugin>)>>`
+                .into_iter()
+                // sort by the original index
                 .sorted_by_key(|(index, _)| *index)
-                .map(|(_, plugin)| plugin)
-                .collect()
+                // remove indexes, log messages for `Err`s and filter them out
+                .filter_map(|(_, result)| match result {
+                    Ok(plugin) => Some(plugin),
+                    Err(err) => {
+                        errors.push(err);
+                        None
+                    }
+                })
+                // finally collect into a `Vec<LockedPlugin>`
+                .collect::<Vec<_>>()
         };
 
         Ok(LockedConfig {
             ctx: ctx.clone().lock(),
             templates: self.templates,
+            errors,
             plugins,
         })
     }
@@ -516,7 +544,7 @@ impl LockedConfig {
     where
         P: AsRef<Path>,
     {
-        let path = path.as_ref();;
+        let path = path.as_ref();
         let locked: LockedConfig = toml::from_str(&String::from_utf8_lossy(
             &fs::read(&path).chain(s!("failed to read locked config from `{}`", path.display()))?,
         ))
@@ -836,13 +864,14 @@ mod tests {
     fn create_test_context(root: &str) -> Context {
         let root = PathBuf::from(root);
         Context {
+            version: clap::crate_version!(),
             verbosity: crate::Verbosity::Quiet,
             no_color: true,
-            version: clap::crate_version!(),
             home: "/".into(),
             config_file: root.join("config.toml"),
             lock_file: root.join("config.lock"),
-            root,
+            root, // must come after the joins above
+            command: crate::Command::Lock,
             reinstall: false,
             relock: false,
         }
@@ -977,13 +1006,14 @@ mod tests {
         let temp = tempfile::tempdir().expect("create temporary directory");
         let root = temp.path();
         let ctx = Context {
+            version: clap::crate_version!(),
             verbosity: crate::Verbosity::Quiet,
             no_color: true,
-            version: clap::crate_version!(),
             home: "/".into(),
             root: root.to_path_buf(),
             config_file: manifest_dir.join("docs/plugins.example.toml"),
             lock_file: root.join("plugins.lock"),
+            command: crate::Command::Lock,
             reinstall: false,
             relock: false,
         };

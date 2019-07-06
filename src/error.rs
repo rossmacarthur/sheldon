@@ -4,18 +4,6 @@ use std::{error::Error as Error_, fmt, io, result};
 
 use quick_error::quick_error;
 
-/// A simple macro to generate a lazy format!.
-macro_rules! s {
-    ($($arg:tt)*) => (|| format!($($arg)*))
-}
-
-/// A simple macro to return a text only `Error`.
-macro_rules! bail {
-    ($fmt:expr, $($arg:tt)+) => {
-        return Err(crate::error::Error::custom(format!($fmt, $($arg)+)));
-    }
-}
-
 /// A custom result type to use in this crate.
 pub type Result<T> = result::Result<T, Error>;
 
@@ -183,5 +171,12 @@ impl Error {
             kind: ErrorKind::Custom,
             messages: vec![message],
         }
+    }
+
+    /// A pretty representation of this `Error`.
+    pub(crate) fn pretty(&self) -> String {
+        format!("{}", self)
+            .replace("\n", "\n  due to: ")
+            .replace("Template error: ", "")
     }
 }
