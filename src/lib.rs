@@ -356,7 +356,7 @@ impl Sheldon {
         }
     }
 
-    /// Execute based on the configured settings. Returns true on success.
+    /// Execute based on the configured settings.
     pub fn run(&self) -> Result<()> {
         if let Err(e) = self.run_command() {
             self.ctx.error(&e);
