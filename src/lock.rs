@@ -426,13 +426,13 @@ impl Plugin {
 
 impl Context {
     /// Consume the `Context` and convert it to a `LockedContext`.
-    fn lock(self) -> LockedContext {
+    fn lock(&self) -> LockedContext {
         LockedContext {
             version: self.version.to_string(),
-            home: self.home,
-            root: self.root,
-            config_file: self.config_file,
-            lock_file: self.lock_file,
+            home: self.home.clone(),
+            root: self.root.clone(),
+            config_file: self.config_file.clone(),
+            lock_file: self.lock_file.clone(),
         }
     }
 }
@@ -530,7 +530,7 @@ impl Config {
         };
 
         Ok(LockedConfig {
-            ctx: ctx.clone().lock(),
+            ctx: ctx.lock(),
             templates: self.templates,
             errors,
             plugins,

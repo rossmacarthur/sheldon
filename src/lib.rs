@@ -34,7 +34,7 @@ use crate::{
     context::Context,
     error::ResultExt,
     lock::LockedConfig,
-    util::{PathBufExt, PathExt},
+    util::{FileMutex, PathBufExt, PathExt},
 };
 pub use crate::{
     context::{Command, Verbosity},
@@ -350,6 +350,7 @@ impl Sheldon {
 
     /// Run the configured command.
     fn run_command(&self) -> Result<()> {
+        let _mutex = FileMutex::acquire(&self.ctx, &self.ctx.root);
         match self.ctx.command {
             Command::Lock => self.lock(),
             Command::Source => self.source(),
