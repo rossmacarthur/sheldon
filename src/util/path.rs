@@ -1,5 +1,3 @@
-//! Utility macros and functions.
-
 use std::{
     fs,
     path::{Path, PathBuf},

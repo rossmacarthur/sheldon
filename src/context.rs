@@ -20,7 +20,7 @@ pub enum Verbosity {
 }
 
 /// Global contextual information for use over the entire program.
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct Context {
     /// The current crate version.
     pub version: &'static str,
@@ -79,7 +79,7 @@ impl Context {
         }
     }
 
-    fn log_status(&self, status: &str, message: &dyn fmt::Display) {
+    fn log_status(&self, color: Color, status: &str, message: &dyn fmt::Display) {
         if self.no_color {
             eprintln!(
                 "{: >12} {}",
@@ -89,7 +89,7 @@ impl Context {
         } else {
             eprintln!(
                 "{} {}",
-                Color::Cyan.bold().paint(format!("{: >10}", status)),
+                color.bold().paint(format!("{: >10}", status)),
                 message
             );
         }
@@ -109,13 +109,19 @@ impl Context {
 
     pub fn status(&self, status: &str, message: &dyn fmt::Display) {
         if self.verbosity > Verbosity::Quiet {
-            self.log_status(status, message);
+            self.log_status(Color::Cyan, status, message);
         }
     }
 
     pub fn status_v(&self, status: &str, message: &dyn fmt::Display) {
         if self.verbosity > Verbosity::Normal {
-            self.log_status(status, message);
+            self.log_status(Color::Cyan, status, message);
+        }
+    }
+
+    pub fn warning(&self, status: &str, message: &dyn fmt::Display) {
+        if self.verbosity > Verbosity::Quiet {
+            self.log_status(Color::Yellow, status, message);
         }
     }
 
