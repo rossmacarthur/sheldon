@@ -11,7 +11,7 @@ repository = "https://github.com/rossmacarthur/sheldon"
 readme = "README.md"
 keywords = ["shell", "plugin", "manager", "zsh", "bash"]
 categories = ["command-line-utilities"]
-license = "Apache-2.0/MIT"
+license = "MIT OR Apache-2.0"
 
 [badges]
 travis-ci = { repository = "rossmacarthur/sheldon", branch = "master" }
