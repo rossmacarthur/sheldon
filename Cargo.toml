@@ -1,14 +1,21 @@
 [package]
-authors = ["Ross MacArthur <ross@macarthur.io>"]
-description = "A fast, configurable, shell plugin manager."
-edition = "2018"
-homepage = "https://github.com/rossmacarthur/sheldon"
-keywords = ["shell", "plugin", "manager", "zsh", "bash"]
-license = "Apache-2.0/MIT"
 name = "sheldon"
-readme = "README.md"
-repository = "https://github.com/rossmacarthur/sheldon"
 version = "0.4.4"
+authors = ["Ross MacArthur <ross@macarthur.io>"]
+edition = "2018"
+
+# Metadata (https://doc.rust-lang.org/cargo/reference/manifest.html)
+description = "A fast, configurable, shell plugin manager."
+homepage = "https://github.com/rossmacarthur/sheldon"
+repository = "https://github.com/rossmacarthur/sheldon"
+readme = "README.md"
+keywords = ["shell", "plugin", "manager", "zsh", "bash"]
+categories = ["command-line-utilities"]
+license = "MIT OR Apache-2.0"
+
+[badges]
+travis-ci = { repository = "rossmacarthur/sheldon", branch = "master" }
+maintenance = { status = "actively-developed" }
 
 [dependencies]
 ansi_term = "0.11.0"
