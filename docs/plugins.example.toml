@@ -4,14 +4,14 @@
 # Global matches, if a plugin doesn't provide a `use` field then the first one
 # of the following that matches more than zero files will be used.
 match = [
-  '{{ name }}.zsh',
-  '*.zsh',
-  '*.sh',
+  "{{ name }}.zsh",
+  "*.zsh",
+  "*.sh",
 ]
 
 # Global templates to apply by default, if a plugin doesn't provide an `apply`
 # field then these will be used.
-apply = ['PATH', 'source']
+apply = ["PATH", "source"]
 
 # Custom user defined templates, the `each` field means that these will be
 # applied for all matched files.
@@ -21,27 +21,27 @@ prompt = { value = 'ln -sf "{{ filename }}" "{{ root }}/functions/prompt_{{ name
 
 [plugins.async]
 # `github` sources provide the repository in the form {username}/{repository}.
-github = 'mafredri/zsh-async'
+github = "mafredri/zsh-async"
 # `github', `git`, or `gist` sources may provide a `branch`, `tag`, or
 # `revision` field.
-tag = 'v1.7.1'
+tag = "v1.7.1"
 # All plugins can specify the template names that will be applied.
-apply = ['function']
+apply = ["function"]
 
 [plugins.pure]
 # `git` sources must provide the Git URL.
-git = 'https://github.com/sindresorhus/pure'
+git = "https://github.com/sindresorhus/pure"
 # All plugins can specify the template names that will be applied.
-apply = ['prompt']
+apply = ["prompt"]
 # All plugins can specify which files templates should be applied to.
-use = ['{{ name }}.zsh']
+use = ["{{ name }}.zsh"]
 
 [plugins.pyenv]
 # `local` sources must provide the path to the source directory.
-local = '~/.dotfiles/zsh/plugins/pyenv'
+local = "~/.dotfiles/zsh/plugins/pyenv"
 
 [plugins.docker-destroy-all]
 # `gist` sources must be provide the Gist identifier.
-gist = '79ee61f7c140c63d2786'
+gist = "79ee61f7c140c63d2786"
 # All plugins can specify the template names that will be applied.
-apply = ['PATH']
+apply = ["PATH"]

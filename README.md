@@ -22,34 +22,34 @@ A fast, configurable, shell plugin manager.
 
 ## Table of Contents
 
-- [Features](#Features)
-- [Table of Contents](#Table-of-Contents)
-- [Installation](#Installation)
-- [Getting started](#Getting-started)
-- [Command line interface](#Command-line-interface)
+- [Features](#features)
+- [Table of Contents](#table-of-contents)
+- [Installation](#installation)
+- [Getting started](#getting-started)
+- [Command line interface](#command-line-interface)
   - [`lock` command](#lock-command)
   - [`source` command](#source-command)
-  - [Flags](#Flags)
-  - [Options](#Options)
-- [Configuration: plugin sources](#Configuration-plugin-sources)
-  - [Git](#Git)
+  - [Flags](#flags)
+  - [Options](#options)
+- [Configuration: plugin sources](#configuration-plugin-sources)
+  - [Git](#git)
     - [`github`](#github)
     - [`gist`](#gist)
     - [`git`](#git)
-    - [Specifying branch / tag / commit](#Specifying-branch--tag--commit)
-  - [Remote](#Remote)
-  - [Local](#Local)
-- [Configuration: plugin options](#Configuration-plugin-options)
+    - [Specifying branch / tag / commit](#specifying-branch--tag--commit)
+  - [Remote](#remote)
+  - [Local](#local)
+- [Configuration: plugin options](#configuration-plugin-options)
   - [`use`](#use)
   - [`apply`](#apply)
-- [Configuration: templates](#Configuration-templates)
-  - [Custom templates](#Custom-templates)
-  - [Example: symlinking files](#Example-symlinking-files)
-  - [Example: overriding the PATH template](#Example-overriding-the-PATH-template)
-- [Configuration: global options](#Configuration-global-options)
+- [Configuration: templates](#configuration-templates)
+  - [Custom templates](#custom-templates)
+  - [Example: symlinking files](#example-symlinking-files)
+  - [Example: overriding the PATH template](#example-overriding-the-path-template)
+- [Configuration: global options](#configuration-global-options)
   - [`match`](#match)
   - [`apply`](#apply-1)
-- [License](#License)
+- [License](#license)
 
 ## Installation
 
@@ -75,7 +75,7 @@ Github type plugin with a unique name `oh-my-zsh`.
 #            ┌─ Unique name for the plugin
 #        ┌───┴───┐
 [plugins.oh-my-zsh]
-github = 'robbyrussell/oh-my-zsh'
+github = "robbyrussell/oh-my-zsh"
 #         └─────┬────┘ └───┬───┘
 #               │          └─ GitHub repository name
 #               └─ GitHub user or organization
@@ -170,7 +170,7 @@ forward slash.
 
 ```toml
 [plugins.pure]
-github = 'sindresorhus/pure'
+github = "sindresorhus/pure"
 ```
 
 #### `gist`
@@ -180,7 +180,7 @@ be the hash or username and hash of the Gist.
 
 ```toml
 [plugins.pure]
-gist = '579d02802b1cc17baed07753d09f5009'
+gist = "579d02802b1cc17baed07753d09f5009"
 ```
 
 #### `git`
@@ -189,7 +189,7 @@ A Git source must set the `git` field and specify the URL.
 
 ```toml
 [plugins.pure]
-git = 'https://github.com/sindresorhus/pure'
+git = "https://github.com/sindresorhus/pure"
 ```
 
 #### Specifying branch / tag / commit
@@ -199,8 +199,8 @@ fields. **sheldon** will then checkout the repository at this reference.
 
 ```toml
 [plugins.pure]
-github = 'sindresorhus/pure'
-tag = '1.9.0'
+github = "sindresorhus/pure"
+tag = "1.9.0"
 ```
 
 ### Remote
@@ -211,7 +211,7 @@ URL.
 
 ```toml
 [plugins.pure]
-remote = 'https://github.com/rossmacarthur/pure/raw/master/pure.zsh'
+remote = "https://github.com/rossmacarthur/pure/raw/master/pure.zsh"
 ```
 
 ### Local
@@ -222,7 +222,7 @@ current user's home directory.
 
 ```toml
 [plugins.pure]
-local = '~/Downloads/repositories/pure'
+local = "~/Downloads/repositories/pure"
 ```
 
 ## Configuration: plugin options
@@ -235,8 +235,8 @@ A list of files / globs to use in the plugin's source directory.
 
 ```toml
 [plugins.pure]
-github = 'sindresorhus/pure'
-use = ['*.zsh']
+github = "sindresorhus/pure"
+use = ["*.zsh"]
 ```
 
 If this field is not given then the first pattern in the global `match` field
@@ -249,8 +249,8 @@ A list of template names to apply to this plugin. This defaults to the global
 
 ```toml
 [plugins.pure]
-github = 'sindresorhus/pure'
-apply = ['source', 'PATH']
+github = "sindresorhus/pure"
+apply = ["source", "PATH"]
 ```
 
 You can define your own [custom templates](#custom-templates) to apply to your
@@ -288,9 +288,9 @@ will not be sourced.
 
 ```toml
 [plugins.pure]
-source = 'github'
-repository = 'sindresorhus/pure'
-apply = ['PATH', 'fpath']
+source = "github"
+repository = "sindresorhus/pure"
+apply = ["PATH", "fpath"]
 ```
 
 The `each` value, as used in the `source` template above, specifies that the
@@ -333,8 +333,8 @@ It can then be applied to the plugin like this
 
 ```toml
 [plugins.pure]
-github = 'sindresorhus/pure'
-apply = ['function']
+github = "sindresorhus/pure"
+apply = ["function"]
 ```
 
 ### Example: overriding the PATH template
@@ -352,8 +352,8 @@ You can then apply it to the plugin like this
 
 ```toml
 [plugins.pure]
-github = 'sindresorhus/pure'
-apply = ['source', 'PATH']
+github = "sindresorhus/pure"
+apply = ["source", "PATH"]
 ```
 
 **Note:** this would change the behavior of **PATH** for *all* plugins using it.
@@ -368,14 +368,14 @@ defaults to
 
 ```toml
 match = [
-  '{{ name }}.plugin.zsh',
-  '{{ name }}.zsh',
-  '{{ name }}.sh',
-  '{{ name }}.zsh-theme',
-  '*.plugin.zsh',
-  '*.zsh',
-  '*.sh',
-  '*.zsh-theme',
+  "{{ name }}.plugin.zsh",
+  "{{ name }}.zsh",
+  "{{ name }}.sh",
+  "{{ name }}.zsh-theme",
+  "*.plugin.zsh",
+  "*.zsh",
+  "*.sh",
+  "*.zsh-theme",
 ]
 ```
 
@@ -387,7 +387,7 @@ A list of template names to apply to all plugins by default (see
 [`apply`](#apply)). This defaults to
 
 ```toml
-apply = ['source']
+apply = ["source"]
 ```
 
 ## License
