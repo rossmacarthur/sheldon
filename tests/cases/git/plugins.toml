@@ -1,2 +1,2 @@
 [plugins.test]
-github = 'rossmacarthur/sheldon-test'
+github = "rossmacarthur/sheldon-test"

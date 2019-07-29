@@ -1,3 +1,3 @@
 [plugins.test]
-github = 'rossmacarthur/sheldon-test'
-tag = 'v0.1.0'
+github = "rossmacarthur/sheldon-test"
+tag = "v0.1.0"
