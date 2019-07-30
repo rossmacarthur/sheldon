@@ -144,11 +144,22 @@ The output of this command is highly configurable. You can define your own
 
 **sheldon** accepts the following global command line options.
 
-| Option                        | Description                  | Default               |
-| ----------------------------- | ---------------------------- | --------------------- |
-| `--root <root>`               | Override the root directory. | `~/.zsh`              |
-| `--config-file <config-file>` | Override the config file.    | `<root>/plugins.toml` |
-| `--lock-file <lock-file>`     | Override the lock file.      | `<config-file>.lock`  |
+| Option                        | Environment variable  | Default                | Description                  |
+| ----------------------------- | --------------------- | ---------------------- | ---------------------------- |
+| `--home <home>`               | `HOME`                | Automatically detected | Override the home directory. |
+| `--root <root>`               | `SHELDON_ROOT`        | `<home>/.zsh`          | Override the root directory. |
+| `--config-file <config-file>` | `SHELDON_CONFIG_FILE` | `<root>/plugins.toml`  | Override the config file.    |
+| `--lock-file <lock-file>`     | `SHELDON_LOCK_FILE`   | `<config-file>.lock`   | Override the lock file.      |
+
+**Note:** in rare circumstances **sheldon** will not be able to automatically
+detect the user's home directory. You should only have to set the `--home`
+option in these cases.
+
+The priority order for setting these values is the following
+
+1. Command line option.
+2. Environment variable.
+3. Default value.
 
 ## Configuration: plugin sources
 
