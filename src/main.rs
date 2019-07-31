@@ -38,8 +38,7 @@ fn main() {
             Arg::with_name("home")
                 .long("home")
                 .takes_value(true)
-                .hidden(true)
-                .help("The current user's home directory."),
+                .help("Override the home directory."),
         )
         .arg(
             Arg::with_name("root")
