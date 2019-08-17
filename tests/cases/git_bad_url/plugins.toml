@@ -1,5 +1,0 @@
-[plugins.test]
-github = "rossmacarthur/sheldon-test"
-
-[plugins.bad-test]
-github = "rossmacarthur/sheldon-bad-url"

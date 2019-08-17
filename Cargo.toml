@@ -38,5 +38,6 @@ url = "1.7.2"
 url_serde = "0.2.0"
 
 [dev-dependencies]
-assert_cmd = "0.11.1"
+pest = "2.1.1"
+pest_derive = "2.1.0"
 tempfile = "3.1.0"

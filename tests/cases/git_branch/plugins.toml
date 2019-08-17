@@ -1,3 +1,0 @@
-[plugins.test]
-github = "rossmacarthur/sheldon-test"
-branch = "feature"
