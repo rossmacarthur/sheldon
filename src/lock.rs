@@ -289,7 +289,33 @@ impl Source {
     fn lock_local(ctx: &Context, directory: PathBuf) -> Result<LockedSource> {
         let directory = ctx.expand_tilde(directory);
 
-        if fs::metadata(&directory)
+        if let Ok(glob) = glob::glob(&directory.to_string_lossy()) {
+            let mut directories: Vec<_> = glob
+                .filter_map(|result| {
+                    if let Ok(directory) = result {
+                        if directory.is_dir() {
+                            return Some(directory);
+                        }
+                    }
+                    None
+                })
+                .collect();
+
+            if directories.len() == 1 {
+                let directory = directories.remove(0);
+                ctx.status("Checked", &ctx.replace_home(&directory).display());
+                Ok(LockedSource {
+                    directory,
+                    filename: None,
+                })
+            } else {
+                err!(
+                    "`{}` matches {} directories",
+                    directory.display(),
+                    directories.len()
+                )
+            }
+        } else if fs::metadata(&directory)
             .chain(s!("failed to find directory `{}`", directory.display()))?
             .is_dir()
         {
@@ -299,7 +325,7 @@ impl Source {
                 filename: None,
             })
         } else {
-            bail!("`{}` is not a directory", directory.display());
+            err!("`{}` is not a directory", directory.display())
         }
     }
 

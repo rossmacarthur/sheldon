@@ -3,14 +3,15 @@ macro_rules! s {
     ($($arg:tt)*) => (|| format!($($arg)*))
 }
 
-/// Return a text only `Error`.
+/// Construct a text only `Err(Error)`.
+macro_rules! err {
+    ($fmt:expr, $($arg:tt)+) => { Err(crate::error::Error::custom(format!($fmt, $($arg)+))) };
+    ($s:tt) => { Err(crate::error::Error::custom($s.into())) };
+}
+
+/// Return a text only `Err(Error)`.
 macro_rules! bail {
-    ($fmt:expr, $($arg:tt)+) => {
-        return Err(crate::error::Error::custom(format!($fmt, $($arg)+)));
-    };
-    ($s:tt) => {
-        return Err(crate::error::Error::custom($s.into()));
-    };
+    ($($arg:tt)*) => { return err!($($arg)*); }
 }
 
 /// Call .into() on each element in a vec! initialization.

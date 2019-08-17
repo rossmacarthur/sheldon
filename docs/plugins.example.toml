@@ -38,9 +38,10 @@ use = ["{{ name }}.zsh"]
 
 [plugins.pyenv]
 # `local` sources must provide the path to the source directory.
-local = "~/.dotfiles/zsh/plugins/"
+local = "~/.dotfiles/plugins/pyenv"
 
 [plugins.ip-netns]
+# `inline` plugins should provide the raw source.
 inline = """
 # Get ip netns information
 ip_netns_prompt_info() {
