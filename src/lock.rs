@@ -12,14 +12,14 @@ use std::{
 };
 
 use indexmap::{indexmap, IndexMap};
-use itertools::Itertools;
+use itertools::{Either, Itertools};
 use lazy_static::lazy_static;
 use maplit::hashmap;
 use serde::{Deserialize, Serialize};
 use url::Url;
 
 use crate::{
-    config::{Config, GitReference, Plugin, Source, Template},
+    config::{Config, ExternalPlugin, GitReference, InlinePlugin, Plugin, Source, Template},
     context::Context,
     Error, Result, ResultExt,
 };
@@ -65,9 +65,9 @@ struct LockedSource {
     filename: Option<PathBuf>,
 }
 
-/// A locked `Plugin`.
+/// A locked `ExternalPlugin`.
 #[derive(Debug, Deserialize, Serialize)]
-struct LockedPlugin {
+struct LockedExternalPlugin {
     /// The name of this plugin.
     name: String,
     /// The directory that this plugin resides in.
@@ -76,6 +76,14 @@ struct LockedPlugin {
     filenames: Vec<PathBuf>,
     /// What templates to apply to each filename.
     apply: Vec<String>,
+}
+
+/// A locked `Plugin`.
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(untagged)]
+enum LockedPlugin {
+    External(LockedExternalPlugin),
+    Inline(InlinePlugin),
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -324,7 +332,7 @@ impl Source {
     }
 }
 
-impl Plugin {
+impl ExternalPlugin {
     fn match_globs(pattern: PathBuf, filenames: &mut Vec<PathBuf>) -> Result<bool> {
         let mut matched = false;
         let pattern = pattern.to_string_lossy();
@@ -340,20 +348,20 @@ impl Plugin {
         Ok(matched)
     }
 
-    /// Consume the `Plugin` and convert it to a `LockedPlugin`.
+    /// Consume the `ExternalPlugin` and convert it to a `LockedExternalPlugin`.
     fn lock(
         self,
         ctx: &Context,
         source: LockedSource,
         matches: &[String],
         apply: &[String],
-    ) -> Result<LockedPlugin> {
+    ) -> Result<LockedExternalPlugin> {
         Ok(if let Source::Remote { .. } = self.source {
             let LockedSource {
                 directory,
                 filename,
             } = source;
-            LockedPlugin {
+            LockedExternalPlugin {
                 name: self.name,
                 directory,
                 filenames: vec![filename.unwrap()],
@@ -414,7 +422,7 @@ impl Plugin {
                 }
             }
 
-            LockedPlugin {
+            LockedExternalPlugin {
                 name: self.name,
                 directory,
                 filenames,
@@ -444,9 +452,19 @@ impl Config {
     /// validates that local plugins are present, and checks that templates
     /// can compile.
     pub fn lock(self, ctx: &Context) -> Result<LockedConfig> {
+        // Partition the plugins into external and inline plugins.
+        let (externals, inlines): (Vec<_>, Vec<_>) = self
+            .plugins
+            .into_iter()
+            .enumerate()
+            .partition_map(|(index, plugin)| match plugin {
+                Plugin::External(plugin) => Either::Left((index, plugin)),
+                Plugin::Inline(plugin) => Either::Right((index, LockedPlugin::Inline(plugin))),
+            });
+
         // Create a map of unique `Source` to `Vec<Plugin>`
         let mut map = IndexMap::new();
-        for (index, plugin) in self.plugins.into_iter().enumerate() {
+        for (index, plugin) in externals {
             map.entry(plugin.source.clone())
                 .or_insert_with(|| Vec::with_capacity(1))
                 .push((index, plugin));
@@ -458,7 +476,10 @@ impl Config {
         let mut errors = Vec::new();
 
         let plugins = if count == 0 {
-            Vec::new()
+            inlines
+                .into_iter()
+                .map(|(_, locked)| locked)
+                .collect::<Vec<_>>()
         } else {
             // Create a thread pool and install the sources in parallel.
             let mut pool = scoped_threadpool::Pool::new(cmp::min(count as u32, MAX_THREADS));
@@ -513,18 +534,22 @@ impl Config {
                 .flatten()
                 // collect into a `Vec<_>`
                 .collect::<Vec<_>>()
-                // iterate over the `Vec<(index, Result<LockedPlugin>)>>`
+                // iterate over the `Vec<(index, Result<LockedExternalPlugin>)>>`
                 .into_iter()
-                // sort by the original index
-                .sorted_by_key(|(index, _)| *index)
-                // remove indexes, log messages for `Err`s and filter them out
-                .filter_map(|(_, result)| match result {
-                    Ok(plugin) => Some(plugin),
+                // log messages for `Err`s and filter them out
+                .filter_map(|(index, result)| match result {
+                    Ok(plugin) => Some((index, LockedPlugin::External(plugin))),
                     Err(err) => {
                         errors.push(err);
                         None
                     }
                 })
+                // chain inline plugins
+                .chain(inlines.into_iter())
+                // sort by the original index
+                .sorted_by_key(|(index, _)| *index)
+                // remove the index
+                .map(|(_, locked)| locked)
                 // finally collect into a `Vec<LockedPlugin>`
                 .collect::<Vec<_>>()
         };
@@ -558,13 +583,18 @@ impl LockedConfig {
             return false;
         }
         for plugin in &self.plugins {
-            if !plugin.directory.exists() {
-                return false;
-            }
-            for filename in &plugin.filenames {
-                if !filename.exists() {
-                    return false;
+            match plugin {
+                LockedPlugin::External(plugin) => {
+                    if !plugin.directory.exists() {
+                        return false;
+                    }
+                    for filename in &plugin.filenames {
+                        if !filename.exists() {
+                            return false;
+                        }
+                    }
                 }
+                LockedPlugin::Inline(_) => {}
             }
         }
         true
@@ -594,43 +624,63 @@ impl LockedConfig {
         let mut script = String::new();
 
         for plugin in &self.plugins {
-            for name in &plugin.apply {
-                // Data to use in template rendering
-                let mut data = hashmap! {
-                    "root" => self
-                        .ctx.root
-                        .to_str()
-                        .chain(s!("root directory is not valid UTF-8"))?,
-                    "name" => &plugin.name,
-                    "directory" => plugin
-                        .directory
-                        .to_str()
-                        .chain(s!("root directory is not valid UTF-8"))?,
-                };
+            match plugin {
+                LockedPlugin::External(plugin) => {
+                    for name in &plugin.apply {
+                        // Data to use in template rendering
+                        let mut data = hashmap! {
+                            "root" => self
+                                .ctx.root
+                                .to_str()
+                                .chain(s!("root directory is not valid UTF-8"))?,
+                            "name" => &plugin.name,
+                            "directory" => plugin
+                                .directory
+                                .to_str()
+                                .chain(s!("root directory is not valid UTF-8"))?,
+                        };
 
-                if templates_map.get(name.as_str()).unwrap().each {
-                    for filename in &plugin.filenames {
-                        data.insert(
-                            "filename",
-                            filename.to_str().chain(s!("filename is not valid UTF-8"))?,
-                        );
-                        script.push_str(
-                            &templates
-                                .render(name, &data)
-                                .chain(s!("failed to render template `{}`", name))?,
-                        );
-                        script.push('\n');
+                        if templates_map.get(name.as_str()).unwrap().each {
+                            for filename in &plugin.filenames {
+                                data.insert(
+                                    "filename",
+                                    filename.to_str().chain(s!("filename is not valid UTF-8"))?,
+                                );
+                                script.push_str(
+                                    &templates
+                                        .render(name, &data)
+                                        .chain(s!("failed to render template `{}`", name))?,
+                                );
+                                script.push('\n');
+                            }
+                        } else {
+                            script.push_str(
+                                &templates
+                                    .render(name, &data)
+                                    .chain(s!("failed to render template `{}`", name))?,
+                            );
+                            script.push('\n');
+                        }
                     }
-                } else {
+                    ctx.status_v("Rendered", &plugin.name);
+                }
+                LockedPlugin::Inline(plugin) => {
+                    let data = hashmap! {
+                        "root" => self
+                            .ctx.root
+                            .to_str()
+                            .chain(s!("root directory is not valid UTF-8"))?,
+                        "name" => &plugin.name,
+                    };
                     script.push_str(
                         &templates
-                            .render(name, &data)
-                            .chain(s!("failed to render template `{}`", name))?,
+                            .render_template(&plugin.raw, &data)
+                            .chain(s!("failed to render inline plugin `{}`", &plugin.name))?,
                     );
                     script.push('\n');
+                    ctx.status_v("Inlined", &plugin.name);
                 }
             }
-            ctx.status_v("Rendered", &plugin.name);
         }
 
         Ok(script)
@@ -887,7 +937,7 @@ mod tests {
         fs::File::create(directory.join("2.txt")).unwrap();
         fs::File::create(directory.join("test.html")).unwrap();
 
-        let plugin = Plugin {
+        let plugin = ExternalPlugin {
             name: "test".into(),
             source: Source::Git {
                 url: Url::parse("https://github.com/rossmacarthur/sheldon").unwrap(),
@@ -932,7 +982,7 @@ mod tests {
         fs::File::create(directory.join("2.txt")).unwrap();
         fs::File::create(directory.join("test.html")).unwrap();
 
-        let plugin = Plugin {
+        let plugin = ExternalPlugin {
             name: "test".into(),
             source: Source::Git {
                 url: Url::parse("https://github.com/rossmacarthur/sheldon").unwrap(),
@@ -965,7 +1015,7 @@ mod tests {
 
     #[test]
     fn plugin_lock_remote() {
-        let plugin = Plugin {
+        let plugin = ExternalPlugin {
             name: "test".into(),
             source: Source::Remote {
                 url: Url::parse("https://ross.macarthur.io/test.html").unwrap(),
@@ -1021,9 +1071,16 @@ mod tests {
         fs::create_dir(&pyenv_dir).unwrap();
 
         let mut config = Config::from_path(&ctx.config_file).unwrap();
-        config.plugins[2].source = Source::Local {
-            directory: pyenv_dir,
-        };
+        {
+            match &mut config.plugins[2] {
+                Plugin::External(ref mut plugin) => {
+                    plugin.source = Source::Local {
+                        directory: pyenv_dir,
+                    }
+                }
+                Plugin::Inline(_) => {}
+            }
+        }
         config.lock(&ctx).unwrap();
     }
 }

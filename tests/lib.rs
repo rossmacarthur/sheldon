@@ -229,3 +229,8 @@ fn git_bad_url() -> io::Result<()> {
 
     Ok(())
 }
+
+#[test]
+fn inline() -> io::Result<()> {
+    TestCase::load("inline")?.run()
+}

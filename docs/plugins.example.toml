@@ -38,7 +38,20 @@ use = ["{{ name }}.zsh"]
 
 [plugins.pyenv]
 # `local` sources must provide the path to the source directory.
-local = "~/.dotfiles/zsh/plugins/pyenv"
+local = "~/.dotfiles/zsh/plugins/"
+
+[plugins.ip-netns]
+inline = """
+# Get ip netns information
+ip_netns_prompt_info() {
+  if (( $+commands[ip] )); then
+    local ref="$(ip netns identify $$)"
+    if [[ ! -z "$ref" ]]; then
+      echo "${ZSH_THEME_IP_NETNS_PREFIX:=(}${ref}${ZSH_THEME_IP_NETNS_SUFFIX:=)}"
+    fi
+  fi
+}
+"""
 
 [plugins.docker-destroy-all]
 # `gist` sources must be provide the Gist identifier.

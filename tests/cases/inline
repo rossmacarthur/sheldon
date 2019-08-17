@@ -1,0 +1,46 @@
+# plugins.toml
+[plugins.test]
+github = "rossmacarthur/sheldon-test"
+
+[plugins.inline-test]
+inline = """
+echo 'testing...'
+"""
+
+# plugins.lock
+version = "<version>"
+home = "<root>"
+root = "<root>"
+config_file = "<root>/plugins.toml"
+lock_file = "<root>/plugins.lock"
+
+[[plugins]]
+name = "test"
+directory = "<root>/repositories/github.com/rossmacarthur/sheldon-test"
+filenames = ["<root>/repositories/github.com/rossmacarthur/sheldon-test/test.plugin.zsh"]
+apply = ["source"]
+
+[[plugins]]
+name = "inline-test"
+raw = "echo 'testing...'\n"
+
+[templates]
+
+# lock.stdout
+
+# lock.stderr
+[LOADED] ~/plugins.toml
+    [CLONED] https://github.com/rossmacarthur/sheldon-test
+[LOCKED] ~/plugins.lock
+
+# source.stdout
+source "<root>/repositories/github.com/rossmacarthur/sheldon-test/test.plugin.zsh"
+echo 'testing...'
+
+
+# source.stderr
+[UNLOCKED] ~/plugins.lock
+  [RENDERED] test
+   [INLINED] inline-test
+
+# end
