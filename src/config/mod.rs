@@ -51,9 +51,9 @@ pub enum Source {
     Local { directory: PathBuf },
 }
 
-/// A configured plugin.
+/// An external configured plugin.
 #[derive(Debug)]
-pub struct Plugin {
+pub struct ExternalPlugin {
     /// The name of this plugin.
     pub name: String,
     /// Specifies how to retrieve this plugin.
@@ -64,6 +64,22 @@ pub struct Plugin {
     pub uses: Option<Vec<String>>,
     /// What templates to apply to each matched file.
     pub apply: Option<Vec<String>>,
+}
+
+/// An inline configured plugin.
+#[derive(Debug, Deserialize, Serialize)]
+pub struct InlinePlugin {
+    /// The name of this plugin.
+    pub name: String,
+    /// The actual source.
+    pub raw: String,
+}
+
+/// A configured plugin.
+#[derive(Debug)]
+pub enum Plugin {
+    External(ExternalPlugin),
+    Inline(InlinePlugin),
 }
 
 /// The user configuration.

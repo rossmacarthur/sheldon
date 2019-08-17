@@ -3,7 +3,7 @@
 use std::{
     fmt, fs,
     path::{Path, PathBuf},
-    result,
+    result, str,
 };
 
 use indexmap::IndexMap;
@@ -11,7 +11,7 @@ use serde::{self, de, Deserialize, Deserializer};
 use url::Url;
 
 use crate::{
-    config::{Config, GitReference, Plugin, Source, Template},
+    config::{Config, ExternalPlugin, GitReference, InlinePlugin, Plugin, Source, Template},
     Result, ResultExt,
 };
 
@@ -37,7 +37,7 @@ struct GitHubRepository {
 /// The actual plugin configuration.
 #[derive(Debug, Default, Deserialize, PartialEq)]
 #[serde(default)]
-struct RawPluginInner {
+struct RawPlugin {
     /// A clonable Git repository.
     #[serde(with = "url_serde")]
     git: Option<Url>,
@@ -50,6 +50,8 @@ struct RawPluginInner {
     remote: Option<Url>,
     /// A local directory.
     local: Option<PathBuf>,
+    /// An inline script.
+    inline: Option<String>,
     /// The Git reference to checkout.
     #[serde(flatten)]
     reference: Option<GitReference>,
@@ -62,16 +64,6 @@ struct RawPluginInner {
     /// What templates to apply to each matched file. If this is `None` then the
     /// default templates will be applied.
     apply: Option<Vec<String>>,
-}
-
-/// The plugin configuration.
-///
-/// This wraps a `RawPluginInner` so we can add validation to the
-/// deserialization.
-#[derive(Debug, Default, Deserialize, PartialEq)]
-struct RawPlugin {
-    #[serde(deserialize_with = "deserialize_raw_plugin_inner", flatten)]
-    inner: RawPluginInner,
 }
 
 /// The contents of the configuration file.
@@ -202,37 +194,6 @@ impl<'de> Deserialize<'de> for GitHubRepository {
     }
 }
 
-/// Custom function to deserialize and validate a `RawPluginInner`.
-fn deserialize_raw_plugin_inner<'de, D>(deserializer: D) -> result::Result<RawPluginInner, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    let inner: RawPluginInner = RawPluginInner::deserialize(deserializer)?;
-
-    if [
-        inner.git.is_some(),
-        inner.gist.is_some(),
-        inner.github.is_some(),
-        inner.remote.is_some(),
-        inner.local.is_some(),
-    ]
-    .iter()
-    .map(|x| *x as u32)
-    .sum::<u32>()
-        != 1
-    {
-        return Err(de::Error::custom("multiple source fields specified"));
-    }
-
-    if inner.reference.is_some() && (inner.remote.is_some() || inner.local.is_some()) {
-        return Err(de::Error::custom(
-            "'reference' field is not valid for source type",
-        ));
-    }
-
-    Ok(inner)
-}
-
 impl Default for RawConfig {
     /// Returns the default `RawConfig`.
     fn default() -> Self {
@@ -280,46 +241,115 @@ impl fmt::Display for GitHubRepository {
     }
 }
 
-impl RawPluginInner {
-    /// Normalize a `RawPluginInner` into a `Plugin` which is simpler and easier
+impl Source {
+    fn is_git(&self) -> bool {
+        match *self {
+            Source::Git { .. } => true,
+            _ => false,
+        }
+    }
+}
+
+/// A convenience struct to help with normalizing the config file in
+/// `Rawplugin::normalize()`.
+#[derive(Debug)]
+enum TempSource {
+    External(Source),
+    Inline(String),
+}
+
+impl RawPlugin {
+    /// Normalize a `RawPlugin` into a `Plugin` which is simpler and easier
     /// to handle.
     fn normalize(self, name: String, templates: &IndexMap<String, Template>) -> Result<Plugin> {
-        let source = if let Some(directory) = self.local {
-            Source::Local { directory }
-        } else if let Some(url) = self.remote {
-            Source::Remote { url }
-        } else {
-            let url = if let Some(url) = self.git {
-                url
-            } else if let Some(repository) = self.gist {
-                Url::parse(&format!("https://{}/{}", GIST_HOST, repository))
-                    .chain(s!("failed to construct Gist URL using `{}`", repository))?
-            } else if let Some(repository) = self.github {
-                Url::parse(&format!(
+        let Self {
+            git,
+            gist,
+            github,
+            remote,
+            local,
+            inline,
+            reference,
+            directory,
+            uses,
+            apply,
+        } = self;
+
+        let reference_is_some = reference.is_some();
+
+        let raw_source = match (git, gist, github, remote, local, inline) {
+            // `git` type
+            (Some(url), None, None, None, None, None) => {
+                TempSource::External(Source::Git { url, reference })
+            }
+            // `gist` type
+            (None, Some(identifier), None, None, None, None) => {
+                let url = Url::parse(&format!("https://{}/{}", GIST_HOST, identifier))
+                    .chain(s!("failed to construct Gist URL using `{}`", identifier))?;
+                TempSource::External(Source::Git { url, reference })
+            }
+            // `github` type
+            (None, None, Some(repository), None, None, None) => {
+                let url = Url::parse(&format!(
                     "https://{}/{}/{}",
                     GITHUB_HOST, repository.username, repository.repository
                 ))
-                .chain(s!("failed to construct GitHub URL using `{}`", repository))?
-            } else {
-                // This assumes `deserialize_raw_plugin_inner()` validated correctly.
-                unreachable!()
-            };
-
-            Source::Git {
-                url,
-                reference: self.reference,
+                .chain(s!("failed to construct GitHub URL using `{}`", repository))?;
+                TempSource::External(Source::Git { url, reference })
+            }
+            // `remote` type
+            (None, None, None, Some(url), None, None) => {
+                TempSource::External(Source::Remote { url })
+            }
+            // `local` type
+            (None, None, None, None, Some(directory), None) => {
+                TempSource::External(Source::Local { directory })
+            }
+            // `inline` type
+            (None, None, None, None, None, Some(raw)) => TempSource::Inline(raw),
+            _ => {
+                bail!("plugin `{}` has multiple source fields", name);
             }
         };
 
-        validate_template_names(&self.apply, templates)?;
+        match raw_source {
+            TempSource::External(source) => {
+                if !source.is_git() && reference_is_some {
+                    bail!(
+                        "`branch`, `tag`, and `revision` fields are not supported by this plugin \
+                         type"
+                    );
+                }
 
-        Ok(Plugin {
-            name,
-            source,
-            directory: self.directory,
-            uses: self.uses,
-            apply: self.apply,
-        })
+                validate_template_names(&apply, templates)?;
+
+                Ok(Plugin::External(ExternalPlugin {
+                    name,
+                    source,
+                    directory,
+                    uses,
+                    apply,
+                }))
+            }
+            TempSource::Inline(raw) => {
+                for (field, is_some) in [
+                    (
+                        "`branch`, `tag`, and `revision` fields are",
+                        reference_is_some,
+                    ),
+                    ("`directory` field is", directory.is_some()),
+                    ("`use` field is", uses.is_some()),
+                    ("`apply` field is", apply.is_some()),
+                ]
+                .iter()
+                {
+                    if *is_some {
+                        bail!("the {} not supported by inline plugins", field);
+                    }
+                }
+                Ok(Plugin::Inline(InlinePlugin { name, raw }))
+            }
+        }
     }
 }
 
@@ -361,9 +391,9 @@ impl RawConfig {
         // Normalize the plugins.
         let mut normalized_plugins = Vec::with_capacity(plugins.len());
 
-        for (name, RawPlugin { inner }) in plugins {
+        for (name, plugin) in plugins {
             normalized_plugins.push(
-                inner
+                plugin
                     .normalize(name.clone(), &templates)
                     .chain(s!("failed to normalize plugin `{}`", name))?,
             );
@@ -456,7 +486,7 @@ mod tests {
     #[test]
     fn deserialize_raw_plugin_git() {
         let mut expected = RawPlugin::default();
-        expected.inner.git = Some(Url::parse("https://github.com/rossmacarthur/sheldon").unwrap());
+        expected.git = Some(Url::parse("https://github.com/rossmacarthur/sheldon").unwrap());
         let plugin: RawPlugin =
             toml::from_str("git = 'https://github.com/rossmacarthur/sheldon'").unwrap();
         assert_eq!(plugin, expected);
@@ -465,7 +495,7 @@ mod tests {
     #[test]
     fn deserialize_raw_plugin_github() {
         let mut expected = RawPlugin::default();
-        expected.inner.github = Some(GitHubRepository {
+        expected.github = Some(GitHubRepository {
             username: "rossmacarthur".into(),
             repository: "sheldon".into(),
         });
@@ -481,6 +511,7 @@ mod tests {
             ("github", "rossmacarthur/sheldon"),
             ("remote", "https://ross.macarthur.io"),
             ("local", "~/.dotfiles/zsh/pure"),
+            ("inline", "derp"),
         ];
 
         for (a, example_a) in &sources {
@@ -489,8 +520,11 @@ mod tests {
                     continue;
                 }
                 let text = format!("{} = '{}'\n{} = '{}'", a, example_a, b, example_b);
-                let e = toml::from_str::<RawPlugin>(&text).unwrap_err();
-                assert_eq!(e.to_string(), "multiple source fields specified",)
+                let e = toml::from_str::<RawPlugin>(&text)
+                    .unwrap()
+                    .normalize("test".to_string(), &IndexMap::new())
+                    .unwrap_err();
+                assert_eq!(e.to_string(), "plugin `test` has multiple source fields")
             }
         }
     }

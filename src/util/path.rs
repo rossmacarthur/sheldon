@@ -115,5 +115,4 @@ mod tests {
             PathBuf::from("~")
         )
     }
-
 }

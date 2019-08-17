@@ -42,6 +42,7 @@ A fast, configurable, shell plugin manager.
 - [Configuration: plugin options](#configuration-plugin-options)
   - [`use`](#use)
   - [`apply`](#apply)
+- [Configuration: inline plugins](#configuration-inline-plugins)
 - [Configuration: templates](#configuration-templates)
   - [Custom templates](#custom-templates)
   - [Example: symlinking files](#example-symlinking-files)
@@ -144,12 +145,12 @@ The output of this command is highly configurable. You can define your own
 
 **sheldon** accepts the following global command line options.
 
-| Option                        | Environment variable  | Default                | Description                  |
-| ----------------------------- | --------------------- | ---------------------- | ---------------------------- |
-| `--home <home>`               | `HOME`                | Automatically detected | Override the home directory. |
-| `--root <root>`               | `SHELDON_ROOT`        | `<home>/.zsh`          | Override the root directory. |
-| `--config-file <config-file>` | `SHELDON_CONFIG_FILE` | `<root>/plugins.toml`  | Override the config file.    |
-| `--lock-file <lock-file>`     | `SHELDON_LOCK_FILE`   | `<config-file>.lock`   | Override the lock file.      |
+| Option                        | Environment variable  | Description                                              |
+| ----------------------------- | --------------------- | -------------------------------------------------------- |
+| `--home <home>`               | `HOME`                | Set the home directory.                                  |
+| `--root <root>`               | `SHELDON_ROOT`        | Set the root directory. (*default:* `<home>/.zsh`)       |
+| `--config-file <config-file>` | `SHELDON_CONFIG_FILE` | Set the config file. (*default:*  `<root>/plugins.toml`) |
+| `--lock-file <lock-file>`     | `SHELDON_LOCK_FILE`   | Set the lock file. (*default:* `<config-file>.lock`)     |
 
 **Note:** in rare circumstances **sheldon** will not be able to automatically
 detect the user's home directory. You should only have to set the `--home`
@@ -238,7 +239,7 @@ local = "~/Downloads/repositories/pure"
 
 ## Configuration: plugin options
 
-These are options that are common to all plugins.
+These are options that are common to all the above plugins.
 
 ### `use`
 
@@ -266,6 +267,18 @@ apply = ["source", "PATH"]
 
 You can define your own [custom templates](#custom-templates) to apply to your
 plugins.
+
+## Configuration: inline plugins
+
+For convenience it also possible to define Inline plugins. An Inline plugin must
+set the `inline` field and specify the raw source.
+
+```toml
+[plugins.pure]
+inline = """
+echo 'not really `pure`'
+"""
+```
 
 ## Configuration: templates
 
