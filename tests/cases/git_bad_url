@@ -1,0 +1,30 @@
+# plugins.toml
+[plugins.test]
+github = "rossmacarthur/sheldon-test"
+
+[plugins.bad-test]
+github = "rossmacarthur/sheldon-bad-url"
+
+# lock.stdout
+
+# lock.stderr
+[LOADED] ~/plugins.toml
+    [CLONED] https://github.com/rossmacarthur/sheldon-test
+
+[ERROR] failed to install source `https://github.com/rossmacarthur/sheldon-bad-url`
+  due to: failed to git clone `https://github.com/rossmacarthur/sheldon-bad-url`
+  due to: remote authentication required but no callback set; class=Net (12)
+
+# source.stdout
+source "<root>/repositories/github.com/rossmacarthur/sheldon-test/test.plugin.zsh"
+
+# source.stderr
+[LOADED] ~/plugins.toml
+   [CHECKED] https://github.com/rossmacarthur/sheldon-test
+  [RENDERED] test
+
+[ERROR] failed to install source `https://github.com/rossmacarthur/sheldon-bad-url`
+  due to: failed to git clone `https://github.com/rossmacarthur/sheldon-bad-url`
+  due to: remote authentication required but no callback set; class=Net (12)
+
+# end

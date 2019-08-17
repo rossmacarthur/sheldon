@@ -1,0 +1,24 @@
+# plugins.toml
+
+# plugins.lock
+version = "<version>"
+home = "<root>"
+root = "<root>"
+config_file = "<root>/plugins.toml"
+lock_file = "<root>/plugins.lock"
+plugins = []
+
+[templates]
+
+# lock.stdout
+
+# lock.stderr
+[LOADED] ~/plugins.toml
+[LOCKED] ~/plugins.lock
+
+# source.stdout
+
+# source.stderr
+[UNLOCKED] ~/plugins.lock
+
+# end
