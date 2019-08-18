@@ -15,7 +15,9 @@ A fast, configurable, shell plugin manager.
     - First class support for Gists.
   - Arbitrary remote files.
   - Local plugins.
+  - Inline plugins.
 - Highly configurable install methods using [handlebars] templating.
+- Shell agnostic, with sensible defaults for [Zsh].
 - Super-fast parallel installation.
 - Configuration file using [TOML] syntax.
 - Uses a lock file for much faster loading of plugins.
@@ -103,13 +105,11 @@ This command installs the plugins sources and generates the lock file. If we ran
 this on the example configuration file above, then the following output would be
 produced.
 
-<img width="437" alt="sheldon lock output"
-src="https://user-images.githubusercontent.com/17109887/60550355-059def80-9d28-11e9-8b1e-67b5fb10e74d.png">
+<img width="437" alt="sheldon lock output" src="https://user-images.githubusercontent.com/17109887/60550355-059def80-9d28-11e9-8b1e-67b5fb10e74d.png">
 
 Running it again would not redownload the plugin
 
-<img width="437" alt="image"
-src="https://user-images.githubusercontent.com/17109887/60550441-4433aa00-9d28-11e9-8429-e6380889e348.png">
+<img width="437" alt="image" src="https://user-images.githubusercontent.com/17109887/60550441-4433aa00-9d28-11e9-8429-e6380889e348.png">
 
 ### `source` command
 
@@ -117,14 +117,12 @@ This command generates the shell script to be sourced. This command will first
 check if there is an up to date lock file otherwise it will relock the
 configuration file.
 
-<img width="688" alt="image"
-src="https://user-images.githubusercontent.com/17109887/60550596-cae88700-9d28-11e9-906b-74f6f5d80149.png">
+<img width="688" alt="image" src="https://user-images.githubusercontent.com/17109887/60550596-cae88700-9d28-11e9-906b-74f6f5d80149.png">
 
 If we now modify our configuration file and run this command again it will
 relock the configuration prior to generating the script.
 
-<img width="691" alt="image"
-src="https://user-images.githubusercontent.com/17109887/60550665-02573380-9d29-11e9-84e9-5dfa89b11895.png">
+<img width="691" alt="image" src="https://user-images.githubusercontent.com/17109887/60550665-02573380-9d29-11e9-84e9-5dfa89b11895.png">
 
 The output of this command is highly configurable. You can define your own
 [custom templates](#configuration-templates) to apply to your plugins.
@@ -403,7 +401,8 @@ match = [
 ]
 ```
 
-**Note:** if you are not using Zsh then you should probably change this setting.
+**Note:** if you are not using [Zsh] then you should probably change this
+setting.
 
 ### `apply`
 
@@ -428,3 +427,4 @@ details.
 [releases]: https://github.com/rossmacarthur/sheldon/releases
 [travis]: https://travis-ci.org/rossmacarthur/sheldon
 [TOML]: https://github.com/toml-lang/toml
+[Zsh]: http://www.zsh.org/
