@@ -116,7 +116,7 @@ where
 
 impl<T> ResultExt<T, Error> for Result<T> {
     /// Chain a message to the `Result`.
-    fn chain<C, D>(self, c: C) -> Result<T>
+    fn chain<C, D>(self, c: C) -> Self
     where
         C: FnOnce() -> D,
         D: fmt::Display,
@@ -167,7 +167,7 @@ impl fmt::Display for Error {
 impl Error {
     /// Create an `Error` from a custom message.
     pub(crate) fn custom(message: String) -> Self {
-        Error {
+        Self {
             kind: ErrorKind::Custom,
             messages: vec![message],
         }

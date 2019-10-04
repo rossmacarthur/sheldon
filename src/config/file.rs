@@ -136,13 +136,13 @@ impl<'de> Deserialize<'de> for Template {
 impl From<TemplateAux> for Template {
     fn from(aux: TemplateAux) -> Self {
         let TemplateAux { value, each } = aux;
-        Template { value, each }
+        Self { value, each }
     }
 }
 
 impl From<&str> for Template {
     fn from(s: &str) -> Self {
-        Template {
+        Self {
             value: s.to_string(),
             each: false,
         }
@@ -197,7 +197,7 @@ impl<'de> Deserialize<'de> for GitHubRepository {
 impl Default for RawConfig {
     /// Returns the default `RawConfig`.
     fn default() -> Self {
-        RawConfig {
+        Self {
             matches: vec_into![
                 "{{ name }}.plugin.zsh",
                 "{{ name }}.zsh",
@@ -244,7 +244,7 @@ impl fmt::Display for GitHubRepository {
 impl Source {
     fn is_git(&self) -> bool {
         match *self {
-            Source::Git { .. } => true,
+            Self::Git { .. } => true,
             _ => false,
         }
     }
@@ -361,7 +361,7 @@ impl RawConfig {
     {
         let path = path.as_ref();
         let contents = fs::read(&path).chain(s!("failed to read from `{}`", path.display()))?;
-        let config: RawConfig = toml::from_str(&String::from_utf8_lossy(&contents))
+        let config: Self = toml::from_str(&String::from_utf8_lossy(&contents))
             .chain(s!("failed to deserialize contents as TOML"))?;
         Ok(config)
     }

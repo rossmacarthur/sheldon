@@ -46,13 +46,13 @@ pub struct Context {
 
 impl Default for Command {
     fn default() -> Self {
-        Command::Source
+        Self::Source
     }
 }
 
 impl Default for Verbosity {
     fn default() -> Self {
-        Verbosity::Normal
+        Self::Normal
     }
 }
 

@@ -140,13 +140,13 @@ impl GitReference {
     /// [Cargo]: https://github.com/rust-lang/cargo/blob/master/src/cargo/sources/git/utils.rs#L207
     fn lock(&self, repo: &git2::Repository) -> Result<LockedGitReference> {
         let reference = match self {
-            GitReference::Branch(s) => repo
+            Self::Branch(s) => repo
                 .find_branch(&format!("origin/{}", s), git2::BranchType::Remote)
                 .chain(s!("failed to find branch `{}`", s))?
                 .get()
                 .target()
                 .chain(s!("branch `{}` does not have a target", s))?,
-            GitReference::Revision(s) => {
+            Self::Revision(s) => {
                 let obj = repo
                     .revparse_single(s)
                     .chain(s!("failed to find revision `{}`", s))?;
@@ -155,7 +155,7 @@ impl GitReference {
                     None => obj.id(),
                 }
             }
-            GitReference::Tag(s) => (|| -> result::Result<_, git2::Error> {
+            Self::Tag(s) => (|| -> result::Result<_, git2::Error> {
                 let id = repo.refname_to_id(&format!("refs/tags/{}", s))?;
                 let obj = repo.find_object(id, None)?;
                 let obj = obj.peel(git2::ObjectType::Commit)?;
@@ -170,9 +170,7 @@ impl GitReference {
 impl fmt::Display for GitReference {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            GitReference::Branch(s) | GitReference::Revision(s) | GitReference::Tag(s) => {
-                write!(f, "{}", s)
-            }
+            Self::Branch(s) | Self::Revision(s) | Self::Tag(s) => write!(f, "{}", s),
         }
     }
 }
@@ -180,12 +178,12 @@ impl fmt::Display for GitReference {
 impl fmt::Display for Source {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Source::Git {
+            Self::Git {
                 url,
                 reference: Some(reference),
             } => write!(f, "{}@{}", url, reference),
-            Source::Git { url, .. } | Source::Remote { url } => write!(f, "{}", url),
-            Source::Local { directory } => write!(f, "{}", directory.display()),
+            Self::Git { url, .. } | Self::Remote { url } => write!(f, "{}", url),
+            Self::Local { directory } => write!(f, "{}", directory.display()),
         }
     }
 }
@@ -332,13 +330,13 @@ impl Source {
     /// Install this `Source`.
     fn lock(self, ctx: &Context) -> Result<LockedSource> {
         match self {
-            Source::Git { url, reference } => {
+            Self::Git { url, reference } => {
                 let mut directory = ctx.root.join(CLONE_DIRECTORY);
                 directory.push(url.host_str().chain(s!("URL `{}` has no host", url))?);
                 directory.push(url.path().trim_start_matches('/'));
                 Self::lock_git(ctx, directory, url, reference)
             }
-            Source::Remote { url } => {
+            Self::Remote { url } => {
                 let mut directory = ctx.root.join(DOWNLOAD_DIRECTORY);
                 directory.push(url.host_str().chain(s!("URL `{}` has no host", url))?);
 
@@ -353,7 +351,7 @@ impl Source {
 
                 Self::lock_remote(ctx, directory, filename, url)
             }
-            Source::Local { directory } => Self::lock_local(ctx, directory),
+            Self::Local { directory } => Self::lock_local(ctx, directory),
         }
     }
 }
@@ -596,7 +594,7 @@ impl LockedConfig {
         P: AsRef<Path>,
     {
         let path = path.as_ref();
-        let locked: LockedConfig = toml::from_str(&String::from_utf8_lossy(
+        let locked: Self = toml::from_str(&String::from_utf8_lossy(
             &fs::read(&path).chain(s!("failed to read locked config from `{}`", path.display()))?,
         ))
         .chain(s!("failed to deserialize locked config"))?;

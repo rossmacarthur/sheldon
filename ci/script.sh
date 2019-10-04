@@ -8,7 +8,7 @@ main() {
     cargo fmt --verbose -- --check
 
     if [ "$TRAVIS_RUST_VERSION" = "stable" ]; then
-        cargo clippy --verbose --all --all-targets --all-features -- -D warnings
+        cargo clippy --verbose --all --all-targets --all-features -- -D warnings -D clippy::use_self
     else
         cargo build --verbose --all --all-targets --all-features
     fi
