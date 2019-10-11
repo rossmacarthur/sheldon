@@ -66,7 +66,7 @@ struct LockedSource {
 }
 
 /// A locked `ExternalPlugin`.
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, PartialEq, Serialize)]
 struct LockedExternalPlugin {
     /// The name of this plugin.
     name: String,
@@ -79,14 +79,14 @@ struct LockedExternalPlugin {
 }
 
 /// A locked `Plugin`.
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, PartialEq, Serialize)]
 #[serde(untagged)]
 enum LockedPlugin {
     External(LockedExternalPlugin),
     Inline(InlinePlugin),
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, PartialEq, Serialize)]
 pub struct LockedContext {
     /// The current crate version.
     version: String,
@@ -132,6 +132,14 @@ impl PartialEq<Context> for LockedContext {
     }
 }
 
+impl fmt::Display for GitReference {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::Branch(s) | Self::Revision(s) | Self::Tag(s) => write!(f, "{}", s),
+        }
+    }
+}
+
 impl GitReference {
     /// Consume the `GitReference` and convert it to a `LockedGitReference`.
     ///
@@ -167,14 +175,6 @@ impl GitReference {
     }
 }
 
-impl fmt::Display for GitReference {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Self::Branch(s) | Self::Revision(s) | Self::Tag(s) => write!(f, "{}", s),
-        }
-    }
-}
-
 impl fmt::Display for Source {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
@@ -189,7 +189,7 @@ impl fmt::Display for Source {
 }
 
 impl Source {
-    /// Clone a Git repository and checks it out at a particular revision.
+    /// Clones a Git repository and checks it out at a particular revision.
     fn lock_git(
         ctx: &Context,
         directory: PathBuf,
@@ -546,7 +546,7 @@ impl Config {
                 .collect::<Vec<_>>()
                 // iterate over the `Vec<Result<_>>`
                 .into_iter()
-                // log messages for `Err`s and filter them out
+                // store `Err`s and filter them out
                 .filter_map(|result| match result {
                     Ok(ok) => Some(ok),
                     Err(err) => {
@@ -560,7 +560,7 @@ impl Config {
                 .collect::<Vec<_>>()
                 // iterate over the `Vec<(index, Result<LockedExternalPlugin>)>>`
                 .into_iter()
-                // log messages for `Err`s and filter them out
+                // store `Err`s and filter them out
                 .filter_map(|(index, result)| match result {
                     Ok(plugin) => Some((index, LockedPlugin::External(plugin))),
                     Err(err) => {
@@ -716,13 +716,11 @@ impl LockedConfig {
         P: AsRef<Path>,
     {
         let path = path.as_ref();
-
         fs::write(
             path,
             &toml::to_string(&self).chain(s!("failed to serialize locked config"))?,
         )
         .chain(s!("failed to write locked config to `{}`", path.display()))?;
-
         Ok(())
     }
 }
@@ -734,93 +732,41 @@ impl LockedConfig {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::{fs, io::Read, process::Command};
+    use std::{
+        fs,
+        io::{Read, Write},
+        process::Command,
+        thread, time,
+    };
     use url::Url;
 
-    fn git_create_test_repo(directory: &Path) -> io::Result<()> {
+    fn git_clone_sheldon_test(temp: &tempfile::TempDir) -> git2::Repository {
+        let directory = temp.path();
         Command::new("git")
-            .arg("-C")
-            .arg(&directory)
-            .arg("init")
-            .output()?;
-        Command::new("git")
-            .arg("-C")
-            .arg(&directory)
-            .arg("remote")
-            .arg("add")
-            .arg("origin")
+            .arg("clone")
             .arg("https://github.com/rossmacarthur/sheldon-test")
-            .output()?;
-        Command::new("git")
-            .arg("-C")
             .arg(&directory)
-            .arg("fetch")
-            .output()?;
-        Command::new("touch")
-            .arg(directory.join("test.txt"))
-            .output()?;
-        Command::new("git")
-            .arg("-C")
-            .arg(directory)
-            .arg("add")
-            .arg(".")
-            .output()?;
-        Command::new("git")
-            .arg("-C")
-            .arg(directory)
-            .arg("commit")
-            .arg("-m")
-            .arg("Initial commit")
-            .output()?;
-        Command::new("git")
-            .arg("-C")
-            .arg(directory)
-            .arg("tag")
-            .arg("derp")
-            .output()?;
-        Ok(())
-    }
-
-    fn git_get_last_commit(directory: &Path) -> String {
-        let output = Command::new("git")
-            .arg("-C")
-            .arg(directory)
-            .arg("log")
-            .arg("-n")
-            .arg("1")
-            .arg("--pretty=format:\"%H\"")
             .output()
-            .unwrap();
-        let stdout = String::from_utf8_lossy(&output.stdout);
-        stdout.trim().trim_matches('"').to_string()
+            .expect("git clone rossmacarthur/sheldon-test");
+        git2::Repository::open(directory).unwrap()
     }
 
-    fn git_get_last_origin_commit(directory: &Path) -> String {
-        let output = Command::new("git")
-            .arg("-C")
-            .arg(directory)
-            .arg("log")
-            .arg("-n")
-            .arg("1")
-            .arg("--pretty=format:\"%H\"")
-            .arg("origin/master")
-            .output()
-            .unwrap();
-        let stdout = String::from_utf8_lossy(&output.stdout);
-        stdout.trim().trim_matches('"').to_string()
+    fn create_test_context(root: &Path) -> Context {
+        Context {
+            version: clap::crate_version!(),
+            verbosity: crate::Verbosity::Quiet,
+            no_color: true,
+            home: "/".into(),
+            config_file: root.join("config.toml"),
+            lock_file: root.join("config.lock"),
+            root: root.to_path_buf(), // must come after the joins above
+            command: crate::Command::Lock,
+            reinstall: false,
+            relock: false,
+        }
     }
 
-    fn git_status(directory: &Path) -> String {
-        let output = Command::new("git")
-            .arg("-C")
-            .arg(directory)
-            .arg("status")
-            .output()
-            .unwrap();
-        String::from_utf8_lossy(&output.stdout).to_string()
-    }
-
-    fn read_file_contents(filename: &Path) -> result::Result<String, io::Error> {
+    fn read_file_contents(filename: &Path) -> io::Result<String> {
         let mut file = fs::File::open(filename)?;
         let mut contents = String::new();
         file.read_to_string(&mut contents)?;
@@ -828,67 +774,146 @@ mod tests {
     }
 
     #[test]
-    fn git_reference_lock_tag() {
-        let temp = tempfile::tempdir().expect("create temporary directory");
-        let directory = temp.path();
-        git_create_test_repo(&directory).expect("create test git repository");
-        let hash = git_get_last_commit(&directory);
-        let repo = git2::Repository::open(directory).unwrap();
-
-        let reference = GitReference::Tag("derp".to_string());
-        let locked = reference.lock(&repo).unwrap();
-
-        assert_eq!(locked.0.to_string(), hash);
+    fn git_reference_to_string() {
+        assert_eq!(
+            GitReference::Branch("feature".to_string()).to_string(),
+            "feature"
+        );
+        assert_eq!(
+            GitReference::Revision("ad149784a".to_string()).to_string(),
+            "ad149784a"
+        );
+        assert_eq!(GitReference::Tag("0.2.3".to_string()).to_string(), "0.2.3");
     }
 
     #[test]
     fn git_reference_lock_branch() {
         let temp = tempfile::tempdir().expect("create temporary directory");
-        let directory = temp.path();
-        git_create_test_repo(&directory).expect("create test git repository");
-        let hash = git_get_last_origin_commit(&directory);
-        let repo = git2::Repository::open(directory).unwrap();
+        let repo = git_clone_sheldon_test(&temp);
 
-        let reference = GitReference::Branch("master".to_string());
+        let reference = GitReference::Branch("feature".to_string());
         let locked = reference.lock(&repo).unwrap();
+        assert_eq!(
+            locked.0.to_string(),
+            "09ead574b20bb573ae0a53c1a5c546181cfa41c8"
+        );
 
-        assert_eq!(locked.0.to_string(), hash);
+        let reference = GitReference::Branch("not-a-branch".to_string());
+        let error = reference.lock(&repo).unwrap_err();
+        assert_eq!(
+            error.to_string(),
+            "failed to find branch `not-a-branch`\ncannot locate remote-tracking branch \
+             \'origin/not-a-branch\'; class=Reference (4); code=NotFound (-3)"
+        );
     }
 
     #[test]
     fn git_reference_lock_revision() {
         let temp = tempfile::tempdir().expect("create temporary directory");
-        let directory = temp.path();
-        git_create_test_repo(&directory).expect("create test git repository");
-        let hash = git_get_last_commit(&directory);
-        let repo = git2::Repository::open(directory).unwrap();
+        let repo = git_clone_sheldon_test(&temp);
 
-        let reference = GitReference::Revision(hash.clone());
+        let reference = GitReference::Revision("ad149784a".to_string());
         let locked = reference.lock(&repo).unwrap();
+        assert_eq!(
+            locked.0.to_string(),
+            "ad149784a1538291f2477fb774eeeed4f4d29e45"
+        );
 
-        assert_eq!(locked.0.to_string(), hash);
+        let reference = GitReference::Revision("2c4ed7710".to_string());
+        let error = reference.lock(&repo).unwrap_err();
+        assert_eq!(
+            error.to_string(),
+            "failed to find revision `2c4ed7710`\nrevspec \'2c4ed7710\' not found; \
+             class=Reference (4); code=NotFound (-3)"
+        );
     }
 
     #[test]
-    fn source_lock_git() {
+    fn git_reference_lock_tag() {
+        let temp = tempfile::tempdir().expect("create temporary directory");
+        let repo = git_clone_sheldon_test(&temp);
+
+        let reference = GitReference::Tag("v0.1.0".to_string());
+        let locked = reference.lock(&repo).unwrap();
+        assert_eq!(
+            locked.0.to_string(),
+            "be8fde277e76f35efbe46848fb352cee68549962"
+        );
+
+        let reference = GitReference::Tag("v0.2.0".to_string());
+        let error = reference.lock(&repo).unwrap_err();
+        assert_eq!(
+            error.to_string(),
+            "failed to find tag `v0.2.0`\nreference \'refs/tags/v0.2.0\' not found; \
+             class=Reference (4); code=NotFound (-3)"
+        );
+    }
+
+    #[test]
+    fn source_to_string() {
+        assert_eq!(
+            Source::Git {
+                url: Url::parse("https://github.com/rossmacarthur/sheldon-test").unwrap(),
+                reference: Some(GitReference::Tag("v0.3.0".to_string())),
+            }
+            .to_string(),
+            "https://github.com/rossmacarthur/sheldon-test@v0.3.0"
+        );
+        assert_eq!(
+            Source::Git {
+                url: Url::parse("https://github.com/rossmacarthur/sheldon-test").unwrap(),
+                reference: None,
+            }
+            .to_string(),
+            "https://github.com/rossmacarthur/sheldon-test"
+        );
+        assert_eq!(
+            Source::Remote {
+                url: Url::parse("https://github.com/rossmacarthur/sheldon/raw/0.3.0/LICENSE-MIT")
+                    .unwrap(),
+            }
+            .to_string(),
+            "https://github.com/rossmacarthur/sheldon/raw/0.3.0/LICENSE-MIT"
+        );
+        assert_eq!(
+            Source::Local {
+                directory: PathBuf::from("~/plugins")
+            }
+            .to_string(),
+            "~/plugins"
+        );
+    }
+
+    #[test]
+    fn source_lock_git_and_reinstall() {
         let temp = tempfile::tempdir().expect("create temporary directory");
         let directory = temp.path();
+        let mut ctx = create_test_context(directory);
+        let url = Url::parse("https://github.com/rossmacarthur/sheldon-test").unwrap();
 
-        let locked = Source::lock_git(
-            &create_test_context(&directory.to_string_lossy()),
-            directory.to_path_buf(),
-            Url::parse("https://github.com/rossmacarthur/sheldon").unwrap(),
-            None,
-        )
-        .unwrap();
+        let locked = Source::lock_git(&ctx, directory.to_path_buf(), url.clone(), None).unwrap();
 
         assert_eq!(locked.directory, directory);
         assert_eq!(locked.filename, None);
+        let repo = git2::Repository::open(&directory).unwrap();
         assert_eq!(
-            git_status(&directory),
-            "On branch master\nYour branch is up to date with 'origin/master'.\n\nnothing to \
-             commit, working tree clean\n"
+            repo.head().unwrap().target().unwrap().to_string(),
+            "be8fde277e76f35efbe46848fb352cee68549962"
         );
+
+        let modified = fs::metadata(&directory).unwrap().modified().unwrap();
+        thread::sleep(time::Duration::from_secs(1));
+        ctx.reinstall = true;
+        let locked = Source::lock_git(&ctx, directory.to_path_buf(), url, None).unwrap();
+
+        assert_eq!(locked.directory, directory);
+        assert_eq!(locked.filename, None);
+        let repo = git2::Repository::open(&directory).unwrap();
+        assert_eq!(
+            repo.head().unwrap().target().unwrap().to_string(),
+            "be8fde277e76f35efbe46848fb352cee68549962"
+        );
+        assert!(fs::metadata(&directory).unwrap().modified().unwrap() > modified)
     }
 
     #[test]
@@ -897,214 +922,381 @@ mod tests {
         let directory = temp.path();
 
         let locked = Source::lock_git(
-            &create_test_context(&directory.to_string_lossy()),
+            &create_test_context(directory),
             directory.to_path_buf(),
-            Url::parse("https://github.com/rossmacarthur/sheldon").unwrap(),
-            Some(GitReference::Tag("0.2.0".to_string())),
+            Url::parse("https://github.com/rossmacarthur/sheldon-test").unwrap(),
+            Some(GitReference::Revision(
+                "ad149784a1538291f2477fb774eeeed4f4d29e45".to_string(),
+            )),
         )
         .unwrap();
 
         assert_eq!(locked.directory, directory);
         assert_eq!(locked.filename, None);
+        let repo = git2::Repository::open(&directory).unwrap();
+        let head = repo.head().unwrap();
         assert_eq!(
-            git_get_last_commit(&directory),
-            "a2cf341b37c958e490aafc92dd775c597addf3c4"
-        );
+            head.target().unwrap().to_string(),
+            "ad149784a1538291f2477fb774eeeed4f4d29e45"
+        )
     }
 
     #[test]
-    fn source_lock_remote() {
-        let manifest_dir: PathBuf = env!("CARGO_MANIFEST_DIR").into();
+    fn source_lock_remote_and_reinstall() {
+        let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         let temp = tempfile::tempdir().expect("create temporary directory");
         let directory = temp.path();
         let filename = directory.join("test.txt");
+        let mut ctx = create_test_context(directory);
+        let url =
+            Url::parse("https://github.com/rossmacarthur/sheldon/raw/0.3.0/LICENSE-MIT").unwrap();
 
-        let locked = Source::lock_remote(
-            &create_test_context(&directory.to_string_lossy()),
-            directory.to_path_buf(),
-            filename.clone(),
-            Url::parse("https://github.com/rossmacarthur/sheldon/raw/0.3.0/LICENSE-MIT").unwrap(),
-        )
-        .unwrap();
+        let locked =
+            Source::lock_remote(&ctx, directory.to_path_buf(), filename.clone(), url.clone())
+                .unwrap();
 
         assert_eq!(locked.directory, directory);
         assert_eq!(locked.filename, Some(filename.clone()));
         assert_eq!(
             read_file_contents(&filename).unwrap(),
             read_file_contents(&manifest_dir.join("LICENSE-MIT")).unwrap()
-        )
-    }
+        );
 
-    fn create_test_context(root: &str) -> Context {
-        let root = PathBuf::from(root);
-        Context {
-            version: clap::crate_version!(),
-            verbosity: crate::Verbosity::Quiet,
-            no_color: true,
-            home: "/".into(),
-            config_file: root.join("config.toml"),
-            lock_file: root.join("config.lock"),
-            root, // must come after the joins above
-            command: crate::Command::Lock,
-            reinstall: false,
-            relock: false,
-        }
+        let modified = fs::metadata(&filename).unwrap().modified().unwrap();
+        thread::sleep(time::Duration::from_secs(1));
+        ctx.reinstall = true;
+        let locked =
+            Source::lock_remote(&ctx, directory.to_path_buf(), filename.clone(), url).unwrap();
+
+        assert_eq!(locked.directory, directory);
+        assert_eq!(locked.filename, Some(filename.clone()));
+        assert_eq!(
+            read_file_contents(&filename).unwrap(),
+            read_file_contents(&manifest_dir.join("LICENSE-MIT")).unwrap()
+        );
+        assert!(fs::metadata(&filename).unwrap().modified().unwrap() > modified)
     }
 
     #[test]
-    fn plugin_lock_git_with_uses() {
+    fn source_lock_local() {
         let temp = tempfile::tempdir().expect("create temporary directory");
-        let root = temp.path();
-        let directory = root.join("repositories/github.com/rossmacarthur/sheldon");
-        fs::create_dir_all(&directory).unwrap();
-        fs::File::create(directory.join("1.txt")).unwrap();
-        fs::File::create(directory.join("2.txt")).unwrap();
-        fs::File::create(directory.join("test.html")).unwrap();
+        let directory = temp.path();
+        let _ = git_clone_sheldon_test(&temp);
 
+        let locked =
+            Source::lock_local(&create_test_context(directory), directory.to_path_buf()).unwrap();
+
+        assert_eq!(locked.directory, directory);
+        assert_eq!(locked.filename, None);
+    }
+
+    #[test]
+    fn source_lock_with_git() {
+        let temp = tempfile::tempdir().expect("create temporary directory");
+        let directory = temp.path();
+        let ctx = create_test_context(directory);
+
+        let source = Source::Git {
+            url: Url::parse("https://github.com/rossmacarthur/sheldon-test").unwrap(),
+            reference: None,
+        };
+        let locked = source.lock(&ctx).unwrap();
+
+        assert_eq!(
+            locked.directory,
+            directory.join("repositories/github.com/rossmacarthur/sheldon-test")
+        );
+        assert_eq!(locked.filename, None)
+    }
+
+    #[test]
+    fn source_lock_with_remote() {
+        let temp = tempfile::tempdir().expect("create temporary directory");
+        let directory = temp.path();
+        let ctx = create_test_context(directory);
+
+        let source = Source::Remote {
+            url: Url::parse("https://github.com/rossmacarthur/sheldon/raw/0.3.0/LICENSE-MIT")
+                .unwrap(),
+        };
+        let locked = source.lock(&ctx).unwrap();
+
+        assert_eq!(
+            locked.directory,
+            directory.join("downloads/github.com/rossmacarthur/sheldon/raw/0.3.0")
+        );
+        assert_eq!(
+            locked.filename,
+            Some(
+                directory.join("downloads/github.com/rossmacarthur/sheldon/raw/0.3.0/LICENSE-MIT")
+            )
+        );
+    }
+
+    #[test]
+    fn external_plugin_lock_git_with_uses() {
+        let temp = tempfile::tempdir().expect("create temporary directory");
+        let directory = temp.path();
+        let ctx = create_test_context(directory);
         let plugin = ExternalPlugin {
-            name: "test".into(),
+            name: "test".to_string(),
             source: Source::Git {
-                url: Url::parse("https://github.com/rossmacarthur/sheldon").unwrap(),
-                reference: None,
+                url: Url::parse("https://github.com/rossmacarthur/sheldon-test").unwrap(),
+                reference: Some(GitReference::Tag("v0.1.0".to_string())),
             },
             directory: None,
-            uses: Some(vec!["*.txt".into(), "{{ name }}.html".into()]),
+            uses: Some(vec!["*.md".into(), "{{ name }}.plugin.zsh".into()]),
             apply: None,
         };
+        let locked_source = plugin.source.clone().lock(&ctx).unwrap();
+        let clone_directory = directory.join("repositories/github.com/rossmacarthur/sheldon-test");
+
         let locked = plugin
-            .lock(
-                &create_test_context(&root.to_string_lossy()),
-                LockedSource {
-                    directory: directory.clone(),
-                    filename: None,
-                },
-                &[],
-                &["hello".into()],
-            )
+            .lock(&ctx, locked_source, &[], &["hello".into()])
             .unwrap();
 
         assert_eq!(locked.name, String::from("test"));
-        assert_eq!(locked.directory, directory);
+        assert_eq!(locked.directory, clone_directory);
         assert_eq!(
             locked.filenames,
             vec![
-                directory.join("1.txt"),
-                directory.join("2.txt"),
-                directory.join("test.html")
+                clone_directory.join("README.md"),
+                clone_directory.join("test.plugin.zsh")
             ]
         );
         assert_eq!(locked.apply, vec![String::from("hello")]);
     }
 
     #[test]
-    fn plugin_lock_git_with_matches() {
+    fn external_plugin_lock_git_with_matches() {
         let temp = tempfile::tempdir().expect("create temporary directory");
-        let root = temp.path();
-        let directory = root.join("repositories/github.com/rossmacarthur/sheldon");
-        fs::create_dir_all(&directory).unwrap();
-        fs::File::create(directory.join("1.txt")).unwrap();
-        fs::File::create(directory.join("2.txt")).unwrap();
-        fs::File::create(directory.join("test.html")).unwrap();
-
+        let directory = temp.path();
+        let ctx = create_test_context(directory);
         let plugin = ExternalPlugin {
-            name: "test".into(),
+            name: "test".to_string(),
             source: Source::Git {
-                url: Url::parse("https://github.com/rossmacarthur/sheldon").unwrap(),
-                reference: None,
+                url: Url::parse("https://github.com/rossmacarthur/sheldon-test").unwrap(),
+                reference: Some(GitReference::Tag("v0.1.0".to_string())),
             },
             directory: None,
             uses: None,
             apply: None,
         };
+        let locked_source = plugin.source.clone().lock(&ctx).unwrap();
+        let clone_directory = directory.join("repositories/github.com/rossmacarthur/sheldon-test");
+
         let locked = plugin
             .lock(
-                &create_test_context(&root.to_string_lossy()),
-                LockedSource {
-                    directory: directory.clone(),
-                    filename: None,
-                },
-                &["*.txt".into(), "test.html".into()],
-                &["hello".into()],
+                &ctx,
+                locked_source,
+                &["*.plugin.zsh".to_string()],
+                &["hello".to_string()],
             )
             .unwrap();
 
         assert_eq!(locked.name, String::from("test"));
-        assert_eq!(locked.directory, directory);
+        assert_eq!(locked.directory, clone_directory);
         assert_eq!(
             locked.filenames,
-            vec![directory.join("1.txt"), directory.join("2.txt")]
+            vec![clone_directory.join("test.plugin.zsh")]
         );
         assert_eq!(locked.apply, vec![String::from("hello")]);
     }
 
     #[test]
-    fn plugin_lock_remote() {
+    fn external_plugin_lock_remote() {
+        let temp = tempfile::tempdir().expect("create temporary directory");
+        let directory = temp.path();
+        let ctx = create_test_context(directory);
         let plugin = ExternalPlugin {
-            name: "test".into(),
+            name: "test".to_string(),
             source: Source::Remote {
-                url: Url::parse("https://ross.macarthur.io/test.html").unwrap(),
+                url: Url::parse(
+                    "https://github.com/rossmacarthur/sheldon-test/raw/master/test.plugin.zsh",
+                )
+                .unwrap(),
             },
             directory: None,
             uses: None,
             apply: None,
         };
+        let locked_source = plugin.source.clone().lock(&ctx).unwrap();
+        let download_directory =
+            directory.join("downloads/github.com/rossmacarthur/sheldon-test/raw/master");
+
         let locked = plugin
-            .lock(
-                &create_test_context("/home/test"),
-                LockedSource {
-                    directory: "/home/test/downloads/ross.macarthur.io".into(),
-                    filename: Some("/home/test/downloads/ross.macarthur.io/test.html".into()),
-                },
-                &[],
-                &["hello".into()],
-            )
+            .lock(&ctx, locked_source, &[], &["hello".to_string()])
             .unwrap();
 
         assert_eq!(locked.name, String::from("test"));
-        assert_eq!(
-            locked.directory,
-            PathBuf::from("/home/test/downloads/ross.macarthur.io")
-        );
+        assert_eq!(locked.directory, download_directory);
         assert_eq!(
             locked.filenames,
-            vec![PathBuf::from(
-                "/home/test/downloads/ross.macarthur.io/test.html"
-            )]
+            vec![download_directory.join("test.plugin.zsh")]
         );
         assert_eq!(locked.apply, vec![String::from("hello")]);
+    }
+
+    #[test]
+    fn config_lock_empty() {
+        let temp = tempfile::tempdir().expect("create temporary directory");
+        let directory = temp.path();
+        let ctx = create_test_context(directory);
+        let config = Config {
+            matches: Vec::new(),
+            apply: None,
+            templates: IndexMap::new(),
+            plugins: Vec::new(),
+        };
+
+        let locked = config.lock(&ctx).unwrap();
+
+        assert_eq!(
+            locked.ctx,
+            LockedContext {
+                version: clap::crate_version!().to_string(),
+                home: PathBuf::from("/"),
+                root: directory.to_path_buf(),
+                config_file: directory.join("config.toml"),
+                lock_file: directory.join("config.lock")
+            }
+        );
+        assert_eq!(locked.plugins, Vec::new());
+        assert_eq!(locked.templates, IndexMap::new());
+        assert_eq!(locked.errors.len(), 0);
     }
 
     #[test]
     fn config_lock_example_config() {
         let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        let temp = tempfile::tempdir().expect("create temporary directory");
-        let root = temp.path();
+
+        let temp0 = tempfile::tempdir().expect("create temporary directory");
+        let local_dir = temp0.path();
+        let _ = git_clone_sheldon_test(&temp0);
+
+        let temp1 = tempfile::tempdir().expect("create temporary directory");
+        let root = temp1.path();
+        let config_file = manifest_dir.join("docs/plugins.example.toml");
+        let lock_file = root.join("plugins.lock");
         let ctx = Context {
             version: clap::crate_version!(),
             verbosity: crate::Verbosity::Quiet,
             no_color: true,
             home: "/".into(),
             root: root.to_path_buf(),
-            config_file: manifest_dir.join("docs/plugins.example.toml"),
-            lock_file: root.join("plugins.lock"),
+            config_file: config_file.clone(),
+            lock_file: lock_file.clone(),
             command: crate::Command::Lock,
             reinstall: false,
             relock: false,
         };
-        let pyenv_dir = root.join("pyenv");
-        fs::create_dir(&pyenv_dir).unwrap();
 
         let mut config = Config::from_path(&ctx.config_file).unwrap();
         {
             match &mut config.plugins[2] {
                 Plugin::External(ref mut plugin) => {
+                    plugin.name = "sheldon-test".to_string();
                     plugin.source = Source::Local {
-                        directory: pyenv_dir,
-                    }
+                        directory: local_dir.to_path_buf(),
+                    };
                 }
-                Plugin::Inline(_) => {}
+                _ => panic!("expected the 3rd plugin to be external"),
             }
         }
-        config.lock(&ctx).unwrap();
+
+        let locked = config.lock(&ctx).unwrap();
+
+        assert_eq!(
+            locked.ctx,
+            LockedContext {
+                version: clap::crate_version!().to_string(),
+                home: PathBuf::from("/"),
+                root: root.to_path_buf(),
+                config_file,
+                lock_file
+            }
+        );
+        assert_eq!(
+            locked.plugins,
+            vec![
+                LockedPlugin::External(LockedExternalPlugin {
+                    name: "async".to_string(),
+                    directory: root.join("repositories/github.com/mafredri/zsh-async"),
+                    filenames: vec![
+                        root.join("repositories/github.com/mafredri/zsh-async/async.zsh")
+                    ],
+                    apply: vec_into!["function"]
+                }),
+                LockedPlugin::External(LockedExternalPlugin {
+                    name: "pure".to_string(),
+                    directory: root.join("repositories/github.com/sindresorhus/pure"),
+                    filenames: vec![root.join("repositories/github.com/sindresorhus/pure/pure.zsh")],
+                    apply: vec_into!["prompt"]
+                }),
+                LockedPlugin::External(LockedExternalPlugin {
+                    name: "sheldon-test".to_string(),
+                    directory: local_dir.to_path_buf(),
+                    filenames: vec![root.join(local_dir.join("test.plugin.zsh"))],
+                    apply: vec_into!["PATH", "source"]
+                }),
+                LockedPlugin::Inline(InlinePlugin {
+                    name: "ip-netns".to_string(),
+                    raw: r#"# Get ip netns information
+ip_netns_prompt_info() {
+  if (( $+commands[ip] )); then
+    local ref="$(ip netns identify $$)"
+    if [[ ! -z "$ref" ]]; then
+      echo "${ZSH_THEME_IP_NETNS_PREFIX:=(}${ref}${ZSH_THEME_IP_NETNS_SUFFIX:=)}"
+    fi
+  fi
+}
+"#
+                    .to_string()
+                }),
+                LockedPlugin::External(LockedExternalPlugin {
+                    name: "docker-destroy-all".to_string(),
+                    directory: root.join("repositories/gist.github.com/79ee61f7c140c63d2786"),
+                    filenames: vec![root.join(
+                        "repositories/gist.github.com/79ee61f7c140c63d2786/get_last_pane_path.sh"
+                    )],
+                    apply: vec_into!["PATH"]
+                })
+            ]
+        );
+        assert_eq!(
+            locked.templates,
+            indexmap_into![
+                "function" => Template {
+                    value: "ln -sf \"{{ filename }}\" \"{{ root }}/functions/{{ name }}\"".to_string(),
+                    each: true
+                },
+                "prompt" => Template {
+                    value:
+                        "ln -sf \"{{ filename }}\" \"{{ root }}/functions/prompt_{{ name }}_setup\"".to_string(),
+                    each: true
+                }
+            ]
+        );
+        assert_eq!(locked.errors.len(), 0);
+    }
+
+    #[test]
+    fn locked_config_to_and_from_path() {
+        let mut temp = tempfile::NamedTempFile::new().unwrap();
+        let content = r#"version = "<version>"
+home = "<root>"
+root = "<root>"
+config_file = "<root>/plugins.toml"
+lock_file = "<root>/plugins.lock"
+plugins = []
+
+[templates]
+"#;
+        temp.write_all(content.as_bytes()).unwrap();
+        let locked_config = LockedConfig::from_path(temp.into_temp_path()).unwrap();
+        let temp = tempfile::NamedTempFile::new().unwrap();
+        let path = temp.into_temp_path();
+        locked_config.to_path(&path).unwrap();
+        assert_eq!(read_file_contents(&path).unwrap(), content);
     }
 }
