@@ -1,4 +1,6 @@
-//! The config file.
+//! Plugin configuration.
+//!
+//! This module handles the defining and deserialization of the config file.
 
 use std::{
     fmt, fs,
@@ -7,13 +9,10 @@ use std::{
 };
 
 use indexmap::IndexMap;
-use serde::{self, de, Deserialize, Deserializer};
+use serde::{self, de, Deserialize, Deserializer, Serialize};
 use url::Url;
 
-use crate::{
-    config::{Config, ExternalPlugin, GitReference, InlinePlugin, Plugin, Source, Template},
-    Result, ResultExt,
-};
+use crate::{Result, ResultExt};
 
 /// The Gist domain host.
 const GIST_HOST: &str = "gist.github.com";
@@ -25,6 +24,27 @@ const GITHUB_HOST: &str = "github.com";
 // Configuration definitions
 /////////////////////////////////////////////////////////////////////////
 
+/// A wrapper around a template string.
+#[derive(Debug, PartialEq, Serialize)]
+pub struct Template {
+    /// The actual template string.
+    pub value: String,
+    /// Whether this template should be applied to each filename.
+    pub each: bool,
+}
+
+/// A Git reference.
+#[derive(Clone, Debug, Deserialize, Eq, Hash, PartialEq)]
+#[serde(rename_all = "lowercase")]
+pub enum GitReference {
+    /// From the HEAD of a branch.
+    Branch(String),
+    /// From a specific revision.
+    Revision(String),
+    /// From a tag.
+    Tag(String),
+}
+
 /// A GitHub repository identifier.
 #[derive(Debug, PartialEq)]
 struct GitHubRepository {
@@ -32,6 +52,20 @@ struct GitHubRepository {
     username: String,
     /// The GitHub repository name.
     repository: String,
+}
+
+/// The source for a `Plugin`.
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+pub enum Source {
+    /// A clonable Git repository.
+    Git {
+        url: Url,
+        reference: Option<GitReference>,
+    },
+    /// A remote file.
+    Remote { url: Url },
+    /// A local directory.
+    Local { directory: PathBuf },
 }
 
 /// The actual plugin configuration.
@@ -66,10 +100,41 @@ struct RawPlugin {
     apply: Option<Vec<String>>,
 }
 
+/// An external configured plugin.
+#[derive(Debug, PartialEq)]
+pub struct ExternalPlugin {
+    /// The name of this plugin.
+    pub name: String,
+    /// Specifies how to retrieve this plugin.
+    pub source: Source,
+    /// Which directory to use in this plugin.
+    pub directory: Option<String>,
+    /// What files to use in the plugin's directory.
+    pub uses: Option<Vec<String>>,
+    /// What templates to apply to each matched file.
+    pub apply: Option<Vec<String>>,
+}
+
+/// An inline configured plugin.
+#[derive(Debug, Deserialize, PartialEq, Serialize)]
+pub struct InlinePlugin {
+    /// The name of this plugin.
+    pub name: String,
+    /// The actual source.
+    pub raw: String,
+}
+
+/// A configured plugin.
+#[derive(Debug, PartialEq)]
+pub enum Plugin {
+    External(ExternalPlugin),
+    Inline(InlinePlugin),
+}
+
 /// The contents of the configuration file.
 #[derive(Debug, Deserialize)]
 #[serde(default)]
-pub struct RawConfig {
+struct RawConfig {
     /// Which files to match and use in a plugin's directory.
     #[serde(rename = "match")]
     matches: Vec<String>,
@@ -79,6 +144,19 @@ pub struct RawConfig {
     templates: IndexMap<String, Template>,
     /// A map of name to plugin.
     plugins: IndexMap<String, RawPlugin>,
+}
+
+/// The user configuration.
+#[derive(Debug)]
+pub struct Config {
+    /// Which files to match and use in a plugin's directory.
+    pub matches: Vec<String>,
+    /// The default list of template names to apply to each matched file.
+    pub apply: Option<Vec<String>>,
+    /// A map of name to template string.
+    pub templates: IndexMap<String, Template>,
+    /// Each configured plugin.
+    pub plugins: Vec<Plugin>,
 }
 
 /////////////////////////////////////////////////////////////////////////
@@ -94,6 +172,22 @@ struct TemplateVisitor;
 struct TemplateAux {
     value: String,
     each: bool,
+}
+
+impl From<TemplateAux> for Template {
+    fn from(aux: TemplateAux) -> Self {
+        let TemplateAux { value, each } = aux;
+        Self { value, each }
+    }
+}
+
+impl From<&str> for Template {
+    fn from(s: &str) -> Self {
+        Self {
+            value: s.to_string(),
+            each: false,
+        }
+    }
 }
 
 impl<'de> de::Visitor<'de> for TemplateVisitor {
@@ -130,22 +224,6 @@ impl<'de> Deserialize<'de> for Template {
         D: Deserializer<'de>,
     {
         deserializer.deserialize_any(TemplateVisitor)
-    }
-}
-
-impl From<TemplateAux> for Template {
-    fn from(aux: TemplateAux) -> Self {
-        let TemplateAux { value, each } = aux;
-        Self { value, each }
-    }
-}
-
-impl From<&str> for Template {
-    fn from(s: &str) -> Self {
-        Self {
-            value: s.to_string(),
-            each: false,
-        }
     }
 }
 
@@ -234,6 +312,14 @@ fn validate_template_names(
     Ok(())
 }
 
+impl Template {
+    /// Set whether this `Template` should be applied to every filename.
+    pub fn each(mut self, each: bool) -> Self {
+        self.each = each;
+        self
+    }
+}
+
 impl fmt::Display for GitHubRepository {
     /// Displays a `GitHubRepository` as "{username}/{repository}".
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -242,6 +328,7 @@ impl fmt::Display for GitHubRepository {
 }
 
 impl Source {
+    /// Whether the `Source` is a `Source::Git` variant.
     fn is_git(&self) -> bool {
         match *self {
             Self::Git { .. } => true,
@@ -355,7 +442,7 @@ impl RawPlugin {
 
 impl RawConfig {
     /// Read a `RawConfig` from the given path.
-    pub fn from_path<P>(path: P) -> Result<Self>
+    fn from_path<P>(path: P) -> Result<Self>
     where
         P: AsRef<Path>,
     {
@@ -367,7 +454,7 @@ impl RawConfig {
     }
 
     /// Normalize a `RawConfig` into a `Config`.
-    pub fn normalize(self) -> Result<Config> {
+    fn normalize(self) -> Result<Config> {
         let Self {
             matches,
             apply,
@@ -408,6 +495,16 @@ impl RawConfig {
     }
 }
 
+impl Config {
+    /// Read a `Config` from the given path.
+    pub fn from_path<P>(path: P) -> Result<Self>
+    where
+        P: AsRef<Path>,
+    {
+        Ok(RawConfig::from_path(path)?.normalize()?)
+    }
+}
+
 /////////////////////////////////////////////////////////////////////////
 // Unit tests
 /////////////////////////////////////////////////////////////////////////
@@ -416,47 +513,42 @@ impl RawConfig {
 mod tests {
     use super::*;
 
-    #[derive(Deserialize)]
+    #[derive(Debug, Deserialize)]
     struct TemplateTest {
         t: Template,
     }
 
     #[test]
-    fn deserialize_template_as_str() {
+    fn template_deserialize_as_str() {
         let test: TemplateTest = toml::from_str("t = 'test'").unwrap();
-        assert_eq!(test.t.value, String::from("test"));
-        assert_eq!(test.t.each, false);
+        assert_eq!(
+            test.t,
+            Template {
+                value: "test".to_string(),
+                each: false
+            }
+        );
     }
 
     #[test]
-    fn deserialize_template_as_map() {
+    fn template_deserialize_as_map() {
         let test: TemplateTest = toml::from_str("t = { value = 'test', each = true }").unwrap();
-        assert_eq!(test.t.value, String::from("test"));
-        assert_eq!(test.t.each, true);
-    }
-
-    #[derive(Deserialize)]
-    struct TestGitHubRepository {
-        g: GitHubRepository,
-    }
-
-    #[test]
-    fn deserialize_github_repository() {
-        let test: TestGitHubRepository = toml::from_str("g = 'rossmacarthur/sheldon'").unwrap();
-        assert_eq!(test.g.username, String::from("rossmacarthur"));
-        assert_eq!(test.g.repository, String::from("sheldon"));
+        assert_eq!(
+            test.t,
+            Template {
+                value: "test".to_string(),
+                each: true
+            }
+        );
     }
 
     #[test]
-    #[should_panic]
-    fn deserialize_github_repository_two_slashes() {
-        toml::from_str::<TestGitHubRepository>("g = 'rossmacarthur/sheldon/test'").unwrap();
-    }
-
-    #[test]
-    #[should_panic]
-    fn deserialize_github_repository_no_slashes() {
-        toml::from_str::<TestGitHubRepository>("g = 'noslash'").unwrap();
+    fn template_deserialize_invalid() {
+        let error = toml::from_str::<TemplateTest>("t = 0").unwrap_err();
+        assert_eq!(
+            error.to_string(),
+            "invalid type: integer `0`, expected string or map for key `t` at line 1 column 5"
+        );
     }
 
     #[derive(Deserialize)]
@@ -466,49 +558,83 @@ mod tests {
     }
 
     #[test]
-    fn deserialize_git_reference_branch() {
+    fn git_reference_deserialize_branch() {
         let test: TestGitReference = toml::from_str("branch = 'master'").unwrap();
         assert_eq!(test.g, GitReference::Branch(String::from("master")));
     }
 
     #[test]
-    fn deserialize_git_reference_tag() {
+    fn git_reference_deserialize_tag() {
         let test: TestGitReference = toml::from_str("tag = 'v0.5.1'").unwrap();
         assert_eq!(test.g, GitReference::Tag(String::from("v0.5.1")));
     }
 
     #[test]
-    fn deserialize_git_reference_revision() {
+    fn git_reference_deserialize_revision() {
         let test: TestGitReference = toml::from_str("revision = 'cd65e828'").unwrap();
         assert_eq!(test.g, GitReference::Revision(String::from("cd65e828")));
     }
 
+    #[derive(Deserialize)]
+    struct TestGitHubRepository {
+        g: GitHubRepository,
+    }
+
     #[test]
-    fn deserialize_raw_plugin_git() {
-        let mut expected = RawPlugin::default();
-        expected.git = Some(Url::parse("https://github.com/rossmacarthur/sheldon").unwrap());
+    fn github_repository_deserialize() {
+        let test: TestGitHubRepository =
+            toml::from_str("g = 'rossmacarthur/sheldon-test'").unwrap();
+        assert_eq!(
+            test.g,
+            GitHubRepository {
+                username: "rossmacarthur".to_string(),
+                repository: "sheldon-test".to_string()
+            }
+        );
+    }
+
+    #[test]
+    #[should_panic]
+    fn github_repository_deserialize_two_slashes() {
+        toml::from_str::<TestGitHubRepository>("g = 'rossmacarthur/sheldon/test'").unwrap();
+    }
+
+    #[test]
+    #[should_panic]
+    fn github_repository_deserialize_no_slashes() {
+        toml::from_str::<TestGitHubRepository>("g = 'noslash'").unwrap();
+    }
+
+    #[test]
+    fn raw_plugin_deserialize_git() {
+        let expected = RawPlugin {
+            git: Some(Url::parse("https://github.com/rossmacarthur/sheldon-test").unwrap()),
+            ..Default::default()
+        };
         let plugin: RawPlugin =
-            toml::from_str("git = 'https://github.com/rossmacarthur/sheldon'").unwrap();
+            toml::from_str("git = 'https://github.com/rossmacarthur/sheldon-test'").unwrap();
         assert_eq!(plugin, expected);
     }
 
     #[test]
-    fn deserialize_raw_plugin_github() {
-        let mut expected = RawPlugin::default();
-        expected.github = Some(GitHubRepository {
-            username: "rossmacarthur".into(),
-            repository: "sheldon".into(),
-        });
-        let plugin: RawPlugin = toml::from_str("github = 'rossmacarthur/sheldon'").unwrap();
+    fn raw_plugin_deserialize_github() {
+        let expected = RawPlugin {
+            github: Some(GitHubRepository {
+                username: "rossmacarthur".into(),
+                repository: "sheldon-test".into(),
+            }),
+            ..Default::default()
+        };
+        let plugin: RawPlugin = toml::from_str("github = 'rossmacarthur/sheldon-test'").unwrap();
         assert_eq!(plugin, expected);
     }
 
     #[test]
-    fn deserialize_raw_plugin_conflicts() {
+    fn raw_plugin_deserialize_conflicts() {
         let sources = [
-            ("git", "https://github.com/rossmacarthur/sheldon"),
+            ("git", "https://github.com/rossmacarthur/sheldon-test"),
             ("gist", "579d02802b1cc17baed07753d09f5009"),
-            ("github", "rossmacarthur/sheldon"),
+            ("github", "rossmacarthur/sheldon-test"),
             ("remote", "https://ross.macarthur.io"),
             ("local", "~/.dotfiles/zsh/pure"),
             ("inline", "derp"),
@@ -527,5 +653,201 @@ mod tests {
                 assert_eq!(e.to_string(), "plugin `test` has multiple source fields")
             }
         }
+    }
+
+    #[test]
+    fn raw_plugin_normalize_git() {
+        let name = "test".to_string();
+        let url = Url::parse("https://github.com/rossmacarthur/sheldon-test").unwrap();
+        let expected = Plugin::External(ExternalPlugin {
+            name: name.clone(),
+            source: Source::Git {
+                url: url.clone(),
+                reference: None,
+            },
+            directory: None,
+            uses: None,
+            apply: None,
+        });
+        let raw_plugin = RawPlugin {
+            git: Some(url),
+            ..Default::default()
+        };
+        assert_eq!(
+            raw_plugin.normalize(name, &IndexMap::new()).unwrap(),
+            expected
+        );
+    }
+
+    #[test]
+    fn raw_plugin_normalize_gist() {
+        let name = "test".to_string();
+        let expected = Plugin::External(ExternalPlugin {
+            name: name.clone(),
+            source: Source::Git {
+                url: Url::parse("https://gist.github.com/579d02802b1cc17baed07753d09f5009")
+                    .unwrap(),
+                reference: None,
+            },
+            directory: None,
+            uses: None,
+            apply: None,
+        });
+        let raw_plugin = RawPlugin {
+            gist: Some("579d02802b1cc17baed07753d09f5009".to_string()),
+            ..Default::default()
+        };
+        assert_eq!(
+            raw_plugin.normalize(name, &IndexMap::new()).unwrap(),
+            expected
+        );
+    }
+
+    #[test]
+    fn raw_plugin_normalize_github() {
+        let name = "test".to_string();
+        let expected = Plugin::External(ExternalPlugin {
+            name: name.clone(),
+            source: Source::Git {
+                url: Url::parse("https://github.com/rossmacarthur/sheldon-test").unwrap(),
+                reference: None,
+            },
+            directory: None,
+            uses: None,
+            apply: None,
+        });
+        let raw_plugin = RawPlugin {
+            github: Some(GitHubRepository {
+                username: "rossmacarthur".to_string(),
+                repository: "sheldon-test".to_string(),
+            }),
+            ..Default::default()
+        };
+        assert_eq!(
+            raw_plugin.normalize(name, &IndexMap::new()).unwrap(),
+            expected
+        );
+    }
+
+    #[test]
+    fn raw_plugin_normalize_remote() {
+        let name = "test".to_string();
+        let url =
+            Url::parse("https://github.com/rossmacarthur/sheldon-test/blob/master/test.plugin.zsh")
+                .unwrap();
+        let expected = Plugin::External(ExternalPlugin {
+            name: name.clone(),
+            source: Source::Remote { url: url.clone() },
+            directory: None,
+            uses: None,
+            apply: None,
+        });
+        let raw_plugin = RawPlugin {
+            remote: Some(url),
+            ..Default::default()
+        };
+        assert_eq!(
+            raw_plugin.normalize(name, &IndexMap::new()).unwrap(),
+            expected
+        );
+    }
+
+    #[test]
+    fn raw_plugin_normalize_remote_with_reference() {
+        let raw_plugin = RawPlugin {
+            remote: Some(
+                Url::parse(
+                    "https://github.com/rossmacarthur/sheldon-test/blob/master/test.plugin.zsh",
+                )
+                .unwrap(),
+            ),
+            reference: Some(GitReference::Tag("v0.1.0".to_string())),
+            ..Default::default()
+        };
+        let error = raw_plugin
+            .normalize("test".to_string(), &IndexMap::new())
+            .unwrap_err();
+        assert_eq!(
+            error.to_string(),
+            "`branch`, `tag`, and `revision` fields are not supported by this plugin type"
+        );
+    }
+
+    #[test]
+    fn raw_plugin_normalize_local() {
+        let name = "test".to_string();
+        let expected = Plugin::External(ExternalPlugin {
+            name: name.clone(),
+            source: Source::Local {
+                directory: "/home/temp".into(),
+            },
+            directory: None,
+            uses: None,
+            apply: None,
+        });
+        let raw_plugin = RawPlugin {
+            local: Some("/home/temp".into()),
+            ..Default::default()
+        };
+        assert_eq!(
+            raw_plugin.normalize(name, &IndexMap::new()).unwrap(),
+            expected
+        );
+    }
+
+    #[test]
+    fn raw_plugin_normalize_inline() {
+        let name = "test".to_string();
+        let expected = Plugin::Inline(InlinePlugin {
+            name: name.clone(),
+            raw: "echo 'this is a test'\n".to_string(),
+        });
+        let raw_plugin = RawPlugin {
+            inline: Some("echo 'this is a test'\n".to_string()),
+            ..Default::default()
+        };
+        assert_eq!(
+            raw_plugin.normalize(name, &IndexMap::new()).unwrap(),
+            expected
+        );
+    }
+
+    #[test]
+    fn raw_plugin_normalize_inline_apply() {
+        let raw_plugin = RawPlugin {
+            inline: Some("echo 'this is a test'\n".to_string()),
+            apply: Some(vec_into!["test"]),
+            ..Default::default()
+        };
+        let error = raw_plugin
+            .normalize("test".to_string(), &IndexMap::new())
+            .unwrap_err();
+        assert_eq!(
+            error.to_string(),
+            "the `apply` field is not supported by inline plugins"
+        );
+    }
+
+    #[test]
+    fn raw_plugin_normalize_external_invalid_template() {
+        let raw_plugin = RawPlugin {
+            github: Some(GitHubRepository {
+                username: "rossmacarthur".to_string(),
+                repository: "sheldon-test".to_string(),
+            }),
+            apply: Some(vec_into!["test"]),
+            ..Default::default()
+        };
+        let error = raw_plugin
+            .normalize("test".to_string(), &IndexMap::new())
+            .unwrap_err();
+        assert_eq!(error.to_string(), "unknown template `test`");
+    }
+
+    #[test]
+    fn config_from_path_example() {
+        let mut path: PathBuf = env!("CARGO_MANIFEST_DIR").into();
+        path.push("docs/plugins.example.toml");
+        Config::from_path(path).unwrap();
     }
 }

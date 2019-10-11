@@ -1,8 +1,12 @@
 use std::{
-    fs,
+    fs::{self, File},
     path::{Path, PathBuf},
     time,
 };
+
+use fs2::{lock_contended_error, FileExt};
+
+use crate::{Context, Result, ResultExt};
 
 /// An extension trait for [`Path`] types.
 ///
@@ -63,6 +67,44 @@ impl PathBufExt for PathBuf {
     }
 }
 
+#[derive(Debug)]
+pub struct FileMutex(File);
+
+impl FileMutex {
+    /// Create a new `FileMutex` at the given path and attempt to acquire it.
+    pub fn acquire(ctx: &Context, path: &Path) -> Result<Self> {
+        let file = fs::OpenOptions::new()
+            .read(true)
+            .open(path)
+            .chain(s!("failed to open `{}`", path.display()))?;
+
+        if let Err(e) = file.try_lock_exclusive() {
+            let msg = s!("failed to acquire file lock `{}`", path.display());
+
+            if e.raw_os_error() != lock_contended_error().raw_os_error() {
+                return Err(e).chain(msg);
+            } else {
+                ctx.warning(
+                    "Blocking",
+                    &format!(
+                        "waiting for file lock on {}",
+                        ctx.replace_home(path).display()
+                    ),
+                );
+                file.lock_exclusive().chain(msg)?;
+            }
+        }
+
+        Ok(Self(file))
+    }
+}
+
+impl Drop for FileMutex {
+    fn drop(&mut self) {
+        self.0.unlock().ok();
+    }
+}
+
 /////////////////////////////////////////////////////////////////////////
 // Unit tests
 /////////////////////////////////////////////////////////////////////////
@@ -72,12 +114,12 @@ mod tests {
     use super::*;
 
     #[test]
-    fn expand_tilde_with_root() {
+    fn path_buf_expand_tilde_with_root() {
         assert_eq!(PathBuf::from("/").expand_tilde("/test"), PathBuf::from("/"))
     }
 
     #[test]
-    fn expand_tilde_with_folder_in_root() {
+    fn path_buf_expand_tilde_with_folder_in_root() {
         assert_eq!(
             PathBuf::from("/fol/der").expand_tilde("/test"),
             PathBuf::from("/fol/der")
@@ -85,7 +127,7 @@ mod tests {
     }
 
     #[test]
-    fn expand_tilde_with_home() {
+    fn path_buf_expand_tilde_with_home() {
         assert_eq!(
             PathBuf::from("~/").expand_tilde("/test"),
             PathBuf::from("/test")
@@ -93,7 +135,7 @@ mod tests {
     }
 
     #[test]
-    fn expand_tilde_with_folder_in_home() {
+    fn path_buf_expand_tilde_with_folder_in_home() {
         assert_eq!(
             PathBuf::from("~/fol/der").expand_tilde("/test"),
             PathBuf::from("/test/fol/der")
@@ -101,7 +143,7 @@ mod tests {
     }
 
     #[test]
-    fn replace_home_with_root() {
+    fn path_buf_replace_home_with_root() {
         assert_eq!(
             PathBuf::from("/not/home").replace_home("/test/home"),
             PathBuf::from("/not/home")
@@ -109,7 +151,7 @@ mod tests {
     }
 
     #[test]
-    fn replace_home_with_home() {
+    fn path_buf_replace_home_with_home() {
         assert_eq!(
             PathBuf::from("/test/home").replace_home("/test/home"),
             PathBuf::from("~")
