@@ -3,6 +3,7 @@ name = "sheldon"
 version = "0.4.6"
 authors = ["Ross MacArthur <ross@macarthur.io>"]
 edition = "2018"
+build = "build.rs"
 
 # Metadata (https://doc.rust-lang.org/cargo/reference/manifest.html)
 description = "A fast, configurable, shell plugin manager."

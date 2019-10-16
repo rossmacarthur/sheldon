@@ -1,19 +1,21 @@
 #!/usr/bin/env bash
 
-# This script takes care of testing sheldon.
+# Test sheldon.
 
 set -ex
 
 main() {
-    cargo fmt --verbose -- --check
-
-    if [ "$TRAVIS_RUST_VERSION" = "stable" ]; then
-        cargo clippy --verbose --all --all-targets --all-features -- -D warnings -D clippy::use_self
-    else
-        cargo build --verbose --all --all-targets --all-features
+    if [ "$LINT" = true ]; then
+        cargo fmt --verbose -- --check
     fi
 
-    cargo test --verbose --all --all-features
+    if [ "$LINT" = true ] && [ "$TRAVIS_RUST_VERSION" = "stable" ]; then
+        cross clippy --target "$TARGET" --verbose --all --all-targets --all-features -- -D warnings -D clippy::use_self
+    else
+        cross build --target "$TARGET" --verbose --all --all-targets --all-features
+    fi
+
+    cross test --target "$TARGET" --verbose --all --all-features
 
     if [ "$TRAVIS_RUST_VERSION" = "stable" ]; then
         git diff --exit-code

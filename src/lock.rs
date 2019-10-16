@@ -748,7 +748,7 @@ mod tests {
             .arg(&directory)
             .output()
             .expect("git clone rossmacarthur/sheldon-test");
-        git2::Repository::open(directory).unwrap()
+        git2::Repository::open(directory).expect("open sheldon-test git repository")
     }
 
     fn create_test_context(root: &Path) -> Context {
@@ -792,7 +792,7 @@ mod tests {
         let repo = git_clone_sheldon_test(&temp);
 
         let reference = GitReference::Branch("feature".to_string());
-        let locked = reference.lock(&repo).unwrap();
+        let locked = reference.lock(&repo).expect("lock git reference");
         assert_eq!(
             locked.0.to_string(),
             "09ead574b20bb573ae0a53c1a5c546181cfa41c8"

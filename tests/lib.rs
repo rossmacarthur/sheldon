@@ -17,7 +17,7 @@ fn sheldon<R>(root: R) -> Command
 where
     R: AsRef<Path>,
 {
-    // From: https://github.com/rust-lang/cargo/blob/master/tests/testsuite/support/mod.rs#L542
+    // From: https://github.com/rust-lang/cargo/blob/master/crates/cargo-test-support/src/lib.rs#L545-L558
     let bin = env::var_os("CARGO_BIN_PATH")
         .map(PathBuf::from)
         .or_else(|| {
@@ -32,12 +32,28 @@ where
         .unwrap()
         .join("sheldon");
 
-    let mut command = Command::new(bin);
+    let mut command = Command::new(&bin);
+    let mut params = Vec::new();
+
+    if let Ok(runner) = env::var(format!(
+        "CARGO_TARGET_{}_RUNNER",
+        env!("TARGET").replace("-", "_").to_ascii_uppercase()
+    )) {
+        let mut split = runner.splitn(2, char::is_whitespace);
+        let runner_bin = split.next().unwrap();
+        if let Some(runner_args) = split.next() {
+            params = runner_args.split_whitespace().map(String::from).collect();
+        }
+        params.push(bin.as_path().to_string_lossy().to_string());
+        command = Command::new(runner_bin);
+    }
+
     command
         .env("HOME", root.as_ref())
         .env("SHELDON_ROOT", root.as_ref())
         .env_remove("SHELDON_CONFIG_FILE")
         .env_remove("SHELDON_LOCK_FILE")
+        .args(&params)
         .arg("--verbose")
         .arg("--no-color");
 
@@ -99,6 +115,7 @@ impl TestCase {
         let stdout = self.get(format!("{}.stdout", command).as_str());
         let stderr = self.get(format!("{}.stderr", command).as_str());
         let result = sheldon(&self.root.path()).arg(command).output()?;
+        println!("{:#?}", result);
         assert_eq!(result.status.code().unwrap(), code);
         assert_eq!(String::from_utf8_lossy(&result.stdout), stdout);
         assert_eq!(String::from_utf8_lossy(&result.stderr), stderr);
