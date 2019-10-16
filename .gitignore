@@ -1,6 +1,5 @@
+/release
 /target
 **/*.rs.bk
-
 /docs/plugins.example.lock
-
 .vscode/

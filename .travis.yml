@@ -1,6 +1,6 @@
 language: rust
+services: docker
 sudo: required
-cache: cargo
 
 env:
   global:
@@ -10,37 +10,40 @@ matrix:
   include:
     # Linux
     - dist: xenial
-      env: TARGET=x86_64-unknown-linux-gnu PUBLISH=true
+      env: TARGET=x86_64-unknown-linux-gnu LINT=true PUBLISH=true
       rust: stable
     - dist: xenial
-      env: TARGET=x86_64-unknown-linux-gnu
+      env: TARGET=x86_64-unknown-linux-gnu LINT=true
       rust: beta
     - dist: xenial
-      env: TARGET=x86_64-unknown-linux-gnu
+      env: TARGET=x86_64-unknown-linux-gnu LINT=true
       rust: nightly
     # OS X
     - os: osx
-      env: TARGET=x86_64-apple-darwin
+      env: TARGET=x86_64-apple-darwin LINT=true
       rust: stable
     - os: osx
-      env: TARGET=x86_64-apple-darwin
+      env: TARGET=x86_64-apple-darwin LINT=true
       rust: beta
     - os: osx
-      env: TARGET=x86_64-apple-darwin
+      env: TARGET=x86_64-apple-darwin LINT=true
       rust: nightly
-
-before_install:
-  - rustup self update
+    # Other architectures
+    - dist: trusty
+      env: TARGET=x86_64-unknown-linux-musl
+      rust: stable
+    - dist: trusty
+      env: TARGET=armv7-unknown-linux-gnueabihf
+      rust: stable
+    - dist: trusty
+      env: TARGET=armv7-unknown-linux-musleabihf
+      rust: stable
 
 install:
-  - rustup component add rustfmt
-  - rustup component add clippy
+  - bash ci/install.sh
 
 script:
   - bash ci/script.sh
-
-before_cache:
-  - chmod -R a+r $HOME/.cargo
 
 before_deploy:
   - bash ci/before_deploy.sh
@@ -54,7 +57,7 @@ deploy:
       tags: true
     api_key:
       secure: VjnzZl3Vbf+qPAfv+JM0CrMg7fEXL0nSas691qMiQxHbOgk0xO6mguW6LOOMIuQSYfrBa62AcvaaA/1QozeR6ADft0h4OfVTMxe5iYKMe+HaMSLN6VQ/GkmjB2Qlco0IHK+wrD/m2zQWNIoTNavfwx6DECUhta1WSYlpXyECsXi/nr5FeNCUuX4eD6BOVPpqpzDeWMmgAXaAoPJqbkTdW0OqvAeLfqmzsdAkMefTwOJIzAPtVR7vMZk7APXQcOlAzIH2E1e7jD2Vj/heMkqPtHs8QFbZGe71TnzS1SlVLkOU8ZHw8YRtY5MCUlt1mMcWV9ye2AHaiWsDNBhgn21oOBMKGIex92g36vyxDG2SGCOL+DCnxWTVnUOg2ZzIfoMyvHJNpGwLY7GZ1Z07vgzVlxZRyp8qF2OrqDbthtvL62afZjAFMBlEKftW1rQKCQ9QEfYSUmwn5vUFklwcVHYHuiVGb2m6z3ChOITqcmJWH/KiZPu8U9E+6dQ8zNYKi9mk+Eouvxw4jv/IjIFOEcX8zVmpXQ+2NIyoUUp7EEHsvY6D159bCkGdAsB7wu6XXFvP+GuJlQDtrCKVXXXHL3dqPR4lW+s74yyzyrsGvxh4oT3ucsp7c2E3DOk+mYGkUxCBbDFXi5y6ysqQjqhi9caHhGg547RsDbTV69N1yX577mI=
-    file: "$CRATE-$TRAVIS_TAG-$TARGET"
+    file: "$CRATE-$TRAVIS_TAG-$TARGET.tar.gz"
   # Publish to crates.io
   - provider: cargo
     on:
