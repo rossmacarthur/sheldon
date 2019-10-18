@@ -16,7 +16,7 @@ matrix:
       env: TARGET=x86_64-unknown-linux-gnu LINT=true
       rust: beta
     - dist: xenial
-      env: TARGET=x86_64-unknown-linux-gnu LINT=true
+      env: TARGET=x86_64-unknown-linux-gnu
       rust: nightly
     # OS X
     - os: osx
@@ -26,7 +26,7 @@ matrix:
       env: TARGET=x86_64-apple-darwin LINT=true
       rust: beta
     - os: osx
-      env: TARGET=x86_64-apple-darwin LINT=true
+      env: TARGET=x86_64-apple-darwin
       rust: nightly
     # Other architectures
     - dist: trusty

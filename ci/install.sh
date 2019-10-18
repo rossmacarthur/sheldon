@@ -27,8 +27,11 @@ main() {
 
     rustup self update
     rustup update "$TRAVIS_RUST_VERSION"
-    rustup component add rustfmt
-    rustup component add clippy
+
+    if [ "$LINT" = true ]; then
+        rustup component add rustfmt
+        rustup component add clippy
+    fi
 }
 
 main
