@@ -26,6 +26,7 @@ main() {
     curl -fLsS "$url" | tar xz -C ~/.cargo/bin cross
 
     rustup self update
+    rustup update "$TRAVIS_RUST_VERSION"
     rustup component add rustfmt
     rustup component add clippy
 }
