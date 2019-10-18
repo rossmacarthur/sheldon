@@ -41,6 +41,28 @@ pub use crate::{
     error::{Error, ErrorKind, Result},
 };
 
+#[doc(hidden)]
+pub mod cli {
+    // Commands
+    pub const LOCK: &str = "lock";
+    pub const SOURCE: &str = "source";
+
+    // Flags
+    pub const QUIET: &str = "quiet";
+    pub const VERBOSE: &str = "verbose";
+    pub const NO_COLOR: &str = "no-color";
+
+    // Common options
+    pub const HOME: &str = "home";
+    pub const ROOT: &str = "root";
+    pub const CONFIG_FILE: &str = "config-file";
+    pub const LOCK_FILE: &str = "lock-file";
+
+    // Subcommand options
+    pub const REINSTALL: &str = "reinstall";
+    pub const RELOCK: &str = "relock";
+}
+
 /// A builder that is used to construct a [`Sheldon`] with specific settings.
 ///
 /// Settings are set using the "builder pattern". All settings are optional and
@@ -178,30 +200,31 @@ impl Builder {
         subcommand: &str,
         submatches: &clap::ArgMatches,
     ) -> Self {
-        let verbosity = if matches.is_present("quiet") {
+        let verbosity = if matches.is_present(crate::cli::QUIET) {
             Verbosity::Quiet
-        } else if matches.is_present("verbose") {
+        } else if matches.is_present(crate::cli::VERBOSE) {
             Verbosity::Verbose
         } else {
             Verbosity::Normal
         };
 
         let command = match subcommand {
-            "lock" => Command::Lock,
-            "source" => Command::Source,
+            crate::cli::LOCK => Command::Lock,
+            crate::cli::SOURCE => Command::Source,
             _ => panic!("unrecognized command `{}`", subcommand),
         };
 
         Self {
             verbosity,
-            no_color: matches.is_present("no-color"),
-            home: matches.value_of("home").map(|s| s.into()),
-            root: matches.value_of("root").map(|s| s.into()),
-            config_file: matches.value_of("config_file").map(|s| s.into()),
-            lock_file: matches.value_of("lock_file").map(|s| s.into()),
+            no_color: matches.is_present(crate::cli::NO_COLOR),
+            home: matches.value_of(crate::cli::HOME).map(|s| s.into()),
+            root: matches.value_of(crate::cli::ROOT).map(|s| s.into()),
+            config_file: matches.value_of(crate::cli::CONFIG_FILE).map(|s| s.into()),
+            lock_file: matches.value_of(crate::cli::LOCK_FILE).map(|s| s.into()),
             command,
-            reinstall: submatches.is_present("reinstall"),
-            relock: submatches.is_present("reinstall") || submatches.is_present("relock"),
+            reinstall: submatches.is_present(crate::cli::REINSTALL),
+            relock: submatches.is_present(crate::cli::REINSTALL)
+                || submatches.is_present(crate::cli::RELOCK),
         }
     }
 
