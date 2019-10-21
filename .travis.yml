@@ -7,28 +7,20 @@ env:
     - CRATE=sheldon
 
 matrix:
+  fast_finish: true
   include:
-    # Linux
     - dist: xenial
       env: TARGET=x86_64-unknown-linux-gnu LINT=true PUBLISH=true
       rust: stable
     - dist: xenial
       env: TARGET=x86_64-unknown-linux-gnu LINT=true
       rust: beta
-    - dist: xenial
-      env: TARGET=x86_64-unknown-linux-gnu
-      rust: nightly
-    # OS X
     - os: osx
       env: TARGET=x86_64-apple-darwin LINT=true
       rust: stable
     - os: osx
       env: TARGET=x86_64-apple-darwin LINT=true
       rust: beta
-    - os: osx
-      env: TARGET=x86_64-apple-darwin
-      rust: nightly
-    # Other architectures
     - dist: trusty
       env: TARGET=x86_64-unknown-linux-musl
       rust: stable
@@ -38,6 +30,13 @@ matrix:
     - dist: trusty
       env: TARGET=armv7-unknown-linux-musleabihf
       rust: stable
+  allow_failures:
+    - dist: xenial
+      env: TARGET=x86_64-unknown-linux-gnu LINT=true
+      rust: nightly
+    - os: osx
+      env: TARGET=x86_64-apple-darwin LINT=true
+      rust: nightly
 
 install:
   - bash ci/install.sh
