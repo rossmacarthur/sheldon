@@ -18,67 +18,67 @@ fn main() {
         .version(crate_version!())
         .version_message("Show the version and exit.")
         .arg(
-            Arg::with_name("quiet")
+            Arg::with_name(sheldon::cli::QUIET)
                 .long("quiet")
                 .short("q")
                 .help("Suppress any informational output."),
         )
         .arg(
-            Arg::with_name("verbose")
+            Arg::with_name(sheldon::cli::VERBOSE)
                 .long("verbose")
                 .short("v")
                 .help("Use verbose output."),
         )
         .arg(
-            Arg::with_name("no-color")
+            Arg::with_name(sheldon::cli::NO_COLOR)
                 .long("no-color")
                 .help("Do not use ANSI colored output."),
         )
         .arg(
-            Arg::with_name("home")
+            Arg::with_name(sheldon::cli::HOME)
                 .long("home")
                 .takes_value(true)
                 .help("Override the home directory."),
         )
         .arg(
-            Arg::with_name("root")
+            Arg::with_name(sheldon::cli::ROOT)
                 .long("root")
                 .takes_value(true)
                 .help("Override the root directory."),
         )
         .arg(
-            Arg::with_name("config-file")
+            Arg::with_name(sheldon::cli::CONFIG_FILE)
                 .long("config-file")
                 .takes_value(true)
                 .help("Override the config file."),
         )
         .arg(
-            Arg::with_name("lock-file")
+            Arg::with_name(sheldon::cli::LOCK_FILE)
                 .long("lock-file")
                 .takes_value(true)
                 .help("Override the lock file."),
         )
         .subcommand(
-            SubCommand::with_name("lock")
+            SubCommand::with_name(sheldon::cli::LOCK)
                 .about("Install the plugins sources and generate the lock file.")
                 .settings(&settings)
                 .arg(
-                    Arg::with_name("reinstall")
+                    Arg::with_name(sheldon::cli::REINSTALL)
                         .long("reinstall")
                         .help("Reinstall all plugin sources."),
                 ),
         )
         .subcommand(
-            SubCommand::with_name("source")
+            SubCommand::with_name(sheldon::cli::SOURCE)
                 .about("Generate and print out the script.")
                 .settings(&settings)
                 .arg(
-                    Arg::with_name("reinstall")
+                    Arg::with_name(sheldon::cli::REINSTALL)
                         .long("reinstall")
                         .help("Reinstall all plugin sources."),
                 )
                 .arg(
-                    Arg::with_name("relock")
+                    Arg::with_name(sheldon::cli::RELOCK)
                         .long("relock")
                         .help("Regenerate the lock file."),
                 ),
