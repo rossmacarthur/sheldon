@@ -1,11 +1,11 @@
-# plugins.toml
+# test.toml
 
-# plugins.lock
+# test.lock
 version = "<version>"
 home = "<root>"
 root = "<root>"
-config_file = "<root>/plugins.toml"
-lock_file = "<root>/plugins.lock"
+config_file = "<root>/test.toml"
+lock_file = "<root>/test.lock"
 clone_dir = "<root>/repositories"
 download_dir = "<root>/downloads"
 plugins = []
@@ -15,12 +15,12 @@ plugins = []
 # lock.stdout
 
 # lock.stderr
-[LOADED] ~/plugins.toml
-[LOCKED] ~/plugins.lock
+[LOADED] ~/test.toml
+[LOCKED] ~/test.lock
 
 # source.stdout
 
 # source.stderr
-[UNLOCKED] ~/plugins.lock
+[UNLOCKED] ~/test.lock
 
 # end

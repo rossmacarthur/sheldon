@@ -57,6 +57,8 @@ pub mod cli {
     pub const ROOT: &str = "root";
     pub const CONFIG_FILE: &str = "config-file";
     pub const LOCK_FILE: &str = "lock-file";
+    pub const CLONE_DIR: &str = "clone-dir";
+    pub const DOWNLOAD_DIR: &str = "download-dir";
 
     // Subcommand options
     pub const REINSTALL: &str = "reinstall";
@@ -80,6 +82,8 @@ pub struct Builder {
     root: Option<PathBuf>,
     config_file: Option<PathBuf>,
     lock_file: Option<PathBuf>,
+    clone_dir: Option<PathBuf>,
+    download_dir: Option<PathBuf>,
     command: Command,
     reinstall: bool,
     relock: bool,
@@ -174,6 +178,32 @@ impl Builder {
         self
     }
 
+    /// Set the location of the clone directory.
+    ///
+    /// If not given, this setting is determined using the following priority:
+    /// - The value of the `SHELDON_CLONE_DIR` environment variable.
+    /// - The `repositories` directory in the root directory.
+    pub fn clone_dir<P>(mut self, clone_dir: P) -> Self
+    where
+        P: Into<PathBuf>,
+    {
+        self.clone_dir = Some(clone_dir.into());
+        self
+    }
+
+    /// Set the location of the download directory.
+    ///
+    /// If not given, this setting is determined using the following priority:
+    /// - The value of the `SHELDON_DOWNLOAD_DIR` environment variable.
+    /// - The `downloads` directory in the root directory.
+    pub fn download_dir<P>(mut self, download_dir: P) -> Self
+    where
+        P: Into<PathBuf>,
+    {
+        self.download_dir = Some(download_dir.into());
+        self
+    }
+
     /// Set the command to run. This defaults to `Command::Source`.
     pub fn command(mut self, command: Command) -> Self {
         self.command = command;
@@ -221,6 +251,8 @@ impl Builder {
             root: matches.value_of(crate::cli::ROOT).map(|s| s.into()),
             config_file: matches.value_of(crate::cli::CONFIG_FILE).map(|s| s.into()),
             lock_file: matches.value_of(crate::cli::LOCK_FILE).map(|s| s.into()),
+            clone_dir: matches.value_of(crate::cli::CLONE_DIR).map(|s| s.into()),
+            download_dir: matches.value_of(crate::cli::DOWNLOAD_DIR).map(|s| s.into()),
             command,
             reinstall: submatches.is_present(crate::cli::REINSTALL),
             relock: submatches.is_present(crate::cli::REINSTALL)
@@ -249,13 +281,17 @@ impl Builder {
         }
 
         let root = process(self.root, &home, "SHELDON_ROOT", || home.join(".zsh"));
-
         let config_file = process(self.config_file, &home, "SHELDON_CONFIG_FILE", || {
             root.join("plugins.toml")
         });
-
         let lock_file = process(self.lock_file, &home, "SHELDON_LOCK_FILE", || {
             config_file.with_extension("lock")
+        });
+        let clone_dir = process(self.clone_dir, &home, "SHELDON_CLONE_DIR", || {
+            root.join("repositories")
+        });
+        let download_dir = process(self.download_dir, &home, "SHELDON_DOWNLOAD_DIR", || {
+            root.join("downloads")
         });
 
         Sheldon {
@@ -267,6 +303,8 @@ impl Builder {
                 root,
                 config_file,
                 lock_file,
+                clone_dir,
+                download_dir,
                 command: self.command,
                 reinstall: self.reinstall,
                 relock: self.relock,
@@ -382,11 +420,9 @@ impl Sheldon {
 
     /// Execute based on the configured settings.
     pub fn run(&self) -> Result<()> {
-        if let Err(e) = self.run_command() {
+        self.run_command().map_err(|e| {
             self.ctx.error(&e);
-            Err(e)
-        } else {
-            Ok(())
-        }
+            e
+        })
     }
 }

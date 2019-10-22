@@ -9,6 +9,8 @@ home = "<root>"
 root = "<root>"
 config_file = "<root>/plugins.toml"
 lock_file = "<root>/plugins.lock"
+clone_dir = "<root>/repositories"
+download_dir = "<root>/downloads"
 
 [[plugins]]
 name = "test"

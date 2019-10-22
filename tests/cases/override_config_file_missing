@@ -1,0 +1,9 @@
+# stdout
+
+# stderr
+
+[ERROR] failed to load config file
+  due to: failed to read from `<root>/test.toml`
+  due to: No such file or directory (os error 2)
+
+# end
