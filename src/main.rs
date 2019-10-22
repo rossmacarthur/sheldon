@@ -38,25 +38,43 @@ fn main() {
             Arg::with_name(sheldon::cli::HOME)
                 .long("home")
                 .takes_value(true)
+                .value_name("PATH")
                 .help("Override the home directory."),
         )
         .arg(
             Arg::with_name(sheldon::cli::ROOT)
                 .long("root")
                 .takes_value(true)
+                .value_name("PATH")
                 .help("Override the root directory."),
         )
         .arg(
             Arg::with_name(sheldon::cli::CONFIG_FILE)
                 .long("config-file")
                 .takes_value(true)
+                .value_name("PATH")
                 .help("Override the config file."),
         )
         .arg(
             Arg::with_name(sheldon::cli::LOCK_FILE)
                 .long("lock-file")
                 .takes_value(true)
+                .value_name("PATH")
                 .help("Override the lock file."),
+        )
+        .arg(
+            Arg::with_name(sheldon::cli::CLONE_DIR)
+                .long("clone-dir")
+                .takes_value(true)
+                .value_name("PATH")
+                .help("Override the directory where git sources are cloned to."),
+        )
+        .arg(
+            Arg::with_name(sheldon::cli::DOWNLOAD_DIR)
+                .long("download-dir")
+                .takes_value(true)
+                .value_name("PATH")
+                .help("Override the directory where remote sources are downloaded to."),
         )
         .subcommand(
             SubCommand::with_name(sheldon::cli::LOCK)

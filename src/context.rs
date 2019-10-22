@@ -36,6 +36,10 @@ pub struct Context {
     pub config_file: PathBuf,
     /// The location of the lock file.
     pub lock_file: PathBuf,
+    /// The directory to clone git sources to.
+    pub clone_dir: PathBuf,
+    /// The directory to download remote plugins sources to.
+    pub download_dir: PathBuf,
     /// The command that we are executing.
     pub command: Command,
     /// Whether to reinstall plugin sources.

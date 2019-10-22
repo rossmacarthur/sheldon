@@ -24,12 +24,6 @@ use crate::{
     Error, Result, ResultExt,
 };
 
-/// The default clone directory for `Git` sources.
-const CLONE_DIRECTORY: &str = "repositories";
-
-/// The default download directory for `Remote` sources.
-const DOWNLOAD_DIRECTORY: &str = "downloads";
-
 /// The maximmum number of threads to use while downloading sources.
 const MAX_THREADS: u32 = 8;
 
@@ -98,6 +92,10 @@ pub struct LockedContext {
     config_file: PathBuf,
     /// The location of the lock file.
     lock_file: PathBuf,
+    /// The directory to clone git sources to.
+    clone_dir: PathBuf,
+    /// The directory to download remote plugins sources to.
+    download_dir: PathBuf,
 }
 
 /// A locked `Config`.
@@ -129,6 +127,8 @@ impl PartialEq<Context> for LockedContext {
             && self.root == other.root
             && self.config_file == other.config_file
             && self.lock_file == other.lock_file
+            && self.clone_dir == other.clone_dir
+            && self.download_dir == other.download_dir
     }
 }
 
@@ -331,13 +331,13 @@ impl Source {
     fn lock(self, ctx: &Context) -> Result<LockedSource> {
         match self {
             Self::Git { url, reference } => {
-                let mut directory = ctx.root.join(CLONE_DIRECTORY);
+                let mut directory = ctx.clone_dir.clone();
                 directory.push(url.host_str().chain(s!("URL `{}` has no host", url))?);
                 directory.push(url.path().trim_start_matches('/'));
                 Self::lock_git(ctx, directory, url, reference)
             }
             Self::Remote { url } => {
-                let mut directory = ctx.root.join(DOWNLOAD_DIRECTORY);
+                let mut directory = ctx.download_dir.clone();
                 directory.push(url.host_str().chain(s!("URL `{}` has no host", url))?);
 
                 let segments: Vec<_> = url
@@ -457,7 +457,7 @@ impl ExternalPlugin {
 }
 
 impl Context {
-    /// Consume the `Context` and convert it to a `LockedContext`.
+    /// Convert this `Context` to a `LockedContext`.
     fn lock(&self) -> LockedContext {
         LockedContext {
             version: self.version.to_string(),
@@ -465,6 +465,8 @@ impl Context {
             root: self.root.clone(),
             config_file: self.config_file.clone(),
             lock_file: self.lock_file.clone(),
+            clone_dir: self.clone_dir.clone(),
+            download_dir: self.download_dir.clone(),
         }
     }
 }
@@ -759,6 +761,8 @@ mod tests {
             home: "/".into(),
             config_file: root.join("config.toml"),
             lock_file: root.join("config.lock"),
+            clone_dir: root.join("repositories"),
+            download_dir: root.join("downloads"),
             root: root.to_path_buf(), // must come after the joins above
             command: crate::Command::Lock,
             reinstall: false,
@@ -1158,7 +1162,9 @@ mod tests {
                 home: PathBuf::from("/"),
                 root: directory.to_path_buf(),
                 config_file: directory.join("config.toml"),
-                lock_file: directory.join("config.lock")
+                lock_file: directory.join("config.lock"),
+                clone_dir: directory.join("repositories"),
+                download_dir: directory.join("downloads"),
             }
         );
         assert_eq!(locked.plugins, Vec::new());
@@ -1178,6 +1184,8 @@ mod tests {
         let root = temp1.path();
         let config_file = manifest_dir.join("docs/plugins.example.toml");
         let lock_file = root.join("plugins.lock");
+        let clone_dir = root.join("repositories");
+        let download_dir = root.join("downloads");
         let ctx = Context {
             version: clap::crate_version!(),
             verbosity: crate::Verbosity::Quiet,
@@ -1186,6 +1194,8 @@ mod tests {
             root: root.to_path_buf(),
             config_file: config_file.clone(),
             lock_file: lock_file.clone(),
+            clone_dir: clone_dir.clone(),
+            download_dir: download_dir.clone(),
             command: crate::Command::Lock,
             reinstall: false,
             relock: false,
@@ -1213,7 +1223,9 @@ mod tests {
                 home: PathBuf::from("/"),
                 root: root.to_path_buf(),
                 config_file,
-                lock_file
+                lock_file,
+                clone_dir,
+                download_dir
             }
         );
         assert_eq!(
@@ -1288,6 +1300,8 @@ home = "<root>"
 root = "<root>"
 config_file = "<root>/plugins.toml"
 lock_file = "<root>/plugins.lock"
+clone_dir = "<root>/repositories"
+download_dir = "<root>/downloads"
 plugins = []
 
 [templates]

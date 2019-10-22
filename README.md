@@ -143,12 +143,14 @@ The output of this command is highly configurable. You can define your own
 
 **sheldon** accepts the following global command line options.
 
-| Option                        | Environment variable  | Description                                              |
-| ----------------------------- | --------------------- | -------------------------------------------------------- |
-| `--home <home>`               | `HOME`                | Set the home directory.                                  |
-| `--root <root>`               | `SHELDON_ROOT`        | Set the root directory. (*default:* `<home>/.zsh`)       |
-| `--config-file <config-file>` | `SHELDON_CONFIG_FILE` | Set the config file. (*default:*  `<root>/plugins.toml`) |
-| `--lock-file <lock-file>`     | `SHELDON_LOCK_FILE`   | Set the lock file. (*default:* `<config-file>.lock`)     |
+| Option                  | Environment variable   | Description                                                 |
+| ------------------------| ---------------------- | ----------------------------------------------------------- |
+| `--home <path>`         | `HOME`                 | Set the home directory.                                     |
+| `--root <path>`         | `SHELDON_ROOT`         | Set the root directory. (*default:* `<home>/.zsh`)          |
+| `--config-file <path>`  | `SHELDON_CONFIG_FILE`  | Set the config file. (*default:*  `<root>/plugins.toml`)    |
+| `--lock-file <path>`    | `SHELDON_LOCK_FILE`    | Set the lock file. (*default:* `<config-file>.lock`)        |
+| `--clone-dir <path>`    | `SHELDON_CLONE_DIR`    | Set the clone directory. (*default:* `<root>/repositories`) |
+| `--download-dir <path>` | `SHELDON_DOWNLOAD_DIR` | Set the download directory. (*default:* `<root>/downloads`) |
 
 **Note:** in rare circumstances **sheldon** will not be able to automatically
 detect the user's home directory. You should only have to set the `--home`
