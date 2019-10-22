@@ -7,36 +7,40 @@ env:
     - CRATE=sheldon
 
 matrix:
-  fast_finish: true
   include:
     - dist: xenial
+      rust: stable
       env: TARGET=x86_64-unknown-linux-gnu LINT=true PUBLISH=true
-      rust: stable
     - dist: xenial
+      rust: beta
       env: TARGET=x86_64-unknown-linux-gnu LINT=true
-      rust: beta
+    - dist: xenial
+      rust: nightly
+      env: TARGET=x86_64-unknown-linux-gnu LINT=true
     - os: osx
-      env: TARGET=x86_64-apple-darwin LINT=true
       rust: stable
-    - os: osx
       env: TARGET=x86_64-apple-darwin LINT=true
+    - os: osx
       rust: beta
+      env: TARGET=x86_64-apple-darwin LINT=true
+    - os: osx
+      rust: nightly
+      env: TARGET=x86_64-apple-darwin LINT=true
     - dist: trusty
+      rust: stable
       env: TARGET=x86_64-unknown-linux-musl
-      rust: stable
     - dist: trusty
+      rust: stable
       env: TARGET=armv7-unknown-linux-gnueabihf
-      rust: stable
     - dist: trusty
-      env: TARGET=armv7-unknown-linux-musleabihf
       rust: stable
+      env: TARGET=armv7-unknown-linux-musleabihf
+  fast_finish: true
   allow_failures:
-    - dist: xenial
+    - rust: nightly
       env: TARGET=x86_64-unknown-linux-gnu LINT=true
-      rust: nightly
-    - os: osx
+    - rust: nightly
       env: TARGET=x86_64-apple-darwin LINT=true
-      rust: nightly
 
 install:
   - bash ci/install.sh
