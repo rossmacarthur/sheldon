@@ -27,6 +27,8 @@ A fast, configurable, shell plugin manager.
 - [Features](#features)
 - [Table of Contents](#table-of-contents)
 - [Installation](#installation)
+  - [Pre-built binaries](#pre-built-binaries)
+  - [Cargo](#cargo)
 - [Getting started](#getting-started)
 - [Command line interface](#command-line-interface)
   - [`lock` command](#lock-command)
@@ -56,14 +58,33 @@ A fast, configurable, shell plugin manager.
 
 ## Installation
 
-The recommended way of installing **sheldon** is using `cargo`
+### Pre-built binaries
+
+Pre-built binaries for Linux (x86-64, armv7) and macOS (x86-64) can be found on
+[the releases page][releases].
+
+Alternatively, the following script can be used to automatically detect your
+host system, download the required artefact, and extract the **sheldon** binary.
+
+```sh
+curl --proto '=https' -fLsS https://rossmacarthur.github.io/install/crate.sh \
+    | sh -s -- --repo "rossmacarthur/sheldon" --to /usr/local/bin
+```
+
+### Cargo
+
+**sheldon** can be installed using [cargo], the Rust language package manager.
+Install [cargo] using [rustup] then run
 
 ```sh
 cargo install sheldon
 ```
 
-Pre-built binaries for Linux and macOS can be found on [the releases
-page][releases].
+Updating can be done using
+
+```sh
+cargo install sheldon --force
+```
 
 ## Getting started
 
@@ -422,11 +443,14 @@ This project is dual licensed under the Apache 2.0 License and the MIT License.
 See [LICENSE-APACHE](LICENSE-APACHE) and [LICENSE-MIT](LICENSE-MIT) for more
 details.
 
+[cargo]: https://doc.rust-lang.org/cargo/
 [configuration]: docs/Configuration.md
 [crates]: https://crates.io/crates/sheldon
 [docs]: https://docs.rs/sheldon
 [handlebars]: http://handlebarsjs.com
 [releases]: https://github.com/rossmacarthur/sheldon/releases
+[rust-lang]: https://www.rust-lang.org/
+[rustup]: https://rustup.rs/
 [travis]: https://travis-ci.org/rossmacarthur/sheldon
 [TOML]: https://github.com/toml-lang/toml
 [Zsh]: http://www.zsh.org/
