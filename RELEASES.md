@@ -4,11 +4,14 @@
 
 *Unreleased*
 
+- [Support Git submodules.][#84] After cloning and checking out a repository
+  submodules will now be recursively fetched.
 - [Support Git source cloning using Git and SSH protocols.][#83] This adds an
   optional `protocol` field to plugin configuration which can be used to specify
   the protocol for Gist and GitHub sources. Additionally, Git sources can now
   specify URLs with protocols `git://` and `ssh://`.
 
+[#84]: https://github.com/rossmacarthur/sheldon/pull/84
 [#83]: https://github.com/rossmacarthur/sheldon/pull/83
 
 ## 0.4.7

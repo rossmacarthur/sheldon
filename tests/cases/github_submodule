@@ -1,0 +1,38 @@
+# plugins.toml
+[plugins.test]
+github = "rossmacarthur/sheldon-test"
+branch = "recursive-recursive"
+directory = "self/self"
+
+# plugins.lock
+version = "<version>"
+home = "<root>"
+root = "<root>"
+config_file = "<root>/plugins.toml"
+lock_file = "<root>/plugins.lock"
+clone_dir = "<root>/repositories"
+download_dir = "<root>/downloads"
+
+[[plugins]]
+name = "test"
+directory = "<root>/repositories/github.com/rossmacarthur/sheldon-test/self/self"
+filenames = ["<root>/repositories/github.com/rossmacarthur/sheldon-test/self/self/test.plugin.zsh"]
+apply = ["source"]
+
+[templates]
+
+# lock.stdout
+
+# lock.stderr
+[LOADED] ~/plugins.toml
+    [CLONED] https://github.com/rossmacarthur/sheldon-test@recursive-recursive
+[LOCKED] ~/plugins.lock
+
+# source.stdout
+source "<root>/repositories/github.com/rossmacarthur/sheldon-test/self/self/test.plugin.zsh"
+
+# source.stderr
+[UNLOCKED] ~/plugins.lock
+  [RENDERED] test
+
+# end
