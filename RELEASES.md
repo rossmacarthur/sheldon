@@ -1,11 +1,22 @@
 # Releases
 
+## 0.4.8
+
+*Unreleased*
+
+- [Support Git source cloning using Git and SSH protocols.][#83] This adds an
+  optional `protocol` field to plugin configuration which can be used to specify
+  the protocol for Gist and GitHub sources. Additionally, Git sources can now
+  specify URLs with protocols `git://` and `ssh://`.
+
+[#83]: https://github.com/rossmacarthur/sheldon/pull/83
+
 ## 0.4.7
 
 *Released on October 22nd, 2019*
 
 - [Add `--clone-dir` and `--download-dir` options.][#76] The directories where
-  git plugin sources are cloned to, and remote sources are downloaded to, are
+  Git plugin sources are cloned to, and remote sources are downloaded to, are
   now configurable. Environment variables for setting these options are also
   now available.
 - [Fix `--config-file` and `--lock-file` options.][#72] These two options were

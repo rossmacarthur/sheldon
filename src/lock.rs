@@ -140,12 +140,80 @@ impl fmt::Display for GitReference {
     }
 }
 
+mod git {
+    use std::path::Path;
+
+    use url::Url;
+
+    use crate::{Result, ResultExt};
+
+    /// Call a function with generated fetch options.
+    fn with_fetch_options<T, F>(f: F) -> Result<T>
+    where
+        F: FnOnce(git2::FetchOptions<'_>) -> Result<T>,
+    {
+        let mut rcb = git2::RemoteCallbacks::new();
+        rcb.credentials(|_, username, allowed| {
+            if allowed.contains(git2::CredentialType::SSH_KEY) {
+                if let Some(username) = username {
+                    return git2::Cred::ssh_key_from_agent(username);
+                }
+            }
+            if allowed.contains(git2::CredentialType::DEFAULT) {
+                return git2::Cred::default();
+            }
+            Err(git2::Error::from_str(
+                "remote authentication required but none available",
+            ))
+        });
+        let mut opts = git2::FetchOptions::new();
+        opts.remote_callbacks(rcb);
+        f(opts)
+    }
+
+    /// Clone or open a Git repository.
+    pub fn clone_or_open(url: &Url, directory: &Path) -> Result<(bool, git2::Repository)> {
+        with_fetch_options(|opts| {
+            let mut cloned = false;
+            let repo = match git2::build::RepoBuilder::new()
+                .fetch_options(opts)
+                .clone(url.as_str(), directory)
+            {
+                Ok(repo) => {
+                    cloned = true;
+                    repo
+                }
+                Err(e) => {
+                    if e.code() != git2::ErrorCode::Exists {
+                        return Err(e).chain(s!("failed to git clone `{}`", url));
+                    } else {
+                        git2::Repository::open(directory)
+                            .chain(s!("failed to open repository at `{}`", directory.display()))?
+                    }
+                }
+            };
+            Ok((cloned, repo))
+        })
+    }
+
+    /// Checkout at repository at a particular revision.
+    pub fn checkout(repo: &git2::Repository, oid: git2::Oid) -> Result<()> {
+        let obj = repo
+            .find_object(oid, None)
+            .chain(s!("failed to find `{}`", oid))?;
+        repo.reset(&obj, git2::ResetType::Hard, None)
+            .chain(s!("failed to set HEAD to `{}`", oid))?;
+        repo.checkout_tree(&obj, None)
+            .chain(s!("failed to checkout `{}`", oid))
+    }
+}
+
 impl GitReference {
     /// Consume the `GitReference` and convert it to a `LockedGitReference`.
     ///
     /// This code is take from [Cargo].
     ///
-    /// [Cargo]: https://github.com/rust-lang/cargo/blob/master/src/cargo/sources/git/utils.rs#L207
+    /// [Cargo]: https://github.com/rust-lang/cargo/blob/master/src/cargo/sources/git/utils.rs#L207-L232
     fn lock(&self, repo: &git2::Repository) -> Result<LockedGitReference> {
         let reference = match self {
             Self::Branch(s) => repo
@@ -205,38 +273,12 @@ impl Source {
             }
         }
 
-        let mut cloned = false;
-
-        // Clone or open the repository.
-        let repo = match git2::Repository::clone(&url.to_string(), &directory) {
-            Ok(repo) => {
-                cloned = true;
-                repo
-            }
-            Err(e) => {
-                if e.code() != git2::ErrorCode::Exists {
-                    return Err(e).chain(s!("failed to git clone `{}`", url));
-                } else {
-                    git2::Repository::open(&directory)
-                        .chain(s!("failed to open repository at `{}`", directory.display()))?
-                }
-            }
-        };
-
+        let (cloned, repo) = git::clone_or_open(&url, &directory)?;
         let status = if cloned { "Cloned" } else { "Checked" };
 
         // Checkout the configured revision.
         if let Some(reference) = reference {
-            let revision = reference.lock(&repo)?;
-
-            let obj = repo
-                .find_object(revision.0, None)
-                .chain(s!("failed to find revision `{}`", revision.0))?;
-            repo.reset(&obj, git2::ResetType::Hard, None).chain(s!(
-                "failed to reset repository to revision `{}`",
-                revision.0
-            ))?;
-
+            git::checkout(&repo, reference.lock(&repo)?.0)?;
             ctx.status(status, &format!("{}@{}", &url, reference));
         } else {
             ctx.status(status, &url);
@@ -929,6 +971,31 @@ mod tests {
             &create_test_context(directory),
             directory.to_path_buf(),
             Url::parse("https://github.com/rossmacarthur/sheldon-test").unwrap(),
+            Some(GitReference::Revision(
+                "ad149784a1538291f2477fb774eeeed4f4d29e45".to_string(),
+            )),
+        )
+        .unwrap();
+
+        assert_eq!(locked.directory, directory);
+        assert_eq!(locked.filename, None);
+        let repo = git2::Repository::open(&directory).unwrap();
+        let head = repo.head().unwrap();
+        assert_eq!(
+            head.target().unwrap().to_string(),
+            "ad149784a1538291f2477fb774eeeed4f4d29e45"
+        )
+    }
+
+    #[test]
+    fn source_lock_git_with_git() {
+        let temp = tempfile::tempdir().expect("create temporary directory");
+        let directory = temp.path();
+
+        let locked = Source::lock_git(
+            &create_test_context(directory),
+            directory.to_path_buf(),
+            Url::parse("git://github.com/rossmacarthur/sheldon-test").unwrap(),
             Some(GitReference::Revision(
                 "ad149784a1538291f2477fb774eeeed4f4d29e45".to_string(),
             )),
