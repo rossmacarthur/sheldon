@@ -8,7 +8,7 @@ use std::{
     collections::HashMap,
     fmt, fs, io,
     path::{Path, PathBuf},
-    result, sync,
+    sync,
 };
 
 use indexmap::{indexmap, IndexMap};
@@ -21,6 +21,7 @@ use url::Url;
 use crate::{
     config::{Config, ExternalPlugin, GitReference, InlinePlugin, Plugin, Source, Template},
     context::Context,
+    util::git,
     Error, Result, ResultExt,
 };
 
@@ -140,74 +141,6 @@ impl fmt::Display for GitReference {
     }
 }
 
-mod git {
-    use std::path::Path;
-
-    use url::Url;
-
-    use crate::{Result, ResultExt};
-
-    /// Call a function with generated fetch options.
-    fn with_fetch_options<T, F>(f: F) -> Result<T>
-    where
-        F: FnOnce(git2::FetchOptions<'_>) -> Result<T>,
-    {
-        let mut rcb = git2::RemoteCallbacks::new();
-        rcb.credentials(|_, username, allowed| {
-            if allowed.contains(git2::CredentialType::SSH_KEY) {
-                if let Some(username) = username {
-                    return git2::Cred::ssh_key_from_agent(username);
-                }
-            }
-            if allowed.contains(git2::CredentialType::DEFAULT) {
-                return git2::Cred::default();
-            }
-            Err(git2::Error::from_str(
-                "remote authentication required but none available",
-            ))
-        });
-        let mut opts = git2::FetchOptions::new();
-        opts.remote_callbacks(rcb);
-        f(opts)
-    }
-
-    /// Clone or open a Git repository.
-    pub fn clone_or_open(url: &Url, directory: &Path) -> Result<(bool, git2::Repository)> {
-        with_fetch_options(|opts| {
-            let mut cloned = false;
-            let repo = match git2::build::RepoBuilder::new()
-                .fetch_options(opts)
-                .clone(url.as_str(), directory)
-            {
-                Ok(repo) => {
-                    cloned = true;
-                    repo
-                }
-                Err(e) => {
-                    if e.code() != git2::ErrorCode::Exists {
-                        return Err(e).chain(s!("failed to git clone `{}`", url));
-                    } else {
-                        git2::Repository::open(directory)
-                            .chain(s!("failed to open repository at `{}`", directory.display()))?
-                    }
-                }
-            };
-            Ok((cloned, repo))
-        })
-    }
-
-    /// Checkout at repository at a particular revision.
-    pub fn checkout(repo: &git2::Repository, oid: git2::Oid) -> Result<()> {
-        let obj = repo
-            .find_object(oid, None)
-            .chain(s!("failed to find `{}`", oid))?;
-        repo.reset(&obj, git2::ResetType::Hard, None)
-            .chain(s!("failed to set HEAD to `{}`", oid))?;
-        repo.checkout_tree(&obj, None)
-            .chain(s!("failed to checkout `{}`", oid))
-    }
-}
-
 impl GitReference {
     /// Consume the `GitReference` and convert it to a `LockedGitReference`.
     ///
@@ -215,31 +148,12 @@ impl GitReference {
     ///
     /// [Cargo]: https://github.com/rust-lang/cargo/blob/master/src/cargo/sources/git/utils.rs#L207-L232
     fn lock(&self, repo: &git2::Repository) -> Result<LockedGitReference> {
-        let reference = match self {
-            Self::Branch(s) => repo
-                .find_branch(&format!("origin/{}", s), git2::BranchType::Remote)
-                .chain(s!("failed to find branch `{}`", s))?
-                .get()
-                .target()
-                .chain(s!("branch `{}` does not have a target", s))?,
-            Self::Revision(s) => {
-                let obj = repo
-                    .revparse_single(s)
-                    .chain(s!("failed to find revision `{}`", s))?;
-                match obj.as_tag() {
-                    Some(tag) => tag.target_id(),
-                    None => obj.id(),
-                }
-            }
-            Self::Tag(s) => (|| -> result::Result<_, git2::Error> {
-                let id = repo.refname_to_id(&format!("refs/tags/{}", s))?;
-                let obj = repo.find_object(id, None)?;
-                let obj = obj.peel(git2::ObjectType::Commit)?;
-                Ok(obj.id())
-            })()
-            .chain(s!("failed to find tag `{}`", s))?,
-        };
-        Ok(LockedGitReference(reference))
+        match self {
+            Self::Branch(s) => git::resolve_branch(repo, s),
+            Self::Revision(s) => git::resolve_revision(repo, s),
+            Self::Tag(s) => git::resolve_tag(repo, s),
+        }
+        .map(LockedGitReference)
     }
 }
 
@@ -283,6 +197,9 @@ impl Source {
         } else {
             ctx.status(status, &url);
         }
+
+        // Recursively update Git submodules.
+        git::submodule_update(&repo).chain(s!("failed to recursively update submodules"))?;
 
         Ok(LockedSource {
             directory,

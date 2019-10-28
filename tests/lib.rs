@@ -280,6 +280,56 @@ nothing to commit, working tree clean
 }
 
 #[test]
+fn lock_and_source_github_submodule() -> io::Result<()> {
+    let case = TestCase::load("github_submodule")?;
+    case.run()?;
+
+    // Check that sheldon-test@recursive-recursive was in fact cloned.
+    let directory = case
+        .root
+        .path()
+        .join("repositories/github.com/rossmacarthur/sheldon-test");
+    let filename = directory.join("test.plugin.zsh");
+    assert!(directory.is_dir());
+    assert!(filename.is_file());
+    assert_eq!(
+        git_status(&directory),
+        r#"On branch master
+Your branch is ahead of 'origin/master' by 2 commits.
+  (use "git push" to publish your local commits)
+
+nothing to commit, working tree clean
+"#,
+    );
+
+    // Check that sheldon-test@recursive submodule self was in fact cloned.
+    let directory = directory.join("self");
+    let filename = directory.join("test.plugin.zsh");
+    assert!(directory.is_dir());
+    assert!(filename.is_file());
+    assert_eq!(
+        git_status(&directory),
+        r#"HEAD detached at 361db1d
+nothing to commit, working tree clean
+"#,
+    );
+
+    // Check that sheldon-test submodule was in fact cloned.
+    let directory = directory.join("self");
+    let filename = directory.join("test.plugin.zsh");
+    assert!(directory.is_dir());
+    assert!(filename.is_file());
+    assert_eq!(
+        git_status(&directory),
+        r#"HEAD detached at be8fde2
+nothing to commit, working tree clean
+"#,
+    );
+
+    Ok(())
+}
+
+#[test]
 fn lock_and_source_github_tag() -> io::Result<()> {
     let case = TestCase::load("github_tag")?;
     case.run()?;
