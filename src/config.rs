@@ -33,6 +33,15 @@ pub struct Template {
     pub each: bool,
 }
 
+/// The Git protocol.
+#[derive(Clone, Copy, Debug, Deserialize, PartialEq)]
+#[serde(rename_all = "lowercase")]
+enum GitProtocol {
+    Git,
+    Https,
+    Ssh,
+}
+
 /// A Git reference.
 #[derive(Clone, Debug, Deserialize, Eq, Hash, PartialEq)]
 #[serde(rename_all = "lowercase")]
@@ -79,6 +88,8 @@ struct RawPlugin {
     gist: Option<String>,
     /// A clonable GitHub repository.
     github: Option<GitHubRepository>,
+    /// What protocol to use when cloning a repository.
+    protocol: Option<GitProtocol>,
     /// A downloadable file.
     #[serde(with = "url_serde")]
     remote: Option<Url>,
@@ -320,6 +331,16 @@ impl Template {
     }
 }
 
+impl GitProtocol {
+    fn prefix(&self) -> &str {
+        match self {
+            Self::Git => "git://",
+            Self::Https => "https://",
+            Self::Ssh => "ssh://git@",
+        }
+    }
+}
+
 impl fmt::Display for GitHubRepository {
     /// Displays a `GitHubRepository` as "{username}/{repository}".
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -353,6 +374,7 @@ impl RawPlugin {
             git,
             gist,
             github,
+            protocol,
             remote,
             local,
             inline,
@@ -362,7 +384,8 @@ impl RawPlugin {
             apply,
         } = self;
 
-        let reference_is_some = reference.is_some();
+        let is_reference_some = reference.is_some();
+        let is_gist_or_github = gist.is_some() || github.is_some();
 
         let raw_source = match (git, gist, github, remote, local, inline) {
             // `git` type
@@ -371,17 +394,26 @@ impl RawPlugin {
             }
             // `gist` type
             (None, Some(identifier), None, None, None, None) => {
-                let url = Url::parse(&format!("https://{}/{}", GIST_HOST, identifier))
+                let url_str = format!(
+                    "{}{}/{}",
+                    protocol.unwrap_or(GitProtocol::Https).prefix(),
+                    GIST_HOST,
+                    identifier.splitn(2, '/').last().unwrap()
+                );
+                let url = Url::parse(&url_str)
                     .chain(s!("failed to construct Gist URL using `{}`", identifier))?;
                 TempSource::External(Source::Git { url, reference })
             }
             // `github` type
             (None, None, Some(repository), None, None, None) => {
-                let url = Url::parse(&format!(
-                    "https://{}/{}/{}",
-                    GITHUB_HOST, repository.username, repository.repository
-                ))
-                .chain(s!("failed to construct GitHub URL using `{}`", repository))?;
+                let url_str = format!(
+                    "{}{}/{}",
+                    protocol.unwrap_or(GitProtocol::Https).prefix(),
+                    GITHUB_HOST,
+                    repository
+                );
+                let url = Url::parse(&url_str)
+                    .chain(s!("failed to construct GitHub URL using `{}`", repository))?;
                 TempSource::External(Source::Git { url, reference })
             }
             // `remote` type
@@ -401,11 +433,13 @@ impl RawPlugin {
 
         match raw_source {
             TempSource::External(source) => {
-                if !source.is_git() && reference_is_some {
+                if !source.is_git() && is_reference_some {
                     bail!(
-                        "`branch`, `tag`, and `revision` fields are not supported by this plugin \
-                         type"
+                        "the `branch`, `tag`, and `revision` fields are not supported by this \
+                         plugin type"
                     );
+                } else if protocol.is_some() && !is_gist_or_github {
+                    bail!("the `protocol` field is not supported by this plugin type");
                 }
 
                 validate_template_names(&apply, templates)?;
@@ -422,8 +456,9 @@ impl RawPlugin {
                 for (field, is_some) in [
                     (
                         "`branch`, `tag`, and `revision` fields are",
-                        reference_is_some,
+                        is_reference_some,
                     ),
+                    ("`protocol` field is", protocol.is_some()),
                     ("`directory` field is", directory.is_some()),
                     ("`use` field is", uses.is_some()),
                     ("`apply` field is", apply.is_some()),
@@ -680,7 +715,31 @@ mod tests {
     }
 
     #[test]
-    fn raw_plugin_normalize_gist() {
+    fn raw_plugin_normalize_gist_with_git() {
+        let name = "test".to_string();
+        let expected = Plugin::External(ExternalPlugin {
+            name: name.clone(),
+            source: Source::Git {
+                url: Url::parse("git://gist.github.com/579d02802b1cc17baed07753d09f5009").unwrap(),
+                reference: None,
+            },
+            directory: None,
+            uses: None,
+            apply: None,
+        });
+        let raw_plugin = RawPlugin {
+            gist: Some("rossmacarthur/579d02802b1cc17baed07753d09f5009".to_string()),
+            protocol: Some(GitProtocol::Git),
+            ..Default::default()
+        };
+        assert_eq!(
+            raw_plugin.normalize(name, &IndexMap::new()).unwrap(),
+            expected
+        );
+    }
+
+    #[test]
+    fn raw_plugin_normalize_gist_with_https() {
         let name = "test".to_string();
         let expected = Plugin::External(ExternalPlugin {
             name: name.clone(),
@@ -704,7 +763,59 @@ mod tests {
     }
 
     #[test]
-    fn raw_plugin_normalize_github() {
+    fn raw_plugin_normalize_gist_with_ssh() {
+        let name = "test".to_string();
+        let expected = Plugin::External(ExternalPlugin {
+            name: name.clone(),
+            source: Source::Git {
+                url: Url::parse("ssh://git@gist.github.com/579d02802b1cc17baed07753d09f5009")
+                    .unwrap(),
+                reference: None,
+            },
+            directory: None,
+            uses: None,
+            apply: None,
+        });
+        let raw_plugin = RawPlugin {
+            gist: Some("rossmacarthur/579d02802b1cc17baed07753d09f5009".to_string()),
+            protocol: Some(GitProtocol::Ssh),
+            ..Default::default()
+        };
+        assert_eq!(
+            raw_plugin.normalize(name, &IndexMap::new()).unwrap(),
+            expected
+        );
+    }
+
+    #[test]
+    fn raw_plugin_normalize_github_with_git() {
+        let name = "test".to_string();
+        let expected = Plugin::External(ExternalPlugin {
+            name: name.clone(),
+            source: Source::Git {
+                url: Url::parse("git://github.com/rossmacarthur/sheldon-test").unwrap(),
+                reference: None,
+            },
+            directory: None,
+            uses: None,
+            apply: None,
+        });
+        let raw_plugin = RawPlugin {
+            github: Some(GitHubRepository {
+                username: "rossmacarthur".to_string(),
+                repository: "sheldon-test".to_string(),
+            }),
+            protocol: Some(GitProtocol::Git),
+            ..Default::default()
+        };
+        assert_eq!(
+            raw_plugin.normalize(name, &IndexMap::new()).unwrap(),
+            expected
+        );
+    }
+
+    #[test]
+    fn raw_plugin_normalize_github_with_https() {
         let name = "test".to_string();
         let expected = Plugin::External(ExternalPlugin {
             name: name.clone(),
@@ -721,6 +832,33 @@ mod tests {
                 username: "rossmacarthur".to_string(),
                 repository: "sheldon-test".to_string(),
             }),
+            ..Default::default()
+        };
+        assert_eq!(
+            raw_plugin.normalize(name, &IndexMap::new()).unwrap(),
+            expected
+        );
+    }
+
+    #[test]
+    fn raw_plugin_normalize_github_with_ssh() {
+        let name = "test".to_string();
+        let expected = Plugin::External(ExternalPlugin {
+            name: name.clone(),
+            source: Source::Git {
+                url: Url::parse("ssh://git@github.com/rossmacarthur/sheldon-test").unwrap(),
+                reference: None,
+            },
+            directory: None,
+            uses: None,
+            apply: None,
+        });
+        let raw_plugin = RawPlugin {
+            github: Some(GitHubRepository {
+                username: "rossmacarthur".to_string(),
+                repository: "sheldon-test".to_string(),
+            }),
+            protocol: Some(GitProtocol::Ssh),
             ..Default::default()
         };
         assert_eq!(
@@ -769,7 +907,28 @@ mod tests {
             .unwrap_err();
         assert_eq!(
             error.to_string(),
-            "`branch`, `tag`, and `revision` fields are not supported by this plugin type"
+            "the `branch`, `tag`, and `revision` fields are not supported by this plugin type"
+        );
+    }
+
+    #[test]
+    fn raw_plugin_normalize_remote_with_ssh() {
+        let raw_plugin = RawPlugin {
+            remote: Some(
+                Url::parse(
+                    "https://github.com/rossmacarthur/sheldon-test/blob/master/test.plugin.zsh",
+                )
+                .unwrap(),
+            ),
+            protocol: Some(GitProtocol::Https),
+            ..Default::default()
+        };
+        let error = raw_plugin
+            .normalize("test".to_string(), &IndexMap::new())
+            .unwrap_err();
+        assert_eq!(
+            error.to_string(),
+            "the `protocol` field is not supported by this plugin type"
         );
     }
 

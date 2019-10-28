@@ -118,7 +118,7 @@ impl TestCommand {
 
     fn run(mut self) -> io::Result<()> {
         let result = self.command.output()?;
-
+        println!("{:#?}", result);
         if let Some(exit_code) = self.expect_exit_code {
             assert_eq!(result.status.code().unwrap(), exit_code);
         }
@@ -128,7 +128,6 @@ impl TestCommand {
         if let Some(stderr) = self.expect_stderr {
             assert_eq!(String::from_utf8_lossy(&result.stderr), stderr);
         }
-
         Ok(())
     }
 }
@@ -174,7 +173,7 @@ impl TestCase {
             .clone()
     }
 
-    pub fn run_command(&self, command: &str) -> io::Result<()> {
+    fn run_command(&self, command: &str) -> io::Result<()> {
         TestCommand::new(self.root.path())
             .expect_exit_code(0)
             .expect_stdout(self.get(format!("{}.stdout", command)))
@@ -183,11 +182,11 @@ impl TestCase {
             .run()
     }
 
-    pub fn write_file(&self, name: &str) -> io::Result<()> {
+    fn write_file(&self, name: &str) -> io::Result<()> {
         fs::write(&self.root.path().join(name), self.get(name))
     }
 
-    pub fn assert_contents(&self, name: &str) -> io::Result<()> {
+    fn assert_contents(&self, name: &str) -> io::Result<()> {
         assert_eq!(
             &fs::read_to_string(&self.root.path().join(name))?,
             &self.get(name)
@@ -195,7 +194,7 @@ impl TestCase {
         Ok(())
     }
 
-    pub fn run(&self) -> io::Result<()> {
+    fn run(&self) -> io::Result<()> {
         self.write_file("plugins.toml")?;
         self.run_command("lock")?;
         self.assert_contents("plugins.lock")?;
@@ -203,7 +202,7 @@ impl TestCase {
     }
 }
 
-pub fn git_status(directory: &Path) -> String {
+fn git_status(directory: &Path) -> String {
     let output = Command::new("git")
         .arg("-C")
         .arg(directory)
@@ -211,6 +210,22 @@ pub fn git_status(directory: &Path) -> String {
         .output()
         .unwrap();
     String::from_utf8_lossy(&output.stdout).to_string()
+}
+
+// Check that sheldon-test was in fact cloned.
+fn check_sheldon_test(root: &Path) {
+    let directory = root.join("repositories/github.com/rossmacarthur/sheldon-test");
+    let filename = directory.join("test.plugin.zsh");
+    assert!(directory.is_dir());
+    assert!(filename.is_file());
+    assert_eq!(
+        git_status(&directory),
+        r#"On branch master
+Your branch is up to date with 'origin/master'.
+
+nothing to commit, working tree clean
+"#,
+    );
 }
 
 /////////////////////////////////////////////////////////////////////////
@@ -223,33 +238,24 @@ fn lock_and_source_empty() -> io::Result<()> {
 }
 
 #[test]
-fn lock_and_source_git() -> io::Result<()> {
-    let case = TestCase::load("git")?;
+fn lock_and_source_github_git() -> io::Result<()> {
+    let case = TestCase::load("github_git")?;
     case.run()?;
-
-    // Check that sheldon-test was in fact cloned.
-    let directory = case
-        .root
-        .path()
-        .join("repositories/github.com/rossmacarthur/sheldon-test");
-    let filename = directory.join("test.plugin.zsh");
-    assert!(directory.is_dir());
-    assert!(filename.is_file());
-    assert_eq!(
-        git_status(&directory),
-        r#"On branch master
-Your branch is up to date with 'origin/master'.
-
-nothing to commit, working tree clean
-"#,
-    );
-
+    check_sheldon_test(case.root.path());
     Ok(())
 }
 
 #[test]
-fn lock_and_source_git_branch() -> io::Result<()> {
-    let case = TestCase::load("git_branch")?;
+fn lock_and_source_github_https() -> io::Result<()> {
+    let case = TestCase::load("github_https")?;
+    case.run()?;
+    check_sheldon_test(case.root.path());
+    Ok(())
+}
+
+#[test]
+fn lock_and_source_github_branch() -> io::Result<()> {
+    let case = TestCase::load("github_branch")?;
     case.run()?;
 
     // Check that sheldon-test@feature was in fact cloned.
@@ -274,8 +280,8 @@ nothing to commit, working tree clean
 }
 
 #[test]
-fn lock_and_source_git_tag() -> io::Result<()> {
-    let case = TestCase::load("git_tag")?;
+fn lock_and_source_github_tag() -> io::Result<()> {
+    let case = TestCase::load("github_tag")?;
     case.run()?;
 
     // Check that sheldon-test@v0.1.0 was in fact cloned.
@@ -299,8 +305,8 @@ nothing to commit, working tree clean
 }
 
 #[test]
-fn lock_and_source_git_bad_url() -> io::Result<()> {
-    let case = TestCase::load("git_bad_url")?;
+fn lock_and_source_github_bad_url() -> io::Result<()> {
+    let case = TestCase::load("github_bad_url")?;
     case.write_file("plugins.toml")?;
 
     TestCommand::new(case.root.path())

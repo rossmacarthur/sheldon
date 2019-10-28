@@ -40,7 +40,8 @@ A fast, configurable, shell plugin manager.
     - [`github`](#github)
     - [`gist`](#gist)
     - [`git`](#git)
-    - [Specifying branch / tag / commit](#specifying-branch--tag--commit)
+    - [Specifying a branch, tag, or commit](#specifying-a-branch-tag-or-commit)
+    - [Cloning with Git or SSH protocols](#cloning-with-git-or-ssh-protocols)
   - [Remote](#remote)
   - [Local](#local)
 - [Configuration: plugin options](#configuration-plugin-options)
@@ -225,7 +226,7 @@ A Git source must set the `git` field and specify the URL.
 git = "https://github.com/sindresorhus/pure"
 ```
 
-#### Specifying branch / tag / commit
+#### Specifying a branch, tag, or commit
 
 All Git sources also allow setting of one of the `branch`, `tag` or `revision`
 fields. **sheldon** will then checkout the repository at this reference.
@@ -235,6 +236,30 @@ fields. **sheldon** will then checkout the repository at this reference.
 github = "sindresorhus/pure"
 tag = "1.9.0"
 ```
+
+#### Cloning with Git or SSH protocols
+
+GitHub and Gist sources are cloned using HTTPS by default. You can specify that
+Git or SSH should be used by setting the `protocol` field to the protocol type.
+This must be one of `git`, `https`, or `ssh`.
+
+```toml
+[plugins.pure]
+github = "sindresorhus/pure"
+protocol = "ssh"
+```
+
+For a plain Git source you should specify the URL with a `git://` or `ssh://`
+protocol. For SSH you will need to specify the username as well (it is `git` for
+GitHub).
+
+```toml
+[plugins.pure]
+git = "ssh://git@github.com/sindresorhus/pure"
+```
+
+**Note:** Currently **sheldon** only supports authentication when cloning using
+SSH and only via the SSH agent.
 
 ### Remote
 
