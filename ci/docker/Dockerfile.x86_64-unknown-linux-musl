@@ -4,5 +4,5 @@ RUN apt-get update \
   && apt-get install -y --no-install-recommends gnupg \
   && rm -rf /var/lib/apt/lists/*
 
-COPY install-git.sh /
-RUN bash install-git.sh
+COPY install_git.sh /
+RUN bash install_git.sh
