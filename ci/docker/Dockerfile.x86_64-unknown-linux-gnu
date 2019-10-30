@@ -1,4 +1,4 @@
 FROM rustembedded/cross:x86_64-unknown-linux-gnu-0.1.16
 
-COPY install-git.sh /
-RUN bash install-git.sh
+COPY install_git.sh /
+RUN bash install_git.sh
