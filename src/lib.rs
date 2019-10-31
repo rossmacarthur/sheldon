@@ -336,7 +336,7 @@ impl Sheldon {
     /// locked config.
     fn locked(&self) -> Result<LockedConfig> {
         let path = &self.ctx.config_file;
-        let config = Config::from_path(&path).chain(s!("failed to load config file"))?;
+        let config = Config::from_path(&path).chain("failed to load config file")?;
         self.ctx
             .header("Loaded", &self.ctx.replace_home(path).display());
         config.lock(&self.ctx)
@@ -354,7 +354,7 @@ impl Sheldon {
         } else {
             locked
                 .to_path(&self.ctx.lock_file)
-                .chain(s!("failed to write lock file"))?;
+                .chain("failed to write lock file")?;
             self.ctx.header(
                 "Locked",
                 &self.ctx.replace_home(&self.ctx.lock_file).display(),
@@ -387,9 +387,7 @@ impl Sheldon {
             }
         };
 
-        let script = locked
-            .source(&self.ctx)
-            .chain(s!("failed to render source"))?;
+        let script = locked.source(&self.ctx).chain("failed to render source")?;
 
         for err in &locked.errors {
             self.ctx.error(&err);
@@ -398,7 +396,7 @@ impl Sheldon {
         if to_path && locked.errors.is_empty() {
             locked
                 .to_path(&self.ctx.lock_file)
-                .chain(s!("failed to write lock file"))?;
+                .chain("failed to write lock file")?;
             self.ctx.header(
                 "Locked",
                 &self.ctx.replace_home(&self.ctx.lock_file).display(),

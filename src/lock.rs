@@ -199,7 +199,7 @@ impl Source {
         }
 
         // Recursively update Git submodules.
-        git::submodule_update(&repo).chain(s!("failed to recursively update submodules"))?;
+        git::submodule_update(&repo).chain("failed to recursively update submodules")?;
 
         Ok(LockedSource {
             directory,
@@ -360,7 +360,7 @@ impl ExternalPlugin {
                 "root" => ctx
                     .root
                     .to_str()
-                    .chain(s!("root directory is not valid UTF-8"))?,
+                    .chain("root directory is not valid UTF-8")?,
                 "name" => &self.name
             };
 
@@ -376,7 +376,7 @@ impl ExternalPlugin {
                 "directory",
                 &directory
                     .to_str()
-                    .chain(s!("directory is not valid UTF-8"))?,
+                    .chain("plugin directory is not valid UTF-8")?,
             );
 
             let mut filenames = Vec::new();
@@ -558,7 +558,7 @@ impl LockedConfig {
         let locked: Self = toml::from_str(&String::from_utf8_lossy(
             &fs::read(&path).chain(s!("failed to read locked config from `{}`", path.display()))?,
         ))
-        .chain(s!("failed to deserialize locked config"))?;
+        .chain("failed to deserialize locked config")?;
         Ok(locked)
     }
 
@@ -617,19 +617,21 @@ impl LockedConfig {
                             "root" => self
                                 .ctx.root
                                 .to_str()
-                                .chain(s!("root directory is not valid UTF-8"))?,
+                                .chain("root directory is not valid UTF-8")?,
                             "name" => &plugin.name,
                             "directory" => plugin
                                 .directory
                                 .to_str()
-                                .chain(s!("root directory is not valid UTF-8"))?,
+                                .chain("plugin directory is not valid UTF-8")?,
                         };
 
                         if templates_map.get(name.as_str()).unwrap().each {
                             for filename in &plugin.filenames {
                                 data.insert(
                                     "filename",
-                                    filename.to_str().chain(s!("filename is not valid UTF-8"))?,
+                                    filename
+                                        .to_str()
+                                        .chain("plugin filename is not valid UTF-8")?,
                                 );
                                 script.push_str(
                                     &templates
@@ -654,7 +656,7 @@ impl LockedConfig {
                         "root" => self
                             .ctx.root
                             .to_str()
-                            .chain(s!("root directory is not valid UTF-8"))?,
+                            .chain("root directory is not valid UTF-8")?,
                         "name" => &plugin.name,
                     };
                     script.push_str(
@@ -679,7 +681,7 @@ impl LockedConfig {
         let path = path.as_ref();
         fs::write(
             path,
-            &toml::to_string(&self).chain(s!("failed to serialize locked config"))?,
+            &toml::to_string(&self).chain("failed to serialize locked config")?,
         )
         .chain(s!("failed to write locked config to `{}`", path.display()))?;
         Ok(())

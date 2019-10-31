@@ -484,7 +484,7 @@ impl RawConfig {
         let path = path.as_ref();
         let contents = fs::read(&path).chain(s!("failed to read from `{}`", path.display()))?;
         let config: Self = toml::from_str(&String::from_utf8_lossy(&contents))
-            .chain(s!("failed to deserialize contents as TOML"))?;
+            .chain("failed to deserialize contents as TOML")?;
         Ok(config)
     }
 
