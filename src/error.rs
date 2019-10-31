@@ -16,15 +16,19 @@ pub struct Error {
     messages: Vec<String>,
 }
 
+/// A trait so that multiple things can be chained to our `Error`.
+pub trait IntoMessage {
+    fn into_message(self) -> String;
+}
+
 /// A trait to allow easy conversion of other `Result`s into our [`Result`] with
 /// a contextual message.
 ///
 /// [`Result`]: type.Result.html
 pub trait ResultExt<T, E> {
-    fn chain<C, D>(self, c: C) -> Result<T>
+    fn chain<M>(self, m: M) -> Result<T>
     where
-        C: FnOnce() -> D,
-        D: fmt::Display;
+        M: IntoMessage;
 }
 
 quick_error! {
@@ -97,32 +101,45 @@ quick_error! {
     }
 }
 
+impl IntoMessage for &str {
+    fn into_message(self) -> String {
+        self.to_string()
+    }
+}
+
+impl<F> IntoMessage for F
+where
+    F: FnOnce() -> String,
+{
+    fn into_message(self) -> String {
+        self()
+    }
+}
+
 impl<T, E> ResultExt<T, E> for result::Result<T, E>
 where
     E: Into<ErrorKind>,
 {
     /// Chain a message to the `Result`.
-    fn chain<C, D>(self, c: C) -> Result<T>
+    fn chain<M>(self, m: M) -> Result<T>
     where
-        C: FnOnce() -> D,
-        D: fmt::Display,
+        M: IntoMessage,
     {
         self.map_err(|e| Error {
             kind: e.into(),
-            messages: vec![format!("{}", c())],
+            messages: vec![m.into_message()],
         })
     }
 }
 
 impl<T> ResultExt<T, Error> for Result<T> {
     /// Chain a message to the `Result`.
-    fn chain<C, D>(self, c: C) -> Self
+    fn chain<M>(self, m: M) -> Self
     where
-        C: FnOnce() -> D,
-        D: fmt::Display,
+        M: IntoMessage,
     {
         self.map_err(|mut e| {
-            e.messages.push(format!("{}", c()));
+            e.messages.push(m.into_message());
             e
         })
     }
@@ -130,12 +147,11 @@ impl<T> ResultExt<T, Error> for Result<T> {
 
 impl<T> ResultExt<T, Error> for Option<T> {
     /// Chain a message to the `Option`.
-    fn chain<C, D>(self, c: C) -> Result<T>
+    fn chain<M>(self, m: M) -> Result<T>
     where
-        C: FnOnce() -> D,
-        D: fmt::Display,
+        M: IntoMessage,
     {
-        self.ok_or_else(|| Error::custom(format!("{}", c())))
+        self.ok_or_else(|| Error::custom(m.into_message()))
     }
 }
 

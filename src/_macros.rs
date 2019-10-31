@@ -1,6 +1,6 @@
 /// Generate a lazy format!.
 macro_rules! s {
-    ($($arg:tt)*) => (|| format!($($arg)*))
+    ($fmt:expr, $($arg:tt)+) => (|| format!($fmt, $($arg)+))
 }
 
 /// Construct a text only `Err(Error)`.
