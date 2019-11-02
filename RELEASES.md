@@ -4,6 +4,8 @@
 
 *Unreleased*
 
+- [Auto clean clone and download directories][#87]. Unused plugin source
+  directories and files will now be automatically removed.
 - [Support Git submodules.][#84] After cloning and checking out a repository
   submodules will now be recursively fetched.
 - [Support Git source cloning using Git and SSH protocols.][#83] This adds an
