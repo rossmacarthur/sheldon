@@ -3,7 +3,6 @@
 github = "rossmacarthur/sheldon-test"
 
 # plugins.lock
-clean = "auto"
 version = "<version>"
 home = "<root>"
 root = "<root>"

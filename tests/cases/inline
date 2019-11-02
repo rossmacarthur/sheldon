@@ -8,7 +8,6 @@ echo 'testing...'
 """
 
 # plugins.lock
-clean = "auto"
 version = "<version>"
 home = "<root>"
 root = "<root>"

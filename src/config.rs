@@ -24,18 +24,6 @@ const GITHUB_HOST: &str = "github.com";
 // Configuration definitions
 /////////////////////////////////////////////////////////////////////////
 
-/// The clean mode.
-#[derive(Debug, Deserialize, Serialize)]
-#[serde(rename_all = "lowercase")]
-pub enum Clean {
-    /// Decide with cleverness when to clean.
-    Auto,
-    /// Always clean the clone and download directories.
-    Always,
-    /// Never clean the clone and download directories.
-    Never,
-}
-
 /// A wrapper around a template string.
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct Template {
@@ -162,8 +150,6 @@ pub enum Plugin {
 #[derive(Debug, Deserialize)]
 #[serde(default)]
 struct RawConfig {
-    /// Whether to clean the clone and download directories.
-    clean: Option<bool>,
     /// Which files to match and use in a plugin's directory.
     #[serde(rename = "match")]
     matches: Vec<String>,
@@ -178,8 +164,6 @@ struct RawConfig {
 /// The user configuration.
 #[derive(Debug)]
 pub struct Config {
-    /// The clean mode for the clone and download directories.
-    pub clean: Clean,
     /// Which files to match and use in a plugin's directory.
     pub matches: Vec<String>,
     /// The default list of template names to apply to each matched file.
@@ -307,7 +291,6 @@ impl Default for RawConfig {
     /// Returns the default `RawConfig`.
     fn default() -> Self {
         Self {
-            clean: None,
             matches: vec_into![
                 "{{ name }}.plugin.zsh",
                 "{{ name }}.zsh",
@@ -342,22 +325,6 @@ fn validate_template_names(
         }
     }
     Ok(())
-}
-
-impl From<Option<bool>> for Clean {
-    fn from(opt: Option<bool>) -> Self {
-        match opt {
-            None => Self::Auto,
-            Some(true) => Self::Always,
-            Some(false) => Self::Never,
-        }
-    }
-}
-
-impl Default for Clean {
-    fn default() -> Self {
-        Self::Auto
-    }
 }
 
 impl Template {
@@ -528,7 +495,6 @@ impl RawConfig {
     /// Normalize a `RawConfig` into a `Config`.
     fn normalize(self) -> Result<Config> {
         let Self {
-            clean,
             matches,
             apply,
             templates,
@@ -560,7 +526,6 @@ impl RawConfig {
         }
 
         Ok(Config {
-            clean: clean.into(),
             matches,
             apply,
             templates,

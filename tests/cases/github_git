@@ -4,7 +4,6 @@ github = "rossmacarthur/sheldon-test"
 protocol = "git"
 
 # plugins.lock
-clean = "auto"
 version = "<version>"
 home = "<root>"
 root = "<root>"

@@ -5,7 +5,6 @@ branch = "recursive-recursive"
 directory = "self/self"
 
 # plugins.lock
-clean = "auto"
 version = "<version>"
 home = "<root>"
 root = "<root>"

@@ -4,7 +4,6 @@ github = "rossmacarthur/sheldon-test"
 tag = "v0.1.0"
 
 # plugins.lock
-clean = "auto"
 version = "<version>"
 home = "<root>"
 root = "<root>"

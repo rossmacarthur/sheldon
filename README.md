@@ -53,7 +53,6 @@ A fast, configurable, shell plugin manager.
   - [Example: symlinking files](#example-symlinking-files)
   - [Example: overriding the PATH template](#example-overriding-the-path-template)
 - [Configuration: global options](#configuration-global-options)
-  - [`clean`](#clean)
   - [`match`](#match)
   - [`apply`](#apply-1)
 - [License](#license)
@@ -434,18 +433,6 @@ apply = ["source", "PATH"]
 **Note:** this would change the behavior of **PATH** for *all* plugins using it.
 
 ## Configuration: global options
-
-### `clean`
-
-The clean mode. This determines how **sheldon** will handle no longer used,
-downloaded sources in the clone and download directories. If set to `true` then
-**sheldon** will always clean these directories. If `false` then **sheldon**
-will never clean these directories. If unset then **sheldon** will automatically
-decide when to clean the directories.
-
-```toml
-clean = true
-```
 
 ### `match`
 

@@ -20,7 +20,7 @@ use url::Url;
 use walkdir::{DirEntry, WalkDir};
 
 use crate::{
-    config::{Clean, Config, ExternalPlugin, GitReference, InlinePlugin, Plugin, Source, Template},
+    config::{Config, ExternalPlugin, GitReference, InlinePlugin, Plugin, Source, Template},
     context::Context,
     util::git,
     Error, Result, ResultExt,
@@ -108,8 +108,6 @@ pub struct LockedConfig {
     /// The global context that was used to generated this `LockedConfig`.
     #[serde(flatten)]
     pub ctx: LockedContext,
-    /// The clean mode.
-    clean: Clean,
     /// Each locked plugin.
     plugins: Vec<LockedPlugin>,
     /// A map of name to template.
@@ -550,7 +548,6 @@ impl Config {
         };
 
         Ok(LockedConfig {
-            clean: self.clean,
             ctx: ctx.lock(),
             templates: self.templates,
             errors,
@@ -621,14 +618,9 @@ impl LockedConfig {
 
     /// Clean the clone and download directories.
     pub fn clean(&self, ctx: &Context) -> Result<()> {
-        let (clean_clone_dir, clean_download_dir) = match self.clean {
-            Clean::Auto => (
-                self.ctx.clone_dir.starts_with(&self.ctx.root),
-                self.ctx.download_dir.starts_with(&self.ctx.root),
-            ),
-            Clean::Never => (false, false),
-            Clean::Always => (true, true),
-        };
+        let clean_clone_dir = self.ctx.clone_dir.starts_with(&self.ctx.root);
+        let clean_download_dir = self.ctx.download_dir.starts_with(&self.ctx.root);
+
         if !clean_clone_dir && !clean_download_dir {
             return Ok(());
         }
@@ -1228,7 +1220,6 @@ mod tests {
         let directory = temp.path();
         let ctx = create_test_context(directory);
         let config = Config {
-            clean: Clean::Auto,
             matches: Vec::new(),
             apply: None,
             templates: IndexMap::new(),
@@ -1383,7 +1374,6 @@ ip_netns_prompt_info() {
         let temp = tempfile::tempdir().expect("create temporary directory");
         let ctx = create_test_context(temp.path());
         let config = Config {
-            clean: Clean::Always,
             matches: vec_into!["*.zsh"],
             apply: None,
             templates: DEFAULT_TEMPLATES
@@ -1437,7 +1427,6 @@ config_file = "<root>/plugins.toml"
 lock_file = "<root>/plugins.lock"
 clone_dir = "<root>/repositories"
 download_dir = "<root>/downloads"
-clean = "auto"
 plugins = []
 
 [templates]

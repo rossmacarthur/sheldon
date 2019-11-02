@@ -1,7 +1,6 @@
 # plugins.toml
 
 # test.lock
-clean = "auto"
 version = "<version>"
 home = "<root>"
 root = "<root>"
