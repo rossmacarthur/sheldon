@@ -129,6 +129,24 @@ impl Context {
         }
     }
 
+    pub fn warning_v(&self, status: &str, message: &dyn fmt::Display) {
+        if self.verbosity > Verbosity::Normal {
+            self.log_status(Color::Yellow, status, message);
+        }
+    }
+
+    pub fn error_warning(&self, error: &Error) {
+        if self.no_color {
+            eprintln!("\n[WARNING] {}", error.pretty());
+        } else {
+            eprintln!(
+                "\n{} {}",
+                Color::Yellow.bold().paint("warning:"),
+                error.pretty()
+            );
+        }
+    }
+
     pub fn error(&self, error: &Error) {
         if self.no_color {
             eprintln!("\n[ERROR] {}", error.pretty());

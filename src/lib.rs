@@ -353,6 +353,9 @@ impl Sheldon {
             Err(last)
         } else {
             locked
+                .clean(&self.ctx)
+                .chain("failed to clean clone and download directories")?;
+            locked
                 .to_path(&self.ctx.lock_file)
                 .chain("failed to write lock file")?;
             self.ctx.header(
@@ -394,6 +397,9 @@ impl Sheldon {
         }
 
         if to_path && locked.errors.is_empty() {
+            locked
+                .clean(&self.ctx)
+                .chain("failed to clean clone and download directories")?;
             locked
                 .to_path(&self.ctx.lock_file)
                 .chain("failed to write lock file")?;

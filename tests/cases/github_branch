@@ -14,7 +14,7 @@ download_dir = "<root>/downloads"
 
 [[plugins]]
 name = "test"
-directory = "<root>/repositories/github.com/rossmacarthur/sheldon-test"
+source_dir = "<root>/repositories/github.com/rossmacarthur/sheldon-test"
 filenames = ["<root>/repositories/github.com/rossmacarthur/sheldon-test/test.plugin.zsh"]
 apply = ["source"]
 

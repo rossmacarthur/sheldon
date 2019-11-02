@@ -25,7 +25,7 @@ const GITHUB_HOST: &str = "github.com";
 /////////////////////////////////////////////////////////////////////////
 
 /// A wrapper around a template string.
-#[derive(Debug, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct Template {
     /// The actual template string.
     pub value: String,
@@ -101,9 +101,13 @@ struct RawPlugin {
     #[serde(flatten)]
     reference: Option<GitReference>,
     /// Which directory to use in this plugin.
+    ///
+    /// This directory can contain template parameters.
     directory: Option<String>,
     /// Which files to use in this plugin's directory. If this is `None` then
     /// this will figured out based on the global `matches` field.
+    ///
+    /// These filenames can contain template parameters.
     #[serde(rename = "use")]
     uses: Option<Vec<String>>,
     /// What templates to apply to each matched file. If this is `None` then the

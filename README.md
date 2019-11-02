@@ -127,11 +127,13 @@ This command installs the plugins sources and generates the lock file. If we ran
 this on the example configuration file above, then the following output would be
 produced.
 
-<img width="437" alt="sheldon lock output" src="https://user-images.githubusercontent.com/17109887/60550355-059def80-9d28-11e9-8b1e-67b5fb10e74d.png">
+<img width="437" alt="sheldon lock output"
+src="https://user-images.githubusercontent.com/17109887/60550355-059def80-9d28-11e9-8b1e-67b5fb10e74d.png">
 
 Running it again would not redownload the plugin
 
-<img width="437" alt="image" src="https://user-images.githubusercontent.com/17109887/60550441-4433aa00-9d28-11e9-8429-e6380889e348.png">
+<img width="437" alt="image"
+src="https://user-images.githubusercontent.com/17109887/60550441-4433aa00-9d28-11e9-8429-e6380889e348.png">
 
 ### `source` command
 
@@ -139,12 +141,14 @@ This command generates the shell script to be sourced. This command will first
 check if there is an up to date lock file otherwise it will relock the
 configuration file.
 
-<img width="688" alt="image" src="https://user-images.githubusercontent.com/17109887/60550596-cae88700-9d28-11e9-906b-74f6f5d80149.png">
+<img width="688" alt="image"
+src="https://user-images.githubusercontent.com/17109887/60550596-cae88700-9d28-11e9-906b-74f6f5d80149.png">
 
 If we now modify our configuration file and run this command again it will
 relock the configuration prior to generating the script.
 
-<img width="691" alt="image" src="https://user-images.githubusercontent.com/17109887/60550665-02573380-9d29-11e9-84e9-5dfa89b11895.png">
+<img width="691" alt="image"
+src="https://user-images.githubusercontent.com/17109887/60550665-02573380-9d29-11e9-84e9-5dfa89b11895.png">
 
 The output of this command is highly configurable. You can define your own
 [custom templates](#configuration-templates) to apply to your plugins.
@@ -463,10 +467,11 @@ apply = ["source"]
 
 ## License
 
-This project is dual licensed under the Apache 2.0 License and the MIT License.
+This project is licensed under either of
 
-See [LICENSE-APACHE](LICENSE-APACHE) and [LICENSE-MIT](LICENSE-MIT) for more
-details.
+- Apache License, Version 2.0, ([LICENSE-APACHE](LICENSE-APACHE) or
+  http://www.apache.org/licenses/LICENSE-2.0)
+- MIT license ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
 
 [cargo]: https://doc.rust-lang.org/cargo/
 [configuration]: docs/Configuration.md

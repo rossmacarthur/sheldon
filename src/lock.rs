@@ -5,10 +5,10 @@
 
 use std::{
     cmp,
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     fmt, fs, io,
     path::{Path, PathBuf},
-    sync,
+    result, sync,
 };
 
 use indexmap::{indexmap, IndexMap};
@@ -17,6 +17,7 @@ use lazy_static::lazy_static;
 use maplit::hashmap;
 use serde::{Deserialize, Serialize};
 use url::Url;
+use walkdir::{DirEntry, WalkDir};
 
 use crate::{
     config::{Config, ExternalPlugin, GitReference, InlinePlugin, Plugin, Source, Template},
@@ -65,9 +66,11 @@ struct LockedSource {
 struct LockedExternalPlugin {
     /// The name of this plugin.
     name: String,
-    /// The directory that this plugin resides in.
-    directory: PathBuf,
-    /// The filenames to use in the directory.
+    /// The directory that this plugin's source resides in.
+    source_dir: PathBuf,
+    /// The directory that this plugin resides in (inside the source directory).
+    plugin_dir: Option<PathBuf>,
+    /// The filenames to use in the plugin directory.
     filenames: Vec<PathBuf>,
     /// What templates to apply to each filename.
     apply: Vec<String>,
@@ -346,7 +349,8 @@ impl ExternalPlugin {
             } = source;
             LockedExternalPlugin {
                 name: self.name,
-                directory,
+                source_dir: directory,
+                plugin_dir: None,
                 filenames: vec![filename.unwrap()],
                 apply: self.apply.unwrap_or_else(|| apply.to_vec()),
             }
@@ -364,14 +368,17 @@ impl ExternalPlugin {
                 "name" => &self.name
             };
 
-            let directory = if let Some(directory) = self.directory {
+            let source_dir = source.directory;
+            let plugin_dir = if let Some(directory) = self.directory {
                 let rendered = templates
                     .render_template(&directory, &data)
                     .chain(s!("failed to render template `{}`", directory))?;
-                source.directory.join(rendered)
+                Some(source_dir.join(rendered))
             } else {
-                source.directory
+                None
             };
+            let directory = plugin_dir.as_ref().unwrap_or(&source_dir);
+
             data.insert(
                 "directory",
                 &directory
@@ -407,7 +414,8 @@ impl ExternalPlugin {
 
             LockedExternalPlugin {
                 name: self.name,
-                directory,
+                source_dir,
+                plugin_dir,
                 filenames,
                 apply: self.apply.unwrap_or_else(|| apply.to_vec()),
             }
@@ -548,6 +556,13 @@ impl Config {
     }
 }
 
+impl LockedExternalPlugin {
+    /// Return a reference to the plugin directory.
+    fn directory(&self) -> &Path {
+        self.plugin_dir.as_ref().unwrap_or(&self.source_dir)
+    }
+}
+
 impl LockedConfig {
     /// Read a `LockedConfig` from the given path.
     pub fn from_path<P>(path: P) -> Result<Self>
@@ -570,7 +585,7 @@ impl LockedConfig {
         for plugin in &self.plugins {
             match plugin {
                 LockedPlugin::External(plugin) => {
-                    if !plugin.directory.exists() {
+                    if !plugin.directory().exists() {
                         return false;
                     }
                     for filename in &plugin.filenames {
@@ -583,6 +598,78 @@ impl LockedConfig {
             }
         }
         true
+    }
+
+    fn remove_path(ctx: &Context, path: &Path) -> Result<()> {
+        let path_replace_home = ctx.replace_home(path);
+        let path_display = &path_replace_home.display();
+        if path
+            .metadata()
+            .chain(s!("failed to fetch metadata for `{}`", path_display))?
+            .is_dir()
+        {
+            fs::remove_dir_all(path).chain(s!("failed to remove directory `{}`", path_display))?;
+        } else {
+            fs::remove_file(path).chain(s!("failed to remove file `{}`", path_display))?;
+        }
+        ctx.warning_v("Removed", path_display);
+        Ok(())
+    }
+
+    /// Clean the clone and download directories.
+    pub fn clean(&self, ctx: &Context) -> Result<()> {
+        let clean_clone_dir = self.ctx.clone_dir.starts_with(&self.ctx.root);
+        let clean_download_dir = self.ctx.download_dir.starts_with(&self.ctx.root);
+
+        if !clean_clone_dir && !clean_download_dir {
+            return Ok(());
+        }
+
+        // Track the source directories, all the plugin directory parents, and all the
+        // plugin filenames.
+        let mut source_dirs = HashSet::new();
+        let mut parent_dirs = HashSet::new();
+        let mut filenames = HashSet::new();
+        for plugin in &self.plugins {
+            if let LockedPlugin::External(locked) = plugin {
+                source_dirs.insert(locked.source_dir.as_path());
+                parent_dirs.extend(locked.directory().ancestors());
+                filenames.extend(locked.filenames.iter().filter_map(|f| {
+                    // `filenames` is only used when filtering the download directory
+                    if f.starts_with(&self.ctx.download_dir) {
+                        Some(f.as_path())
+                    } else {
+                        None
+                    }
+                }));
+            }
+        }
+
+        let remove = |entry: DirEntry| {
+            if let Err(err) = Self::remove_path(ctx, entry.path()) {
+                ctx.error_warning(&err);
+            }
+        };
+        if clean_clone_dir {
+            WalkDir::new(&self.ctx.clone_dir)
+                .into_iter()
+                .filter_entry(|e| !source_dirs.contains(e.path()))
+                .filter_map(result::Result::ok)
+                .filter(|e| !parent_dirs.contains(e.path()))
+                .for_each(remove);
+        }
+        if clean_download_dir {
+            WalkDir::new(&self.ctx.download_dir)
+                .into_iter()
+                .filter_map(result::Result::ok)
+                .filter(|e| {
+                    let p = e.path();
+                    !filenames.contains(p) && !parent_dirs.contains(p)
+                })
+                .for_each(remove);
+        }
+
+        Ok(())
     }
 
     /// Generate the script.
@@ -620,7 +707,7 @@ impl LockedConfig {
                                 .chain("root directory is not valid UTF-8")?,
                             "name" => &plugin.name,
                             "directory" => plugin
-                                .directory
+                                .directory()
                                 .to_str()
                                 .chain("plugin directory is not valid UTF-8")?,
                         };
@@ -1046,7 +1133,7 @@ mod tests {
             .unwrap();
 
         assert_eq!(locked.name, String::from("test"));
-        assert_eq!(locked.directory, clone_directory);
+        assert_eq!(locked.directory(), clone_directory);
         assert_eq!(
             locked.filenames,
             vec![
@@ -1085,7 +1172,7 @@ mod tests {
             .unwrap();
 
         assert_eq!(locked.name, String::from("test"));
-        assert_eq!(locked.directory, clone_directory);
+        assert_eq!(locked.directory(), clone_directory);
         assert_eq!(
             locked.filenames,
             vec![clone_directory.join("test.plugin.zsh")]
@@ -1119,7 +1206,7 @@ mod tests {
             .unwrap();
 
         assert_eq!(locked.name, String::from("test"));
-        assert_eq!(locked.directory, download_directory);
+        assert_eq!(locked.directory(), download_directory);
         assert_eq!(
             locked.filenames,
             vec![download_directory.join("test.plugin.zsh")]
@@ -1219,7 +1306,8 @@ mod tests {
             vec![
                 LockedPlugin::External(LockedExternalPlugin {
                     name: "async".to_string(),
-                    directory: root.join("repositories/github.com/mafredri/zsh-async"),
+                    source_dir: root.join("repositories/github.com/mafredri/zsh-async"),
+                    plugin_dir: None,
                     filenames: vec![
                         root.join("repositories/github.com/mafredri/zsh-async/async.zsh")
                     ],
@@ -1227,13 +1315,15 @@ mod tests {
                 }),
                 LockedPlugin::External(LockedExternalPlugin {
                     name: "pure".to_string(),
-                    directory: root.join("repositories/github.com/sindresorhus/pure"),
+                    source_dir: root.join("repositories/github.com/sindresorhus/pure"),
+                    plugin_dir: None,
                     filenames: vec![root.join("repositories/github.com/sindresorhus/pure/pure.zsh")],
                     apply: vec_into!["prompt"]
                 }),
                 LockedPlugin::External(LockedExternalPlugin {
                     name: "sheldon-test".to_string(),
-                    directory: local_dir.to_path_buf(),
+                    source_dir: local_dir.to_path_buf(),
+                    plugin_dir: None,
                     filenames: vec![root.join(local_dir.join("test.plugin.zsh"))],
                     apply: vec_into!["PATH", "source"]
                 }),
@@ -1253,7 +1343,8 @@ ip_netns_prompt_info() {
                 }),
                 LockedPlugin::External(LockedExternalPlugin {
                     name: "docker-destroy-all".to_string(),
-                    directory: root.join("repositories/gist.github.com/79ee61f7c140c63d2786"),
+                    source_dir: root.join("repositories/gist.github.com/79ee61f7c140c63d2786"),
+                    plugin_dir: None,
                     filenames: vec![root.join(
                         "repositories/gist.github.com/79ee61f7c140c63d2786/get_last_pane_path.sh"
                     )],
@@ -1276,6 +1367,54 @@ ip_netns_prompt_info() {
             ]
         );
         assert_eq!(locked.errors.len(), 0);
+    }
+
+    #[test]
+    fn locked_config_clean() {
+        let temp = tempfile::tempdir().expect("create temporary directory");
+        let ctx = create_test_context(temp.path());
+        let config = Config {
+            matches: vec_into!["*.zsh"],
+            apply: None,
+            templates: DEFAULT_TEMPLATES
+                .iter()
+                .map(|(k, v)| (k.clone(), v.clone()))
+                .collect(),
+            plugins: vec![Plugin::External(ExternalPlugin {
+                name: "test".to_string(),
+                source: Source::Git {
+                    url: Url::parse("git://github.com/rossmacarthur/sheldon-test").unwrap(),
+                    reference: None,
+                },
+                directory: None,
+                uses: None,
+                apply: None,
+            })],
+        };
+        let locked = config.lock(&ctx).unwrap();
+        let test_dir = ctx.clone_dir.join("github.com/rossmacarthur/another-dir");
+        let test_file = test_dir.join("test.txt");
+        fs::create_dir_all(&test_dir).unwrap();
+        {
+            fs::OpenOptions::new()
+                .create(true)
+                .write(true)
+                .open(&test_file)
+                .unwrap();
+        }
+
+        locked.clean(&ctx).unwrap();
+
+        assert!(ctx
+            .clone_dir
+            .join("github.com/rossmacarthur/sheldon-test")
+            .exists());
+        assert!(ctx
+            .clone_dir
+            .join("github.com/rossmacarthur/sheldon-test/test.plugin.zsh")
+            .exists());
+        assert!(!test_file.exists());
+        assert!(!test_dir.exists());
     }
 
     #[test]
