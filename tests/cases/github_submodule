@@ -5,6 +5,7 @@ branch = "recursive-recursive"
 directory = "self/self"
 
 # plugins.lock
+clean = "auto"
 version = "<version>"
 home = "<root>"
 root = "<root>"
@@ -15,7 +16,8 @@ download_dir = "<root>/downloads"
 
 [[plugins]]
 name = "test"
-directory = "<root>/repositories/github.com/rossmacarthur/sheldon-test/self/self"
+source_dir = "<root>/repositories/github.com/rossmacarthur/sheldon-test"
+plugin_dir = "<root>/repositories/github.com/rossmacarthur/sheldon-test/self/self"
 filenames = ["<root>/repositories/github.com/rossmacarthur/sheldon-test/self/self/test.plugin.zsh"]
 apply = ["source"]
 

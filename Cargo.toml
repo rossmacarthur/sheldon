@@ -37,6 +37,7 @@ serde = { version = "1.0.101", features = ["derive"] }
 toml = "0.5.3"
 url = "1.7.2"
 url_serde = "0.2.0"
+walkdir = "2.2.9"
 
 [dev-dependencies]
 pest = "2.1.2"
