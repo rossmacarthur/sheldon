@@ -352,9 +352,7 @@ impl Sheldon {
             }
             Err(last)
         } else {
-            locked
-                .clean(&self.ctx)
-                .chain("failed to clean clone and download directories")?;
+            let warnings = locked.clean(&self.ctx);
             locked
                 .to_path(&self.ctx.lock_file)
                 .chain("failed to write lock file")?;
@@ -362,6 +360,9 @@ impl Sheldon {
                 "Locked",
                 &self.ctx.replace_home(&self.ctx.lock_file).display(),
             );
+            for warning in warnings {
+                self.ctx.error_warning(&warning);
+            }
             Ok(())
         }
     }
@@ -392,14 +393,8 @@ impl Sheldon {
 
         let script = locked.source(&self.ctx).chain("failed to render source")?;
 
-        for err in &locked.errors {
-            self.ctx.error(&err);
-        }
-
         if to_path && locked.errors.is_empty() {
-            locked
-                .clean(&self.ctx)
-                .chain("failed to clean clone and download directories")?;
+            let warnings = locked.clean(&self.ctx);
             locked
                 .to_path(&self.ctx.lock_file)
                 .chain("failed to write lock file")?;
@@ -407,6 +402,13 @@ impl Sheldon {
                 "Locked",
                 &self.ctx.replace_home(&self.ctx.lock_file).display(),
             );
+            for warning in warnings {
+                self.ctx.error_warning(&warning);
+            }
+        } else {
+            for err in &locked.errors {
+                self.ctx.error(&err);
+            }
         }
 
         print!("{}", script);

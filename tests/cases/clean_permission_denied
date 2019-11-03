@@ -1,0 +1,29 @@
+# plugins.toml
+
+# plugins.lock
+version = "<version>"
+home = "<root>"
+root = "<root>"
+config_file = "<root>/plugins.toml"
+lock_file = "<root>/plugins.lock"
+clone_dir = "<root>/repositories"
+download_dir = "<root>/downloads"
+plugins = []
+
+[templates]
+
+# lock.stdout
+
+# lock.stderr
+[LOADED] ~/plugins.toml
+[LOCKED] ~/plugins.lock
+
+[WARNING] failed to remove directory `~/repositories/test.com`
+  due to: Permission denied (os error 13)
+
+# source.stdout
+
+# source.stderr
+[UNLOCKED] ~/plugins.lock
+
+# end
