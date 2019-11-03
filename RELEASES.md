@@ -2,10 +2,10 @@
 
 ## 0.4.8
 
-*Unreleased*
+*Released on November 3rd, 2019*
 
-- [Auto clean clone and download directories][#87]. Unused plugin source
-  directories and files will now be automatically removed.
+- [Auto clean clone and download directories][#87]. Unused source directories
+  and files will now be automatically removed.
 - [Support Git submodules.][#84] After cloning and checking out a repository
   submodules will now be recursively fetched.
 - [Support Git source cloning using Git and SSH protocols.][#83] This adds an
@@ -13,6 +13,7 @@
   the protocol for Gist and GitHub sources. Additionally, Git sources can now
   specify URLs with protocols `git://` and `ssh://`.
 
+[#87]: https://github.com/rossmacarthur/sheldon/pull/87
 [#84]: https://github.com/rossmacarthur/sheldon/pull/84
 [#83]: https://github.com/rossmacarthur/sheldon/pull/83
 

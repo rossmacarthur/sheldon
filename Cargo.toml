@@ -1,6 +1,6 @@
 [package]
 name = "sheldon"
-version = "0.4.7"
+version = "0.4.8"
 authors = ["Ross MacArthur <ross@macarthur.io>"]
 edition = "2018"
 build = "build.rs"

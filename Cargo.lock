@@ -1332,7 +1332,7 @@ dependencies = [
 
 [[package]]
 name = "sheldon"
-version = "0.4.7"
+version = "0.4.8"
 dependencies = [
  "ansi_term 0.12.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "clap 2.33.0 (registry+https://github.com/rust-lang/crates.io-index)",
