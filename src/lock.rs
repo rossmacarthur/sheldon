@@ -17,7 +17,7 @@ use lazy_static::lazy_static;
 use maplit::hashmap;
 use serde::{Deserialize, Serialize};
 use url::Url;
-use walkdir::{DirEntry, WalkDir};
+use walkdir::WalkDir;
 
 use crate::{
     config::{Config, ExternalPlugin, GitReference, InlinePlugin, Plugin, Source, Template},
@@ -617,12 +617,13 @@ impl LockedConfig {
     }
 
     /// Clean the clone and download directories.
-    pub fn clean(&self, ctx: &Context) -> Result<()> {
+    pub fn clean(&self, ctx: &Context) -> Vec<Error> {
+        let mut warnings = Vec::new();
         let clean_clone_dir = self.ctx.clone_dir.starts_with(&self.ctx.root);
         let clean_download_dir = self.ctx.download_dir.starts_with(&self.ctx.root);
 
         if !clean_clone_dir && !clean_download_dir {
-            return Ok(());
+            return warnings;
         }
 
         // Track the source directories, all the plugin directory parents, and all the
@@ -644,32 +645,38 @@ impl LockedConfig {
                 }));
             }
         }
+        parent_dirs.insert(self.ctx.clone_dir.as_path());
+        parent_dirs.insert(self.ctx.download_dir.as_path());
 
-        let remove = |entry: DirEntry| {
-            if let Err(err) = Self::remove_path(ctx, entry.path()) {
-                ctx.error_warning(&err);
-            }
-        };
         if clean_clone_dir {
-            WalkDir::new(&self.ctx.clone_dir)
+            for entry in WalkDir::new(&self.ctx.clone_dir)
                 .into_iter()
                 .filter_entry(|e| !source_dirs.contains(e.path()))
                 .filter_map(result::Result::ok)
                 .filter(|e| !parent_dirs.contains(e.path()))
-                .for_each(remove);
+            {
+                if let Err(err) = Self::remove_path(ctx, entry.path()) {
+                    warnings.push(err);
+                }
+            }
         }
+
         if clean_download_dir {
-            WalkDir::new(&self.ctx.download_dir)
+            for entry in WalkDir::new(&self.ctx.download_dir)
                 .into_iter()
                 .filter_map(result::Result::ok)
                 .filter(|e| {
                     let p = e.path();
                     !filenames.contains(p) && !parent_dirs.contains(p)
                 })
-                .for_each(remove);
+            {
+                if let Err(err) = Self::remove_path(ctx, entry.path()) {
+                    warnings.push(err);
+                }
+            }
         }
 
-        Ok(())
+        warnings
     }
 
     /// Generate the script.
@@ -1403,8 +1410,7 @@ ip_netns_prompt_info() {
                 .unwrap();
         }
 
-        locked.clean(&ctx).unwrap();
-
+        assert_eq!(locked.clean(&ctx).len(), 0);
         assert!(ctx
             .clone_dir
             .join("github.com/rossmacarthur/sheldon-test")

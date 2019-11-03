@@ -233,6 +233,51 @@ nothing to commit, working tree clean
 /////////////////////////////////////////////////////////////////////////
 
 #[test]
+fn lock_and_source_clean() -> io::Result<()> {
+    let case = TestCase::load("clean")?;
+    let root = case.root.path();
+    fs::create_dir_all(&root.join("repositories/test.com"))?;
+    {
+        fs::OpenOptions::new()
+            .create(true)
+            .write(true)
+            .open(&root.join("repositories/test.com/test.txt"))?;
+    }
+
+    case.run()?;
+
+    Ok(())
+}
+
+#[test]
+fn lock_and_source_clean_permission_denied() -> io::Result<()> {
+    use std::os::unix::fs::PermissionsExt;
+
+    let case = TestCase::load("clean_permission_denied")?;
+    let root = case.root.path();
+    fs::create_dir_all(&root.join("repositories/test.com"))?;
+    {
+        fs::OpenOptions::new()
+            .create(true)
+            .write(true)
+            .open(&root.join("repositories/test.com/test.txt"))?;
+    }
+    fs::set_permissions(
+        &root.join("repositories/test.com"),
+        fs::Permissions::from_mode(0o000),
+    )?;
+
+    case.run()?;
+
+    fs::set_permissions(
+        &root.join("repositories/test.com"),
+        fs::Permissions::from_mode(0o777),
+    )?;
+
+    Ok(())
+}
+
+#[test]
 fn lock_and_source_empty() -> io::Result<()> {
     TestCase::load("empty")?.run()
 }
