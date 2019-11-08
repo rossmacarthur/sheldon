@@ -1,19 +1,35 @@
-# sheldon
-
-[![Crates.io Version](https://img.shields.io/crates/v/sheldon.svg?style=flat-square)][crates]
-[![Docs.rs Latest](https://img.shields.io/badge/docs.rs-latest-brightgreen.svg?style=flat-square&color=blue)][docs]
-[![Build Status](https://img.shields.io/travis/rossmacarthur/sheldon/master.svg?style=flat-square)][travis]
-
-A fast, configurable, shell plugin manager.
+<h1 align="center">sheldon</h1>
+<div align="center">
+  <strong>
+    <img class="emoji" title=":bowtie:" alt=":bowtie:" src="https://github.githubassets.com/images/icons/emoji/bowtie.png" width="20" height="20" align="absmiddle">
+      A fast, configurable, shell plugin manager
+    </strong>
+</div>
+<br />
+<div align="center">
+  <a href="https://crates.io/crates/sheldon">
+    <img src="https://img.shields.io/crates/v/sheldon.svg?style=flat-square" alt="Crates.io version" />
+  </a>
+  <a href="https://github.com/rossmacarthur/sheldon/releases/latest">
+    <img src="https://img.shields.io/github/v/release/rossmacarthur/sheldon?label=download&style=flat-square&color=yellow" alt="Download" />
+  </a>
+  <a href="https://travis-ci.org/rossmacarthur/sheldon">
+    <img src="https://img.shields.io/travis/rossmacarthur/sheldon/master.svg?style=flat-square" alt="Build status" />
+  </a>
+  <a href="https://docs.rs/sheldon">
+    <img src="https://img.shields.io/badge/docs.rs-latest-blue?style=flat-square" alt="Docs.rs latest" />
+  </a>
+</div>
 
 ## Features
 
 - Can manage virtually anything.
   - Any public Git repository.
     - Branch / tag / commit support.
+    - Submodule support.
     - First class support for GitHub repositories.
     - First class support for Gists.
-  - Arbitrary remote files.
+  - Arbitrary remote scripts or binaries.
   - Local plugins.
   - Inline plugins.
 - Highly configurable install methods using [handlebars] templating.
@@ -475,12 +491,9 @@ This project is licensed under either of
 
 [cargo]: https://doc.rust-lang.org/cargo/
 [configuration]: docs/Configuration.md
-[crates]: https://crates.io/crates/sheldon
-[docs]: https://docs.rs/sheldon
 [handlebars]: http://handlebarsjs.com
 [releases]: https://github.com/rossmacarthur/sheldon/releases
 [rust-lang]: https://www.rust-lang.org/
 [rustup]: https://rustup.rs/
-[travis]: https://travis-ci.org/rossmacarthur/sheldon
 [TOML]: https://github.com/toml-lang/toml
 [Zsh]: http://www.zsh.org/
