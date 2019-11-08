@@ -10,12 +10,13 @@ main() {
     fi
 
     if [ "$LINT" = true ] && [ "$TRAVIS_RUST_VERSION" = "stable" ]; then
-        cross clippy --target "$TARGET" --verbose --all --all-targets --all-features -- -D warnings -D clippy::use_self
+        cross clippy --target "$TARGET" --verbose --all-targets --all-features -- \
+            -D warnings -D clippy::use_self -D clippy::items-after-statements -D clippy::if-not-else
     else
-        cross build --target "$TARGET" --verbose --all --all-targets --all-features
+        cross build --target "$TARGET" --verbose --all-targets --all-features
     fi
 
-    cross test --target "$TARGET" --verbose --all --all-features
+    cross test --target "$TARGET" --verbose --all-features
 
     if [ "$TRAVIS_RUST_VERSION" = "stable" ]; then
         git diff --exit-code

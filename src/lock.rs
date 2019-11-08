@@ -6,6 +6,7 @@
 use std::{
     cmp,
     collections::{HashMap, HashSet},
+    convert::TryInto,
     fmt, fs, io,
     path::{Path, PathBuf},
     result, sync,
@@ -225,7 +226,9 @@ impl Source {
             }
         }
 
-        if !filename.exists() {
+        if filename.exists() {
+            ctx.status("Checked", &url);
+        } else {
             fs::create_dir_all(&directory)
                 .chain(s!("failed to create directory `{}`", directory.display()))?;
             let mut response =
@@ -235,8 +238,6 @@ impl Source {
             io::copy(&mut response, &mut out)
                 .chain(s!("failed to copy contents to `{}`", filename.display()))?;
             ctx.status("Fetched", &url);
-        } else {
-            ctx.status("Checked", &url);
         }
 
         Ok(LockedSource {
@@ -307,7 +308,7 @@ impl Source {
                     .chain(s!("URL `{}` is cannot-be-a-base", url))?
                     .collect();
                 let (base, rest) = segments.split_last().unwrap();
-                let base = if *base != "" { *base } else { "index" };
+                let base = if *base == "" { "index" } else { *base };
                 directory.push(rest.iter().collect::<PathBuf>());
                 let filename = directory.join(base);
 
@@ -475,7 +476,8 @@ impl Config {
                 .collect::<Vec<_>>()
         } else {
             // Create a thread pool and install the sources in parallel.
-            let mut pool = scoped_threadpool::Pool::new(cmp::min(count as u32, MAX_THREADS));
+            let thread_count = cmp::min(count.try_into().unwrap_or(MAX_THREADS), MAX_THREADS);
+            let mut pool = scoped_threadpool::Pool::new(thread_count);
             let (tx, rx) = sync::mpsc::channel();
 
             pool.scoped(|scoped| {
