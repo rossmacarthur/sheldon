@@ -8,6 +8,18 @@ env:
 
 matrix:
   include:
+    # x86_64-apple-darwin
+    - os: osx
+      rust: stable
+      env: TARGET=x86_64-apple-darwin LINT=true
+    - os: osx
+      rust: beta
+      env: TARGET=x86_64-apple-darwin LINT=true
+    - os: osx
+      rust: nightly
+      env: TARGET=x86_64-apple-darwin LINT=true
+
+    # x86_64-unknown-linux-gnu
     - dist: xenial
       rust: stable
       env: TARGET=x86_64-unknown-linux-gnu LINT=true PUBLISH=true
@@ -17,24 +29,31 @@ matrix:
     - dist: xenial
       rust: nightly
       env: TARGET=x86_64-unknown-linux-gnu LINT=true
-    - os: osx
-      rust: stable
-      env: TARGET=x86_64-apple-darwin LINT=true
-    - os: osx
-      rust: beta
-      env: TARGET=x86_64-apple-darwin LINT=true
-    - os: osx
-      rust: nightly
-      env: TARGET=x86_64-apple-darwin LINT=true
+
+    # x86_64-unknown-linux-musl
     - dist: trusty
       rust: stable
       env: TARGET=x86_64-unknown-linux-musl
     - dist: trusty
+      rust: beta
+      env: TARGET=x86_64-unknown-linux-musl
+
+    # armv7-unknown-linux-gnueabihf
+    - dist: trusty
       rust: stable
       env: TARGET=armv7-unknown-linux-gnueabihf
     - dist: trusty
-      rust: stable
+      rust: beta
+      env: TARGET=armv7-unknown-linux-gnueabihf
+
+    # armv7-unknown-linux-musleabihf
+    - dist: trusty
+      rust: 1.38.0  # because of QEMU failure on 1.39.0, revert to stable when 1.40.0 is stable
       env: TARGET=armv7-unknown-linux-musleabihf
+    - dist: trusty
+      rust: beta
+      env: TARGET=armv7-unknown-linux-musleabihf
+
   fast_finish: true
   allow_failures:
     - rust: nightly
