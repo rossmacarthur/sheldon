@@ -231,8 +231,10 @@ impl<'de> de::Visitor<'de> for TemplateVisitor {
 
 /// Manually implement `Deserialize` for a `Template`.
 ///
-/// Unfortunately we can not use https://serde.rs/string-or-struct.html,
+/// Unfortunately we can not use [the recommended method][string-or-struct],
 /// because we are storing `Template`s in a map.
+///
+/// [string-or-struct](https://serde.rs/string-or-struct.html)
 impl<'de> Deserialize<'de> for Template {
     fn deserialize<D>(deserializer: D) -> result::Result<Self, D::Error>
     where
@@ -457,7 +459,7 @@ impl RawPlugin {
                 }))
             }
             TempSource::Inline(raw) => {
-                for (field, is_some) in [
+                let unsupported = [
                     (
                         "`branch`, `tag`, and `revision` fields are",
                         is_reference_some,
@@ -466,9 +468,8 @@ impl RawPlugin {
                     ("`directory` field is", directory.is_some()),
                     ("`use` field is", uses.is_some()),
                     ("`apply` field is", apply.is_some()),
-                ]
-                .iter()
-                {
+                ];
+                for (field, is_some) in &unsupported {
                     if *is_some {
                         bail!("the {} not supported by inline plugins", field);
                     }

@@ -265,21 +265,23 @@ impl Builder {
     ///
     /// [`Sheldon`]: struct.Sheldon.html
     pub fn build(self) -> Sheldon {
-        let home = self.home.unwrap_or_else(|| {
-            dirs::home_dir().expect("failed to determine the current user's home directory")
-        });
-
         fn process<F>(opt: Option<PathBuf>, home: &Path, var: &str, f: F) -> PathBuf
         where
             F: FnOnce() -> PathBuf,
         {
-            opt.map(|p| p.expand_tilde(home)).unwrap_or_else(|| {
-                env::var(var)
-                    .and_then(|v| Ok(v.into()))
-                    .unwrap_or_else(|_| f())
-            })
+            opt.map_or_else(
+                || {
+                    env::var(var)
+                        .and_then(|v| Ok(v.into()))
+                        .unwrap_or_else(|_| f())
+                },
+                |p| p.expand_tilde(home),
+            )
         }
 
+        let home = self.home.unwrap_or_else(|| {
+            dirs::home_dir().expect("failed to determine the current user's home directory")
+        });
         let root = process(self.root, &home, "SHELDON_ROOT", || home.join(".zsh"));
         let config_file = process(self.config_file, &home, "SHELDON_CONFIG_FILE", || {
             root.join("plugins.toml")

@@ -81,9 +81,7 @@ impl FileMutex {
         if let Err(e) = file.try_lock_exclusive() {
             let msg = s!("failed to acquire file lock `{}`", path.display());
 
-            if e.raw_os_error() != lock_contended_error().raw_os_error() {
-                return Err(e).chain(msg);
-            } else {
+            if e.raw_os_error() == lock_contended_error().raw_os_error() {
                 ctx.warning(
                     "Blocking",
                     &format!(
@@ -92,6 +90,8 @@ impl FileMutex {
                     ),
                 );
                 file.lock_exclusive().chain(msg)?;
+            } else {
+                return Err(e).chain(msg);
             }
         }
 
@@ -153,11 +153,11 @@ pub mod git {
                     repo
                 }
                 Err(e) => {
-                    if e.code() != ErrorCode::Exists {
-                        return Err(e).chain(s!("failed to git clone `{}`", url));
-                    } else {
+                    if e.code() == ErrorCode::Exists {
                         Repository::open(directory)
                             .chain(s!("failed to open repository at `{}`", directory.display()))?
+                    } else {
+                        return Err(e).chain(s!("failed to git clone `{}`", url));
                     }
                 }
             };
