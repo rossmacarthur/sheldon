@@ -12,7 +12,7 @@ use indexmap::IndexMap;
 use serde::{self, de, Deserialize, Deserializer, Serialize};
 use url::Url;
 
-use crate::{Result, ResultExt};
+use crate::error::{Result, ResultExt};
 
 /// The Gist domain host.
 const GIST_HOST: &str = "gist.github.com";
@@ -314,7 +314,7 @@ impl Default for RawConfig {
 // Normalization implementations
 /////////////////////////////////////////////////////////////////////////
 
-// Check whether the specifed templates actually exist.
+/// Check whether the specifed templates actually exist.
 fn validate_template_names(
     apply: &Option<Vec<String>>,
     templates: &IndexMap<String, Template>,
@@ -365,7 +365,7 @@ impl Source {
 }
 
 /// A convenience struct to help with normalizing the config file in
-/// `Rawplugin::normalize()`.
+/// `RawPlugin::normalize()`.
 #[derive(Debug)]
 enum TempSource {
     External(Source),

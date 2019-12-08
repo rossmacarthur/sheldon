@@ -405,7 +405,7 @@ fn lock_and_source_github_bad_url() -> io::Result<()> {
     case.write_file("plugins.toml")?;
 
     TestCommand::new(case.root.path())
-        .expect_exit_code(1)
+        .expect_exit_code(2)
         .expect_stdout(case.get("lock.stdout"))
         .expect_stderr(case.get("lock.stderr"))
         .arg("lock")
@@ -459,7 +459,7 @@ fn lock_and_source_override_config_file_missing() -> io::Result<()> {
     let args = ["--config-file", config_file.to_str().unwrap()];
 
     TestCommand::new(case.root.path())
-        .expect_exit_code(1)
+        .expect_exit_code(2)
         .expect_stdout(case.get("stdout"))
         .expect_stderr(case.get("stderr"))
         .args(&args)
@@ -467,7 +467,7 @@ fn lock_and_source_override_config_file_missing() -> io::Result<()> {
         .run()?;
 
     TestCommand::new(case.root.path())
-        .expect_exit_code(1)
+        .expect_exit_code(2)
         .expect_stdout(case.get("stdout"))
         .expect_stderr(case.get("stderr"))
         .args(&args)

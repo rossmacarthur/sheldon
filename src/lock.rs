@@ -22,9 +22,9 @@ use walkdir::WalkDir;
 
 use crate::{
     config::{Config, ExternalPlugin, GitReference, InlinePlugin, Plugin, Source, Template},
-    context::Context,
+    context::{LockContext as Context, OutputExt, Settings, SettingsExt},
+    error::{Error, Result, ResultExt},
     util::git,
-    Error, Result, ResultExt,
 };
 
 /// The maximmum number of threads to use while downloading sources.
@@ -85,30 +85,12 @@ enum LockedPlugin {
     Inline(InlinePlugin),
 }
 
-#[derive(Debug, Deserialize, PartialEq, Serialize)]
-pub struct LockedContext {
-    /// The current crate version.
-    version: String,
-    /// The location of the home directory.
-    home: PathBuf,
-    /// The location of the root directory.
-    root: PathBuf,
-    /// The location of the config file.
-    config_file: PathBuf,
-    /// The location of the lock file.
-    lock_file: PathBuf,
-    /// The directory to clone git sources to.
-    clone_dir: PathBuf,
-    /// The directory to download remote plugins sources to.
-    download_dir: PathBuf,
-}
-
 /// A locked `Config`.
 #[derive(Debug, Deserialize, Serialize)]
 pub struct LockedConfig {
     /// The global context that was used to generated this `LockedConfig`.
     #[serde(flatten)]
-    pub ctx: LockedContext,
+    pub settings: Settings,
     /// Each locked plugin.
     plugins: Vec<LockedPlugin>,
     /// A map of name to template.
@@ -124,18 +106,6 @@ pub struct LockedConfig {
 /////////////////////////////////////////////////////////////////////////
 // Lock implementations.
 /////////////////////////////////////////////////////////////////////////
-
-impl PartialEq<Context> for LockedContext {
-    fn eq(&self, other: &Context) -> bool {
-        self.version == other.version
-            && self.home == other.home
-            && self.root == other.root
-            && self.config_file == other.config_file
-            && self.lock_file == other.lock_file
-            && self.clone_dir == other.clone_dir
-            && self.download_dir == other.download_dir
-    }
-}
 
 impl fmt::Display for GitReference {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -294,13 +264,13 @@ impl Source {
     fn lock(self, ctx: &Context) -> Result<LockedSource> {
         match self {
             Self::Git { url, reference } => {
-                let mut directory = ctx.clone_dir.clone();
+                let mut directory = ctx.clone_dir().to_path_buf();
                 directory.push(url.host_str().chain(s!("URL `{}` has no host", url))?);
                 directory.push(url.path().trim_start_matches('/'));
                 Self::lock_git(ctx, directory, url, reference)
             }
             Self::Remote { url } => {
-                let mut directory = ctx.download_dir.clone();
+                let mut directory = ctx.download_dir().to_path_buf();
                 directory.push(url.host_str().chain(s!("URL `{}` has no host", url))?);
 
                 let segments: Vec<_> = url
@@ -363,7 +333,7 @@ impl ExternalPlugin {
             // Data to use in template rendering
             let mut data = hashmap! {
                 "root" => ctx
-                    .root
+                    .root()
                     .to_str()
                     .chain("root directory is not valid UTF-8")?,
                 "name" => &self.name
@@ -421,21 +391,6 @@ impl ExternalPlugin {
                 apply: self.apply.unwrap_or_else(|| apply.to_vec()),
             }
         })
-    }
-}
-
-impl Context {
-    /// Convert this `Context` to a `LockedContext`.
-    fn lock(&self) -> LockedContext {
-        LockedContext {
-            version: self.version.to_string(),
-            home: self.home.clone(),
-            root: self.root.clone(),
-            config_file: self.config_file.clone(),
-            lock_file: self.lock_file.clone(),
-            clone_dir: self.clone_dir.clone(),
-            download_dir: self.download_dir.clone(),
-        }
     }
 }
 
@@ -550,7 +505,7 @@ impl Config {
         };
 
         Ok(LockedConfig {
-            ctx: ctx.lock(),
+            settings: ctx.settings().clone(),
             templates: self.templates,
             errors,
             plugins,
@@ -581,7 +536,7 @@ impl LockedConfig {
 
     /// Verify that the `LockedConfig` is okay.
     pub fn verify(&self, ctx: &Context) -> bool {
-        if &self.ctx != ctx {
+        if &self.settings != ctx.settings() {
             return false;
         }
         for plugin in &self.plugins {
@@ -621,8 +576,11 @@ impl LockedConfig {
     /// Clean the clone and download directories.
     pub fn clean(&self, ctx: &Context) -> Vec<Error> {
         let mut warnings = Vec::new();
-        let clean_clone_dir = self.ctx.clone_dir.starts_with(&self.ctx.root);
-        let clean_download_dir = self.ctx.download_dir.starts_with(&self.ctx.root);
+        let clean_clone_dir = self.settings.clone_dir().starts_with(self.settings.root());
+        let clean_download_dir = self
+            .settings
+            .download_dir()
+            .starts_with(self.settings.root());
 
         if !clean_clone_dir && !clean_download_dir {
             return warnings;
@@ -639,7 +597,7 @@ impl LockedConfig {
                 parent_dirs.extend(locked.directory().ancestors());
                 filenames.extend(locked.filenames.iter().filter_map(|f| {
                     // `filenames` is only used when filtering the download directory
-                    if f.starts_with(&self.ctx.download_dir) {
+                    if f.starts_with(self.settings.download_dir()) {
                         Some(f.as_path())
                     } else {
                         None
@@ -647,11 +605,11 @@ impl LockedConfig {
                 }));
             }
         }
-        parent_dirs.insert(self.ctx.clone_dir.as_path());
-        parent_dirs.insert(self.ctx.download_dir.as_path());
+        parent_dirs.insert(self.settings.clone_dir());
+        parent_dirs.insert(self.settings.download_dir());
 
         if clean_clone_dir {
-            for entry in WalkDir::new(&self.ctx.clone_dir)
+            for entry in WalkDir::new(self.settings.clone_dir())
                 .into_iter()
                 .filter_entry(|e| !source_dirs.contains(e.path()))
                 .filter_map(result::Result::ok)
@@ -664,7 +622,7 @@ impl LockedConfig {
         }
 
         if clean_download_dir {
-            for entry in WalkDir::new(&self.ctx.download_dir)
+            for entry in WalkDir::new(self.settings.download_dir())
                 .into_iter()
                 .filter_map(result::Result::ok)
                 .filter(|e| {
@@ -711,7 +669,8 @@ impl LockedConfig {
                         // Data to use in template rendering
                         let mut data = hashmap! {
                             "root" => self
-                                .ctx.root
+                                .settings
+                                .root()
                                 .to_str()
                                 .chain("root directory is not valid UTF-8")?,
                             "name" => &plugin.name,
@@ -750,7 +709,8 @@ impl LockedConfig {
                 LockedPlugin::Inline(plugin) => {
                     let data = hashmap! {
                         "root" => self
-                            .ctx.root
+                            .settings
+                            .root()
                             .to_str()
                             .chain("root directory is not valid UTF-8")?,
                         "name" => &plugin.name,
@@ -812,18 +772,20 @@ mod tests {
 
     fn create_test_context(root: &Path) -> Context {
         Context {
-            version: clap::crate_version!(),
-            verbosity: crate::Verbosity::Quiet,
-            no_color: true,
-            home: "/".into(),
-            config_file: root.join("config.toml"),
-            lock_file: root.join("config.lock"),
-            clone_dir: root.join("repositories"),
-            download_dir: root.join("downloads"),
-            root: root.to_path_buf(), // must come after the joins above
-            command: crate::Command::Lock,
+            settings: Settings {
+                version: structopt::clap::crate_version!().to_string(),
+                home: "/".into(),
+                config_file: root.join("config.toml"),
+                lock_file: root.join("config.lock"),
+                clone_dir: root.join("repositories"),
+                download_dir: root.join("downloads"),
+                root: root.to_path_buf(), // must come after the joins above
+            },
+            output: crate::context::Output {
+                verbosity: crate::context::Verbosity::Quiet,
+                no_color: true,
+            },
             reinstall: false,
-            relock: false,
         }
     }
 
@@ -1237,18 +1199,7 @@ mod tests {
 
         let locked = config.lock(&ctx).unwrap();
 
-        assert_eq!(
-            locked.ctx,
-            LockedContext {
-                version: clap::crate_version!().to_string(),
-                home: PathBuf::from("/"),
-                root: directory.to_path_buf(),
-                config_file: directory.join("config.toml"),
-                lock_file: directory.join("config.lock"),
-                clone_dir: directory.join("repositories"),
-                download_dir: directory.join("downloads"),
-            }
-        );
+        assert_eq!(&locked.settings, ctx.settings());
         assert_eq!(locked.plugins, Vec::new());
         assert_eq!(locked.templates, IndexMap::new());
         assert_eq!(locked.errors.len(), 0);
@@ -1269,21 +1220,23 @@ mod tests {
         let clone_dir = root.join("repositories");
         let download_dir = root.join("downloads");
         let ctx = Context {
-            version: clap::crate_version!(),
-            verbosity: crate::Verbosity::Quiet,
-            no_color: true,
-            home: "/".into(),
-            root: root.to_path_buf(),
-            config_file: config_file.clone(),
-            lock_file: lock_file.clone(),
-            clone_dir: clone_dir.clone(),
-            download_dir: download_dir.clone(),
-            command: crate::Command::Lock,
+            settings: Settings {
+                version: structopt::clap::crate_version!().to_string(),
+                root: root.to_path_buf(),
+                config_file: config_file.clone(),
+                lock_file: lock_file.clone(),
+                clone_dir: clone_dir.clone(),
+                download_dir: download_dir.clone(),
+                home: "/".into(),
+            },
+            output: crate::context::Output {
+                verbosity: crate::context::Verbosity::Quiet,
+                no_color: true,
+            },
             reinstall: false,
-            relock: false,
         };
 
-        let mut config = Config::from_path(&ctx.config_file).unwrap();
+        let mut config = Config::from_path(ctx.config_file()).unwrap();
         {
             match &mut config.plugins[2] {
                 Plugin::External(ref mut plugin) => {
@@ -1298,18 +1251,7 @@ mod tests {
 
         let locked = config.lock(&ctx).unwrap();
 
-        assert_eq!(
-            locked.ctx,
-            LockedContext {
-                version: clap::crate_version!().to_string(),
-                home: PathBuf::from("/"),
-                root: root.to_path_buf(),
-                config_file,
-                lock_file,
-                clone_dir,
-                download_dir
-            }
-        );
+        assert_eq!(locked.settings, ctx.settings);
         assert_eq!(
             locked.plugins,
             vec![
@@ -1401,7 +1343,7 @@ ip_netns_prompt_info() {
             })],
         };
         let locked = config.lock(&ctx).unwrap();
-        let test_dir = ctx.clone_dir.join("github.com/rossmacarthur/another-dir");
+        let test_dir = ctx.clone_dir().join("github.com/rossmacarthur/another-dir");
         let test_file = test_dir.join("test.txt");
         fs::create_dir_all(&test_dir).unwrap();
         {
@@ -1414,11 +1356,11 @@ ip_netns_prompt_info() {
 
         assert_eq!(locked.clean(&ctx).len(), 0);
         assert!(ctx
-            .clone_dir
+            .clone_dir()
             .join("github.com/rossmacarthur/sheldon-test")
             .exists());
         assert!(ctx
-            .clone_dir
+            .clone_dir()
             .join("github.com/rossmacarthur/sheldon-test/test.plugin.zsh")
             .exists());
         assert!(!test_file.exists());

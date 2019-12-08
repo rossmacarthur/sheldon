@@ -1,3 +1,5 @@
+//! General purpose macros.
+
 /// Generate a lazy format!.
 macro_rules! s {
     ($fmt:expr, $($arg:tt)+) => (|| format!($fmt, $($arg)+))
