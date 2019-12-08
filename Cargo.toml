@@ -20,7 +20,6 @@ maintenance = { status = "actively-developed" }
 
 [dependencies]
 ansi_term = "0.12.1"
-clap = "2.33.0"
 dirs = "2.0.2"
 fs2 = "0.4.3"
 git2 = "0.10.1"
@@ -34,6 +33,7 @@ quick-error = { package = "quick-error2", version = "2.0.1" }
 reqwest = "0.9.22"
 scoped_threadpool = "0.1.9"
 serde = { version = "1.0.102", features = ["derive"] }
+structopt = "0.3.5"
 toml = "0.5.5"
 url = "1.7.2"
 url_serde = "0.2.0"

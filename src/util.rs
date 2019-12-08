@@ -1,3 +1,5 @@
+//! Utility traits and functions.
+
 use std::{
     fs::{self, File},
     path::{Path, PathBuf},
@@ -6,7 +8,10 @@ use std::{
 
 use fs2::{lock_contended_error, FileExt};
 
-use crate::{Context, Result, ResultExt};
+use crate::{
+    context::{Context, OutputExt, SettingsExt},
+    error::{Result, ResultExt},
+};
 
 /// An extension trait for [`Path`] types.
 ///
@@ -68,9 +73,9 @@ impl PathBufExt for PathBuf {
 }
 
 #[derive(Debug)]
-pub struct FileMutex(File);
+pub struct Mutex(File);
 
-impl FileMutex {
+impl Mutex {
     /// Create a new `FileMutex` at the given path and attempt to acquire it.
     pub fn acquire(ctx: &Context, path: &Path) -> Result<Self> {
         let file = fs::OpenOptions::new()
@@ -99,7 +104,7 @@ impl FileMutex {
     }
 }
 
-impl Drop for FileMutex {
+impl Drop for Mutex {
     fn drop(&mut self) {
         self.0.unlock().ok();
     }
