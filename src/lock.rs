@@ -1223,10 +1223,10 @@ mod tests {
             settings: Settings {
                 version: structopt::clap::crate_version!().to_string(),
                 root: root.to_path_buf(),
-                config_file: config_file.clone(),
-                lock_file: lock_file.clone(),
-                clone_dir: clone_dir.clone(),
-                download_dir: download_dir.clone(),
+                config_file,
+                lock_file,
+                clone_dir,
+                download_dir,
                 home: "/".into(),
             },
             output: crate::context::Output {
