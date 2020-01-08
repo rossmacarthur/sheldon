@@ -48,7 +48,7 @@ matrix:
 
     # armv7-unknown-linux-musleabihf
     - dist: trusty
-      rust: 1.38.0  # because of QEMU failure on 1.39.0, revert to stable when 1.40.0 is stable
+      rust: stable
       env: TARGET=armv7-unknown-linux-musleabihf
     - dist: trusty
       rust: beta
