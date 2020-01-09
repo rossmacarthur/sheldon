@@ -8,8 +8,9 @@ use structopt::{
 };
 
 use crate::{
-    context::{Output, OutputExt, Settings, Verbosity},
+    context::Settings,
     error::Error,
+    log::{Output, Verbosity},
 };
 
 const SETTINGS: &[AppSettings] = &[AppSettings::ColorNever, AppSettings::DeriveDisplayOrder];
@@ -142,7 +143,7 @@ impl Opt {
         }) {
             Ok(home) => home,
             Err(err) => {
-                output.error(&err);
+                error!(&output, &err);
                 process::exit(1);
             }
         };

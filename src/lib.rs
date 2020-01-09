@@ -21,12 +21,13 @@ mod config;
 mod context;
 mod error;
 mod lock;
+mod log;
 mod util;
 
 use crate::{
     cli::{Command, Opt},
     config::Config,
-    context::{Context, LockContext, OutputExt, SettingsExt},
+    context::{Context, LockContext, SettingsExt},
     error::{Result, ResultExt},
     lock::LockedConfig,
     util::{Mutex, PathExt},
@@ -41,8 +42,8 @@ impl Sheldon {
     /// locked config.
     fn locked(ctx: &LockContext) -> Result<LockedConfig> {
         let path = ctx.config_file();
-        let config: Config = Config::from_path(&path).chain("failed to load config file")?;
-        ctx.header("Loaded", &ctx.replace_home(path).display());
+        let config = Config::from_path(path).chain("failed to load config file")?;
+        header!(ctx, "Loaded", path);
         config.lock(ctx)
     }
 
@@ -52,17 +53,16 @@ impl Sheldon {
 
         if let Some(last) = locked.errors.pop() {
             for err in locked.errors {
-                ctx.error(&err)
+                error!(ctx, &err);
             }
             Err(last)
         } else {
             let warnings = locked.clean(ctx);
-            locked
-                .to_path(ctx.lock_file())
-                .chain("failed to write lock file")?;
-            ctx.header("Locked", &ctx.replace_home(ctx.lock_file()).display());
+            let path = ctx.lock_file();
+            locked.to_path(path).chain("failed to write lock file")?;
+            header!(ctx, "Locked", path);
             for warning in warnings {
-                ctx.error_warning(&warning);
+                error_w!(ctx, &warning);
             }
             Ok(())
         }
@@ -70,16 +70,19 @@ impl Sheldon {
 
     /// Generates the script.
     fn source(ctx: &LockContext, relock: bool) -> Result<()> {
+        let config_path = ctx.config_file();
+        let lock_path = ctx.lock_file();
+
         let mut to_path = true;
 
-        let locked = if relock || ctx.config_file().newer_than(&ctx.lock_file()) {
+        let locked = if relock || config_path.newer_than(lock_path) {
             Self::locked(ctx)?
         } else {
-            match LockedConfig::from_path(ctx.lock_file()) {
+            match LockedConfig::from_path(lock_path) {
                 Ok(locked) => {
                     if locked.verify(ctx) {
                         to_path = false;
-                        ctx.header_v("Unlocked", &ctx.replace_home(ctx.lock_file()).display());
+                        header_v!(ctx, "Unlocked", lock_path);
                         locked
                     } else {
                         Self::locked(ctx)?
@@ -94,15 +97,15 @@ impl Sheldon {
         if to_path && locked.errors.is_empty() {
             let warnings = locked.clean(ctx);
             locked
-                .to_path(ctx.lock_file())
+                .to_path(lock_path)
                 .chain("failed to write lock file")?;
-            ctx.header("Locked", &ctx.replace_home(ctx.lock_file()).display());
+            header_v!(ctx, "Locked", lock_path);
             for warning in warnings {
-                ctx.error_warning(&warning);
+                error_w!(ctx, &warning);
             }
         } else {
             for err in &locked.errors {
-                ctx.error(&err);
+                error!(ctx, &err);
             }
         }
 
@@ -145,7 +148,7 @@ impl Sheldon {
             }
         }
         .map_err(|e| {
-            output.error(&e);
+            error!(&output, &e);
             e
         })
     }

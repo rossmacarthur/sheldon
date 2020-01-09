@@ -22,7 +22,7 @@ use walkdir::WalkDir;
 
 use crate::{
     config::{Config, ExternalPlugin, GitReference, InlinePlugin, Plugin, Source, Template},
-    context::{LockContext as Context, OutputExt, Settings, SettingsExt},
+    context::{LockContext as Context, Settings, SettingsExt},
     error::{Error, Result, ResultExt},
     util::git,
 };
@@ -167,9 +167,9 @@ impl Source {
         // Checkout the configured revision.
         if let Some(reference) = reference {
             git::checkout(&repo, reference.lock(&repo)?.0)?;
-            ctx.status(status, &format!("{}@{}", &url, reference));
+            status!(ctx, status, &format!("{}@{}", &url, reference));
         } else {
-            ctx.status(status, &url);
+            status!(ctx, status, &url);
         }
 
         // Recursively update Git submodules.
@@ -197,7 +197,7 @@ impl Source {
         }
 
         if filename.exists() {
-            ctx.status("Checked", &url);
+            status!(ctx, "Checked", &url);
         } else {
             fs::create_dir_all(&directory)
                 .chain(s!("failed to create directory `{}`", directory.display()))?;
@@ -207,7 +207,7 @@ impl Source {
                 .chain(s!("failed to create `{}`", filename.display()))?;
             io::copy(&mut response, &mut out)
                 .chain(s!("failed to copy contents to `{}`", filename.display()))?;
-            ctx.status("Fetched", &url);
+            status!(ctx, "Fetched", &url);
         }
 
         Ok(LockedSource {
@@ -234,7 +234,7 @@ impl Source {
 
             if directories.len() == 1 {
                 let directory = directories.remove(0);
-                ctx.status("Checked", &ctx.replace_home(&directory).display());
+                status!(ctx, "Checked", directory.as_path());
                 Ok(LockedSource {
                     directory,
                     filename: None,
@@ -250,7 +250,7 @@ impl Source {
             .chain(s!("failed to find directory `{}`", directory.display()))?
             .is_dir()
         {
-            ctx.status("Checked", &ctx.replace_home(&directory).display());
+            status!(ctx, "Checked", directory.as_path());
             Ok(LockedSource {
                 directory,
                 filename: None,
@@ -569,7 +569,7 @@ impl LockedConfig {
         } else {
             fs::remove_file(path).chain(s!("failed to remove file `{}`", path_display))?;
         }
-        ctx.warning_v("Removed", path_display);
+        warning_v!(ctx, "Removed", path_display);
         Ok(())
     }
 
@@ -704,7 +704,7 @@ impl LockedConfig {
                             script.push('\n');
                         }
                     }
-                    ctx.status_v("Rendered", &plugin.name);
+                    status_v!(ctx, "Rendered", &plugin.name);
                 }
                 LockedPlugin::Inline(plugin) => {
                     let data = hashmap! {
@@ -721,7 +721,7 @@ impl LockedConfig {
                             .chain(s!("failed to render inline plugin `{}`", &plugin.name))?,
                     );
                     script.push('\n');
-                    ctx.status_v("Inlined", &plugin.name);
+                    status_v!(ctx, "Inlined", &plugin.name);
                 }
             }
         }
@@ -781,8 +781,8 @@ mod tests {
                 download_dir: root.join("downloads"),
                 root: root.to_path_buf(), // must come after the joins above
             },
-            output: crate::context::Output {
-                verbosity: crate::context::Verbosity::Quiet,
+            output: crate::log::Output {
+                verbosity: crate::log::Verbosity::Quiet,
                 no_color: true,
             },
             reinstall: false,
@@ -1229,8 +1229,8 @@ mod tests {
                 download_dir,
                 home: "/".into(),
             },
-            output: crate::context::Output {
-                verbosity: crate::context::Verbosity::Quiet,
+            output: crate::log::Output {
+                verbosity: crate::log::Verbosity::Quiet,
                 no_color: true,
             },
             reinstall: false,

@@ -9,7 +9,7 @@ use std::{
 use fs2::{lock_contended_error, FileExt};
 
 use crate::{
-    context::{Context, OutputExt, SettingsExt},
+    context::{Context, SettingsExt},
     error::{Result, ResultExt},
 };
 
@@ -18,14 +18,16 @@ use crate::{
 /// [`Path`]: https://doc.rust-lang.org/std/path/struct.Path.html
 pub trait PathExt {
     fn metadata_modified(&self) -> Option<time::SystemTime>;
-    fn newer_than(&self, other: &Path) -> bool;
-}
 
-pub trait PathBufExt {
-    fn expand_tilde<P>(self, home: P) -> Self
+    fn newer_than<P>(&self, other: P) -> bool
     where
         P: AsRef<Path>;
-    fn replace_home<P>(self, home: P) -> Self
+
+    fn expand_tilde<P>(&self, home: P) -> PathBuf
+    where
+        P: AsRef<Path>;
+
+    fn replace_home<P>(&self, home: P) -> PathBuf
     where
         P: AsRef<Path>;
 }
@@ -33,41 +35,42 @@ pub trait PathBufExt {
 impl PathExt for Path {
     /// Returns the modified time of the file if available.
     fn metadata_modified(&self) -> Option<time::SystemTime> {
-        fs::metadata(&self).ok().and_then(|m| m.modified().ok())
+        fs::metadata(&self).and_then(|m| m.modified()).ok()
     }
 
     /// Returns whether the file at this path is newer than the file at the
     /// given one. If either file does not exist, this method returns `false`.
-    fn newer_than(&self, other: &Path) -> bool {
-        match (self.metadata_modified(), other.metadata_modified()) {
+    fn newer_than<P>(&self, other: P) -> bool
+    where
+        P: AsRef<Path>,
+    {
+        match (self.metadata_modified(), other.as_ref().metadata_modified()) {
             (Some(self_time), Some(other_time)) => self_time > other_time,
             _ => false,
         }
     }
-}
 
-impl PathBufExt for PathBuf {
-    /// Expands the tilde in the path the given home.
-    fn expand_tilde<P>(self, home: P) -> Self
+    /// Expands the tilde in the path with the given home directory.
+    fn expand_tilde<P>(&self, home: P) -> PathBuf
     where
         P: AsRef<Path>,
     {
         if let Ok(path) = self.strip_prefix("~") {
             home.as_ref().join(path)
         } else {
-            self
+            self.to_path_buf()
         }
     }
 
     /// Replaces the home directory in the path with a tilde.
-    fn replace_home<P>(self, home: P) -> Self
+    fn replace_home<P>(&self, home: P) -> PathBuf
     where
         P: AsRef<Path>,
     {
         if let Ok(path) = self.strip_prefix(home) {
-            Path::new("~").join(path)
+            Self::new("~").join(path)
         } else {
-            self
+            self.to_path_buf()
         }
     }
 }
@@ -87,12 +90,13 @@ impl Mutex {
             let msg = s!("failed to acquire file lock `{}`", path.display());
 
             if e.raw_os_error() == lock_contended_error().raw_os_error() {
-                ctx.warning(
+                warning!(
+                    ctx,
                     "Blocking",
                     &format!(
                         "waiting for file lock on {}",
                         ctx.replace_home(path).display()
-                    ),
+                    )
                 );
                 file.lock_exclusive().chain(msg)?;
             } else {
