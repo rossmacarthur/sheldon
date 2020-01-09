@@ -1,31 +1,10 @@
 //! Contextual information.
 
-use std::{
-    fmt,
-    path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
 
-use ansi_term::Color;
 use serde::{Deserialize, Serialize};
 
-use crate::{error::Error, util::PathBufExt};
-
-/// The requested verbosity of output.
-#[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
-pub enum Verbosity {
-    Quiet,
-    Normal,
-    Verbose,
-}
-
-/// The output style.
-#[derive(Clone, Copy, Debug)]
-pub struct Output {
-    /// The requested verbosity of output.
-    pub verbosity: Verbosity,
-    /// Whether to not use ANSI color codes.
-    pub no_color: bool,
-}
+use crate::{log::Output, util::PathExt};
 
 /// Settings to use over the entire program.
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
@@ -67,121 +46,6 @@ pub struct LockContext {
     pub reinstall: bool,
 }
 
-/// Provides an interface to output information using a struct that has an
-/// `Output`.
-pub trait OutputExt {
-    fn output(&self) -> &Output;
-
-    #[inline]
-    fn log_header(&self, header: &str, message: &dyn fmt::Display, verbosity: Verbosity) {
-        if self.output().verbosity >= verbosity {
-            if self.output().no_color {
-                eprintln!("[{}] {}", header.to_uppercase(), message);
-            } else {
-                eprintln!("{} {}", Color::Purple.bold().paint(header), message);
-            }
-        }
-    }
-
-    #[inline]
-    fn log_status(
-        &self,
-        color: Color,
-        status: &str,
-        message: &dyn fmt::Display,
-        verbosity: Verbosity,
-    ) {
-        if self.output().verbosity >= verbosity {
-            if self.output().no_color {
-                eprintln!(
-                    "{: >12} {}",
-                    format!("[{}]", status.to_uppercase()),
-                    message
-                )
-            } else {
-                eprintln!(
-                    "{} {}",
-                    color.bold().paint(format!("{: >10}", status)),
-                    message
-                );
-            }
-        }
-    }
-
-    #[inline]
-    fn header(&self, header: &str, message: &dyn fmt::Display) {
-        self.log_header(header, message, Verbosity::Normal);
-    }
-
-    #[inline]
-    fn header_v(&self, header: &str, message: &dyn fmt::Display) {
-        self.log_header(header, message, Verbosity::Verbose);
-    }
-
-    #[inline]
-    fn status(&self, status: &str, message: &dyn fmt::Display) {
-        self.log_status(Color::Cyan, status, message, Verbosity::Normal);
-    }
-
-    #[inline]
-    fn status_v(&self, status: &str, message: &dyn fmt::Display) {
-        self.log_status(Color::Cyan, status, message, Verbosity::Verbose);
-    }
-
-    #[inline]
-    fn warning(&self, status: &str, message: &dyn fmt::Display) {
-        self.log_status(Color::Yellow, status, message, Verbosity::Normal);
-    }
-
-    #[inline]
-    fn warning_v(&self, status: &str, message: &dyn fmt::Display) {
-        self.log_status(Color::Yellow, status, message, Verbosity::Verbose);
-    }
-
-    #[inline]
-    fn error_warning(&self, error: &Error) {
-        if self.output().no_color {
-            eprintln!("\n[WARNING] {}", error.pretty());
-        } else {
-            eprintln!(
-                "\n{} {}",
-                Color::Yellow.bold().paint("warning:"),
-                error.pretty()
-            );
-        }
-    }
-
-    #[inline]
-    fn error(&self, error: &Error) {
-        if self.output().no_color {
-            eprintln!("\n[ERROR] {}", error.pretty());
-        } else {
-            eprintln!("\n{} {}", Color::Red.bold().paint("error:"), error.pretty());
-        }
-    }
-}
-
-impl OutputExt for Output {
-    #[inline]
-    fn output(&self) -> &Output {
-        self
-    }
-}
-
-impl OutputExt for &Context<'_> {
-    #[inline]
-    fn output(&self) -> &Output {
-        self.output
-    }
-}
-
-impl OutputExt for &LockContext {
-    #[inline]
-    fn output(&self) -> &Output {
-        &self.output
-    }
-}
-
 macro_rules! setting_access {
     ($name:ident) => {
         #[inline]
@@ -214,13 +78,13 @@ pub trait SettingsExt {
         path.expand_tilde(self.home())
     }
 
-    /// Replaces the home directory in the given path to a tilde.
+    /// Replaces the home directory in the given path with a tilde.
     #[inline]
     fn replace_home<P>(&self, path: P) -> PathBuf
     where
-        P: Into<PathBuf>,
+        P: AsRef<Path>,
     {
-        path.into().replace_home(self.home())
+        path.as_ref().replace_home(self.home())
     }
 }
 
@@ -231,7 +95,7 @@ impl SettingsExt for Settings {
     }
 }
 
-impl SettingsExt for &Context<'_> {
+impl SettingsExt for Context<'_> {
     #[inline]
     fn settings(&self) -> &Settings {
         self.settings
