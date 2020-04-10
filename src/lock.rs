@@ -202,7 +202,7 @@ impl Source {
             fs::create_dir_all(&directory)
                 .chain(s!("failed to create directory `{}`", directory.display()))?;
             let mut response =
-                reqwest::get(url.clone()).chain(s!("failed to download `{}`", url))?;
+                reqwest::blocking::get(url.clone()).chain(s!("failed to download `{}`", url))?;
             let mut out = fs::File::create(&filename)
                 .chain(s!("failed to create `{}`", filename.display()))?;
             io::copy(&mut response, &mut out)

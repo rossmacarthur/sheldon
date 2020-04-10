@@ -82,7 +82,6 @@ pub enum Source {
 #[serde(default)]
 struct RawPlugin {
     /// A clonable Git repository.
-    #[serde(with = "url_serde")]
     git: Option<Url>,
     /// A Gist snippet, only the hash or username/hash needs to be specified.
     gist: Option<String>,
@@ -91,7 +90,6 @@ struct RawPlugin {
     /// What protocol to use when cloning a repository.
     protocol: Option<GitProtocol>,
     /// A downloadable file.
-    #[serde(with = "url_serde")]
     remote: Option<Url>,
     /// A local directory.
     local: Option<PathBuf>,
