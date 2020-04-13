@@ -16,6 +16,9 @@
   <a href="https://github.com/rossmacarthur/sheldon/actions?query=workflow%3Abuild">
     <img src="https://img.shields.io/github/workflow/status/rossmacarthur/sheldon/build/master" alt="Build status" />
   </a>
+  <a href="https://github.com/rossmacarthur/sheldon/releases/latest">
+    <img src="https://img.shields.io/github/workflow/status/rossmacarthur/sheldon/release?label=release" alt="Release status" />
+  </a>
 </div>
 
 ## Features
@@ -82,7 +85,7 @@ host system, download the required artefact, and extract the **sheldon** binary.
 
 ```sh
 curl --proto '=https' -fLsS https://rossmacarthur.github.io/install/crate.sh \
-    | sh -s -- --repo "rossmacarthur/sheldon" --to /usr/local/bin
+    | bash -s -- --repo "rossmacarthur/sheldon" --to /usr/local/bin
 ```
 
 ### Cargo
