@@ -3,8 +3,9 @@
 use std::{fmt, path::Path};
 
 pub use ansi_term::Color;
+use anyhow::Error;
 
-use crate::{context::SettingsExt, error::Error, Context, LockContext};
+use crate::{context::SettingsExt, Context, LockContext};
 
 /// The requested verbosity of output.
 #[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
@@ -153,13 +154,18 @@ pub fn error<C>(ctx: &C, color: Color, status: &str, error: &Error)
 where
     C: OutputExt,
 {
+    let pretty = error
+        .chain()
+        .map(|c| c.to_string().replace("Template error: ", ""))
+        .collect::<Vec<_>>()
+        .join("\n  due to: ");
     if ctx.no_color() {
-        eprintln!("\n[{}] {}", status.to_uppercase(), error.pretty());
+        eprintln!("\n[{}] {}", status.to_uppercase(), pretty);
     } else {
         eprintln!(
             "\n{} {}",
             color.bold().paint(format!("{}:", status)),
-            error.pretty()
+            pretty
         );
     }
 }

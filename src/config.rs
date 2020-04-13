@@ -8,11 +8,10 @@ use std::{
     result, str,
 };
 
+use anyhow::{bail, Context as ResultExt, Result};
 use indexmap::IndexMap;
 use serde::{self, de, Deserialize, Deserializer, Serialize};
 use url::Url;
-
-use crate::error::{Result, ResultExt};
 
 /// The Gist domain host.
 const GIST_HOST: &str = "gist.github.com";
@@ -405,7 +404,7 @@ impl RawPlugin {
                     identifier.splitn(2, '/').last().unwrap()
                 );
                 let url = Url::parse(&url_str)
-                    .chain(s!("failed to construct Gist URL using `{}`", identifier))?;
+                    .with_context(s!("failed to construct Gist URL using `{}`", identifier))?;
                 TempSource::External(Source::Git { url, reference })
             }
             // `github` type
@@ -417,7 +416,7 @@ impl RawPlugin {
                     repository
                 );
                 let url = Url::parse(&url_str)
-                    .chain(s!("failed to construct GitHub URL using `{}`", repository))?;
+                    .with_context(s!("failed to construct GitHub URL using `{}`", repository))?;
                 TempSource::External(Source::Git { url, reference })
             }
             // `remote` type
@@ -485,9 +484,10 @@ impl RawConfig {
         P: AsRef<Path>,
     {
         let path = path.as_ref();
-        let contents = fs::read(&path).chain(s!("failed to read from `{}`", path.display()))?;
+        let contents =
+            fs::read(&path).with_context(s!("failed to read from `{}`", path.display()))?;
         let config: Self = toml::from_str(&String::from_utf8_lossy(&contents))
-            .chain("failed to deserialize contents as TOML")?;
+            .context("failed to deserialize contents as TOML")?;
         Ok(config)
     }
 
@@ -507,7 +507,7 @@ impl RawConfig {
             for (name, template) in &templates {
                 handlebars
                     .register_template_string(&name, &template.value)
-                    .chain(s!("failed to compile template `{}`", name))?
+                    .with_context(s!("failed to compile template `{}`", name))?
             }
         }
 
@@ -520,7 +520,7 @@ impl RawConfig {
             normalized_plugins.push(
                 plugin
                     .normalize(name.clone(), &templates)
-                    .chain(s!("failed to normalize plugin `{}`", name))?,
+                    .with_context(s!("failed to normalize plugin `{}`", name))?,
             );
         }
 

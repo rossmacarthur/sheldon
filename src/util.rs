@@ -6,12 +6,10 @@ use std::{
     time,
 };
 
+use anyhow::{Context as ResultExt, Result};
 use fs2::{lock_contended_error, FileExt};
 
-use crate::{
-    context::{Context, SettingsExt},
-    error::{Result, ResultExt},
-};
+use crate::context::{Context, SettingsExt};
 
 /// An extension trait for [`Path`] types.
 ///
@@ -84,7 +82,7 @@ impl Mutex {
         let file = fs::OpenOptions::new()
             .read(true)
             .open(path)
-            .chain(s!("failed to open `{}`", path.display()))?;
+            .with_context(s!("failed to open `{}`", path.display()))?;
 
         if let Err(e) = file.try_lock_exclusive() {
             let msg = s!("failed to acquire file lock `{}`", path.display());
@@ -98,9 +96,9 @@ impl Mutex {
                         ctx.replace_home(path).display()
                     )
                 );
-                file.lock_exclusive().chain(msg)?;
+                file.lock_exclusive().with_context(msg)?;
             } else {
-                return Err(e).chain(msg);
+                return Err(e).with_context(msg);
             }
         }
 
@@ -123,12 +121,12 @@ pub mod git {
     };
     use url::Url;
 
-    use crate::ResultExt;
+    use anyhow::Context as ResultExt;
 
     /// Call a function with generated fetch options.
-    fn with_fetch_options<T, F>(f: F) -> crate::Result<T>
+    fn with_fetch_options<T, F>(f: F) -> anyhow::Result<T>
     where
-        F: FnOnce(FetchOptions<'_>) -> crate::Result<T>,
+        F: FnOnce(FetchOptions<'_>) -> anyhow::Result<T>,
     {
         let mut rcb = RemoteCallbacks::new();
         rcb.credentials(|_, username, allowed| {
@@ -150,7 +148,7 @@ pub mod git {
     }
 
     /// Clone or open a Git repository.
-    pub fn clone_or_open(url: &Url, directory: &Path) -> crate::Result<(bool, Repository)> {
+    pub fn clone_or_open(url: &Url, directory: &Path) -> anyhow::Result<(bool, Repository)> {
         with_fetch_options(|opts| {
             let mut cloned = false;
             let repo = match RepoBuilder::new()
@@ -163,10 +161,12 @@ pub mod git {
                 }
                 Err(e) => {
                     if e.code() == ErrorCode::Exists {
-                        Repository::open(directory)
-                            .chain(s!("failed to open repository at `{}`", directory.display()))?
+                        Repository::open(directory).with_context(s!(
+                            "failed to open repository at `{}`",
+                            directory.display()
+                        ))?
                     } else {
-                        return Err(e).chain(s!("failed to git clone `{}`", url));
+                        return Err(e).with_context(s!("failed to git clone `{}`", url));
                     }
                 }
             };
@@ -175,14 +175,14 @@ pub mod git {
     }
 
     /// Checkout at repository at a particular revision.
-    pub fn checkout(repo: &Repository, oid: Oid) -> crate::Result<()> {
+    pub fn checkout(repo: &Repository, oid: Oid) -> anyhow::Result<()> {
         let obj = repo
             .find_object(oid, None)
-            .chain(s!("failed to find `{}`", oid))?;
+            .with_context(s!("failed to find `{}`", oid))?;
         repo.reset(&obj, ResetType::Hard, None)
-            .chain(s!("failed to set HEAD to `{}`", oid))?;
+            .with_context(s!("failed to set HEAD to `{}`", oid))?;
         repo.checkout_tree(&obj, None)
-            .chain(s!("failed to checkout `{}`", oid))
+            .with_context(s!("failed to checkout `{}`", oid))
     }
 
     /// Recursively update Git submodules.
@@ -203,19 +203,19 @@ pub mod git {
     }
 
     /// Resolve a branch to a object identifier.
-    pub fn resolve_branch(repo: &Repository, branch: &str) -> crate::Result<Oid> {
+    pub fn resolve_branch(repo: &Repository, branch: &str) -> anyhow::Result<Oid> {
         repo.find_branch(&format!("origin/{}", branch), BranchType::Remote)
-            .chain(s!("failed to find branch `{}`", branch))?
+            .with_context(s!("failed to find branch `{}`", branch))?
             .get()
             .target()
-            .chain(s!("branch `{}` does not have a target", branch))
+            .with_context(s!("branch `{}` does not have a target", branch))
     }
 
     /// Resolve a revision to a object identifier.
-    pub fn resolve_revision(repo: &Repository, revision: &str) -> crate::Result<Oid> {
+    pub fn resolve_revision(repo: &Repository, revision: &str) -> anyhow::Result<Oid> {
         let obj = repo
             .revparse_single(revision)
-            .chain(s!("failed to find revision `{}`", revision))?;
+            .with_context(s!("failed to find revision `{}`", revision))?;
         Ok(match obj.as_tag() {
             Some(tag) => tag.target_id(),
             None => obj.id(),
@@ -223,14 +223,14 @@ pub mod git {
     }
 
     /// Resolve a tag to a object identifier.
-    pub fn resolve_tag(repo: &Repository, tag: &str) -> crate::Result<Oid> {
+    pub fn resolve_tag(repo: &Repository, tag: &str) -> anyhow::Result<Oid> {
         fn _resolve_tag(repo: &Repository, tag: &str) -> Result<Oid, Error> {
             let id = repo.refname_to_id(&format!("refs/tags/{}", tag))?;
             let obj = repo.find_object(id, None)?;
             let obj = obj.peel(git2::ObjectType::Commit)?;
             Ok(obj.id())
         }
-        _resolve_tag(repo, tag).chain(s!("failed to find tag `{}`", tag))
+        _resolve_tag(repo, tag).with_context(s!("failed to find tag `{}`", tag))
     }
 }
 

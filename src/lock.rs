@@ -12,6 +12,7 @@ use std::{
     result, sync,
 };
 
+use anyhow::{anyhow, bail, Context as ResultExt, Error, Result};
 use indexmap::{indexmap, IndexMap};
 use itertools::{Either, Itertools};
 use lazy_static::lazy_static;
@@ -23,7 +24,6 @@ use walkdir::WalkDir;
 use crate::{
     config::{Config, ExternalPlugin, GitReference, InlinePlugin, Plugin, Source, Template},
     context::{LockContext as Context, Settings, SettingsExt},
-    error::{Error, Result, ResultExt},
     util::git,
 };
 
@@ -156,7 +156,7 @@ impl Source {
             if let Err(e) = fs::remove_dir_all(&directory) {
                 if e.kind() != io::ErrorKind::NotFound {
                     return Err(e)
-                        .chain(s!("failed to remove directory `{}`", &directory.display()));
+                        .with_context(s!("failed to remove directory `{}`", &directory.display()));
                 }
             }
         }
@@ -173,7 +173,7 @@ impl Source {
         }
 
         // Recursively update Git submodules.
-        git::submodule_update(&repo).chain("failed to recursively update submodules")?;
+        git::submodule_update(&repo).context("failed to recursively update submodules")?;
 
         Ok(LockedSource {
             directory,
@@ -191,7 +191,8 @@ impl Source {
         if ctx.reinstall {
             if let Err(e) = fs::remove_file(&filename) {
                 if e.kind() != io::ErrorKind::NotFound {
-                    return Err(e).chain(s!("failed to remove filename `{}`", &filename.display()));
+                    return Err(e)
+                        .with_context(s!("failed to remove filename `{}`", &filename.display()));
                 }
             }
         }
@@ -200,13 +201,13 @@ impl Source {
             status!(ctx, "Checked", &url);
         } else {
             fs::create_dir_all(&directory)
-                .chain(s!("failed to create directory `{}`", directory.display()))?;
-            let mut response =
-                reqwest::blocking::get(url.clone()).chain(s!("failed to download `{}`", url))?;
+                .with_context(s!("failed to create directory `{}`", directory.display()))?;
+            let mut response = reqwest::blocking::get(url.clone())
+                .with_context(s!("failed to download `{}`", url))?;
             let mut out = fs::File::create(&filename)
-                .chain(s!("failed to create `{}`", filename.display()))?;
+                .with_context(s!("failed to create `{}`", filename.display()))?;
             io::copy(&mut response, &mut out)
-                .chain(s!("failed to copy contents to `{}`", filename.display()))?;
+                .with_context(s!("failed to copy contents to `{}`", filename.display()))?;
             status!(ctx, "Fetched", &url);
         }
 
@@ -240,14 +241,14 @@ impl Source {
                     filename: None,
                 })
             } else {
-                err!(
+                Err(anyhow!(
                     "`{}` matches {} directories",
                     directory.display(),
                     directories.len()
-                )
+                ))
             }
         } else if fs::metadata(&directory)
-            .chain(s!("failed to find directory `{}`", directory.display()))?
+            .with_context(s!("failed to find directory `{}`", directory.display()))?
             .is_dir()
         {
             status!(ctx, "Checked", directory.as_path());
@@ -256,7 +257,7 @@ impl Source {
                 filename: None,
             })
         } else {
-            err!("`{}` is not a directory", directory.display())
+            Err(anyhow!("`{}` is not a directory", directory.display()))
         }
     }
 
@@ -265,17 +266,23 @@ impl Source {
         match self {
             Self::Git { url, reference } => {
                 let mut directory = ctx.clone_dir().to_path_buf();
-                directory.push(url.host_str().chain(s!("URL `{}` has no host", url))?);
+                directory.push(
+                    url.host_str()
+                        .with_context(s!("URL `{}` has no host", url))?,
+                );
                 directory.push(url.path().trim_start_matches('/'));
                 Self::lock_git(ctx, directory, url, reference)
             }
             Self::Remote { url } => {
                 let mut directory = ctx.download_dir().to_path_buf();
-                directory.push(url.host_str().chain(s!("URL `{}` has no host", url))?);
+                directory.push(
+                    url.host_str()
+                        .with_context(s!("URL `{}` has no host", url))?,
+                );
 
                 let segments: Vec<_> = url
                     .path_segments()
-                    .chain(s!("URL `{}` is cannot-be-a-base", url))?
+                    .with_context(s!("URL `{}` is cannot-be-a-base", url))?
                     .collect();
                 let (base, rest) = segments.split_last().unwrap();
                 let base = if *base == "" { "index" } else { *base };
@@ -294,11 +301,12 @@ impl ExternalPlugin {
         let mut matched = false;
         let pattern = pattern.to_string_lossy();
         let paths: glob::Paths =
-            glob::glob(&pattern).chain(s!("failed to parse glob pattern `{}`", &pattern))?;
+            glob::glob(&pattern).with_context(s!("failed to parse glob pattern `{}`", &pattern))?;
 
         for path in paths {
-            filenames
-                .push(path.chain(s!("failed to read path matched by pattern `{}`", &pattern))?);
+            filenames.push(
+                path.with_context(s!("failed to read path matched by pattern `{}`", &pattern))?,
+            );
             matched = true;
         }
 
@@ -335,7 +343,7 @@ impl ExternalPlugin {
                 "root" => ctx
                     .root()
                     .to_str()
-                    .chain("root directory is not valid UTF-8")?,
+                    .context("root directory is not valid UTF-8")?,
                 "name" => &self.name
             };
 
@@ -343,7 +351,7 @@ impl ExternalPlugin {
             let plugin_dir = if let Some(directory) = self.directory {
                 let rendered = templates
                     .render_template(&directory, &data)
-                    .chain(s!("failed to render template `{}`", directory))?;
+                    .with_context(s!("failed to render template `{}`", directory))?;
                 Some(source_dir.join(rendered))
             } else {
                 None
@@ -354,7 +362,7 @@ impl ExternalPlugin {
                 "directory",
                 &directory
                     .to_str()
-                    .chain("plugin directory is not valid UTF-8")?,
+                    .context("plugin directory is not valid UTF-8")?,
             );
 
             let mut filenames = Vec::new();
@@ -364,7 +372,7 @@ impl ExternalPlugin {
                 for u in uses {
                     let rendered = templates
                         .render_template(u, &data)
-                        .chain(s!("failed to render template `{}`", u))?;
+                        .with_context(s!("failed to render template `{}`", u))?;
                     let pattern = directory.join(&rendered);
                     if !Self::match_globs(pattern, &mut filenames)? {
                         bail!("failed to find any files matching `{}`", &rendered);
@@ -375,7 +383,7 @@ impl ExternalPlugin {
                 for g in matches {
                     let rendered = templates
                         .render_template(g, &data)
-                        .chain(s!("failed to render template `{}`", g))?;
+                        .with_context(s!("failed to render template `{}`", g))?;
                     let pattern = directory.join(rendered);
                     if Self::match_globs(pattern, &mut filenames)? {
                         break;
@@ -443,7 +451,7 @@ impl Config {
                             let source_name = format!("{}", source);
                             let source = source
                                 .lock(ctx)
-                                .chain(s!("failed to install source `{}`", source_name))?;
+                                .with_context(s!("failed to install source `{}`", source_name))?;
 
                             let mut locked = Vec::with_capacity(plugins.len());
                             for (index, plugin) in plugins {
@@ -452,7 +460,7 @@ impl Config {
                                     index,
                                     plugin
                                         .lock(ctx, source.clone(), matches, apply)
-                                        .chain(s!("failed to install plugin `{}`", name)),
+                                        .with_context(s!("failed to install plugin `{}`", name)),
                                 ));
                             }
 
@@ -528,9 +536,10 @@ impl LockedConfig {
     {
         let path = path.as_ref();
         let locked: Self = toml::from_str(&String::from_utf8_lossy(
-            &fs::read(&path).chain(s!("failed to read locked config from `{}`", path.display()))?,
+            &fs::read(&path)
+                .with_context(s!("failed to read locked config from `{}`", path.display()))?,
         ))
-        .chain("failed to deserialize locked config")?;
+        .context("failed to deserialize locked config")?;
         Ok(locked)
     }
 
@@ -562,12 +571,13 @@ impl LockedConfig {
         let path_display = &path_replace_home.display();
         if path
             .metadata()
-            .chain(s!("failed to fetch metadata for `{}`", path_display))?
+            .with_context(s!("failed to fetch metadata for `{}`", path_display))?
             .is_dir()
         {
-            fs::remove_dir_all(path).chain(s!("failed to remove directory `{}`", path_display))?;
+            fs::remove_dir_all(path)
+                .with_context(s!("failed to remove directory `{}`", path_display))?;
         } else {
-            fs::remove_file(path).chain(s!("failed to remove file `{}`", path_display))?;
+            fs::remove_file(path).with_context(s!("failed to remove file `{}`", path_display))?;
         }
         warning_v!(ctx, "Removed", path_display);
         Ok(())
@@ -657,7 +667,7 @@ impl LockedConfig {
         for (name, template) in &templates_map {
             templates
                 .register_template_string(&name, &template.value)
-                .chain(s!("failed to compile template `{}`", name))?;
+                .with_context(s!("failed to compile template `{}`", name))?;
         }
 
         let mut script = String::new();
@@ -672,12 +682,12 @@ impl LockedConfig {
                                 .settings
                                 .root()
                                 .to_str()
-                                .chain("root directory is not valid UTF-8")?,
+                                .context("root directory is not valid UTF-8")?,
                             "name" => &plugin.name,
                             "directory" => plugin
                                 .directory()
                                 .to_str()
-                                .chain("plugin directory is not valid UTF-8")?,
+                                .context("plugin directory is not valid UTF-8")?,
                         };
 
                         if templates_map.get(name.as_str()).unwrap().each {
@@ -686,12 +696,12 @@ impl LockedConfig {
                                     "filename",
                                     filename
                                         .to_str()
-                                        .chain("plugin filename is not valid UTF-8")?,
+                                        .context("plugin filename is not valid UTF-8")?,
                                 );
                                 script.push_str(
                                     &templates
                                         .render(name, &data)
-                                        .chain(s!("failed to render template `{}`", name))?,
+                                        .with_context(s!("failed to render template `{}`", name))?,
                                 );
                                 script.push('\n');
                             }
@@ -699,7 +709,7 @@ impl LockedConfig {
                             script.push_str(
                                 &templates
                                     .render(name, &data)
-                                    .chain(s!("failed to render template `{}`", name))?,
+                                    .with_context(s!("failed to render template `{}`", name))?,
                             );
                             script.push('\n');
                         }
@@ -712,13 +722,16 @@ impl LockedConfig {
                             .settings
                             .root()
                             .to_str()
-                            .chain("root directory is not valid UTF-8")?,
+                            .context("root directory is not valid UTF-8")?,
                         "name" => &plugin.name,
                     };
                     script.push_str(
                         &templates
                             .render_template(&plugin.raw, &data)
-                            .chain(s!("failed to render inline plugin `{}`", &plugin.name))?,
+                            .with_context(s!(
+                                "failed to render inline plugin `{}`",
+                                &plugin.name
+                            ))?,
                     );
                     script.push('\n');
                     status_v!(ctx, "Inlined", &plugin.name);
@@ -737,9 +750,9 @@ impl LockedConfig {
         let path = path.as_ref();
         fs::write(
             path,
-            &toml::to_string(&self).chain("failed to serialize locked config")?,
+            &toml::to_string(&self).context("failed to serialize locked config")?,
         )
-        .chain(s!("failed to write locked config to `{}`", path.display()))?;
+        .with_context(s!("failed to write locked config to `{}`", path.display()))?;
         Ok(())
     }
 }
@@ -823,11 +836,7 @@ mod tests {
 
         let reference = GitReference::Branch("not-a-branch".to_string());
         let error = reference.lock(&repo).unwrap_err();
-        assert_eq!(
-            error.to_string(),
-            "failed to find branch `not-a-branch`\ncannot locate remote-tracking branch \
-             \'origin/not-a-branch\'; class=Reference (4); code=NotFound (-3)"
-        );
+        assert_eq!(error.to_string(), "failed to find branch `not-a-branch`");
     }
 
     #[test]
@@ -844,11 +853,7 @@ mod tests {
 
         let reference = GitReference::Revision("2c4ed7710".to_string());
         let error = reference.lock(&repo).unwrap_err();
-        assert_eq!(
-            error.to_string(),
-            "failed to find revision `2c4ed7710`\nrevspec \'2c4ed7710\' not found; \
-             class=Reference (4); code=NotFound (-3)"
-        );
+        assert_eq!(error.to_string(), "failed to find revision `2c4ed7710`");
     }
 
     #[test]
@@ -865,11 +870,7 @@ mod tests {
 
         let reference = GitReference::Tag("v0.2.0".to_string());
         let error = reference.lock(&repo).unwrap_err();
-        assert_eq!(
-            error.to_string(),
-            "failed to find tag `v0.2.0`\nreference \'refs/tags/v0.2.0\' not found; \
-             class=Reference (4); code=NotFound (-3)"
-        );
+        assert_eq!(error.to_string(), "failed to find tag `v0.2.0`");
     }
 
     #[test]

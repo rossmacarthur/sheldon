@@ -2,6 +2,7 @@
 
 use std::{path::PathBuf, process};
 
+use anyhow::anyhow;
 use structopt::{
     clap::{crate_version, AppSettings},
     StructOpt,
@@ -9,7 +10,6 @@ use structopt::{
 
 use crate::{
     context::Settings,
-    error::Error,
     log::{Output, Verbosity},
 };
 
@@ -135,10 +135,9 @@ impl Opt {
         };
 
         let home = match home.or_else(dirs::home_dir).ok_or_else(|| {
-            Error::custom(
+            anyhow!(
                 "failed to determine the current user's home directory, try using the `--home` \
                  option"
-                    .into(),
             )
         }) {
             Ok(home) => home,

@@ -11,24 +11,22 @@
 //!
 //! [homepage]: https://github.com/rossmacarthur/sheldon#sheldon
 
-#![recursion_limit = "128"]
-
 #[macro_use]
 mod _macros;
 
 mod cli;
 mod config;
 mod context;
-mod error;
 mod lock;
 mod log;
 mod util;
+
+use anyhow::{Context as ResultExt, Result};
 
 use crate::{
     cli::{Command, Opt},
     config::Config,
     context::{Context, LockContext, SettingsExt},
-    error::{Result, ResultExt},
     lock::LockedConfig,
     util::{Mutex, PathExt},
 };
@@ -42,7 +40,7 @@ impl Sheldon {
     /// locked config.
     fn locked(ctx: &LockContext) -> Result<LockedConfig> {
         let path = ctx.config_file();
-        let config = Config::from_path(path).chain("failed to load config file")?;
+        let config = Config::from_path(path).context("failed to load config file")?;
         header!(ctx, "Loaded", path);
         config.lock(ctx)
     }
@@ -59,7 +57,7 @@ impl Sheldon {
         } else {
             let warnings = locked.clean(ctx);
             let path = ctx.lock_file();
-            locked.to_path(path).chain("failed to write lock file")?;
+            locked.to_path(path).context("failed to write lock file")?;
             header!(ctx, "Locked", path);
             for warning in warnings {
                 error_w!(ctx, &warning);
@@ -92,13 +90,13 @@ impl Sheldon {
             }
         };
 
-        let script = locked.source(ctx).chain("failed to render source")?;
+        let script = locked.source(ctx).context("failed to render source")?;
 
         if to_path && locked.errors.is_empty() {
             let warnings = locked.clean(ctx);
             locked
                 .to_path(lock_path)
-                .chain("failed to write lock file")?;
+                .context("failed to write lock file")?;
             header_v!(ctx, "Locked", lock_path);
             for warning in warnings {
                 error_w!(ctx, &warning);
