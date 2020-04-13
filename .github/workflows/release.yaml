@@ -1,0 +1,127 @@
+# Publish to crates.io and upload release binaries to GitHub.
+#
+# This workflow contains three jobs. The first job `prepare` does two things
+#   - Check that the tag is the same as the package version.
+#   - Create a release on GitHub.
+#
+# Then the `publish` and `artifact` jobs run in parallel. `publish` runs `cargo
+# publish` to publish the project to crates.io. `artifact` builds binaries for
+# each supported platform and uploads them to the GitHub release.
+
+name: release
+
+on:
+  push:
+    tags: ['*']
+
+env:
+  CRATE: sheldon
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: Calculate version from tag
+        run: echo "::set-env name=VERSION::${GITHUB_REF#refs/tags/}"
+
+      - name: Check tag against package version
+        run: grep '^version = ' Cargo.toml | grep -q "$VERSION"
+
+      - uses: actions/create-release@latest
+        id: release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ env.VERSION }}
+          release_name: ${{ env.VERSION }}
+
+      - name: Save version and upload URL
+        run: |
+          mkdir details
+          echo "$VERSION" > details/version
+          echo "${{ steps.release.outputs.upload_url }}" > details/upload-url
+
+      - uses: actions/upload-artifact@v1
+        with:
+          name: details
+          path: details
+
+  publish:
+    needs: prepare
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+
+    - uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        profile: minimal
+        override: true
+
+    - name: Publish
+      run: cargo publish --token "${{ secrets.CRATES_IO_TOKEN }}"
+
+  artifact:
+    needs: prepare
+
+    strategy:
+      matrix:
+        include:
+        - { os: macos-latest, target: x86_64-apple-darwin }
+        - { os: ubuntu-latest, target: x86_64-unknown-linux-gnu }
+        - { os: ubuntu-latest, target: x86_64-unknown-linux-musl }
+        - { os: ubuntu-latest, target: armv7-unknown-linux-gnueabihf }
+        - { os: ubuntu-latest, target: armv7-unknown-linux-musleabihf }
+
+    name: artifact (${{ matrix.target }})
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v1
+
+      - uses: actions/download-artifact@v1
+        with:
+          name: details
+          path: details
+
+      - name: Get version and upload URL
+        run: |
+          echo "::set-env name=VERSION::$(cat details/version)"
+          echo "::set-env name=UPLOAD_URL::$(cat details/upload-url)"
+
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+
+      - name: Build
+        run: |
+          cargo install cross
+          cross build --locked --release --target ${{ matrix.target }}
+
+      - name: Archive
+        run: |
+          mkdir release
+          archive=$CRATE-$VERSION-${{ matrix.target }}.tar.gz
+          cp target/${{ matrix.target }}/release/$CRATE release/$CRATE
+          cp LICENSE* release
+          cp README.md release
+          cd release
+          tar cfz "../$archive" -- *
+          cd ..
+          rm -r release
+          echo "::set-env name=ARCHIVE::$archive"
+
+      - uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ env.UPLOAD_URL }}
+          asset_path: ${{ env.ARCHIVE }}
+          asset_name: ${{ env.ARCHIVE }}
+          asset_content_type: application/octet-stream
