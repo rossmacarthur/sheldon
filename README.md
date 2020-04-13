@@ -8,16 +8,13 @@
 <br />
 <div align="center">
   <a href="https://crates.io/crates/sheldon">
-    <img src="https://img.shields.io/crates/v/sheldon.svg?style=flat-square" alt="Crates.io version" />
+    <img src="https://img.shields.io/crates/v/sheldon.svg" alt="Crates.io version" />
   </a>
   <a href="https://github.com/rossmacarthur/sheldon/releases/latest">
-    <img src="https://img.shields.io/github/v/release/rossmacarthur/sheldon?label=download&style=flat-square&color=yellow" alt="Download" />
+    <img src="https://img.shields.io/github/v/release/rossmacarthur/sheldon?label=download&scolor=yellow" alt="Download" />
   </a>
-  <a href="https://travis-ci.org/rossmacarthur/sheldon">
-    <img src="https://img.shields.io/travis/rossmacarthur/sheldon/master.svg?style=flat-square" alt="Build status" />
-  </a>
-  <a href="https://docs.rs/sheldon">
-    <img src="https://img.shields.io/badge/docs.rs-latest-blue?style=flat-square" alt="Docs.rs latest" />
+  <a href="https://github.com/rossmacarthur/sheldon/actions?query=workflow%3Abuild">
+    <img src="https://img.shields.io/github/workflow/status/rossmacarthur/sheldon/build/master" alt="Build status" />
   </a>
 </div>
 
@@ -55,7 +52,7 @@
   - [Git](#git)
     - [`github`](#github)
     - [`gist`](#gist)
-    - [`git`](#git)
+    - [`git`](#git-1)
     - [Specifying a branch, tag, or commit](#specifying-a-branch-tag-or-commit)
     - [Cloning with Git or SSH protocols](#cloning-with-git-or-ssh-protocols)
   - [Remote](#remote)
@@ -186,7 +183,7 @@ The output of this command is highly configurable. You can define your own
 **sheldon** accepts the following global command line options.
 
 | Option                  | Environment variable   | Description                                                 |
-| ------------------------| ---------------------- | ----------------------------------------------------------- |
+| ----------------------- | ---------------------- | ----------------------------------------------------------- |
 | `--home <path>`         | `HOME`                 | Set the home directory.                                     |
 | `--root <path>`         | `SHELDON_ROOT`         | Set the root directory. (*default:* `<home>/.zsh`)          |
 | `--config-file <path>`  | `SHELDON_CONFIG_FILE`  | Set the config file. (*default:*  `<root>/plugins.toml`)    |

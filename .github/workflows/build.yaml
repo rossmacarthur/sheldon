@@ -1,0 +1,63 @@
+name: build
+
+on: [push]
+
+jobs:
+  lint:
+    strategy:
+      matrix:
+        toolchain: [stable, beta, nightly]
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+
+    - uses: actions-rs/toolchain@v1
+      with:
+        toolchain: ${{ matrix.toolchain }}
+        components: rustfmt, clippy
+        override: true
+
+    - name: Rustfmt
+      run: cargo fmt -- --check
+
+    - name: Clippy
+      run: cargo clippy -- -D warnings -D clippy::use-self -D clippy::items-after-statements -D clippy::if-not-else
+
+  test:
+    needs: lint
+
+    strategy:
+      matrix:
+        include:
+        - { os: macos-latest, target: x86_64-apple-darwin, toolchain: stable }
+        - { os: macos-latest, target: x86_64-apple-darwin, toolchain: beta }
+        - { os: macos-latest, target: x86_64-apple-darwin, toolchain: nightly }
+        - { os: ubuntu-latest, target: x86_64-unknown-linux-gnu, toolchain: stable }
+        - { os: ubuntu-latest, target: x86_64-unknown-linux-gnu, toolchain: beta }
+        - { os: ubuntu-latest, target: x86_64-unknown-linux-gnu, toolchain: nightly }
+        - { os: ubuntu-latest, target: x86_64-unknown-linux-musl, toolchain: stable }
+        - { os: ubuntu-latest, target: x86_64-unknown-linux-musl, toolchain: beta }
+        - { os: ubuntu-latest, target: x86_64-unknown-linux-musl, toolchain: nightly }
+        - { os: ubuntu-latest, target: armv7-unknown-linux-gnueabihf, toolchain: stable }
+        - { os: ubuntu-latest, target: armv7-unknown-linux-gnueabihf, toolchain: beta }
+        - { os: ubuntu-latest, target: armv7-unknown-linux-musleabihf, toolchain: stable }
+        - { os: ubuntu-latest, target: armv7-unknown-linux-musleabihf, toolchain: beta }
+
+    name: test (${{ matrix.toolchain }}, ${{ matrix.target }})
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v1
+
+    - uses: actions-rs/toolchain@v1
+      with:
+        toolchain: ${{ matrix.toolchain }}
+        profile: minimal
+        override: true
+
+    - name: Test
+      run: |
+        cargo install cross
+        cross test --locked --target ${{ matrix.target }}

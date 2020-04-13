@@ -1,4 +1,0 @@
-FROM rustembedded/cross:armv7-unknown-linux-gnueabihf-0.1.16
-
-COPY install_git.sh /
-RUN bash install_git.sh

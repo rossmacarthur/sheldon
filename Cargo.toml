@@ -15,7 +15,6 @@ categories = ["command-line-utilities"]
 license = "MIT OR Apache-2.0"
 
 [badges]
-travis-ci = { repository = "rossmacarthur/sheldon", branch = "master" }
 maintenance = { status = "actively-developed" }
 
 [dependencies]

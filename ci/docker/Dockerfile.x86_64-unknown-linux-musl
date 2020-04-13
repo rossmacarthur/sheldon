@@ -1,8 +1,0 @@
-FROM rustembedded/cross:x86_64-unknown-linux-musl-0.1.16
-
-RUN apt-get update \
-  && apt-get install -y --no-install-recommends gnupg \
-  && rm -rf /var/lib/apt/lists/*
-
-COPY install_git.sh /
-RUN bash install_git.sh
