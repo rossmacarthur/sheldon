@@ -202,30 +202,36 @@ impl TestCase {
     }
 }
 
-fn git_status(directory: &Path) -> String {
-    let output = Command::new("git")
-        .arg("-C")
-        .arg(directory)
-        .arg("status")
-        .output()
-        .unwrap();
-    String::from_utf8_lossy(&output.stdout).to_string()
+trait RepositoryExt {
+    fn revparse_commit(&self, spec: &str) -> Result<git2::Commit, git2::Error>;
+    fn status(&self) -> Result<git2::Statuses, git2::Error>;
+}
+
+impl RepositoryExt for git2::Repository {
+    fn revparse_commit(&self, spec: &str) -> Result<git2::Commit, git2::Error> {
+        Ok(self.revparse_single(spec)?.peel_to_commit()?)
+    }
+
+    fn status(&self) -> Result<git2::Statuses, git2::Error> {
+        self.statuses(Some(git2::StatusOptions::new().include_untracked(true)))
+    }
 }
 
 // Check that sheldon-test was in fact cloned.
-fn check_sheldon_test(root: &Path) {
+fn check_sheldon_test(root: &Path) -> Result<(), git2::Error> {
     let directory = root.join("repositories/github.com/rossmacarthur/sheldon-test");
     let filename = directory.join("test.plugin.zsh");
     assert!(directory.is_dir());
     assert!(filename.is_file());
+    let repo = git2::Repository::open(&directory)?;
+    // HEAD is the same as origin/master
     assert_eq!(
-        git_status(&directory),
-        r#"On branch master
-Your branch is up to date with 'origin/master'.
-
-nothing to commit, working tree clean
-"#,
+        repo.revparse_commit("HEAD")?.id(),
+        repo.revparse_commit("origin/master")?.id()
     );
+    // working tree clean
+    assert!(repo.status()?.is_empty());
+    Ok(())
 }
 
 /////////////////////////////////////////////////////////////////////////
@@ -286,7 +292,7 @@ fn lock_and_source_empty() -> io::Result<()> {
 fn lock_and_source_github_git() -> io::Result<()> {
     let case = TestCase::load("github_git")?;
     case.run()?;
-    check_sheldon_test(case.root.path());
+    check_sheldon_test(case.root.path()).unwrap();
     Ok(())
 }
 
@@ -294,7 +300,7 @@ fn lock_and_source_github_git() -> io::Result<()> {
 fn lock_and_source_github_https() -> io::Result<()> {
     let case = TestCase::load("github_https")?;
     case.run()?;
-    check_sheldon_test(case.root.path());
+    check_sheldon_test(case.root.path()).unwrap();
     Ok(())
 }
 
@@ -311,15 +317,15 @@ fn lock_and_source_github_branch() -> io::Result<()> {
     let filename = directory.join("test.plugin.zsh");
     assert!(directory.is_dir());
     assert!(filename.is_file());
-    assert_eq!(
-        git_status(&directory),
-        r#"On branch master
-Your branch is ahead of 'origin/master' by 1 commit.
-  (use "git push" to publish your local commits)
 
-nothing to commit, working tree clean
-"#,
+    let repo = git2::Repository::open(&directory).unwrap();
+    // HEAD is 1 commit ahead of origin/master
+    assert_eq!(
+        repo.revparse_commit("HEAD~1").unwrap().id(),
+        repo.revparse_commit("origin/master").unwrap().id()
     );
+    // working tree clean
+    assert!(repo.status().unwrap().is_empty());
 
     Ok(())
 }
@@ -337,39 +343,42 @@ fn lock_and_source_github_submodule() -> io::Result<()> {
     let filename = directory.join("test.plugin.zsh");
     assert!(directory.is_dir());
     assert!(filename.is_file());
+    let repo = git2::Repository::open(&directory).unwrap();
+    // HEAD is 2 commits head of origin/master
     assert_eq!(
-        git_status(&directory),
-        r#"On branch master
-Your branch is ahead of 'origin/master' by 2 commits.
-  (use "git push" to publish your local commits)
-
-nothing to commit, working tree clean
-"#,
+        repo.revparse_commit("HEAD~2").unwrap().id(),
+        repo.revparse_commit("origin/master").unwrap().id()
     );
+    // working tree clean
+    assert!(repo.status().unwrap().is_empty());
 
     // Check that sheldon-test@recursive submodule self was in fact cloned.
     let directory = directory.join("self");
     let filename = directory.join("test.plugin.zsh");
     assert!(directory.is_dir());
     assert!(filename.is_file());
+    let repo = git2::Repository::open(&directory).unwrap();
+    // HEAD is 1 commits head of origin/master
     assert_eq!(
-        git_status(&directory),
-        r#"HEAD detached at 361db1d
-nothing to commit, working tree clean
-"#,
+        repo.revparse_commit("HEAD~1").unwrap().id(),
+        repo.revparse_commit("origin/master").unwrap().id()
     );
+    // working tree clean
+    assert!(repo.status().unwrap().is_empty());
 
     // Check that sheldon-test submodule was in fact cloned.
     let directory = directory.join("self");
     let filename = directory.join("test.plugin.zsh");
     assert!(directory.is_dir());
     assert!(filename.is_file());
+    let repo = git2::Repository::open(&directory).unwrap();
+    // HEAD is origin/master
     assert_eq!(
-        git_status(&directory),
-        r#"HEAD detached at be8fde2
-nothing to commit, working tree clean
-"#,
+        repo.revparse_commit("HEAD").unwrap().id(),
+        repo.revparse_commit("origin/master").unwrap().id()
     );
+    // working tree clean
+    assert!(repo.status().unwrap().is_empty());
 
     Ok(())
 }
@@ -378,24 +387,7 @@ nothing to commit, working tree clean
 fn lock_and_source_github_tag() -> io::Result<()> {
     let case = TestCase::load("github_tag")?;
     case.run()?;
-
-    // Check that sheldon-test@v0.1.0 was in fact cloned.
-    let directory = case
-        .root
-        .path()
-        .join("repositories/github.com/rossmacarthur/sheldon-test");
-    let filename = directory.join("test.plugin.zsh");
-    assert!(directory.is_dir());
-    assert!(filename.is_file());
-    assert_eq!(
-        git_status(&directory),
-        r#"On branch master
-Your branch is up to date with 'origin/master'.
-
-nothing to commit, working tree clean
-"#,
-    );
-
+    check_sheldon_test(case.root.path()).unwrap();
     Ok(())
 }
 
