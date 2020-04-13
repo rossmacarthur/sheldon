@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
 
       - name: Calculate version from tag
         run: echo "::set-env name=VERSION::${GITHUB_REF#refs/tags/}"
@@ -30,7 +30,7 @@ jobs:
       - name: Check tag against package version
         run: grep '^version = ' Cargo.toml | grep -q "$VERSION"
 
-      - uses: actions/create-release@latest
+      - uses: actions/create-release@v1
         id: release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -54,7 +54,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
 
     - uses: actions-rs/toolchain@v1
       with:
@@ -81,7 +81,7 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
 
       - uses: actions/download-artifact@v1
         with:
@@ -117,7 +117,7 @@ jobs:
           rm -r release
           echo "::set-env name=ARCHIVE::$archive"
 
-      - uses: actions/upload-release-asset@v1.0.1
+      - uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
