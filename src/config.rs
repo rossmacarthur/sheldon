@@ -3,15 +3,20 @@
 //! This module handles the defining and deserialization of the config file.
 
 use std::{
-    fmt, fs,
+    error, fmt, fs,
     path::{Path, PathBuf},
     result, str,
+    str::FromStr,
 };
 
 use anyhow::{bail, Context as ResultExt, Result};
 use indexmap::IndexMap;
-use serde::{self, de, Deserialize, Deserializer, Serialize};
+use lazy_static::lazy_static;
+use regex::Regex;
+use serde::{self, de, Deserialize, Deserializer, Serialize, Serializer};
 use url::Url;
+
+use crate::lock::DEFAULT_TEMPLATES;
 
 /// The Gist domain host.
 const GIST_HOST: &str = "gist.github.com";
@@ -33,16 +38,15 @@ pub struct Template {
 }
 
 /// The Git protocol.
-#[derive(Clone, Copy, Debug, Deserialize, PartialEq)]
-#[serde(rename_all = "lowercase")]
-enum GitProtocol {
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum GitProtocol {
     Git,
     Https,
     Ssh,
 }
 
 /// A Git reference.
-#[derive(Clone, Debug, Deserialize, Eq, Hash, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum GitReference {
     /// From the HEAD of a branch.
@@ -53,13 +57,22 @@ pub enum GitReference {
     Tag(String),
 }
 
+/// A Gist repository identifier.
+#[derive(Debug, PartialEq)]
+pub struct GistRepository {
+    /// The GitHub username / organization.
+    vendor: Option<String>,
+    /// The Gist identifier.
+    identifier: String,
+}
+
 /// A GitHub repository identifier.
 #[derive(Debug, PartialEq)]
-struct GitHubRepository {
+pub struct GitHubRepository {
     /// The GitHub username / organization.
-    username: String,
+    vendor: String,
     /// The GitHub repository name.
-    repository: String,
+    name: String,
 }
 
 /// The source for a `Plugin`.
@@ -77,39 +90,39 @@ pub enum Source {
 }
 
 /// The actual plugin configuration.
-#[derive(Debug, Default, Deserialize, PartialEq)]
+#[derive(Debug, Default, Deserialize, PartialEq, Serialize)]
 #[serde(default)]
-struct RawPlugin {
+pub struct RawPlugin {
     /// A clonable Git repository.
-    git: Option<Url>,
-    /// A Gist snippet, only the hash or username/hash needs to be specified.
-    gist: Option<String>,
+    pub git: Option<Url>,
+    /// A clonable Gist repository.
+    pub gist: Option<GistRepository>,
     /// A clonable GitHub repository.
-    github: Option<GitHubRepository>,
-    /// What protocol to use when cloning a repository.
-    protocol: Option<GitProtocol>,
+    pub github: Option<GitHubRepository>,
     /// A downloadable file.
-    remote: Option<Url>,
+    pub remote: Option<Url>,
     /// A local directory.
-    local: Option<PathBuf>,
+    pub local: Option<PathBuf>,
     /// An inline script.
-    inline: Option<String>,
+    pub inline: Option<String>,
+    /// What protocol to use when cloning a repository.
+    pub protocol: Option<GitProtocol>,
     /// The Git reference to checkout.
     #[serde(flatten)]
-    reference: Option<GitReference>,
+    pub reference: Option<GitReference>,
     /// Which directory to use in this plugin.
     ///
     /// This directory can contain template parameters.
-    directory: Option<String>,
+    pub directory: Option<String>,
     /// Which files to use in this plugin's directory. If this is `None` then
     /// this will figured out based on the global `matches` field.
     ///
     /// These filenames can contain template parameters.
     #[serde(rename = "use")]
-    uses: Option<Vec<String>>,
+    pub uses: Option<Vec<String>>,
     /// What templates to apply to each matched file. If this is `None` then the
     /// default templates will be applied.
-    apply: Option<Vec<String>>,
+    pub apply: Option<Vec<String>>,
 }
 
 /// An external configured plugin.
@@ -144,25 +157,25 @@ pub enum Plugin {
 }
 
 /// The contents of the configuration file.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Default, Deserialize)]
 #[serde(default)]
-struct RawConfig {
+pub struct RawConfig {
     /// Which files to match and use in a plugin's directory.
     #[serde(rename = "match")]
-    matches: Vec<String>,
+    matches: Option<Vec<String>>,
     /// The default list of template names to apply to each matched file.
     apply: Option<Vec<String>>,
     /// A map of name to template string.
     templates: IndexMap<String, Template>,
     /// A map of name to plugin.
-    plugins: IndexMap<String, RawPlugin>,
+    pub plugins: IndexMap<String, RawPlugin>,
 }
 
 /// The user configuration.
 #[derive(Debug)]
 pub struct Config {
     /// Which files to match and use in a plugin's directory.
-    pub matches: Vec<String>,
+    pub matches: Option<Vec<String>>,
     /// The default list of template names to apply to each matched file.
     pub apply: Option<Vec<String>>,
     /// A map of name to template string.
@@ -170,6 +183,61 @@ pub struct Config {
     /// Each configured plugin.
     pub plugins: Vec<Plugin>,
 }
+
+/////////////////////////////////////////////////////////////////////////
+// Serialization implementations
+/////////////////////////////////////////////////////////////////////////
+
+impl fmt::Display for GitProtocol {
+    /// Displays a `GitProtocol`.
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::Git => f.write_str("git"),
+            Self::Https => f.write_str("https"),
+            Self::Ssh => f.write_str("ssh"),
+        }
+    }
+}
+
+impl fmt::Display for GistRepository {
+    /// Displays a `GistRepository` as "[{vendor}/]{identifier}".
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self {
+                vendor: Some(vendor),
+                identifier,
+            } => write!(f, "{}/{}", vendor, identifier),
+            Self {
+                vendor: None,
+                identifier,
+            } => write!(f, "{}", identifier),
+        }
+    }
+}
+
+impl fmt::Display for GitHubRepository {
+    /// Displays a `GitHubRepository` as "{vendor}/{repository}".
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}/{}", self.vendor, self.name)
+    }
+}
+
+macro_rules! impl_serialize_as_str {
+    ($name:ident) => {
+        impl Serialize for $name {
+            fn serialize<S>(&self, serializer: S) -> result::Result<S::Ok, S::Error>
+            where
+                S: Serializer,
+            {
+                serializer.serialize_str(&self.to_string())
+            }
+        }
+    };
+}
+
+impl_serialize_as_str!(GitProtocol);
+impl_serialize_as_str!(GistRepository);
+impl_serialize_as_str!(GitHubRepository);
 
 /////////////////////////////////////////////////////////////////////////
 // Deserialization implementations
@@ -241,71 +309,153 @@ impl<'de> Deserialize<'de> for Template {
     }
 }
 
-/// A visitor to deserialize a `GitHubRepository` from a string.
-struct GitHubRepositoryVisitor;
+#[derive(Debug)]
+pub struct ParseGitProtocolError;
 
-impl<'de> de::Visitor<'de> for GitHubRepositoryVisitor {
-    type Value = GitHubRepository;
-
-    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        formatter.write_str("the `<username>/<repository>` GitHub repository identifier")
-    }
-
-    fn visit_str<E>(self, value: &str) -> result::Result<Self::Value, E>
-    where
-        E: de::Error,
-    {
-        let error = || {
-            de::Error::custom(format!(
-                "failed to parse `{}` as a GitHub repository",
-                value
-            ))
-        };
-        let mut value_split = value.splitn(2, '/');
-        let username = value_split.next().ok_or_else(error)?.to_string();
-        let repository = value_split.next().ok_or_else(error)?.to_string();
-
-        if repository.contains('/') {
-            return Err(error());
-        }
-
-        Ok(GitHubRepository {
-            username,
-            repository,
-        })
+impl fmt::Display for ParseGitProtocolError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str("expected one of `git`, `https`, or `ssh`")
     }
 }
 
-/// Manually implement `Deserialize` for a `GitHubRepository`.
-impl<'de> Deserialize<'de> for GitHubRepository {
-    fn deserialize<D>(deserializer: D) -> result::Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        deserializer.deserialize_str(GitHubRepositoryVisitor)
-    }
-}
+impl error::Error for ParseGitProtocolError {}
 
-impl Default for RawConfig {
-    /// Returns the default `RawConfig`.
-    fn default() -> Self {
-        Self {
-            matches: vec_into![
-                "{{ name }}.plugin.zsh",
-                "{{ name }}.zsh",
-                "{{ name }}.sh",
-                "{{ name }}.zsh-theme",
-                "*.plugin.zsh",
-                "*.zsh",
-                "*.sh",
-                "*.zsh-theme"
-            ],
-            apply: None,
-            templates: IndexMap::new(),
-            plugins: IndexMap::new(),
+impl FromStr for GitProtocol {
+    type Err = ParseGitProtocolError;
+
+    fn from_str(s: &str) -> result::Result<Self, Self::Err> {
+        match s {
+            "git" => Ok(Self::Git),
+            "https" => Ok(Self::Https),
+            "ssh" => Ok(Self::Ssh),
+            _ => Err(ParseGitProtocolError),
         }
     }
 }
+
+macro_rules! make_regex_matcher {
+    ($name:ident, $regex:literal) => {
+        fn $name(s: &str) -> bool {
+            lazy_static! {
+                static ref RE: Regex = Regex::new($regex).expect("invalid regex");
+            }
+            RE.is_match(s)
+        }
+    };
+}
+
+make_regex_matcher!(is_valid_gist_identifier, "^[a-fA-F0-9]+$");
+make_regex_matcher!(is_valid_github_vendor, "^[a-zA-Z0-9_-]+$");
+make_regex_matcher!(is_valid_github_repository, "^[a-zA-Z0-9\\._-]+$");
+
+#[derive(Debug)]
+pub struct ParseGistRepositoryError;
+
+impl fmt::Display for ParseGistRepositoryError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str("not a valid Gist identifier, the hash or username/hash should be provided")
+    }
+}
+
+impl error::Error for ParseGistRepositoryError {}
+
+impl FromStr for GistRepository {
+    type Err = ParseGistRepositoryError;
+
+    fn from_str(s: &str) -> result::Result<Self, Self::Err> {
+        let mut s_split = s.rsplit('/');
+        let identifier = s_split.next().ok_or(ParseGistRepositoryError)?.to_string();
+        let vendor = s_split.next().map(ToString::to_string);
+
+        if s_split.next().is_some() {
+            return Err(ParseGistRepositoryError);
+        }
+        if let Some(vendor) = &vendor {
+            if !is_valid_github_vendor(vendor) {
+                return Err(ParseGistRepositoryError);
+            }
+        }
+        if !is_valid_gist_identifier(&identifier) {
+            return Err(ParseGistRepositoryError);
+        }
+
+        Ok(Self { vendor, identifier })
+    }
+}
+
+#[derive(Debug)]
+pub struct ParseGitHubRepositoryError;
+
+impl fmt::Display for ParseGitHubRepositoryError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str("not a valid GitHub repository, the username/repository should be provided")
+    }
+}
+
+impl error::Error for ParseGitHubRepositoryError {}
+
+impl FromStr for GitHubRepository {
+    type Err = ParseGitHubRepositoryError;
+
+    fn from_str(s: &str) -> result::Result<Self, Self::Err> {
+        let mut s_split = s.split('/');
+        let vendor = s_split
+            .next()
+            .ok_or(ParseGitHubRepositoryError)?
+            .to_string();
+        let name = s_split
+            .next()
+            .ok_or(ParseGitHubRepositoryError)?
+            .to_string();
+
+        if s_split.next().is_some() {
+            return Err(ParseGitHubRepositoryError);
+        }
+        if !is_valid_github_vendor(&vendor) || !is_valid_github_repository(&name) {
+            return Err(ParseGitHubRepositoryError);
+        }
+
+        Ok(Self { vendor, name })
+    }
+}
+
+macro_rules! impl_deserialize_from_str {
+    ($module:ident, $name:ident, $expecting:expr) => {
+        mod $module {
+            use super::*;
+
+            struct Visitor;
+
+            impl<'de> de::Visitor<'de> for Visitor {
+                type Value = $name;
+
+                fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                    formatter.write_str($expecting)
+                }
+
+                fn visit_str<E>(self, value: &str) -> result::Result<Self::Value, E>
+                where
+                    E: de::Error,
+                {
+                    $name::from_str(value).map_err(|e| de::Error::custom(e.to_string()))
+                }
+            }
+
+            impl<'de> Deserialize<'de> for $name {
+                fn deserialize<D>(deserializer: D) -> result::Result<Self, D::Error>
+                where
+                    D: Deserializer<'de>,
+                {
+                    deserializer.deserialize_str(Visitor)
+                }
+            }
+        }
+    };
+}
+
+impl_deserialize_from_str!(git_protocol, GitProtocol, "a Git protocol type");
+impl_deserialize_from_str!(gist_repository, GistRepository, "a Gist identifier");
+impl_deserialize_from_str!(github_repository, GitHubRepository, "a GitHub repository");
 
 /////////////////////////////////////////////////////////////////////////
 // Normalization implementations
@@ -318,7 +468,7 @@ fn validate_template_names(
 ) -> Result<()> {
     if let Some(apply) = apply {
         for name in apply {
-            if !crate::lock::DEFAULT_TEMPLATES.contains_key(name) && !templates.contains_key(name) {
+            if !DEFAULT_TEMPLATES.contains_key(name) && !templates.contains_key(name) {
                 bail!("unknown template `{}`", name);
             }
         }
@@ -344,13 +494,6 @@ impl GitProtocol {
     }
 }
 
-impl fmt::Display for GitHubRepository {
-    /// Displays a `GitHubRepository` as "{username}/{repository}".
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}/{}", self.username, self.repository)
-    }
-}
-
 impl Source {
     /// Whether the `Source` is a `Source::Git` variant.
     fn is_git(&self) -> bool {
@@ -372,15 +515,15 @@ enum TempSource {
 impl RawPlugin {
     /// Normalize a `RawPlugin` into a `Plugin` which is simpler and easier
     /// to handle.
-    fn normalize(self, name: String, templates: &IndexMap<String, Template>) -> Result<Plugin> {
+    pub fn normalize(self, name: String, templates: &IndexMap<String, Template>) -> Result<Plugin> {
         let Self {
             git,
             gist,
             github,
-            protocol,
             remote,
             local,
             inline,
+            protocol,
             reference,
             directory,
             uses,
@@ -396,15 +539,15 @@ impl RawPlugin {
                 TempSource::External(Source::Git { url, reference })
             }
             // `gist` type
-            (None, Some(identifier), None, None, None, None) => {
+            (None, Some(repository), None, None, None, None) => {
                 let url_str = format!(
                     "{}{}/{}",
                     protocol.unwrap_or(GitProtocol::Https).prefix(),
                     GIST_HOST,
-                    identifier.splitn(2, '/').last().unwrap()
+                    repository.identifier
                 );
                 let url = Url::parse(&url_str)
-                    .with_context(s!("failed to construct Gist URL using `{}`", identifier))?;
+                    .with_context(s!("failed to construct Gist URL using `{}`", repository))?;
                 TempSource::External(Source::Git { url, reference })
             }
             // `github` type
@@ -457,11 +600,11 @@ impl RawPlugin {
             }
             TempSource::Inline(raw) => {
                 let unsupported = [
+                    ("`protocol` field is", protocol.is_some()),
                     (
                         "`branch`, `tag`, and `revision` fields are",
                         is_reference_some,
                     ),
-                    ("`protocol` field is", protocol.is_some()),
                     ("`directory` field is", directory.is_some()),
                     ("`use` field is", uses.is_some()),
                     ("`apply` field is", apply.is_some()),
@@ -479,15 +622,17 @@ impl RawPlugin {
 
 impl RawConfig {
     /// Read a `RawConfig` from the given path.
-    fn from_path<P>(path: P) -> Result<Self>
+    pub fn from_path<P>(path: P) -> Result<Self>
     where
         P: AsRef<Path>,
     {
         let path = path.as_ref();
-        let contents =
-            fs::read(&path).with_context(s!("failed to read from `{}`", path.display()))?;
-        let config: Self = toml::from_str(&String::from_utf8_lossy(&contents))
-            .context("failed to deserialize contents as TOML")?;
+        let contents = String::from_utf8(
+            fs::read(&path).with_context(s!("failed to read from `{}`", path.display()))?,
+        )
+        .context("config file contents are not valid UTF-8")?;
+        let config: Self =
+            toml::from_str(&contents).context("failed to deserialize contents as TOML")?;
         Ok(config)
     }
 
@@ -557,6 +702,36 @@ mod tests {
     }
 
     #[test]
+    fn gist_repository_to_string() {
+        let test = GistRepository {
+            vendor: None,
+            identifier: "579d02802b1cc17baed07753d09f5009".to_string(),
+        };
+        assert_eq!(test.to_string(), "579d02802b1cc17baed07753d09f5009");
+    }
+
+    #[test]
+    fn gist_repository_to_string_with_vendor() {
+        let test = GistRepository {
+            vendor: Some("rossmacarthur".to_string()),
+            identifier: "579d02802b1cc17baed07753d09f5009".to_string(),
+        };
+        assert_eq!(
+            test.to_string(),
+            "rossmacarthur/579d02802b1cc17baed07753d09f5009"
+        );
+    }
+
+    #[test]
+    fn github_repository_to_string() {
+        let test = GitHubRepository {
+            vendor: "rossmacarthur".to_string(),
+            name: "sheldon-test".to_string(),
+        };
+        assert_eq!(test.to_string(), "rossmacarthur/sheldon-test");
+    }
+
+    #[test]
     fn template_deserialize_as_str() {
         let test: TemplateTest = toml::from_str("t = 'test'").unwrap();
         assert_eq!(
@@ -614,6 +789,39 @@ mod tests {
     }
 
     #[derive(Deserialize)]
+    struct TestGistRepository {
+        g: GistRepository,
+    }
+
+    #[test]
+    fn gist_repository_deserialize() {
+        let test: TestGistRepository =
+            toml::from_str("g = 'rossmacarthur/579d02802b1cc17baed07753d09f5009'").unwrap();
+        assert_eq!(
+            test.g,
+            GistRepository {
+                vendor: Some("rossmacarthur".to_string()),
+                identifier: "579d02802b1cc17baed07753d09f5009".to_string()
+            }
+        );
+    }
+
+    #[test]
+    #[should_panic]
+    fn gist_repository_deserialize_two_slashes() {
+        toml::from_str::<TestGistRepository>(
+            "g = 'rossmacarthur/579d02802b1cc17baed07753d09f5009/test'",
+        )
+        .unwrap();
+    }
+
+    #[test]
+    #[should_panic]
+    fn gist_repository_deserialize_not_hex() {
+        toml::from_str::<TestGistRepository>("g = 'nothex'").unwrap();
+    }
+
+    #[derive(Deserialize)]
     struct TestGitHubRepository {
         g: GitHubRepository,
     }
@@ -625,8 +833,8 @@ mod tests {
         assert_eq!(
             test.g,
             GitHubRepository {
-                username: "rossmacarthur".to_string(),
-                repository: "sheldon-test".to_string()
+                vendor: "rossmacarthur".to_string(),
+                name: "sheldon-test".to_string()
             }
         );
     }
@@ -658,8 +866,8 @@ mod tests {
     fn raw_plugin_deserialize_github() {
         let expected = RawPlugin {
             github: Some(GitHubRepository {
-                username: "rossmacarthur".into(),
-                repository: "sheldon-test".into(),
+                vendor: "rossmacarthur".into(),
+                name: "sheldon-test".into(),
             }),
             ..Default::default()
         };
@@ -731,7 +939,11 @@ mod tests {
             apply: None,
         });
         let raw_plugin = RawPlugin {
-            gist: Some("rossmacarthur/579d02802b1cc17baed07753d09f5009".to_string()),
+            gist: Some(
+                "rossmacarthur/579d02802b1cc17baed07753d09f5009"
+                    .parse()
+                    .unwrap(),
+            ),
             protocol: Some(GitProtocol::Git),
             ..Default::default()
         };
@@ -756,7 +968,7 @@ mod tests {
             apply: None,
         });
         let raw_plugin = RawPlugin {
-            gist: Some("579d02802b1cc17baed07753d09f5009".to_string()),
+            gist: Some("579d02802b1cc17baed07753d09f5009".parse().unwrap()),
             ..Default::default()
         };
         assert_eq!(
@@ -780,7 +992,11 @@ mod tests {
             apply: None,
         });
         let raw_plugin = RawPlugin {
-            gist: Some("rossmacarthur/579d02802b1cc17baed07753d09f5009".to_string()),
+            gist: Some(
+                "rossmacarthur/579d02802b1cc17baed07753d09f5009"
+                    .parse()
+                    .unwrap(),
+            ),
             protocol: Some(GitProtocol::Ssh),
             ..Default::default()
         };
@@ -805,8 +1021,8 @@ mod tests {
         });
         let raw_plugin = RawPlugin {
             github: Some(GitHubRepository {
-                username: "rossmacarthur".to_string(),
-                repository: "sheldon-test".to_string(),
+                vendor: "rossmacarthur".to_string(),
+                name: "sheldon-test".to_string(),
             }),
             protocol: Some(GitProtocol::Git),
             ..Default::default()
@@ -832,8 +1048,8 @@ mod tests {
         });
         let raw_plugin = RawPlugin {
             github: Some(GitHubRepository {
-                username: "rossmacarthur".to_string(),
-                repository: "sheldon-test".to_string(),
+                vendor: "rossmacarthur".to_string(),
+                name: "sheldon-test".to_string(),
             }),
             ..Default::default()
         };
@@ -858,8 +1074,8 @@ mod tests {
         });
         let raw_plugin = RawPlugin {
             github: Some(GitHubRepository {
-                username: "rossmacarthur".to_string(),
-                repository: "sheldon-test".to_string(),
+                vendor: "rossmacarthur".to_string(),
+                name: "sheldon-test".to_string(),
             }),
             protocol: Some(GitProtocol::Ssh),
             ..Default::default()
@@ -994,8 +1210,8 @@ mod tests {
     fn raw_plugin_normalize_external_invalid_template() {
         let raw_plugin = RawPlugin {
             github: Some(GitHubRepository {
-                username: "rossmacarthur".to_string(),
-                repository: "sheldon-test".to_string(),
+                vendor: "rossmacarthur".to_string(),
+                name: "sheldon-test".to_string(),
             }),
             apply: Some(vec_into!["test"]),
             ..Default::default()
@@ -1008,7 +1224,7 @@ mod tests {
 
     #[test]
     fn config_from_path_example() {
-        let mut path: PathBuf = env!("CARGO_MANIFEST_DIR").into();
+        let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         path.push("docs/plugins.example.toml");
         Config::from_path(path).unwrap();
     }

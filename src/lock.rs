@@ -31,6 +31,20 @@ use crate::{
 const MAX_THREADS: u32 = 8;
 
 lazy_static! {
+    /// The default files to match on.
+    pub static ref DEFAULT_MATCHES: Vec<String> = vec_into![
+        "{{ name }}.plugin.zsh",
+        "{{ name }}.zsh",
+        "{{ name }}.sh",
+        "{{ name }}.zsh-theme",
+        "*.plugin.zsh",
+        "*.zsh",
+        "*.sh",
+        "*.zsh-theme"
+    ];
+}
+
+lazy_static! {
     /// The default template names to apply.
     pub static ref DEFAULT_APPLY: Vec<String> = vec_into!["source"];
 }
@@ -427,7 +441,7 @@ impl Config {
                 .push((index, plugin));
         }
 
-        let matches = &self.matches;
+        let matches = &self.matches.as_ref().unwrap_or(&*DEFAULT_MATCHES);
         let apply = &self.apply.as_ref().unwrap_or(&*DEFAULT_APPLY);
         let count = map.len();
         let mut errors = Vec::new();
@@ -448,7 +462,7 @@ impl Config {
                     let tx = tx.clone();
                     scoped.execute(move || {
                         tx.send((|| {
-                            let source_name = format!("{}", source);
+                            let source_name = source.to_string();
                             let source = source
                                 .lock(ctx)
                                 .with_context(s!("failed to install source `{}`", source_name))?;
@@ -1192,7 +1206,7 @@ mod tests {
         let directory = temp.path();
         let ctx = create_test_context(directory);
         let config = Config {
-            matches: Vec::new(),
+            matches: None,
             apply: None,
             templates: IndexMap::new(),
             plugins: Vec::new(),
@@ -1326,7 +1340,7 @@ ip_netns_prompt_info() {
         let temp = tempfile::tempdir().expect("create temporary directory");
         let ctx = create_test_context(temp.path());
         let config = Config {
-            matches: vec_into!["*.zsh"],
+            matches: None,
             apply: None,
             templates: DEFAULT_TEMPLATES
                 .iter()
