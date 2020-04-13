@@ -2,14 +2,25 @@
 
 use std::{
     fs::{self, File},
+    io,
     path::{Path, PathBuf},
     time,
 };
 
-use anyhow::{Context as ResultExt, Result};
+use anyhow::{Context as ResultExt, Error, Result};
 use fs2::{lock_contended_error, FileExt};
 
 use crate::context::{Context, SettingsExt};
+
+/// Returns the underlying error kind for the given error.
+pub fn underlying_io_error_kind(error: &Error) -> Option<io::ErrorKind> {
+    for cause in error.chain() {
+        if let Some(io_error) = cause.downcast_ref::<io::Error>() {
+            return Some(io_error.kind());
+        }
+    }
+    None
+}
 
 /// An extension trait for [`Path`] types.
 ///

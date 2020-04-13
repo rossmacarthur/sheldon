@@ -20,6 +20,7 @@ maintenance = { status = "actively-developed" }
 [dependencies]
 ansi_term = "0.11.0"
 anyhow = "1.0.28"
+casual = "0.1.1"
 dirs = "2.0.2"
 fs2 = "0.4.3"
 git2 = "0.13.1"
@@ -35,6 +36,7 @@ scoped_threadpool = "0.1.9"
 serde = { version = "1.0.106", features = ["derive"] }
 structopt = "0.3.13"
 toml = "0.5.6"
+toml_edit = "0.1.5"
 url = { version = "2.1.1", features = ["serde"] }
 walkdir = "2.3.1"
 

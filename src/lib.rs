@@ -17,18 +17,22 @@ mod _macros;
 mod cli;
 mod config;
 mod context;
+mod edit;
 mod lock;
 mod log;
 mod util;
 
-use anyhow::{Context as ResultExt, Result};
+use std::{fs, io};
+
+use anyhow::{bail, Context as ResultExt, Result};
 
 use crate::{
     cli::{Command, Opt},
     config::Config,
-    context::{Context, LockContext, SettingsExt},
+    context::{Context, EditContext, LockContext, SettingsExt},
+    edit::Plugin,
     lock::LockedConfig,
-    util::{Mutex, PathExt},
+    util::{underlying_io_error_kind, Mutex, PathExt},
 };
 
 /// The main application.
@@ -36,6 +40,59 @@ use crate::{
 pub struct Sheldon;
 
 impl Sheldon {
+    /// Read or initialize a new config.
+    fn read_or_init(ctx: &EditContext) -> Result<edit::Config> {
+        let path = ctx.config_file();
+        match edit::Config::from_path(path) {
+            Ok(config) => {
+                header!(ctx, "Loaded", path);
+                Ok(config)
+            }
+            Err(err) => {
+                if underlying_io_error_kind(&err) == Some(io::ErrorKind::NotFound) {
+                    if !casual::confirm(&format!(
+                        "Initialize new config file `{}`?",
+                        &ctx.replace_home(path).display()
+                    )) {
+                        bail!("Aborted!");
+                    };
+                    if let Some(parent) = path.parent() {
+                        fs::create_dir_all(parent).with_context(s!(
+                            "failed to create directory `{}`",
+                            &ctx.replace_home(parent).display()
+                        ))?;
+                    }
+                    Ok(edit::Config::default())
+                } else {
+                    Err(err)
+                }
+            }
+        }
+    }
+
+    /// Adds a new plugin to the config file.
+    fn add(ctx: &EditContext, name: String, plugin: Plugin) -> Result<()> {
+        let path = ctx.config_file();
+        let mut config = Self::read_or_init(ctx)?;
+        config.add(&name, plugin)?;
+        status!(ctx, "Added", &name);
+        config.to_path(ctx.config_file())?;
+        header!(ctx, "Updated", path);
+        Ok(())
+    }
+
+    /// Removes a plugin from the config file.
+    fn remove(ctx: &EditContext, name: String) -> Result<()> {
+        let path = ctx.config_file();
+        let mut config = edit::Config::from_path(path)?;
+        header!(ctx, "Loaded", path);
+        config.remove(&name);
+        status!(ctx, "Removed", &name);
+        config.to_path(ctx.config_file())?;
+        header!(ctx, "Updated", path);
+        Ok(())
+    }
+
     /// Reads the config from the config file path, locks it, and returns the
     /// locked config.
     fn locked(ctx: &LockContext) -> Result<LockedConfig> {
@@ -128,6 +185,14 @@ impl Sheldon {
         };
 
         match command {
+            Command::Add { name, plugin } => {
+                let ctx = EditContext { settings, output };
+                Self::add(&ctx, name, *plugin)
+            }
+            Command::Remove { name } => {
+                let ctx = EditContext { settings, output };
+                Self::remove(&ctx, name)
+            }
             Command::Lock { reinstall } => {
                 let ctx = LockContext {
                     settings,

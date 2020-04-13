@@ -4,27 +4,134 @@ use std::{path::PathBuf, process};
 
 use anyhow::anyhow;
 use structopt::{
-    clap::{crate_version, AppSettings},
+    clap::{crate_version, AppSettings, ArgGroup},
     StructOpt,
 };
+use url::Url;
 
 use crate::{
+    config::{GistRepository, GitHubRepository, GitProtocol, GitReference, RawPlugin},
     context::Settings,
+    edit::Plugin,
     log::{Output, Verbosity},
 };
 
-const SETTINGS: &[AppSettings] = &[AppSettings::ColorNever, AppSettings::DeriveDisplayOrder];
-const HELP_MESSAGE: &str = "Show this message and exit.";
-const VERSION_MESSAGE: &str = "Show the version and exit.";
+const SETTINGS: &[AppSettings] = &[
+    AppSettings::ColorNever,
+    AppSettings::DeriveDisplayOrder,
+    AppSettings::DisableHelpSubcommand,
+    AppSettings::VersionlessSubcommands,
+];
+const HELP_MESSAGE: &str = "Show this message and exit";
+const VERSION_MESSAGE: &str = "Show the version and exit";
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, PartialEq, StructOpt)]
+#[structopt(
+    group = ArgGroup::with_name("plugin").required(true),
+    group = ArgGroup::with_name("git-reference")
+)]
+struct Add {
+    /// A name for this plugin.
+    #[structopt(value_name = "NAME")]
+    name: String,
+
+    /// Add a clonable Git repository.
+    #[structopt(long, value_name = "URL", group = "plugin")]
+    git: Option<Url>,
+
+    /// Add a clonable Gist snippet.
+    #[structopt(long, value_name = "ID", group = "plugin")]
+    gist: Option<GistRepository>,
+
+    /// Add a clonable GitHub repository.
+    #[structopt(long, value_name = "REPO", group = "plugin")]
+    github: Option<GitHubRepository>,
+
+    /// Add a downloadable file.
+    #[structopt(long, value_name = "URL", group = "plugin")]
+    remote: Option<Url>,
+
+    /// Add a local directory.
+    #[structopt(long, value_name = "DIR", group = "plugin")]
+    local: Option<PathBuf>,
+
+    /// The Git protocol for a Gist or GitHub plugin.
+    #[structopt(long, value_name = "PROTO", conflicts_with_all = &["git", "remote", "local"])]
+    protocol: Option<GitProtocol>,
+
+    /// Checkout the tip of a branch.
+    #[structopt(
+        long,
+        value_name = "BRANCH",
+        group = "git-reference",
+        // for some weird reason this makes all 'git-reference' options correctly conflict
+        // but putting it on the 'git-reference' ArgGroup doesn't work
+        conflicts_with_all = &["remote", "local"],
+    )]
+    branch: Option<String>,
+
+    /// Checkout a specific revision.
+    #[structopt(long, value_name = "SHA", group = "git-reference")]
+    revision: Option<String>,
+
+    /// Checkout a specific tag.
+    #[structopt(long, value_name = "TAG", group = "git-reference")]
+    tag: Option<String>,
+
+    /// Which sub directory to use in this plugin.
+    #[structopt(long, value_name = "PATH")]
+    directory: Option<String>,
+
+    /// Which files to use in this plugin.
+    #[structopt(long = "use", value_name = "MATCH")]
+    uses: Option<Vec<String>>,
+
+    /// Templates to apply to this plugin.
+    #[structopt(long, value_name = "TEMPLATE")]
+    apply: Option<Vec<String>>,
+}
+
+#[derive(Debug, PartialEq, StructOpt)]
+enum RawCommand {
+    /// Add a new plugin to the config file.
+    #[structopt(help_message = HELP_MESSAGE)]
+    Add(Box<Add>),
+
+    /// Remove a plugin from the config file.
+    #[structopt(help_message = HELP_MESSAGE)]
+    Remove {
+        /// A name for this plugin.
+        #[structopt(value_name = "NAME")]
+        name: String,
+    },
+
+    /// Install the plugins sources and generate the lock file.
+    #[structopt(help_message = HELP_MESSAGE)]
+    Lock {
+        /// Reinstall all plugin sources.
+        #[structopt(long)]
+        reinstall: bool,
+    },
+
+    /// Generate and print out the script.
+    #[structopt(help_message = HELP_MESSAGE)]
+    Source {
+        /// Reinstall all plugin sources.
+        #[structopt(long)]
+        reinstall: bool,
+
+        /// Regenerate the lock file.
+        #[structopt(long)]
+        relock: bool,
+    },
+}
+
+#[derive(Debug, PartialEq, StructOpt)]
 #[structopt(
     author,
     about,
-    settings = &SETTINGS,
-    setting = AppSettings::DisableHelpSubcommand,
     setting = AppSettings::SubcommandRequired,
-    setting = AppSettings::VersionlessSubcommands,
+    global_settings = &SETTINGS,
     help_message = HELP_MESSAGE,
     version_message = VERSION_MESSAGE,
 )]
@@ -67,34 +174,24 @@ struct RawOpt {
 
     /// The subcommand to run.
     #[structopt(subcommand)]
-    command: Command,
+    command: RawCommand,
 }
 
-/// The command that is being run.
-#[derive(Debug, StructOpt)]
+/// The resolved command.
+#[derive(Debug)]
 pub enum Command {
+    /// Add a new plugin to the config file.
+    Add { name: String, plugin: Box<Plugin> },
+    /// Remove a plugin from the config file.
+    Remove { name: String },
     /// Install the plugins sources and generate the lock file.
-    #[structopt(settings = &SETTINGS, help_message = HELP_MESSAGE)]
-    Lock {
-        /// Reinstall all plugin sources.
-        #[structopt(long)]
-        reinstall: bool,
-    },
-
+    Lock { reinstall: bool },
     /// Generate and print out the script.
-    #[structopt(settings = &SETTINGS, help_message = HELP_MESSAGE)]
-    Source {
-        /// Reinstall all plugin sources.
-        #[structopt(long)]
-        reinstall: bool,
-
-        /// Regenerate the lock file.
-        #[structopt(long)]
-        relock: bool,
-    },
+    Source { reinstall: bool, relock: bool },
 }
 
 /// Resolved command line options with defaults set.
+#[derive(Debug)]
 pub struct Opt {
     /// Global settings for use across the entire program.
     pub settings: Settings,
@@ -104,10 +201,55 @@ pub struct Opt {
     pub command: Command,
 }
 
+impl Plugin {
+    fn from_add(add: Add) -> (String, Self) {
+        let Add {
+            name,
+            git,
+            gist,
+            github,
+            remote,
+            local,
+            protocol,
+            branch,
+            revision,
+            tag,
+            directory,
+            uses,
+            apply,
+        } = add;
+
+        let reference = match (branch, revision, tag) {
+            (Some(s), None, None) => Some(GitReference::Branch(s)),
+            (None, Some(s), None) => Some(GitReference::Revision(s)),
+            (None, None, Some(s)) => Some(GitReference::Tag(s)),
+            (None, None, None) => None,
+            // this is unreachable because these three options are in the same mutually exclusive
+            // 'git-reference' CLI group
+            _ => unreachable!(),
+        };
+
+        (
+            name,
+            Self::from(RawPlugin {
+                git,
+                gist,
+                github,
+                remote,
+                local,
+                inline: None,
+                protocol,
+                reference,
+                directory,
+                uses,
+                apply,
+            }),
+        )
+    }
+}
+
 impl Opt {
-    /// Gets the struct from the command line arguments. Print the error message
-    /// and quit the program in case of failure.
-    pub fn from_args() -> Self {
+    fn from_raw_opt(raw_opt: RawOpt) -> Self {
         let RawOpt {
             quiet,
             verbose,
@@ -119,7 +261,7 @@ impl Opt {
             clone_dir,
             download_dir,
             command,
-        } = RawOpt::from_args();
+        } = raw_opt;
 
         let verbosity = if quiet {
             Verbosity::Quiet
@@ -162,10 +304,594 @@ impl Opt {
             download_dir,
         };
 
+        let command = match command {
+            RawCommand::Add(add) => {
+                let (name, plugin) = Plugin::from_add(*add);
+                Command::Add {
+                    name,
+                    plugin: Box::new(plugin),
+                }
+            }
+            RawCommand::Remove { name } => Command::Remove { name },
+            RawCommand::Lock { reinstall } => Command::Lock { reinstall },
+            RawCommand::Source { reinstall, relock } => Command::Source { reinstall, relock },
+        };
+
         Self {
             settings,
             output,
             command,
         }
+    }
+
+    /// Gets the struct from the command line arguments. Print the error message
+    /// and quit the program in case of failure.
+    pub fn from_args() -> Self {
+        Self::from_raw_opt(RawOpt::from_args())
+    }
+}
+
+/////////////////////////////////////////////////////////////////////////
+// Unit tests
+/////////////////////////////////////////////////////////////////////////
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::{env, iter};
+    use structopt::clap::{crate_authors, crate_description, crate_name};
+
+    fn setup() {
+        for (k, _) in env::vars() {
+            if k.starts_with(&format!("{}_", crate_name!().to_uppercase())) {
+                env::remove_var(k);
+            }
+        }
+    }
+
+    fn raw_opt(args: &[&str]) -> RawOpt {
+        RawOpt::from_iter_safe(iter::once(crate_name!()).chain(args.into_iter().map(|s| *s)))
+            .unwrap()
+    }
+
+    fn raw_opt_err(args: &[&str]) -> structopt::clap::Error {
+        RawOpt::from_iter_safe(iter::once(crate_name!()).chain(args.into_iter().map(|s| *s)))
+            .unwrap_err()
+    }
+
+    #[test]
+    fn raw_opt_version() {
+        setup();
+        for opt in &["-V", "--version"] {
+            let err = raw_opt_err(&[opt]);
+            assert_eq!(err.message, ""); // not sure why this doesn't contain the outputted data :/
+            assert_eq!(err.kind, structopt::clap::ErrorKind::VersionDisplayed);
+            assert_eq!(err.info, None);
+        }
+    }
+
+    #[test]
+    fn raw_opt_help() {
+        setup();
+        for opt in &["-h", "--help"] {
+            let err = raw_opt_err(&[opt]);
+            assert_eq!(
+                err.message,
+                format!(
+                    "\
+{name} {version}
+{authors}
+{description}
+
+USAGE:
+    {name} [FLAGS] [OPTIONS] <SUBCOMMAND>
+
+FLAGS:
+    -q, --quiet       Suppress any informational output
+    -v, --verbose     Use verbose output
+        --no-color    Do not use ANSI colored output
+    -h, --help        Show this message and exit
+    -V, --version     Show the version and exit
+
+OPTIONS:
+        --root <PATH>            The root directory [env: SHELDON_ROOT=]
+        --config-file <PATH>     The config file [env: SHELDON_CONFIG_FILE=]
+        --lock-file <PATH>       The lock file [env: SHELDON_LOCK_FILE=]
+        --clone-dir <PATH>       The directory where git sources are cloned to [env: \
+                     SHELDON_CLONE_DIR=]
+        --download-dir <PATH>    The directory where remote sources are downloaded to [env: \
+                     SHELDON_DOWNLOAD_DIR=]
+
+SUBCOMMANDS:
+    add       Add a new plugin to the config file
+    remove    Remove a plugin from the config file
+    lock      Install the plugins sources and generate the lock file
+    source    Generate and print out the script",
+                    name = crate_name!(),
+                    version = crate_version!(),
+                    authors = crate_authors!(),
+                    description = crate_description!(),
+                )
+            );
+            assert_eq!(err.kind, structopt::clap::ErrorKind::HelpDisplayed);
+            assert_eq!(err.info, None);
+        }
+    }
+
+    #[test]
+    fn raw_opt_no_options() {
+        setup();
+        assert_eq!(
+            raw_opt(&["lock"]),
+            RawOpt {
+                quiet: false,
+                verbose: false,
+                no_color: false,
+                home: None,
+                root: None,
+                config_file: None,
+                lock_file: None,
+                clone_dir: None,
+                download_dir: None,
+                command: RawCommand::Lock { reinstall: false },
+            }
+        );
+    }
+
+    #[test]
+    fn raw_opt_options() {
+        setup();
+        assert_eq!(
+            raw_opt(&[
+                "--quiet",
+                "--verbose",
+                "--no-color",
+                "--home",
+                "/",
+                "--root",
+                "/test",
+                "--config-file",
+                "/plugins.toml",
+                "--lock-file",
+                "/test/plugins.lock",
+                "--clone-dir",
+                "/repos",
+                "--download-dir",
+                "/downloads",
+                "lock",
+            ]),
+            RawOpt {
+                quiet: true,
+                verbose: true,
+                no_color: true,
+                home: Some("/".into()),
+                root: Some("/test".into()),
+                config_file: Some("/plugins.toml".into()),
+                lock_file: Some("/test/plugins.lock".into()),
+                clone_dir: Some("/repos".into()),
+                download_dir: Some("/downloads".into()),
+                command: RawCommand::Lock { reinstall: false },
+            }
+        );
+    }
+
+    #[test]
+    fn raw_opt_subcommand_required() {
+        setup();
+        let err = raw_opt_err(&[]);
+        assert_eq!(
+            err.message,
+            format!(
+                "\
+error: '{name}' requires a subcommand, but one was not provided
+
+USAGE:
+    {name} [FLAGS] [OPTIONS] <SUBCOMMAND>
+
+For more information try --help",
+                name = crate_name!()
+            )
+        );
+        assert_eq!(err.kind, structopt::clap::ErrorKind::MissingSubcommand);
+        assert_eq!(err.info, None);
+    }
+
+    #[test]
+    fn raw_opt_add_help() {
+        setup();
+        let err = raw_opt_err(&["add", "--help"]);
+        assert_eq!(
+            err.message,
+            format!(
+                "\
+{name}-add {version}
+Add a new plugin to the config file
+
+USAGE:
+    {name} add [OPTIONS] <NAME> <--git <URL>|--gist <ID>|--github <REPO>|--remote <URL>|--local \
+                 <DIR>>
+
+FLAGS:
+    -h, --help    Show this message and exit
+
+OPTIONS:
+        --git <URL>              Add a clonable Git repository
+        --gist <ID>              Add a clonable Gist snippet
+        --github <REPO>          Add a clonable GitHub repository
+        --remote <URL>           Add a downloadable file
+        --local <DIR>            Add a local directory
+        --protocol <PROTO>       The Git protocol for a Gist or GitHub plugin
+        --branch <BRANCH>        Checkout the tip of a branch
+        --revision <SHA>         Checkout a specific revision
+        --tag <TAG>              Checkout a specific tag
+        --directory <PATH>       Which sub directory to use in this plugin
+        --use <MATCH>...         Which files to use in this plugin
+        --apply <TEMPLATE>...    Templates to apply to this plugin
+
+ARGS:
+    <NAME>    A name for this plugin",
+                name = crate_name!(),
+                version = crate_version!()
+            )
+        );
+        assert_eq!(err.kind, structopt::clap::ErrorKind::HelpDisplayed);
+        assert_eq!(err.info, None);
+    }
+
+    #[test]
+    fn raw_opt_add_no_source() {
+        setup();
+        assert_eq!(
+            raw_opt_err(&["add", "test",]).kind,
+            structopt::clap::ErrorKind::MissingRequiredArgument
+        );
+    }
+
+    #[test]
+    fn raw_opt_add_git_with_options() {
+        setup();
+        assert_eq!(
+            raw_opt(&[
+                "add",
+                "test",
+                "--git",
+                "https://github.com/rossmacarthur/sheldon-test",
+                "--revision",
+                "ad149784a1538291f2477fb774eeeed4f4d29e45",
+                "--directory",
+                "missing",
+                "--use",
+                "{name}.sh",
+                "*.zsh",
+                "--apply",
+                "something",
+                "another-thing"
+            ])
+            .command,
+            RawCommand::Add(Box::new(Add {
+                name: "test".to_string(),
+                git: Some(
+                    "https://github.com/rossmacarthur/sheldon-test"
+                        .parse()
+                        .unwrap()
+                ),
+                gist: None,
+                github: None,
+                remote: None,
+                local: None,
+                protocol: None,
+                branch: None,
+                revision: Some("ad149784a1538291f2477fb774eeeed4f4d29e45".into()),
+                tag: None,
+                directory: Some("missing".into()),
+                uses: Some(vec_into!["{name}.sh", "*.zsh"]),
+                apply: Some(vec_into!["something", "another-thing"]),
+            }))
+        );
+    }
+
+    #[test]
+    fn raw_opt_add_gist_options() {
+        setup();
+        assert_eq!(
+            raw_opt(&[
+                "add",
+                "test",
+                "--gist",
+                "579d02802b1cc17baed07753d09f5009",
+                "--tag",
+                "0.1.0",
+                "--protocol",
+                "ssh",
+                "--directory",
+                "missing",
+                "--use",
+                "{name}.sh",
+                "*.zsh",
+                "--apply",
+                "something",
+                "another-thing"
+            ])
+            .command,
+            RawCommand::Add(Box::new(Add {
+                name: "test".to_string(),
+                git: None,
+                gist: Some("579d02802b1cc17baed07753d09f5009".parse().unwrap()),
+                github: None,
+                remote: None,
+                local: None,
+                protocol: Some("ssh".parse().unwrap()),
+                branch: None,
+                revision: None,
+                tag: Some("0.1.0".into()),
+                directory: Some("missing".into()),
+                uses: Some(vec_into!["{name}.sh", "*.zsh"]),
+                apply: Some(vec_into!["something", "another-thing"]),
+            }))
+        );
+    }
+
+    #[test]
+    fn raw_opt_add_github_options() {
+        setup();
+        assert_eq!(
+            raw_opt(&[
+                "add",
+                "test",
+                "--github",
+                "rossmacarthur/sheldon-test",
+                "--branch",
+                "feature",
+                "--protocol",
+                "https",
+                "--directory",
+                "missing",
+                "--use",
+                "{name}.sh",
+                "*.zsh",
+                "--apply",
+                "something",
+                "another-thing"
+            ])
+            .command,
+            RawCommand::Add(Box::new(Add {
+                name: "test".to_string(),
+                git: None,
+                gist: None,
+                github: Some("rossmacarthur/sheldon-test".parse().unwrap()),
+                remote: None,
+                local: None,
+                protocol: Some("https".parse().unwrap()),
+                branch: Some("feature".into()),
+                revision: None,
+                tag: None,
+                directory: Some("missing".into()),
+                uses: Some(vec_into!["{name}.sh", "*.zsh"]),
+                apply: Some(vec_into!["something", "another-thing"]),
+            }))
+        );
+    }
+
+    #[test]
+    fn raw_opt_add_remote_options() {
+        setup();
+        assert_eq!(
+            raw_opt(&[
+                "add",
+                "test",
+                "--remote",
+                "https://raw.githubusercontent.com/rossmacarthur/sheldon-test/master/test.plugin.zsh",
+                "--use",
+                "{name}.sh",
+                "*.zsh",
+                "--apply",
+                "something",
+                "another-thing"
+            ])
+            .command,
+            RawCommand::Add(Box::new(Add {
+                name: "test".to_string(),
+                git: None,
+                gist: None,
+                github: None,
+                remote: Some("https://raw.githubusercontent.com/rossmacarthur/sheldon-test/master/test.plugin.zsh".parse().unwrap()),
+                local: None,
+                protocol: None,
+                branch: None,
+                revision: None,
+                tag: None,
+                directory: None,
+                uses: Some(vec_into!["{name}.sh", "*.zsh"]),
+                apply: Some(vec_into!["something", "another-thing"]),
+            }))
+        );
+    }
+
+    #[test]
+    fn raw_opt_add_local_options() {
+        setup();
+        assert_eq!(
+            raw_opt(&[
+                "add",
+                "test",
+                "--local",
+                "~/.dotfiles/zsh/pure",
+                "--use",
+                "{name}.sh",
+                "*.zsh",
+                "--apply",
+                "something",
+                "another-thing"
+            ])
+            .command,
+            RawCommand::Add(Box::new(Add {
+                name: "test".to_string(),
+                git: None,
+                gist: None,
+                github: None,
+                remote: None,
+                local: Some("~/.dotfiles/zsh/pure".into()),
+                protocol: None,
+                branch: None,
+                revision: None,
+                tag: None,
+                directory: None,
+                uses: Some(vec_into!["{name}.sh", "*.zsh"]),
+                apply: Some(vec_into!["something", "another-thing"]),
+            }))
+        );
+    }
+
+    #[test]
+    fn raw_opt_add_remote_with_reference_expect_conflict() {
+        setup();
+        assert_eq!(
+            raw_opt_err(&[
+                "add",
+                "test",
+                "--remote",
+                "https://raw.githubusercontent.com/rossmacarthur/sheldon-test/master/test.plugin.zsh",
+                "--branch",
+                "feature"
+            ])
+            .kind,
+            structopt::clap::ErrorKind::ArgumentConflict
+        );
+    }
+
+    #[test]
+    fn raw_opt_add_local_with_reference_expect_conflict() {
+        setup();
+        assert_eq!(
+            raw_opt_err(&[
+                "add",
+                "test",
+                "--local",
+                "~/.dotfiles/zsh/pure",
+                "--tag",
+                "0.1.0"
+            ])
+            .kind,
+            structopt::clap::ErrorKind::ArgumentConflict
+        );
+    }
+
+    #[test]
+    fn raw_opt_add_git_with_github_expect_conflict() {
+        setup();
+        assert_eq!(
+            raw_opt_err(&[
+                "add",
+                "test",
+                "--git",
+                "https://github.com/rossmacarthur/sheldon-test",
+                "--github",
+                "rossmacarthur/sheldon-test",
+            ])
+            .kind,
+            structopt::clap::ErrorKind::ArgumentConflict
+        );
+    }
+
+    #[test]
+    fn raw_opt_add_git_with_protocol_expect_conflict() {
+        setup();
+        assert_eq!(
+            raw_opt_err(&[
+                "add",
+                "test",
+                "--git",
+                "https://github.com/rossmacarthur/sheldon-test",
+                "--protocol",
+                "ssh",
+            ])
+            .kind,
+            structopt::clap::ErrorKind::ArgumentConflict
+        );
+    }
+
+    #[test]
+    fn raw_opt_add_remote_with_protocol_expect_conflict() {
+        setup();
+        assert_eq!(
+            raw_opt_err(&[
+                "add",
+                "test",
+                "--remote",
+                "https://raw.githubusercontent.com/rossmacarthur/sheldon-test/master/test.plugin.zsh",
+                "--protocol",
+                "ssh",
+            ])
+            .kind,
+            structopt::clap::ErrorKind::ArgumentConflict
+        );
+    }
+
+    #[test]
+    fn raw_opt_add_local_with_protocol_expect_conflict() {
+        setup();
+        assert_eq!(
+            raw_opt_err(&[
+                "add",
+                "test",
+                "--local",
+                "~/.dotfiles/zsh/pure",
+                "--protocol",
+                "ssh",
+            ])
+            .kind,
+            structopt::clap::ErrorKind::ArgumentConflict
+        );
+    }
+
+    #[test]
+    fn raw_opt_lock_help() {
+        setup();
+        let err = raw_opt_err(&["lock", "--help"]);
+        assert_eq!(
+            err.message,
+            format!(
+                "\
+{name}-lock {version}
+Install the plugins sources and generate the lock file
+
+USAGE:
+    {name} lock [FLAGS]
+
+FLAGS:
+        --reinstall    Reinstall all plugin sources
+    -h, --help         Show this message and exit",
+                name = crate_name!(),
+                version = crate_version!()
+            )
+        );
+        assert_eq!(err.kind, structopt::clap::ErrorKind::HelpDisplayed);
+        assert_eq!(err.info, None);
+    }
+
+    #[test]
+    fn raw_opt_source_help() {
+        setup();
+        let err = raw_opt_err(&["source", "--help"]);
+        assert_eq!(
+            err.message,
+            format!(
+                "\
+{name}-source {version}
+Generate and print out the script
+
+USAGE:
+    {name} source [FLAGS]
+
+FLAGS:
+        --reinstall    Reinstall all plugin sources
+        --relock       Regenerate the lock file
+    -h, --help         Show this message and exit",
+                name = crate_name!(),
+                version = crate_version!()
+            )
+        );
+        assert_eq!(err.kind, structopt::clap::ErrorKind::HelpDisplayed);
+        assert_eq!(err.info, None);
     }
 }

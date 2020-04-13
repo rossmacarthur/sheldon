@@ -49,7 +49,7 @@ pub enum GitProtocol {
 #[derive(Clone, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum GitReference {
-    /// From the HEAD of a branch.
+    /// From the tip of a branch.
     Branch(String),
     /// From a specific revision.
     Revision(String),
@@ -572,6 +572,9 @@ impl RawPlugin {
             }
             // `inline` type
             (None, None, None, None, None, Some(raw)) => TempSource::Inline(raw),
+            (None, None, None, None, None, None) => {
+                bail!("plugin `{}` has no source fields", name);
+            }
             _ => {
                 bail!("plugin `{}` has multiple source fields", name);
             }

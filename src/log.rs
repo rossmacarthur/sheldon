@@ -5,7 +5,7 @@ use std::{fmt, path::Path};
 pub use ansi_term::Color;
 use anyhow::Error;
 
-use crate::{context::SettingsExt, Context, LockContext};
+use crate::context::{Context, EditContext, LockContext, SettingsExt};
 
 /// The requested verbosity of output.
 #[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
@@ -68,6 +68,13 @@ impl OutputExt for Context<'_> {
     #[inline]
     fn output(&self) -> &Output {
         self.output
+    }
+}
+
+impl OutputExt for EditContext {
+    #[inline]
+    fn output(&self) -> &Output {
+        &self.output
     }
 }
 

@@ -34,6 +34,15 @@ pub struct Context<'a> {
     pub output: &'a Output,
 }
 
+/// Contextual information to use while running edit tasks (add, remove).
+#[derive(Debug)]
+pub struct EditContext {
+    /// Common data.
+    pub settings: Settings,
+    /// The output style.
+    pub output: Output,
+}
+
 /// Contextual information to use while running the main tasks (lock and
 /// source).
 #[derive(Debug)]
@@ -99,6 +108,13 @@ impl SettingsExt for Context<'_> {
     #[inline]
     fn settings(&self) -> &Settings {
         self.settings
+    }
+}
+
+impl SettingsExt for EditContext {
+    #[inline]
+    fn settings(&self) -> &Settings {
+        &self.settings
     }
 }
 
