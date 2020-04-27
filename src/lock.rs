@@ -124,7 +124,7 @@ pub struct LockedConfig {
 impl fmt::Display for GitReference {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Self::Branch(s) | Self::Revision(s) | Self::Tag(s) => write!(f, "{}", s),
+            Self::Branch(s) | Self::Rev(s) | Self::Tag(s) => write!(f, "{}", s),
         }
     }
 }
@@ -138,7 +138,7 @@ impl GitReference {
     fn lock(&self, repo: &git2::Repository) -> Result<LockedGitReference> {
         match self {
             Self::Branch(s) => git::resolve_branch(repo, s),
-            Self::Revision(s) => git::resolve_revision(repo, s),
+            Self::Rev(s) => git::resolve_rev(repo, s),
             Self::Tag(s) => git::resolve_tag(repo, s),
         }
         .map(LockedGitReference)
@@ -830,7 +830,7 @@ mod tests {
             "feature"
         );
         assert_eq!(
-            GitReference::Revision("ad149784a".to_string()).to_string(),
+            GitReference::Rev("ad149784a".to_string()).to_string(),
             "ad149784a"
         );
         assert_eq!(GitReference::Tag("0.2.3".to_string()).to_string(), "0.2.3");
@@ -854,18 +854,18 @@ mod tests {
     }
 
     #[test]
-    fn git_reference_lock_revision() {
+    fn git_reference_lock_rev() {
         let temp = tempfile::tempdir().expect("create temporary directory");
         let repo = git_clone_sheldon_test(&temp);
 
-        let reference = GitReference::Revision("ad149784a".to_string());
+        let reference = GitReference::Rev("ad149784a".to_string());
         let locked = reference.lock(&repo).unwrap();
         assert_eq!(
             locked.0.to_string(),
             "ad149784a1538291f2477fb774eeeed4f4d29e45"
         );
 
-        let reference = GitReference::Revision("2c4ed7710".to_string());
+        let reference = GitReference::Rev("2c4ed7710".to_string());
         let error = reference.lock(&repo).unwrap_err();
         assert_eq!(error.to_string(), "failed to find revision `2c4ed7710`");
     }
@@ -963,7 +963,7 @@ mod tests {
             &create_test_context(directory),
             directory.to_path_buf(),
             Url::parse("https://github.com/rossmacarthur/sheldon-test").unwrap(),
-            Some(GitReference::Revision(
+            Some(GitReference::Rev(
                 "ad149784a1538291f2477fb774eeeed4f4d29e45".to_string(),
             )),
         )
@@ -988,7 +988,7 @@ mod tests {
             &create_test_context(directory),
             directory.to_path_buf(),
             Url::parse("git://github.com/rossmacarthur/sheldon-test").unwrap(),
-            Some(GitReference::Revision(
+            Some(GitReference::Rev(
                 "ad149784a1538291f2477fb774eeeed4f4d29e45".to_string(),
             )),
         )

@@ -248,7 +248,7 @@ git = "https://github.com/sindresorhus/pure"
 
 #### Specifying a branch, tag, or commit
 
-All Git sources also allow setting of one of the `branch`, `tag` or `revision`
+All Git sources also allow setting of one of the `branch`, `tag` or `rev`
 fields. **sheldon** will then checkout the repository at this reference.
 
 ```toml

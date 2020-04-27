@@ -70,9 +70,9 @@ struct Add {
     )]
     branch: Option<String>,
 
-    /// Checkout a specific revision.
+    /// Checkout a specific commit.
     #[structopt(long, value_name = "SHA", group = "git-reference")]
-    revision: Option<String>,
+    rev: Option<String>,
 
     /// Checkout a specific tag.
     #[structopt(long, value_name = "TAG", group = "git-reference")]
@@ -212,16 +212,16 @@ impl Plugin {
             local,
             protocol,
             branch,
-            revision,
+            rev,
             tag,
             directory,
             uses,
             apply,
         } = add;
 
-        let reference = match (branch, revision, tag) {
+        let reference = match (branch, rev, tag) {
             (Some(s), None, None) => Some(GitReference::Branch(s)),
-            (None, Some(s), None) => Some(GitReference::Revision(s)),
+            (None, Some(s), None) => Some(GitReference::Rev(s)),
             (None, None, Some(s)) => Some(GitReference::Tag(s)),
             (None, None, None) => None,
             // this is unreachable because these three options are in the same mutually exclusive
@@ -522,7 +522,7 @@ OPTIONS:
         --local <DIR>            Add a local directory
         --protocol <PROTO>       The Git protocol for a Gist or GitHub plugin
         --branch <BRANCH>        Checkout the tip of a branch
-        --revision <SHA>         Checkout a specific revision
+        --rev <SHA>              Checkout a specific commit
         --tag <TAG>              Checkout a specific tag
         --directory <PATH>       Which sub directory to use in this plugin
         --use <MATCH>...         Which files to use in this plugin
@@ -556,7 +556,7 @@ ARGS:
                 "test",
                 "--git",
                 "https://github.com/rossmacarthur/sheldon-test",
-                "--revision",
+                "--rev",
                 "ad149784a1538291f2477fb774eeeed4f4d29e45",
                 "--directory",
                 "missing",
@@ -581,7 +581,7 @@ ARGS:
                 local: None,
                 protocol: None,
                 branch: None,
-                revision: Some("ad149784a1538291f2477fb774eeeed4f4d29e45".into()),
+                rev: Some("ad149784a1538291f2477fb774eeeed4f4d29e45".into()),
                 tag: None,
                 directory: Some("missing".into()),
                 uses: Some(vec_into!["{name}.sh", "*.zsh"]),
@@ -622,7 +622,7 @@ ARGS:
                 local: None,
                 protocol: Some("ssh".parse().unwrap()),
                 branch: None,
-                revision: None,
+                rev: None,
                 tag: Some("0.1.0".into()),
                 directory: Some("missing".into()),
                 uses: Some(vec_into!["{name}.sh", "*.zsh"]),
@@ -663,7 +663,7 @@ ARGS:
                 local: None,
                 protocol: Some("https".parse().unwrap()),
                 branch: Some("feature".into()),
-                revision: None,
+                rev: None,
                 tag: None,
                 directory: Some("missing".into()),
                 uses: Some(vec_into!["{name}.sh", "*.zsh"]),
@@ -698,7 +698,7 @@ ARGS:
                 local: None,
                 protocol: None,
                 branch: None,
-                revision: None,
+                rev: None,
                 tag: None,
                 directory: None,
                 uses: Some(vec_into!["{name}.sh", "*.zsh"]),
@@ -733,7 +733,7 @@ ARGS:
                 local: Some("~/.dotfiles/zsh/pure".into()),
                 protocol: None,
                 branch: None,
-                revision: None,
+                rev: None,
                 tag: None,
                 directory: None,
                 uses: Some(vec_into!["{name}.sh", "*.zsh"]),

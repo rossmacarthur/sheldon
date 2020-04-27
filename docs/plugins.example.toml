@@ -22,8 +22,7 @@ prompt = { value = 'ln -sf "{{ filename }}" "{{ root }}/functions/prompt_{{ name
 [plugins.async]
 # `github` sources provide the repository in the form {username}/{repository}.
 github = "mafredri/zsh-async"
-# `github', `git`, or `gist` sources may provide a `branch`, `tag`, or
-# `revision` field.
+# `github', `git`, or `gist` sources may provide a `branch`, `tag`, or `rev`.
 tag = "v1.7.1"
 # All plugins can specify the template names that will be applied.
 apply = ["function"]

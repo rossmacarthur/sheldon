@@ -223,10 +223,10 @@ pub mod git {
     }
 
     /// Resolve a revision to a object identifier.
-    pub fn resolve_revision(repo: &Repository, revision: &str) -> anyhow::Result<Oid> {
+    pub fn resolve_rev(repo: &Repository, rev: &str) -> anyhow::Result<Oid> {
         let obj = repo
-            .revparse_single(revision)
-            .with_context(s!("failed to find revision `{}`", revision))?;
+            .revparse_single(rev)
+            .with_context(s!("failed to find revision `{}`", rev))?;
         Ok(match obj.as_tag() {
             Some(tag) => tag.target_id(),
             None => obj.id(),

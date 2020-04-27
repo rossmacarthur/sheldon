@@ -52,7 +52,7 @@ pub enum GitReference {
     /// From the tip of a branch.
     Branch(String),
     /// From a specific revision.
-    Revision(String),
+    Rev(String),
     /// From a tag.
     Tag(String),
 }
@@ -584,8 +584,8 @@ impl RawPlugin {
             TempSource::External(source) => {
                 if !source.is_git() && is_reference_some {
                     bail!(
-                        "the `branch`, `tag`, and `revision` fields are not supported by this \
-                         plugin type"
+                        "the `branch`, `tag`, and `rev` fields are not supported by this plugin \
+                         type"
                     );
                 } else if protocol.is_some() && !is_gist_or_github {
                     bail!("the `protocol` field is not supported by this plugin type");
@@ -604,10 +604,7 @@ impl RawPlugin {
             TempSource::Inline(raw) => {
                 let unsupported = [
                     ("`protocol` field is", protocol.is_some()),
-                    (
-                        "`branch`, `tag`, and `revision` fields are",
-                        is_reference_some,
-                    ),
+                    ("`branch`, `tag`, and `rev` fields are", is_reference_some),
                     ("`directory` field is", directory.is_some()),
                     ("`use` field is", uses.is_some()),
                     ("`apply` field is", apply.is_some()),
@@ -786,9 +783,9 @@ mod tests {
     }
 
     #[test]
-    fn git_reference_deserialize_revision() {
-        let test: TestGitReference = toml::from_str("revision = 'cd65e828'").unwrap();
-        assert_eq!(test.g, GitReference::Revision(String::from("cd65e828")));
+    fn git_reference_deserialize_rev() {
+        let test: TestGitReference = toml::from_str("rev = 'cd65e828'").unwrap();
+        assert_eq!(test.g, GitReference::Rev(String::from("cd65e828")));
     }
 
     #[derive(Deserialize)]
@@ -1129,7 +1126,7 @@ mod tests {
             .unwrap_err();
         assert_eq!(
             error.to_string(),
-            "the `branch`, `tag`, and `revision` fields are not supported by this plugin type"
+            "the `branch`, `tag`, and `rev` fields are not supported by this plugin type"
         );
     }
 
