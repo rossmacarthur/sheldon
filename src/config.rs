@@ -61,7 +61,7 @@ pub enum GitReference {
 #[derive(Debug, PartialEq)]
 pub struct GistRepository {
     /// The GitHub username / organization.
-    vendor: Option<String>,
+    owner: Option<String>,
     /// The Gist identifier.
     identifier: String,
 }
@@ -70,7 +70,7 @@ pub struct GistRepository {
 #[derive(Debug, PartialEq)]
 pub struct GitHubRepository {
     /// The GitHub username / organization.
-    vendor: String,
+    owner: String,
     /// The GitHub repository name.
     name: String,
 }
@@ -200,15 +200,15 @@ impl fmt::Display for GitProtocol {
 }
 
 impl fmt::Display for GistRepository {
-    /// Displays a `GistRepository` as "[{vendor}/]{identifier}".
+    /// Displays a `GistRepository` as "[{owner}/]{identifier}".
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Self {
-                vendor: Some(vendor),
+                owner: Some(owner),
                 identifier,
-            } => write!(f, "{}/{}", vendor, identifier),
+            } => write!(f, "{}/{}", owner, identifier),
             Self {
-                vendor: None,
+                owner: None,
                 identifier,
             } => write!(f, "{}", identifier),
         }
@@ -216,9 +216,9 @@ impl fmt::Display for GistRepository {
 }
 
 impl fmt::Display for GitHubRepository {
-    /// Displays a `GitHubRepository` as "{vendor}/{repository}".
+    /// Displays a `GitHubRepository` as "{owner}/{repository}".
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}/{}", self.vendor, self.name)
+        write!(f, "{}/{}", self.owner, self.name)
     }
 }
 
@@ -345,7 +345,7 @@ macro_rules! make_regex_matcher {
 }
 
 make_regex_matcher!(is_valid_gist_identifier, "^[a-fA-F0-9]+$");
-make_regex_matcher!(is_valid_github_vendor, "^[a-zA-Z0-9_-]+$");
+make_regex_matcher!(is_valid_github_owner, "^[a-zA-Z0-9_-]+$");
 make_regex_matcher!(is_valid_github_repository, "^[a-zA-Z0-9\\._-]+$");
 
 #[derive(Debug)]
@@ -365,13 +365,13 @@ impl FromStr for GistRepository {
     fn from_str(s: &str) -> result::Result<Self, Self::Err> {
         let mut s_split = s.rsplit('/');
         let identifier = s_split.next().ok_or(ParseGistRepositoryError)?.to_string();
-        let vendor = s_split.next().map(ToString::to_string);
+        let owner = s_split.next().map(ToString::to_string);
 
         if s_split.next().is_some() {
             return Err(ParseGistRepositoryError);
         }
-        if let Some(vendor) = &vendor {
-            if !is_valid_github_vendor(vendor) {
+        if let Some(owner) = &owner {
+            if !is_valid_github_owner(owner) {
                 return Err(ParseGistRepositoryError);
             }
         }
@@ -379,7 +379,7 @@ impl FromStr for GistRepository {
             return Err(ParseGistRepositoryError);
         }
 
-        Ok(Self { vendor, identifier })
+        Ok(Self { owner, identifier })
     }
 }
 
@@ -399,7 +399,7 @@ impl FromStr for GitHubRepository {
 
     fn from_str(s: &str) -> result::Result<Self, Self::Err> {
         let mut s_split = s.split('/');
-        let vendor = s_split
+        let owner = s_split
             .next()
             .ok_or(ParseGitHubRepositoryError)?
             .to_string();
@@ -411,11 +411,11 @@ impl FromStr for GitHubRepository {
         if s_split.next().is_some() {
             return Err(ParseGitHubRepositoryError);
         }
-        if !is_valid_github_vendor(&vendor) || !is_valid_github_repository(&name) {
+        if !is_valid_github_owner(&owner) || !is_valid_github_repository(&name) {
             return Err(ParseGitHubRepositoryError);
         }
 
-        Ok(Self { vendor, name })
+        Ok(Self { owner, name })
     }
 }
 
@@ -704,16 +704,16 @@ mod tests {
     #[test]
     fn gist_repository_to_string() {
         let test = GistRepository {
-            vendor: None,
+            owner: None,
             identifier: "579d02802b1cc17baed07753d09f5009".to_string(),
         };
         assert_eq!(test.to_string(), "579d02802b1cc17baed07753d09f5009");
     }
 
     #[test]
-    fn gist_repository_to_string_with_vendor() {
+    fn gist_repository_to_string_with_owner() {
         let test = GistRepository {
-            vendor: Some("rossmacarthur".to_string()),
+            owner: Some("rossmacarthur".to_string()),
             identifier: "579d02802b1cc17baed07753d09f5009".to_string(),
         };
         assert_eq!(
@@ -725,7 +725,7 @@ mod tests {
     #[test]
     fn github_repository_to_string() {
         let test = GitHubRepository {
-            vendor: "rossmacarthur".to_string(),
+            owner: "rossmacarthur".to_string(),
             name: "sheldon-test".to_string(),
         };
         assert_eq!(test.to_string(), "rossmacarthur/sheldon-test");
@@ -800,7 +800,7 @@ mod tests {
         assert_eq!(
             test.g,
             GistRepository {
-                vendor: Some("rossmacarthur".to_string()),
+                owner: Some("rossmacarthur".to_string()),
                 identifier: "579d02802b1cc17baed07753d09f5009".to_string()
             }
         );
@@ -833,7 +833,7 @@ mod tests {
         assert_eq!(
             test.g,
             GitHubRepository {
-                vendor: "rossmacarthur".to_string(),
+                owner: "rossmacarthur".to_string(),
                 name: "sheldon-test".to_string()
             }
         );
@@ -866,7 +866,7 @@ mod tests {
     fn raw_plugin_deserialize_github() {
         let expected = RawPlugin {
             github: Some(GitHubRepository {
-                vendor: "rossmacarthur".into(),
+                owner: "rossmacarthur".into(),
                 name: "sheldon-test".into(),
             }),
             ..Default::default()
@@ -1021,7 +1021,7 @@ mod tests {
         });
         let raw_plugin = RawPlugin {
             github: Some(GitHubRepository {
-                vendor: "rossmacarthur".to_string(),
+                owner: "rossmacarthur".to_string(),
                 name: "sheldon-test".to_string(),
             }),
             protocol: Some(GitProtocol::Git),
@@ -1048,7 +1048,7 @@ mod tests {
         });
         let raw_plugin = RawPlugin {
             github: Some(GitHubRepository {
-                vendor: "rossmacarthur".to_string(),
+                owner: "rossmacarthur".to_string(),
                 name: "sheldon-test".to_string(),
             }),
             ..Default::default()
@@ -1074,7 +1074,7 @@ mod tests {
         });
         let raw_plugin = RawPlugin {
             github: Some(GitHubRepository {
-                vendor: "rossmacarthur".to_string(),
+                owner: "rossmacarthur".to_string(),
                 name: "sheldon-test".to_string(),
             }),
             protocol: Some(GitProtocol::Ssh),
@@ -1210,7 +1210,7 @@ mod tests {
     fn raw_plugin_normalize_external_invalid_template() {
         let raw_plugin = RawPlugin {
             github: Some(GitHubRepository {
-                vendor: "rossmacarthur".to_string(),
+                owner: "rossmacarthur".to_string(),
                 name: "sheldon-test".to_string(),
             }),
             apply: Some(vec_into!["test"]),
