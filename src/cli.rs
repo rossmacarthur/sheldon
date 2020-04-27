@@ -80,7 +80,7 @@ struct Add {
 
     /// Which sub directory to use in this plugin.
     #[structopt(long, value_name = "PATH")]
-    directory: Option<String>,
+    dir: Option<String>,
 
     /// Which files to use in this plugin.
     #[structopt(long = "use", value_name = "MATCH")]
@@ -214,7 +214,7 @@ impl Plugin {
             branch,
             rev,
             tag,
-            directory,
+            dir,
             uses,
             apply,
         } = add;
@@ -240,7 +240,7 @@ impl Plugin {
                 inline: None,
                 proto,
                 reference,
-                directory,
+                dir,
                 uses,
                 apply,
             }),
@@ -524,7 +524,7 @@ OPTIONS:
         --branch <BRANCH>        Checkout the tip of a branch
         --rev <SHA>              Checkout a specific commit
         --tag <TAG>              Checkout a specific tag
-        --directory <PATH>       Which sub directory to use in this plugin
+        --dir <PATH>             Which sub directory to use in this plugin
         --use <MATCH>...         Which files to use in this plugin
         --apply <TEMPLATE>...    Templates to apply to this plugin
 
@@ -558,7 +558,7 @@ ARGS:
                 "https://github.com/rossmacarthur/sheldon-test",
                 "--rev",
                 "ad149784a1538291f2477fb774eeeed4f4d29e45",
-                "--directory",
+                "--dir",
                 "missing",
                 "--use",
                 "{name}.sh",
@@ -583,7 +583,7 @@ ARGS:
                 branch: None,
                 rev: Some("ad149784a1538291f2477fb774eeeed4f4d29e45".into()),
                 tag: None,
-                directory: Some("missing".into()),
+                dir: Some("missing".into()),
                 uses: Some(vec_into!["{name}.sh", "*.zsh"]),
                 apply: Some(vec_into!["something", "another-thing"]),
             }))
@@ -603,7 +603,7 @@ ARGS:
                 "0.1.0",
                 "--proto",
                 "ssh",
-                "--directory",
+                "--dir",
                 "missing",
                 "--use",
                 "{name}.sh",
@@ -624,7 +624,7 @@ ARGS:
                 branch: None,
                 rev: None,
                 tag: Some("0.1.0".into()),
-                directory: Some("missing".into()),
+                dir: Some("missing".into()),
                 uses: Some(vec_into!["{name}.sh", "*.zsh"]),
                 apply: Some(vec_into!["something", "another-thing"]),
             }))
@@ -644,7 +644,7 @@ ARGS:
                 "feature",
                 "--proto",
                 "https",
-                "--directory",
+                "--dir",
                 "missing",
                 "--use",
                 "{name}.sh",
@@ -665,7 +665,7 @@ ARGS:
                 branch: Some("feature".into()),
                 rev: None,
                 tag: None,
-                directory: Some("missing".into()),
+                dir: Some("missing".into()),
                 uses: Some(vec_into!["{name}.sh", "*.zsh"]),
                 apply: Some(vec_into!["something", "another-thing"]),
             }))
@@ -700,7 +700,7 @@ ARGS:
                 branch: None,
                 rev: None,
                 tag: None,
-                directory: None,
+                dir: None,
                 uses: Some(vec_into!["{name}.sh", "*.zsh"]),
                 apply: Some(vec_into!["something", "another-thing"]),
             }))
@@ -735,7 +735,7 @@ ARGS:
                 branch: None,
                 rev: None,
                 tag: None,
-                directory: None,
+                dir: None,
                 uses: Some(vec_into!["{name}.sh", "*.zsh"]),
                 apply: Some(vec_into!["something", "another-thing"]),
             }))

@@ -2,7 +2,7 @@
 [plugins.test]
 github = "rossmacarthur/sheldon-test"
 branch = "recursive-recursive"
-directory = "self/self"
+dir = "self/self"
 
 # plugins.lock
 version = "<version>"

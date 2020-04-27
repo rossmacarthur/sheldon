@@ -52,9 +52,9 @@ lazy_static! {
 lazy_static! {
     /// The default templates.
     pub static ref DEFAULT_TEMPLATES: IndexMap<String, Template> = indexmap_into! {
-        "PATH" => "export PATH=\"{{ directory }}:$PATH\"",
-        "path" => "path=( \"{{ directory }}\" $path )",
-        "fpath" => "fpath=( \"{{ directory }}\" $fpath )",
+        "PATH" => "export PATH=\"{{ dir }}:$PATH\"",
+        "path" => "path=( \"{{ dir }}\" $path )",
+        "fpath" => "fpath=( \"{{ dir }}\" $fpath )",
         "source" => Template::from("source \"{{ filename }}\"").each(true)
     };
 }
@@ -71,7 +71,7 @@ struct LockedGitReference(git2::Oid);
 #[derive(Clone, Debug)]
 struct LockedSource {
     /// The clone or download directory.
-    directory: PathBuf,
+    dir: PathBuf,
     /// The download filename.
     filename: Option<PathBuf>,
 }
@@ -153,7 +153,7 @@ impl fmt::Display for Source {
                 reference: Some(reference),
             } => write!(f, "{}@{}", url, reference),
             Self::Git { url, .. } | Self::Remote { url } => write!(f, "{}", url),
-            Self::Local { directory } => write!(f, "{}", directory.display()),
+            Self::Local { dir } => write!(f, "{}", dir.display()),
         }
     }
 }
@@ -162,20 +162,19 @@ impl Source {
     /// Clones a Git repository and checks it out at a particular revision.
     fn lock_git(
         ctx: &Context,
-        directory: PathBuf,
+        dir: PathBuf,
         url: Url,
         reference: Option<GitReference>,
     ) -> Result<LockedSource> {
         if ctx.reinstall {
-            if let Err(e) = fs::remove_dir_all(&directory) {
+            if let Err(e) = fs::remove_dir_all(&dir) {
                 if e.kind() != io::ErrorKind::NotFound {
-                    return Err(e)
-                        .with_context(s!("failed to remove directory `{}`", &directory.display()));
+                    return Err(e).with_context(s!("failed to remove dir `{}`", &dir.display()));
                 }
             }
         }
 
-        let (cloned, repo) = git::clone_or_open(&url, &directory)?;
+        let (cloned, repo) = git::clone_or_open(&url, &dir)?;
         let status = if cloned { "Cloned" } else { "Checked" };
 
         // Checkout the configured revision.
@@ -190,7 +189,7 @@ impl Source {
         git::submodule_update(&repo).context("failed to recursively update submodules")?;
 
         Ok(LockedSource {
-            directory,
+            dir,
             filename: None,
         })
     }
@@ -198,7 +197,7 @@ impl Source {
     /// Downloads a Remote source.
     fn lock_remote(
         ctx: &Context,
-        directory: PathBuf,
+        dir: PathBuf,
         filename: PathBuf,
         url: Url,
     ) -> Result<LockedSource> {
@@ -214,8 +213,8 @@ impl Source {
         if filename.exists() {
             status!(ctx, "Checked", &url);
         } else {
-            fs::create_dir_all(&directory)
-                .with_context(s!("failed to create directory `{}`", directory.display()))?;
+            fs::create_dir_all(&dir)
+                .with_context(s!("failed to create dir `{}`", dir.display()))?;
             let mut response = reqwest::blocking::get(url.clone())
                 .with_context(s!("failed to download `{}`", url))?;
             let mut out = fs::File::create(&filename)
@@ -226,21 +225,21 @@ impl Source {
         }
 
         Ok(LockedSource {
-            directory,
+            dir,
             filename: Some(filename),
         })
     }
 
     /// Checks that a Local source directory exists.
-    fn lock_local(ctx: &Context, directory: PathBuf) -> Result<LockedSource> {
-        let directory = ctx.expand_tilde(directory);
+    fn lock_local(ctx: &Context, dir: PathBuf) -> Result<LockedSource> {
+        let dir = ctx.expand_tilde(dir);
 
-        if let Ok(glob) = glob::glob(&directory.to_string_lossy()) {
+        if let Ok(glob) = glob::glob(&dir.to_string_lossy()) {
             let mut directories: Vec<_> = glob
                 .filter_map(|result| {
-                    if let Ok(directory) = result {
-                        if directory.is_dir() {
-                            return Some(directory);
+                    if let Ok(dir) = result {
+                        if dir.is_dir() {
+                            return Some(dir);
                         }
                     }
                     None
@@ -248,30 +247,30 @@ impl Source {
                 .collect();
 
             if directories.len() == 1 {
-                let directory = directories.remove(0);
-                status!(ctx, "Checked", directory.as_path());
+                let dir = directories.remove(0);
+                status!(ctx, "Checked", dir.as_path());
                 Ok(LockedSource {
-                    directory,
+                    dir,
                     filename: None,
                 })
             } else {
                 Err(anyhow!(
                     "`{}` matches {} directories",
-                    directory.display(),
+                    dir.display(),
                     directories.len()
                 ))
             }
-        } else if fs::metadata(&directory)
-            .with_context(s!("failed to find directory `{}`", directory.display()))?
+        } else if fs::metadata(&dir)
+            .with_context(s!("failed to find dir `{}`", dir.display()))?
             .is_dir()
         {
-            status!(ctx, "Checked", directory.as_path());
+            status!(ctx, "Checked", dir.as_path());
             Ok(LockedSource {
-                directory,
+                dir,
                 filename: None,
             })
         } else {
-            Err(anyhow!("`{}` is not a directory", directory.display()))
+            Err(anyhow!("`{}` is not a dir", dir.display()))
         }
     }
 
@@ -279,17 +278,17 @@ impl Source {
     fn lock(self, ctx: &Context) -> Result<LockedSource> {
         match self {
             Self::Git { url, reference } => {
-                let mut directory = ctx.clone_dir().to_path_buf();
-                directory.push(
+                let mut dir = ctx.clone_dir().to_path_buf();
+                dir.push(
                     url.host_str()
                         .with_context(s!("URL `{}` has no host", url))?,
                 );
-                directory.push(url.path().trim_start_matches('/'));
-                Self::lock_git(ctx, directory, url, reference)
+                dir.push(url.path().trim_start_matches('/'));
+                Self::lock_git(ctx, dir, url, reference)
             }
             Self::Remote { url } => {
-                let mut directory = ctx.download_dir().to_path_buf();
-                directory.push(
+                let mut dir = ctx.download_dir().to_path_buf();
+                dir.push(
                     url.host_str()
                         .with_context(s!("URL `{}` has no host", url))?,
                 );
@@ -300,12 +299,12 @@ impl Source {
                     .collect();
                 let (base, rest) = segments.split_last().unwrap();
                 let base = if *base == "" { "index" } else { *base };
-                directory.push(rest.iter().collect::<PathBuf>());
-                let filename = directory.join(base);
+                dir.push(rest.iter().collect::<PathBuf>());
+                let filename = dir.join(base);
 
-                Self::lock_remote(ctx, directory, filename, url)
+                Self::lock_remote(ctx, dir, filename, url)
             }
-            Self::Local { directory } => Self::lock_local(ctx, directory),
+            Self::Local { dir } => Self::lock_local(ctx, dir),
         }
     }
 }
@@ -336,13 +335,10 @@ impl ExternalPlugin {
         apply: &[String],
     ) -> Result<LockedExternalPlugin> {
         Ok(if let Source::Remote { .. } = self.source {
-            let LockedSource {
-                directory,
-                filename,
-            } = source;
+            let LockedSource { dir, filename } = source;
             LockedExternalPlugin {
                 name: self.name,
-                source_dir: directory,
+                source_dir: dir,
                 plugin_dir: None,
                 filenames: vec![filename.unwrap()],
                 apply: self.apply.unwrap_or_else(|| apply.to_vec()),
@@ -361,23 +357,21 @@ impl ExternalPlugin {
                 "name" => &self.name
             };
 
-            let source_dir = source.directory;
-            let plugin_dir = if let Some(directory) = self.directory {
+            let source_dir = source.dir;
+            let plugin_dir = if let Some(dir) = self.dir {
                 let rendered = templates
-                    .render_template(&directory, &data)
-                    .with_context(s!("failed to render template `{}`", directory))?;
+                    .render_template(&dir, &data)
+                    .with_context(s!("failed to render template `{}`", dir))?;
                 Some(source_dir.join(rendered))
             } else {
                 None
             };
-            let directory = plugin_dir.as_ref().unwrap_or(&source_dir);
-
-            data.insert(
-                "directory",
-                &directory
-                    .to_str()
-                    .context("plugin directory is not valid UTF-8")?,
-            );
+            let dir = plugin_dir.as_ref().unwrap_or(&source_dir);
+            let dir_as_str = dir
+                .to_str()
+                .context("plugin directory is not valid UTF-8")?;
+            data.insert("dir", dir_as_str);
+            data.insert("directory", dir_as_str);
 
             let mut filenames = Vec::new();
 
@@ -387,7 +381,7 @@ impl ExternalPlugin {
                     let rendered = templates
                         .render_template(u, &data)
                         .with_context(s!("failed to render template `{}`", u))?;
-                    let pattern = directory.join(&rendered);
+                    let pattern = dir.join(&rendered);
                     if !Self::match_globs(pattern, &mut filenames)? {
                         bail!("failed to find any files matching `{}`", &rendered);
                     };
@@ -398,7 +392,7 @@ impl ExternalPlugin {
                     let rendered = templates
                         .render_template(g, &data)
                         .with_context(s!("failed to render template `{}`", g))?;
-                    let pattern = directory.join(rendered);
+                    let pattern = dir.join(rendered);
                     if Self::match_globs(pattern, &mut filenames)? {
                         break;
                     }
@@ -537,7 +531,7 @@ impl Config {
 
 impl LockedExternalPlugin {
     /// Return a reference to the plugin directory.
-    fn directory(&self) -> &Path {
+    fn dir(&self) -> &Path {
         self.plugin_dir.as_ref().unwrap_or(&self.source_dir)
     }
 }
@@ -565,7 +559,7 @@ impl LockedConfig {
         for plugin in &self.plugins {
             match plugin {
                 LockedPlugin::External(plugin) => {
-                    if !plugin.directory().exists() {
+                    if !plugin.dir().exists() {
                         return false;
                     }
                     for filename in &plugin.filenames {
@@ -618,7 +612,7 @@ impl LockedConfig {
         for plugin in &self.plugins {
             if let LockedPlugin::External(locked) = plugin {
                 source_dirs.insert(locked.source_dir.as_path());
-                parent_dirs.extend(locked.directory().ancestors());
+                parent_dirs.extend(locked.dir().ancestors());
                 filenames.extend(locked.filenames.iter().filter_map(|f| {
                     // `filenames` is only used when filtering the download directory
                     if f.starts_with(self.settings.download_dir()) {
@@ -690,6 +684,11 @@ impl LockedConfig {
             match plugin {
                 LockedPlugin::External(plugin) => {
                     for name in &plugin.apply {
+                        let dir_as_str = plugin
+                            .dir()
+                            .to_str()
+                            .context("plugin directory is not valid UTF-8")?;
+
                         // Data to use in template rendering
                         let mut data = hashmap! {
                             "root" => self
@@ -698,10 +697,8 @@ impl LockedConfig {
                                 .to_str()
                                 .context("root directory is not valid UTF-8")?,
                             "name" => &plugin.name,
-                            "directory" => plugin
-                                .directory()
-                                .to_str()
-                                .context("plugin directory is not valid UTF-8")?,
+                            "dir" => dir_as_str,
+                            "directory" => dir_as_str,
                         };
 
                         if templates_map.get(name.as_str()).unwrap().each {
@@ -787,14 +784,14 @@ mod tests {
     use url::Url;
 
     fn git_clone_sheldon_test(temp: &tempfile::TempDir) -> git2::Repository {
-        let directory = temp.path();
+        let dir = temp.path();
         Command::new("git")
             .arg("clone")
             .arg("https://github.com/rossmacarthur/sheldon-test")
-            .arg(&directory)
+            .arg(&dir)
             .output()
             .expect("git clone rossmacarthur/sheldon-test");
-        git2::Repository::open(directory).expect("open sheldon-test git repository")
+        git2::Repository::open(dir).expect("open sheldon-test git repository")
     }
 
     fn create_test_context(root: &Path) -> Context {
@@ -915,7 +912,7 @@ mod tests {
         );
         assert_eq!(
             Source::Local {
-                directory: PathBuf::from("~/plugins")
+                dir: PathBuf::from("~/plugins")
             }
             .to_string(),
             "~/plugins"
@@ -925,43 +922,43 @@ mod tests {
     #[test]
     fn source_lock_git_and_reinstall() {
         let temp = tempfile::tempdir().expect("create temporary directory");
-        let directory = temp.path();
-        let mut ctx = create_test_context(directory);
+        let dir = temp.path();
+        let mut ctx = create_test_context(dir);
         let url = Url::parse("https://github.com/rossmacarthur/sheldon-test").unwrap();
 
-        let locked = Source::lock_git(&ctx, directory.to_path_buf(), url.clone(), None).unwrap();
+        let locked = Source::lock_git(&ctx, dir.to_path_buf(), url.clone(), None).unwrap();
 
-        assert_eq!(locked.directory, directory);
+        assert_eq!(locked.dir, dir);
         assert_eq!(locked.filename, None);
-        let repo = git2::Repository::open(&directory).unwrap();
+        let repo = git2::Repository::open(&dir).unwrap();
         assert_eq!(
             repo.head().unwrap().target().unwrap().to_string(),
             "be8fde277e76f35efbe46848fb352cee68549962"
         );
 
-        let modified = fs::metadata(&directory).unwrap().modified().unwrap();
+        let modified = fs::metadata(&dir).unwrap().modified().unwrap();
         thread::sleep(time::Duration::from_secs(1));
         ctx.reinstall = true;
-        let locked = Source::lock_git(&ctx, directory.to_path_buf(), url, None).unwrap();
+        let locked = Source::lock_git(&ctx, dir.to_path_buf(), url, None).unwrap();
 
-        assert_eq!(locked.directory, directory);
+        assert_eq!(locked.dir, dir);
         assert_eq!(locked.filename, None);
-        let repo = git2::Repository::open(&directory).unwrap();
+        let repo = git2::Repository::open(&dir).unwrap();
         assert_eq!(
             repo.head().unwrap().target().unwrap().to_string(),
             "be8fde277e76f35efbe46848fb352cee68549962"
         );
-        assert!(fs::metadata(&directory).unwrap().modified().unwrap() > modified)
+        assert!(fs::metadata(&dir).unwrap().modified().unwrap() > modified)
     }
 
     #[test]
     fn source_lock_git_with_reference() {
         let temp = tempfile::tempdir().expect("create temporary directory");
-        let directory = temp.path();
+        let dir = temp.path();
 
         let locked = Source::lock_git(
-            &create_test_context(directory),
-            directory.to_path_buf(),
+            &create_test_context(dir),
+            dir.to_path_buf(),
             Url::parse("https://github.com/rossmacarthur/sheldon-test").unwrap(),
             Some(GitReference::Rev(
                 "ad149784a1538291f2477fb774eeeed4f4d29e45".to_string(),
@@ -969,9 +966,9 @@ mod tests {
         )
         .unwrap();
 
-        assert_eq!(locked.directory, directory);
+        assert_eq!(locked.dir, dir);
         assert_eq!(locked.filename, None);
-        let repo = git2::Repository::open(&directory).unwrap();
+        let repo = git2::Repository::open(&dir).unwrap();
         let head = repo.head().unwrap();
         assert_eq!(
             head.target().unwrap().to_string(),
@@ -982,11 +979,11 @@ mod tests {
     #[test]
     fn source_lock_git_with_git() {
         let temp = tempfile::tempdir().expect("create temporary directory");
-        let directory = temp.path();
+        let dir = temp.path();
 
         let locked = Source::lock_git(
-            &create_test_context(directory),
-            directory.to_path_buf(),
+            &create_test_context(dir),
+            dir.to_path_buf(),
             Url::parse("git://github.com/rossmacarthur/sheldon-test").unwrap(),
             Some(GitReference::Rev(
                 "ad149784a1538291f2477fb774eeeed4f4d29e45".to_string(),
@@ -994,9 +991,9 @@ mod tests {
         )
         .unwrap();
 
-        assert_eq!(locked.directory, directory);
+        assert_eq!(locked.dir, dir);
         assert_eq!(locked.filename, None);
-        let repo = git2::Repository::open(&directory).unwrap();
+        let repo = git2::Repository::open(&dir).unwrap();
         let head = repo.head().unwrap();
         assert_eq!(
             head.target().unwrap().to_string(),
@@ -1008,17 +1005,16 @@ mod tests {
     fn source_lock_remote_and_reinstall() {
         let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         let temp = tempfile::tempdir().expect("create temporary directory");
-        let directory = temp.path();
-        let filename = directory.join("test.txt");
-        let mut ctx = create_test_context(directory);
+        let dir = temp.path();
+        let filename = dir.join("test.txt");
+        let mut ctx = create_test_context(dir);
         let url =
             Url::parse("https://github.com/rossmacarthur/sheldon/raw/0.3.0/LICENSE-MIT").unwrap();
 
         let locked =
-            Source::lock_remote(&ctx, directory.to_path_buf(), filename.clone(), url.clone())
-                .unwrap();
+            Source::lock_remote(&ctx, dir.to_path_buf(), filename.clone(), url.clone()).unwrap();
 
-        assert_eq!(locked.directory, directory);
+        assert_eq!(locked.dir, dir);
         assert_eq!(locked.filename, Some(filename.clone()));
         assert_eq!(
             read_file_contents(&filename).unwrap(),
@@ -1028,10 +1024,9 @@ mod tests {
         let modified = fs::metadata(&filename).unwrap().modified().unwrap();
         thread::sleep(time::Duration::from_secs(1));
         ctx.reinstall = true;
-        let locked =
-            Source::lock_remote(&ctx, directory.to_path_buf(), filename.clone(), url).unwrap();
+        let locked = Source::lock_remote(&ctx, dir.to_path_buf(), filename.clone(), url).unwrap();
 
-        assert_eq!(locked.directory, directory);
+        assert_eq!(locked.dir, dir);
         assert_eq!(locked.filename, Some(filename.clone()));
         assert_eq!(
             read_file_contents(&filename).unwrap(),
@@ -1043,21 +1038,20 @@ mod tests {
     #[test]
     fn source_lock_local() {
         let temp = tempfile::tempdir().expect("create temporary directory");
-        let directory = temp.path();
+        let dir = temp.path();
         let _ = git_clone_sheldon_test(&temp);
 
-        let locked =
-            Source::lock_local(&create_test_context(directory), directory.to_path_buf()).unwrap();
+        let locked = Source::lock_local(&create_test_context(dir), dir.to_path_buf()).unwrap();
 
-        assert_eq!(locked.directory, directory);
+        assert_eq!(locked.dir, dir);
         assert_eq!(locked.filename, None);
     }
 
     #[test]
     fn source_lock_with_git() {
         let temp = tempfile::tempdir().expect("create temporary directory");
-        let directory = temp.path();
-        let ctx = create_test_context(directory);
+        let dir = temp.path();
+        let ctx = create_test_context(dir);
 
         let source = Source::Git {
             url: Url::parse("https://github.com/rossmacarthur/sheldon-test").unwrap(),
@@ -1066,8 +1060,8 @@ mod tests {
         let locked = source.lock(&ctx).unwrap();
 
         assert_eq!(
-            locked.directory,
-            directory.join("repositories/github.com/rossmacarthur/sheldon-test")
+            locked.dir,
+            dir.join("repositories/github.com/rossmacarthur/sheldon-test")
         );
         assert_eq!(locked.filename, None)
     }
@@ -1075,8 +1069,8 @@ mod tests {
     #[test]
     fn source_lock_with_remote() {
         let temp = tempfile::tempdir().expect("create temporary directory");
-        let directory = temp.path();
-        let ctx = create_test_context(directory);
+        let dir = temp.path();
+        let ctx = create_test_context(dir);
 
         let source = Source::Remote {
             url: Url::parse("https://github.com/rossmacarthur/sheldon/raw/0.3.0/LICENSE-MIT")
@@ -1085,46 +1079,44 @@ mod tests {
         let locked = source.lock(&ctx).unwrap();
 
         assert_eq!(
-            locked.directory,
-            directory.join("downloads/github.com/rossmacarthur/sheldon/raw/0.3.0")
+            locked.dir,
+            dir.join("downloads/github.com/rossmacarthur/sheldon/raw/0.3.0")
         );
         assert_eq!(
             locked.filename,
-            Some(
-                directory.join("downloads/github.com/rossmacarthur/sheldon/raw/0.3.0/LICENSE-MIT")
-            )
+            Some(dir.join("downloads/github.com/rossmacarthur/sheldon/raw/0.3.0/LICENSE-MIT"))
         );
     }
 
     #[test]
     fn external_plugin_lock_git_with_uses() {
         let temp = tempfile::tempdir().expect("create temporary directory");
-        let directory = temp.path();
-        let ctx = create_test_context(directory);
+        let dir = temp.path();
+        let ctx = create_test_context(dir);
         let plugin = ExternalPlugin {
             name: "test".to_string(),
             source: Source::Git {
                 url: Url::parse("https://github.com/rossmacarthur/sheldon-test").unwrap(),
                 reference: Some(GitReference::Tag("v0.1.0".to_string())),
             },
-            directory: None,
+            dir: None,
             uses: Some(vec!["*.md".into(), "{{ name }}.plugin.zsh".into()]),
             apply: None,
         };
         let locked_source = plugin.source.clone().lock(&ctx).unwrap();
-        let clone_directory = directory.join("repositories/github.com/rossmacarthur/sheldon-test");
+        let clone_dir = dir.join("repositories/github.com/rossmacarthur/sheldon-test");
 
         let locked = plugin
             .lock(&ctx, locked_source, &[], &["hello".into()])
             .unwrap();
 
         assert_eq!(locked.name, String::from("test"));
-        assert_eq!(locked.directory(), clone_directory);
+        assert_eq!(locked.dir(), clone_dir);
         assert_eq!(
             locked.filenames,
             vec![
-                clone_directory.join("README.md"),
-                clone_directory.join("test.plugin.zsh")
+                clone_dir.join("README.md"),
+                clone_dir.join("test.plugin.zsh")
             ]
         );
         assert_eq!(locked.apply, vec![String::from("hello")]);
@@ -1133,20 +1125,20 @@ mod tests {
     #[test]
     fn external_plugin_lock_git_with_matches() {
         let temp = tempfile::tempdir().expect("create temporary directory");
-        let directory = temp.path();
-        let ctx = create_test_context(directory);
+        let dir = temp.path();
+        let ctx = create_test_context(dir);
         let plugin = ExternalPlugin {
             name: "test".to_string(),
             source: Source::Git {
                 url: Url::parse("https://github.com/rossmacarthur/sheldon-test").unwrap(),
                 reference: Some(GitReference::Tag("v0.1.0".to_string())),
             },
-            directory: None,
+            dir: None,
             uses: None,
             apply: None,
         };
         let locked_source = plugin.source.clone().lock(&ctx).unwrap();
-        let clone_directory = directory.join("repositories/github.com/rossmacarthur/sheldon-test");
+        let clone_dir = dir.join("repositories/github.com/rossmacarthur/sheldon-test");
 
         let locked = plugin
             .lock(
@@ -1158,19 +1150,16 @@ mod tests {
             .unwrap();
 
         assert_eq!(locked.name, String::from("test"));
-        assert_eq!(locked.directory(), clone_directory);
-        assert_eq!(
-            locked.filenames,
-            vec![clone_directory.join("test.plugin.zsh")]
-        );
+        assert_eq!(locked.dir(), clone_dir);
+        assert_eq!(locked.filenames, vec![clone_dir.join("test.plugin.zsh")]);
         assert_eq!(locked.apply, vec![String::from("hello")]);
     }
 
     #[test]
     fn external_plugin_lock_remote() {
         let temp = tempfile::tempdir().expect("create temporary directory");
-        let directory = temp.path();
-        let ctx = create_test_context(directory);
+        let dir = temp.path();
+        let ctx = create_test_context(dir);
         let plugin = ExternalPlugin {
             name: "test".to_string(),
             source: Source::Remote {
@@ -1179,32 +1168,28 @@ mod tests {
                 )
                 .unwrap(),
             },
-            directory: None,
+            dir: None,
             uses: None,
             apply: None,
         };
         let locked_source = plugin.source.clone().lock(&ctx).unwrap();
-        let download_directory =
-            directory.join("downloads/github.com/rossmacarthur/sheldon-test/raw/master");
+        let download_dir = dir.join("downloads/github.com/rossmacarthur/sheldon-test/raw/master");
 
         let locked = plugin
             .lock(&ctx, locked_source, &[], &["hello".to_string()])
             .unwrap();
 
         assert_eq!(locked.name, String::from("test"));
-        assert_eq!(locked.directory(), download_directory);
-        assert_eq!(
-            locked.filenames,
-            vec![download_directory.join("test.plugin.zsh")]
-        );
+        assert_eq!(locked.dir(), download_dir);
+        assert_eq!(locked.filenames, vec![download_dir.join("test.plugin.zsh")]);
         assert_eq!(locked.apply, vec![String::from("hello")]);
     }
 
     #[test]
     fn config_lock_empty() {
         let temp = tempfile::tempdir().expect("create temporary directory");
-        let directory = temp.path();
-        let ctx = create_test_context(directory);
+        let dir = temp.path();
+        let ctx = create_test_context(dir);
         let config = Config {
             matches: None,
             apply: None,
@@ -1257,7 +1242,7 @@ mod tests {
                 Plugin::External(ref mut plugin) => {
                     plugin.name = "sheldon-test".to_string();
                     plugin.source = Source::Local {
-                        directory: local_dir.to_path_buf(),
+                        dir: local_dir.to_path_buf(),
                     };
                 }
                 _ => panic!("expected the 3rd plugin to be external"),
@@ -1352,7 +1337,7 @@ ip_netns_prompt_info() {
                     url: Url::parse("git://github.com/rossmacarthur/sheldon-test").unwrap(),
                     reference: None,
                 },
-                directory: None,
+                dir: None,
                 uses: None,
                 apply: None,
             })],

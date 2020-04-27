@@ -86,7 +86,7 @@ pub enum Source {
     /// A remote file.
     Remote { url: Url },
     /// A local directory.
-    Local { directory: PathBuf },
+    Local { dir: PathBuf },
 }
 
 /// The actual plugin configuration.
@@ -114,7 +114,8 @@ pub struct RawPlugin {
     /// Which directory to use in this plugin.
     ///
     /// This directory can contain template parameters.
-    pub directory: Option<String>,
+    #[serde(alias = "directory")]
+    pub dir: Option<String>,
     /// Which files to use in this plugin's directory. If this is `None` then
     /// this will figured out based on the global `matches` field.
     ///
@@ -134,7 +135,7 @@ pub struct ExternalPlugin {
     /// Specifies how to retrieve this plugin.
     pub source: Source,
     /// Which directory to use in this plugin.
-    pub directory: Option<String>,
+    pub dir: Option<String>,
     /// What files to use in the plugin's directory.
     pub uses: Option<Vec<String>>,
     /// What templates to apply to each matched file.
@@ -526,7 +527,7 @@ impl RawPlugin {
             inline,
             proto,
             reference,
-            directory,
+            dir,
             uses,
             apply,
         } = self;
@@ -568,8 +569,8 @@ impl RawPlugin {
                 TempSource::External(Source::Remote { url })
             }
             // `local` type
-            (None, None, None, None, Some(directory), None) => {
-                TempSource::External(Source::Local { directory })
+            (None, None, None, None, Some(dir), None) => {
+                TempSource::External(Source::Local { dir })
             }
             // `inline` type
             (None, None, None, None, None, Some(raw)) => TempSource::Inline(raw),
@@ -597,7 +598,7 @@ impl RawPlugin {
                 Ok(Plugin::External(ExternalPlugin {
                     name,
                     source,
-                    directory,
+                    dir,
                     uses,
                     apply,
                 }))
@@ -606,7 +607,7 @@ impl RawPlugin {
                 let unsupported = [
                     ("`proto` field is", proto.is_some()),
                     ("`branch`, `tag`, and `rev` fields are", is_reference_some),
-                    ("`directory` field is", directory.is_some()),
+                    ("`dir` field is", dir.is_some()),
                     ("`use` field is", uses.is_some()),
                     ("`apply` field is", apply.is_some()),
                 ];
@@ -912,7 +913,7 @@ mod tests {
                 url: url.clone(),
                 reference: None,
             },
-            directory: None,
+            dir: None,
             uses: None,
             apply: None,
         });
@@ -935,7 +936,7 @@ mod tests {
                 url: Url::parse("git://gist.github.com/579d02802b1cc17baed07753d09f5009").unwrap(),
                 reference: None,
             },
-            directory: None,
+            dir: None,
             uses: None,
             apply: None,
         });
@@ -964,7 +965,7 @@ mod tests {
                     .unwrap(),
                 reference: None,
             },
-            directory: None,
+            dir: None,
             uses: None,
             apply: None,
         });
@@ -988,7 +989,7 @@ mod tests {
                     .unwrap(),
                 reference: None,
             },
-            directory: None,
+            dir: None,
             uses: None,
             apply: None,
         });
@@ -1016,7 +1017,7 @@ mod tests {
                 url: Url::parse("git://github.com/rossmacarthur/sheldon-test").unwrap(),
                 reference: None,
             },
-            directory: None,
+            dir: None,
             uses: None,
             apply: None,
         });
@@ -1043,7 +1044,7 @@ mod tests {
                 url: Url::parse("https://github.com/rossmacarthur/sheldon-test").unwrap(),
                 reference: None,
             },
-            directory: None,
+            dir: None,
             uses: None,
             apply: None,
         });
@@ -1069,7 +1070,7 @@ mod tests {
                 url: Url::parse("ssh://git@github.com/rossmacarthur/sheldon-test").unwrap(),
                 reference: None,
             },
-            directory: None,
+            dir: None,
             uses: None,
             apply: None,
         });
@@ -1096,7 +1097,7 @@ mod tests {
         let expected = Plugin::External(ExternalPlugin {
             name: name.clone(),
             source: Source::Remote { url: url.clone() },
-            directory: None,
+            dir: None,
             uses: None,
             apply: None,
         });
@@ -1158,9 +1159,9 @@ mod tests {
         let expected = Plugin::External(ExternalPlugin {
             name: name.clone(),
             source: Source::Local {
-                directory: "/home/temp".into(),
+                dir: "/home/temp".into(),
             },
-            directory: None,
+            dir: None,
             uses: None,
             apply: None,
         });

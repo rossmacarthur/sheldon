@@ -159,12 +159,12 @@ pub mod git {
     }
 
     /// Clone or open a Git repository.
-    pub fn clone_or_open(url: &Url, directory: &Path) -> anyhow::Result<(bool, Repository)> {
+    pub fn clone_or_open(url: &Url, dir: &Path) -> anyhow::Result<(bool, Repository)> {
         with_fetch_options(|opts| {
             let mut cloned = false;
             let repo = match RepoBuilder::new()
                 .fetch_options(opts)
-                .clone(url.as_str(), directory)
+                .clone(url.as_str(), dir)
             {
                 Ok(repo) => {
                     cloned = true;
@@ -172,10 +172,8 @@ pub mod git {
                 }
                 Err(e) => {
                     if e.code() == ErrorCode::Exists {
-                        Repository::open(directory).with_context(s!(
-                            "failed to open repository at `{}`",
-                            directory.display()
-                        ))?
+                        Repository::open(dir)
+                            .with_context(s!("failed to open repository at `{}`", dir.display()))?
                     } else {
                         return Err(e).with_context(s!("failed to git clone `{}`", url));
                     }

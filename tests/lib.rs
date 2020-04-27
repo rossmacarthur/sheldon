@@ -219,11 +219,11 @@ impl RepositoryExt for git2::Repository {
 
 // Check that sheldon-test was in fact cloned.
 fn check_sheldon_test(root: &Path) -> Result<(), git2::Error> {
-    let directory = root.join("repositories/github.com/rossmacarthur/sheldon-test");
-    let filename = directory.join("test.plugin.zsh");
-    assert!(directory.is_dir());
+    let dir = root.join("repositories/github.com/rossmacarthur/sheldon-test");
+    let filename = dir.join("test.plugin.zsh");
+    assert!(dir.is_dir());
     assert!(filename.is_file());
-    let repo = git2::Repository::open(&directory)?;
+    let repo = git2::Repository::open(&dir)?;
     // HEAD is the same as origin/master
     assert_eq!(
         repo.revparse_commit("HEAD")?.id(),
@@ -310,15 +310,15 @@ fn lock_and_source_github_branch() -> io::Result<()> {
     case.run()?;
 
     // Check that sheldon-test@feature was in fact cloned.
-    let directory = case
+    let dir = case
         .root
         .path()
         .join("repositories/github.com/rossmacarthur/sheldon-test");
-    let filename = directory.join("test.plugin.zsh");
-    assert!(directory.is_dir());
+    let filename = dir.join("test.plugin.zsh");
+    assert!(dir.is_dir());
     assert!(filename.is_file());
 
-    let repo = git2::Repository::open(&directory).unwrap();
+    let repo = git2::Repository::open(&dir).unwrap();
     // HEAD is 1 commit ahead of origin/master
     assert_eq!(
         repo.revparse_commit("HEAD~1").unwrap().id(),
@@ -336,14 +336,14 @@ fn lock_and_source_github_submodule() -> io::Result<()> {
     case.run()?;
 
     // Check that sheldon-test@recursive-recursive was in fact cloned.
-    let directory = case
+    let dir = case
         .root
         .path()
         .join("repositories/github.com/rossmacarthur/sheldon-test");
-    let filename = directory.join("test.plugin.zsh");
-    assert!(directory.is_dir());
+    let filename = dir.join("test.plugin.zsh");
+    assert!(dir.is_dir());
     assert!(filename.is_file());
-    let repo = git2::Repository::open(&directory).unwrap();
+    let repo = git2::Repository::open(&dir).unwrap();
     // HEAD is 2 commits head of origin/master
     assert_eq!(
         repo.revparse_commit("HEAD~2").unwrap().id(),
@@ -353,11 +353,11 @@ fn lock_and_source_github_submodule() -> io::Result<()> {
     assert!(repo.status().unwrap().is_empty());
 
     // Check that sheldon-test@recursive submodule self was in fact cloned.
-    let directory = directory.join("self");
-    let filename = directory.join("test.plugin.zsh");
-    assert!(directory.is_dir());
+    let dir = dir.join("self");
+    let filename = dir.join("test.plugin.zsh");
+    assert!(dir.is_dir());
     assert!(filename.is_file());
-    let repo = git2::Repository::open(&directory).unwrap();
+    let repo = git2::Repository::open(&dir).unwrap();
     // HEAD is 1 commits head of origin/master
     assert_eq!(
         repo.revparse_commit("HEAD~1").unwrap().id(),
@@ -367,11 +367,11 @@ fn lock_and_source_github_submodule() -> io::Result<()> {
     assert!(repo.status().unwrap().is_empty());
 
     // Check that sheldon-test submodule was in fact cloned.
-    let directory = directory.join("self");
-    let filename = directory.join("test.plugin.zsh");
-    assert!(directory.is_dir());
+    let dir = dir.join("self");
+    let filename = dir.join("test.plugin.zsh");
+    assert!(dir.is_dir());
     assert!(filename.is_file());
-    let repo = git2::Repository::open(&directory).unwrap();
+    let repo = git2::Repository::open(&dir).unwrap();
     // HEAD is origin/master
     assert_eq!(
         repo.revparse_commit("HEAD").unwrap().id(),

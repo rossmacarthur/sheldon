@@ -269,9 +269,8 @@ github = "sindresorhus/pure"
 proto = "ssh"
 ```
 
-For a plain Git source you should specify the URL with a `git://` or `ssh://`
-protocol. For SSH you will need to specify the username as well (it is `git` for
-GitHub).
+For a plain Git source you should specify the URL with a `git://` or `ssh://` «.
+For SSH you will need to specify the username as well (it is `git` for GitHub).
 
 ```toml
 [plugins.pure]
@@ -295,7 +294,7 @@ remote = "https://github.com/rossmacarthur/pure/raw/master/pure.zsh"
 ### Local
 
 Local sources reference local directories. A Local source must set the `local`
-field and specify a `directory`. Tildes may be used and will be expanded to the
+field and specify a directory. Tildes may be used and will be expanded to the
 current user's home directory.
 
 ```toml
@@ -366,10 +365,10 @@ As template strings they could be represented like this
 ```toml
 [templates]
 source = { value = 'source "{{ filename }}"', each = true }
-PATH = 'export PATH="{{ directory }}:$PATH"'
-FPATH = 'export FPATH="{{ directory }}:$FPATH"'
-path = 'path=( "{{ directory }}" $path )'
-fpath = 'fpath=( "{{ directory }}" $fpath )'
+PATH = 'export PATH="{{ dir }}:$PATH"'
+FPATH = 'export FPATH="{{ dir }}:$FPATH"'
+path = 'path=( "{{ dir }}" $path )'
+fpath = 'fpath=( "{{ dir }}" $fpath )'
 ```
 
 For example if we change the `apply` field for the below plugin, it will only
@@ -398,8 +397,8 @@ Plugins all have the following information that can be used in templates
   for the plugin in the plugins table. However, it is often the name of the
   plugin, so it can be useful to use this name in templates with `{{ name }}`.
 - **A directory.** In git sources this is the location of the cloned repository,
-  for local sources, it is the `directory` specified. This `directory` can be
-  used in templates with `{{ directory }}`.
+  for local sources, it is the directory specified. This directory can be used
+  in templates with `{{ dir }}`.
 - **Zero or more filenames.** These are the matched files in the plugin
   directory either discovered using the the global `match` field or specified as
   a plugin option with `use`. These can be used in templates using `{{ filename
@@ -435,7 +434,7 @@ do this like this
 
 ```toml
 [templates]
-PATH = 'export PATH="$PATH:{{ directory }}"'
+PATH = 'export PATH="$PATH:{{ dir }}"'
 ```
 
 You can then apply it to the plugin like this
