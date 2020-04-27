@@ -220,9 +220,9 @@ impl RepositoryExt for git2::Repository {
 // Check that sheldon-test was in fact cloned.
 fn check_sheldon_test(root: &Path) -> Result<(), git2::Error> {
     let dir = root.join("repositories/github.com/rossmacarthur/sheldon-test");
-    let filename = dir.join("test.plugin.zsh");
+    let file = dir.join("test.plugin.zsh");
     assert!(dir.is_dir());
-    assert!(filename.is_file());
+    assert!(file.is_file());
     let repo = git2::Repository::open(&dir)?;
     // HEAD is the same as origin/master
     assert_eq!(
@@ -314,9 +314,9 @@ fn lock_and_source_github_branch() -> io::Result<()> {
         .root
         .path()
         .join("repositories/github.com/rossmacarthur/sheldon-test");
-    let filename = dir.join("test.plugin.zsh");
+    let file = dir.join("test.plugin.zsh");
     assert!(dir.is_dir());
-    assert!(filename.is_file());
+    assert!(file.is_file());
 
     let repo = git2::Repository::open(&dir).unwrap();
     // HEAD is 1 commit ahead of origin/master
@@ -340,9 +340,9 @@ fn lock_and_source_github_submodule() -> io::Result<()> {
         .root
         .path()
         .join("repositories/github.com/rossmacarthur/sheldon-test");
-    let filename = dir.join("test.plugin.zsh");
+    let file = dir.join("test.plugin.zsh");
     assert!(dir.is_dir());
-    assert!(filename.is_file());
+    assert!(file.is_file());
     let repo = git2::Repository::open(&dir).unwrap();
     // HEAD is 2 commits head of origin/master
     assert_eq!(
@@ -354,9 +354,9 @@ fn lock_and_source_github_submodule() -> io::Result<()> {
 
     // Check that sheldon-test@recursive submodule self was in fact cloned.
     let dir = dir.join("self");
-    let filename = dir.join("test.plugin.zsh");
+    let file = dir.join("test.plugin.zsh");
     assert!(dir.is_dir());
-    assert!(filename.is_file());
+    assert!(file.is_file());
     let repo = git2::Repository::open(&dir).unwrap();
     // HEAD is 1 commits head of origin/master
     assert_eq!(
@@ -368,9 +368,9 @@ fn lock_and_source_github_submodule() -> io::Result<()> {
 
     // Check that sheldon-test submodule was in fact cloned.
     let dir = dir.join("self");
-    let filename = dir.join("test.plugin.zsh");
+    let file = dir.join("test.plugin.zsh");
     assert!(dir.is_dir());
-    assert!(filename.is_file());
+    assert!(file.is_file());
     let repo = git2::Repository::open(&dir).unwrap();
     // HEAD is origin/master
     assert_eq!(

@@ -354,7 +354,7 @@ variable. A plugin will apply a template if you add the template name to the
 
 Available built in templates are
 
-- **source**: source each filename in a plugin.
+- **source**: source each file in a plugin.
 - **PATH**: add the plugin directory to the `PATH` variable.
 - **FPATH**: add the plugin directory to the `FPATH` variable.
 - **path**: add the plugin directory to the `path` variable.
@@ -364,7 +364,7 @@ As template strings they could be represented like this
 
 ```toml
 [templates]
-source = { value = 'source "{{ filename }}"', each = true }
+source = { value = 'source "{{ file }}"', each = true }
 PATH = 'export PATH="{{ dir }}:$PATH"'
 FPATH = 'export FPATH="{{ dir }}:$FPATH"'
 path = 'path=( "{{ dir }}" $path )'
@@ -383,8 +383,8 @@ apply = ["PATH", "fpath"]
 ```
 
 The `each` value, as used in the `source` template above, specifies that the
-template should be applied to each matched filename for the plugin. This
-defaults to `false`.
+template should be applied to each matched file for the plugin. This defaults to
+`false`.
 
 ### Custom templates
 
@@ -399,10 +399,9 @@ Plugins all have the following information that can be used in templates
 - **A directory.** In git sources this is the location of the cloned repository,
   for local sources, it is the directory specified. This directory can be used
   in templates with `{{ dir }}`.
-- **Zero or more filenames.** These are the matched files in the plugin
-  directory either discovered using the the global `match` field or specified as
-  a plugin option with `use`. These can be used in templates using `{{ filename
-  }}`.
+- **Zero or more files.** These are the matched files in the plugin directory
+  either discovered using the the global `match` field or specified as a plugin
+  option with `use`. These can be used in templates using `{{ file }}`.
 
 You can use the following global information in templates
 
@@ -415,7 +414,7 @@ directory. We could create a new template with name **function**, like this
 
 ```toml
 [templates]
-function = { value = 'ln -sf "{{ filename }}" "~/.zsh/functions/{{ name }}"', each = true }
+function = { value = 'ln -sf "{{ file }}" "~/.zsh/functions/{{ name }}"', each = true }
 ```
 
 It can then be applied to the plugin like this

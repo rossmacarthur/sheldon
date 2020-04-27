@@ -1,7 +1,7 @@
 //! Plugin installation.
 //!
 //! This module handles the downloading of `Source`s and figuring out which
-//! filenames to use for `Plugins`.
+//! files to use for `Plugins`.
 
 use std::{
     cmp,
@@ -55,7 +55,7 @@ lazy_static! {
         "PATH" => "export PATH=\"{{ dir }}:$PATH\"",
         "path" => "path=( \"{{ dir }}\" $path )",
         "fpath" => "fpath=( \"{{ dir }}\" $fpath )",
-        "source" => Template::from("source \"{{ filename }}\"").each(true)
+        "source" => Template::from("source \"{{ file }}\"").each(true)
     };
 }
 
@@ -72,8 +72,8 @@ struct LockedGitReference(git2::Oid);
 struct LockedSource {
     /// The clone or download directory.
     dir: PathBuf,
-    /// The download filename.
-    filename: Option<PathBuf>,
+    /// The downloaded file.
+    file: Option<PathBuf>,
 }
 
 /// A locked `ExternalPlugin`.
@@ -85,9 +85,9 @@ struct LockedExternalPlugin {
     source_dir: PathBuf,
     /// The directory that this plugin resides in (inside the source directory).
     plugin_dir: Option<PathBuf>,
-    /// The filenames to use in the plugin directory.
-    filenames: Vec<PathBuf>,
-    /// What templates to apply to each filename.
+    /// The files to use in the plugin directory.
+    files: Vec<PathBuf>,
+    /// What templates to apply to each file.
     apply: Vec<String>,
 }
 
@@ -188,45 +188,36 @@ impl Source {
         // Recursively update Git submodules.
         git::submodule_update(&repo).context("failed to recursively update submodules")?;
 
-        Ok(LockedSource {
-            dir,
-            filename: None,
-        })
+        Ok(LockedSource { dir, file: None })
     }
 
     /// Downloads a Remote source.
-    fn lock_remote(
-        ctx: &Context,
-        dir: PathBuf,
-        filename: PathBuf,
-        url: Url,
-    ) -> Result<LockedSource> {
+    fn lock_remote(ctx: &Context, dir: PathBuf, file: PathBuf, url: Url) -> Result<LockedSource> {
         if ctx.reinstall {
-            if let Err(e) = fs::remove_file(&filename) {
+            if let Err(e) = fs::remove_file(&file) {
                 if e.kind() != io::ErrorKind::NotFound {
-                    return Err(e)
-                        .with_context(s!("failed to remove filename `{}`", &filename.display()));
+                    return Err(e).with_context(s!("failed to remove file `{}`", &file.display()));
                 }
             }
         }
 
-        if filename.exists() {
+        if file.exists() {
             status!(ctx, "Checked", &url);
         } else {
             fs::create_dir_all(&dir)
                 .with_context(s!("failed to create dir `{}`", dir.display()))?;
             let mut response = reqwest::blocking::get(url.clone())
                 .with_context(s!("failed to download `{}`", url))?;
-            let mut out = fs::File::create(&filename)
-                .with_context(s!("failed to create `{}`", filename.display()))?;
+            let mut out = fs::File::create(&file)
+                .with_context(s!("failed to create `{}`", file.display()))?;
             io::copy(&mut response, &mut out)
-                .with_context(s!("failed to copy contents to `{}`", filename.display()))?;
+                .with_context(s!("failed to copy contents to `{}`", file.display()))?;
             status!(ctx, "Fetched", &url);
         }
 
         Ok(LockedSource {
             dir,
-            filename: Some(filename),
+            file: Some(file),
         })
     }
 
@@ -249,10 +240,7 @@ impl Source {
             if directories.len() == 1 {
                 let dir = directories.remove(0);
                 status!(ctx, "Checked", dir.as_path());
-                Ok(LockedSource {
-                    dir,
-                    filename: None,
-                })
+                Ok(LockedSource { dir, file: None })
             } else {
                 Err(anyhow!(
                     "`{}` matches {} directories",
@@ -265,10 +253,7 @@ impl Source {
             .is_dir()
         {
             status!(ctx, "Checked", dir.as_path());
-            Ok(LockedSource {
-                dir,
-                filename: None,
-            })
+            Ok(LockedSource { dir, file: None })
         } else {
             Err(anyhow!("`{}` is not a dir", dir.display()))
         }
@@ -300,9 +285,9 @@ impl Source {
                 let (base, rest) = segments.split_last().unwrap();
                 let base = if *base == "" { "index" } else { *base };
                 dir.push(rest.iter().collect::<PathBuf>());
-                let filename = dir.join(base);
+                let file = dir.join(base);
 
-                Self::lock_remote(ctx, dir, filename, url)
+                Self::lock_remote(ctx, dir, file, url)
             }
             Self::Local { dir } => Self::lock_local(ctx, dir),
         }
@@ -310,14 +295,14 @@ impl Source {
 }
 
 impl ExternalPlugin {
-    fn match_globs(pattern: PathBuf, filenames: &mut Vec<PathBuf>) -> Result<bool> {
+    fn match_globs(pattern: PathBuf, files: &mut Vec<PathBuf>) -> Result<bool> {
         let mut matched = false;
         let pattern = pattern.to_string_lossy();
         let paths: glob::Paths =
             glob::glob(&pattern).with_context(s!("failed to parse glob pattern `{}`", &pattern))?;
 
         for path in paths {
-            filenames.push(
+            files.push(
                 path.with_context(s!("failed to read path matched by pattern `{}`", &pattern))?,
             );
             matched = true;
@@ -335,12 +320,12 @@ impl ExternalPlugin {
         apply: &[String],
     ) -> Result<LockedExternalPlugin> {
         Ok(if let Source::Remote { .. } = self.source {
-            let LockedSource { dir, filename } = source;
+            let LockedSource { dir, file } = source;
             LockedExternalPlugin {
                 name: self.name,
                 source_dir: dir,
                 plugin_dir: None,
-                filenames: vec![filename.unwrap()],
+                files: vec![file.unwrap()],
                 apply: self.apply.unwrap_or_else(|| apply.to_vec()),
             }
         } else {
@@ -373,7 +358,7 @@ impl ExternalPlugin {
             data.insert("dir", dir_as_str);
             data.insert("directory", dir_as_str);
 
-            let mut filenames = Vec::new();
+            let mut files = Vec::new();
 
             // If the plugin defined what files to use, we do all of them.
             if let Some(uses) = &self.uses {
@@ -382,7 +367,7 @@ impl ExternalPlugin {
                         .render_template(u, &data)
                         .with_context(s!("failed to render template `{}`", u))?;
                     let pattern = dir.join(&rendered);
-                    if !Self::match_globs(pattern, &mut filenames)? {
+                    if !Self::match_globs(pattern, &mut files)? {
                         bail!("failed to find any files matching `{}`", &rendered);
                     };
                 }
@@ -393,7 +378,7 @@ impl ExternalPlugin {
                         .render_template(g, &data)
                         .with_context(s!("failed to render template `{}`", g))?;
                     let pattern = dir.join(rendered);
-                    if Self::match_globs(pattern, &mut filenames)? {
+                    if Self::match_globs(pattern, &mut files)? {
                         break;
                     }
                 }
@@ -403,7 +388,7 @@ impl ExternalPlugin {
                 name: self.name,
                 source_dir,
                 plugin_dir,
-                filenames,
+                files,
                 apply: self.apply.unwrap_or_else(|| apply.to_vec()),
             }
         })
@@ -562,8 +547,8 @@ impl LockedConfig {
                     if !plugin.dir().exists() {
                         return false;
                     }
-                    for filename in &plugin.filenames {
-                        if !filename.exists() {
+                    for file in &plugin.files {
+                        if !file.exists() {
                             return false;
                         }
                     }
@@ -605,16 +590,16 @@ impl LockedConfig {
         }
 
         // Track the source directories, all the plugin directory parents, and all the
-        // plugin filenames.
+        // plugin files.
         let mut source_dirs = HashSet::new();
         let mut parent_dirs = HashSet::new();
-        let mut filenames = HashSet::new();
+        let mut files = HashSet::new();
         for plugin in &self.plugins {
             if let LockedPlugin::External(locked) = plugin {
                 source_dirs.insert(locked.source_dir.as_path());
                 parent_dirs.extend(locked.dir().ancestors());
-                filenames.extend(locked.filenames.iter().filter_map(|f| {
-                    // `filenames` is only used when filtering the download directory
+                files.extend(locked.files.iter().filter_map(|f| {
+                    // `files` is only used when filtering the download directory
                     if f.starts_with(self.settings.download_dir()) {
                         Some(f.as_path())
                     } else {
@@ -645,7 +630,7 @@ impl LockedConfig {
                 .filter_map(result::Result::ok)
                 .filter(|e| {
                     let p = e.path();
-                    !filenames.contains(p) && !parent_dirs.contains(p)
+                    !files.contains(p) && !parent_dirs.contains(p)
                 })
             {
                 if let Err(err) = Self::remove_path(ctx, entry.path()) {
@@ -702,13 +687,11 @@ impl LockedConfig {
                         };
 
                         if templates_map.get(name.as_str()).unwrap().each {
-                            for filename in &plugin.filenames {
-                                data.insert(
-                                    "filename",
-                                    filename
-                                        .to_str()
-                                        .context("plugin filename is not valid UTF-8")?,
-                                );
+                            for file in &plugin.files {
+                                let as_str =
+                                    file.to_str().context("plugin file is not valid UTF-8")?;
+                                data.insert("file", as_str);
+                                data.insert("filename", as_str);
                                 script.push_str(
                                     &templates
                                         .render(name, &data)
@@ -813,8 +796,8 @@ mod tests {
         }
     }
 
-    fn read_file_contents(filename: &Path) -> io::Result<String> {
-        let mut file = fs::File::open(filename)?;
+    fn read_file_contents(file: &Path) -> io::Result<String> {
+        let mut file = fs::File::open(file)?;
         let mut contents = String::new();
         file.read_to_string(&mut contents)?;
         Ok(contents)
@@ -929,7 +912,7 @@ mod tests {
         let locked = Source::lock_git(&ctx, dir.to_path_buf(), url.clone(), None).unwrap();
 
         assert_eq!(locked.dir, dir);
-        assert_eq!(locked.filename, None);
+        assert_eq!(locked.file, None);
         let repo = git2::Repository::open(&dir).unwrap();
         assert_eq!(
             repo.head().unwrap().target().unwrap().to_string(),
@@ -942,7 +925,7 @@ mod tests {
         let locked = Source::lock_git(&ctx, dir.to_path_buf(), url, None).unwrap();
 
         assert_eq!(locked.dir, dir);
-        assert_eq!(locked.filename, None);
+        assert_eq!(locked.file, None);
         let repo = git2::Repository::open(&dir).unwrap();
         assert_eq!(
             repo.head().unwrap().target().unwrap().to_string(),
@@ -967,7 +950,7 @@ mod tests {
         .unwrap();
 
         assert_eq!(locked.dir, dir);
-        assert_eq!(locked.filename, None);
+        assert_eq!(locked.file, None);
         let repo = git2::Repository::open(&dir).unwrap();
         let head = repo.head().unwrap();
         assert_eq!(
@@ -992,7 +975,7 @@ mod tests {
         .unwrap();
 
         assert_eq!(locked.dir, dir);
-        assert_eq!(locked.filename, None);
+        assert_eq!(locked.file, None);
         let repo = git2::Repository::open(&dir).unwrap();
         let head = repo.head().unwrap();
         assert_eq!(
@@ -1006,33 +989,33 @@ mod tests {
         let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         let temp = tempfile::tempdir().expect("create temporary directory");
         let dir = temp.path();
-        let filename = dir.join("test.txt");
+        let file = dir.join("test.txt");
         let mut ctx = create_test_context(dir);
         let url =
             Url::parse("https://github.com/rossmacarthur/sheldon/raw/0.3.0/LICENSE-MIT").unwrap();
 
         let locked =
-            Source::lock_remote(&ctx, dir.to_path_buf(), filename.clone(), url.clone()).unwrap();
+            Source::lock_remote(&ctx, dir.to_path_buf(), file.clone(), url.clone()).unwrap();
 
         assert_eq!(locked.dir, dir);
-        assert_eq!(locked.filename, Some(filename.clone()));
+        assert_eq!(locked.file, Some(file.clone()));
         assert_eq!(
-            read_file_contents(&filename).unwrap(),
+            read_file_contents(&file).unwrap(),
             read_file_contents(&manifest_dir.join("LICENSE-MIT")).unwrap()
         );
 
-        let modified = fs::metadata(&filename).unwrap().modified().unwrap();
+        let modified = fs::metadata(&file).unwrap().modified().unwrap();
         thread::sleep(time::Duration::from_secs(1));
         ctx.reinstall = true;
-        let locked = Source::lock_remote(&ctx, dir.to_path_buf(), filename.clone(), url).unwrap();
+        let locked = Source::lock_remote(&ctx, dir.to_path_buf(), file.clone(), url).unwrap();
 
         assert_eq!(locked.dir, dir);
-        assert_eq!(locked.filename, Some(filename.clone()));
+        assert_eq!(locked.file, Some(file.clone()));
         assert_eq!(
-            read_file_contents(&filename).unwrap(),
+            read_file_contents(&file).unwrap(),
             read_file_contents(&manifest_dir.join("LICENSE-MIT")).unwrap()
         );
-        assert!(fs::metadata(&filename).unwrap().modified().unwrap() > modified)
+        assert!(fs::metadata(&file).unwrap().modified().unwrap() > modified)
     }
 
     #[test]
@@ -1044,7 +1027,7 @@ mod tests {
         let locked = Source::lock_local(&create_test_context(dir), dir.to_path_buf()).unwrap();
 
         assert_eq!(locked.dir, dir);
-        assert_eq!(locked.filename, None);
+        assert_eq!(locked.file, None);
     }
 
     #[test]
@@ -1063,7 +1046,7 @@ mod tests {
             locked.dir,
             dir.join("repositories/github.com/rossmacarthur/sheldon-test")
         );
-        assert_eq!(locked.filename, None)
+        assert_eq!(locked.file, None)
     }
 
     #[test]
@@ -1083,7 +1066,7 @@ mod tests {
             dir.join("downloads/github.com/rossmacarthur/sheldon/raw/0.3.0")
         );
         assert_eq!(
-            locked.filename,
+            locked.file,
             Some(dir.join("downloads/github.com/rossmacarthur/sheldon/raw/0.3.0/LICENSE-MIT"))
         );
     }
@@ -1113,7 +1096,7 @@ mod tests {
         assert_eq!(locked.name, String::from("test"));
         assert_eq!(locked.dir(), clone_dir);
         assert_eq!(
-            locked.filenames,
+            locked.files,
             vec![
                 clone_dir.join("README.md"),
                 clone_dir.join("test.plugin.zsh")
@@ -1151,7 +1134,7 @@ mod tests {
 
         assert_eq!(locked.name, String::from("test"));
         assert_eq!(locked.dir(), clone_dir);
-        assert_eq!(locked.filenames, vec![clone_dir.join("test.plugin.zsh")]);
+        assert_eq!(locked.files, vec![clone_dir.join("test.plugin.zsh")]);
         assert_eq!(locked.apply, vec![String::from("hello")]);
     }
 
@@ -1181,7 +1164,7 @@ mod tests {
 
         assert_eq!(locked.name, String::from("test"));
         assert_eq!(locked.dir(), download_dir);
-        assert_eq!(locked.filenames, vec![download_dir.join("test.plugin.zsh")]);
+        assert_eq!(locked.files, vec![download_dir.join("test.plugin.zsh")]);
         assert_eq!(locked.apply, vec![String::from("hello")]);
     }
 
@@ -1259,23 +1242,21 @@ mod tests {
                     name: "async".to_string(),
                     source_dir: root.join("repositories/github.com/mafredri/zsh-async"),
                     plugin_dir: None,
-                    filenames: vec![
-                        root.join("repositories/github.com/mafredri/zsh-async/async.zsh")
-                    ],
+                    files: vec![root.join("repositories/github.com/mafredri/zsh-async/async.zsh")],
                     apply: vec_into!["function"]
                 }),
                 LockedPlugin::External(LockedExternalPlugin {
                     name: "pure".to_string(),
                     source_dir: root.join("repositories/github.com/sindresorhus/pure"),
                     plugin_dir: None,
-                    filenames: vec![root.join("repositories/github.com/sindresorhus/pure/pure.zsh")],
+                    files: vec![root.join("repositories/github.com/sindresorhus/pure/pure.zsh")],
                     apply: vec_into!["prompt"]
                 }),
                 LockedPlugin::External(LockedExternalPlugin {
                     name: "sheldon-test".to_string(),
                     source_dir: local_dir.to_path_buf(),
                     plugin_dir: None,
-                    filenames: vec![root.join(local_dir.join("test.plugin.zsh"))],
+                    files: vec![root.join(local_dir.join("test.plugin.zsh"))],
                     apply: vec_into!["PATH", "source"]
                 }),
                 LockedPlugin::Inline(InlinePlugin {
@@ -1296,7 +1277,7 @@ ip_netns_prompt_info() {
                     name: "docker-destroy-all".to_string(),
                     source_dir: root.join("repositories/gist.github.com/79ee61f7c140c63d2786"),
                     plugin_dir: None,
-                    filenames: vec![root.join(
+                    files: vec![root.join(
                         "repositories/gist.github.com/79ee61f7c140c63d2786/get_last_pane_path.sh"
                     )],
                     apply: vec_into!["PATH"]
@@ -1307,12 +1288,12 @@ ip_netns_prompt_info() {
             locked.templates,
             indexmap_into![
                 "function" => Template {
-                    value: "ln -sf \"{{ filename }}\" \"{{ root }}/functions/{{ name }}\"".to_string(),
+                    value: "ln -sf \"{{ file }}\" \"{{ root }}/functions/{{ name }}\"".to_string(),
                     each: true
                 },
                 "prompt" => Template {
                     value:
-                        "ln -sf \"{{ filename }}\" \"{{ root }}/functions/prompt_{{ name }}_setup\"".to_string(),
+                        "ln -sf \"{{ file }}\" \"{{ root }}/functions/prompt_{{ name }}_setup\"".to_string(),
                     each: true
                 }
             ]

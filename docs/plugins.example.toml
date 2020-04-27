@@ -16,8 +16,8 @@ apply = ["PATH", "source"]
 # Custom user defined templates, the `each` field means that these will be
 # applied for all matched files.
 [templates]
-function = { value = 'ln -sf "{{ filename }}" "{{ root }}/functions/{{ name }}"', each = true }
-prompt = { value = 'ln -sf "{{ filename }}" "{{ root }}/functions/prompt_{{ name }}_setup"', each = true }
+function = { value = 'ln -sf "{{ file }}" "{{ root }}/functions/{{ name }}"', each = true }
+prompt = { value = 'ln -sf "{{ file }}" "{{ root }}/functions/prompt_{{ name }}_setup"', each = true }
 
 [plugins.async]
 # `github` sources provide the repository in the form {username}/{repository}.

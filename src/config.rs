@@ -33,7 +33,7 @@ const GITHUB_HOST: &str = "github.com";
 pub struct Template {
     /// The actual template string.
     pub value: String,
-    /// Whether this template should be applied to each filename.
+    /// Whether this template should be applied to each file.
     pub each: bool,
 }
 
@@ -119,7 +119,7 @@ pub struct RawPlugin {
     /// Which files to use in this plugin's directory. If this is `None` then
     /// this will figured out based on the global `matches` field.
     ///
-    /// These filenames can contain template parameters.
+    /// These files can contain template parameters.
     #[serde(rename = "use")]
     pub uses: Option<Vec<String>>,
     /// What templates to apply to each matched file. If this is `None` then the
@@ -479,7 +479,7 @@ fn validate_template_names(
 }
 
 impl Template {
-    /// Set whether this `Template` should be applied to every filename.
+    /// Set whether this `Template` should be applied to every file.
     pub fn each(mut self, each: bool) -> Self {
         self.each = each;
         self
