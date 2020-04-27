@@ -106,7 +106,8 @@ pub struct RawPlugin {
     /// An inline script.
     pub inline: Option<String>,
     /// What protocol to use when cloning a repository.
-    pub protocol: Option<GitProtocol>,
+    #[serde(alias = "protocol")]
+    pub proto: Option<GitProtocol>,
     /// The Git reference to checkout.
     #[serde(flatten)]
     pub reference: Option<GitReference>,
@@ -523,7 +524,7 @@ impl RawPlugin {
             remote,
             local,
             inline,
-            protocol,
+            proto,
             reference,
             directory,
             uses,
@@ -542,7 +543,7 @@ impl RawPlugin {
             (None, Some(repository), None, None, None, None) => {
                 let url_str = format!(
                     "{}{}/{}",
-                    protocol.unwrap_or(GitProtocol::Https).prefix(),
+                    proto.unwrap_or(GitProtocol::Https).prefix(),
                     GIST_HOST,
                     repository.identifier
                 );
@@ -554,7 +555,7 @@ impl RawPlugin {
             (None, None, Some(repository), None, None, None) => {
                 let url_str = format!(
                     "{}{}/{}",
-                    protocol.unwrap_or(GitProtocol::Https).prefix(),
+                    proto.unwrap_or(GitProtocol::Https).prefix(),
                     GITHUB_HOST,
                     repository
                 );
@@ -587,8 +588,8 @@ impl RawPlugin {
                         "the `branch`, `tag`, and `rev` fields are not supported by this plugin \
                          type"
                     );
-                } else if protocol.is_some() && !is_gist_or_github {
-                    bail!("the `protocol` field is not supported by this plugin type");
+                } else if proto.is_some() && !is_gist_or_github {
+                    bail!("the `proto` field is not supported by this plugin type");
                 }
 
                 validate_template_names(&apply, templates)?;
@@ -603,7 +604,7 @@ impl RawPlugin {
             }
             TempSource::Inline(raw) => {
                 let unsupported = [
-                    ("`protocol` field is", protocol.is_some()),
+                    ("`proto` field is", proto.is_some()),
                     ("`branch`, `tag`, and `rev` fields are", is_reference_some),
                     ("`directory` field is", directory.is_some()),
                     ("`use` field is", uses.is_some()),
@@ -944,7 +945,7 @@ mod tests {
                     .parse()
                     .unwrap(),
             ),
-            protocol: Some(GitProtocol::Git),
+            proto: Some(GitProtocol::Git),
             ..Default::default()
         };
         assert_eq!(
@@ -997,7 +998,7 @@ mod tests {
                     .parse()
                     .unwrap(),
             ),
-            protocol: Some(GitProtocol::Ssh),
+            proto: Some(GitProtocol::Ssh),
             ..Default::default()
         };
         assert_eq!(
@@ -1024,7 +1025,7 @@ mod tests {
                 owner: "rossmacarthur".to_string(),
                 name: "sheldon-test".to_string(),
             }),
-            protocol: Some(GitProtocol::Git),
+            proto: Some(GitProtocol::Git),
             ..Default::default()
         };
         assert_eq!(
@@ -1077,7 +1078,7 @@ mod tests {
                 owner: "rossmacarthur".to_string(),
                 name: "sheldon-test".to_string(),
             }),
-            protocol: Some(GitProtocol::Ssh),
+            proto: Some(GitProtocol::Ssh),
             ..Default::default()
         };
         assert_eq!(
@@ -1139,7 +1140,7 @@ mod tests {
                 )
                 .unwrap(),
             ),
-            protocol: Some(GitProtocol::Https),
+            proto: Some(GitProtocol::Https),
             ..Default::default()
         };
         let error = raw_plugin
@@ -1147,7 +1148,7 @@ mod tests {
             .unwrap_err();
         assert_eq!(
             error.to_string(),
-            "the `protocol` field is not supported by this plugin type"
+            "the `proto` field is not supported by this plugin type"
         );
     }
 

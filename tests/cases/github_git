@@ -1,7 +1,7 @@
 # plugins.toml
 [plugins.test]
 github = "rossmacarthur/sheldon-test"
-protocol = "git"
+proto = "git"
 
 # plugins.lock
 version = "<version>"

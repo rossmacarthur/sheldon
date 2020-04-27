@@ -260,13 +260,13 @@ tag = "1.9.0"
 #### Cloning with Git or SSH protocols
 
 GitHub and Gist sources are cloned using HTTPS by default. You can specify that
-Git or SSH should be used by setting the `protocol` field to the protocol type.
+Git or SSH should be used by setting the `proto` field to the protocol type.
 This must be one of `git`, `https`, or `ssh`.
 
 ```toml
 [plugins.pure]
 github = "sindresorhus/pure"
-protocol = "ssh"
+proto = "ssh"
 ```
 
 For a plain Git source you should specify the URL with a `git://` or `ssh://`

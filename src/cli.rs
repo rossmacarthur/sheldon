@@ -57,7 +57,7 @@ struct Add {
 
     /// The Git protocol for a Gist or GitHub plugin.
     #[structopt(long, value_name = "PROTO", conflicts_with_all = &["git", "remote", "local"])]
-    protocol: Option<GitProtocol>,
+    proto: Option<GitProtocol>,
 
     /// Checkout the tip of a branch.
     #[structopt(
@@ -210,7 +210,7 @@ impl Plugin {
             github,
             remote,
             local,
-            protocol,
+            proto,
             branch,
             rev,
             tag,
@@ -238,7 +238,7 @@ impl Plugin {
                 remote,
                 local,
                 inline: None,
-                protocol,
+                proto,
                 reference,
                 directory,
                 uses,
@@ -520,7 +520,7 @@ OPTIONS:
         --github <REPO>          Add a clonable GitHub repository
         --remote <URL>           Add a downloadable file
         --local <DIR>            Add a local directory
-        --protocol <PROTO>       The Git protocol for a Gist or GitHub plugin
+        --proto <PROTO>          The Git protocol for a Gist or GitHub plugin
         --branch <BRANCH>        Checkout the tip of a branch
         --rev <SHA>              Checkout a specific commit
         --tag <TAG>              Checkout a specific tag
@@ -579,7 +579,7 @@ ARGS:
                 github: None,
                 remote: None,
                 local: None,
-                protocol: None,
+                proto: None,
                 branch: None,
                 rev: Some("ad149784a1538291f2477fb774eeeed4f4d29e45".into()),
                 tag: None,
@@ -601,7 +601,7 @@ ARGS:
                 "579d02802b1cc17baed07753d09f5009",
                 "--tag",
                 "0.1.0",
-                "--protocol",
+                "--proto",
                 "ssh",
                 "--directory",
                 "missing",
@@ -620,7 +620,7 @@ ARGS:
                 github: None,
                 remote: None,
                 local: None,
-                protocol: Some("ssh".parse().unwrap()),
+                proto: Some("ssh".parse().unwrap()),
                 branch: None,
                 rev: None,
                 tag: Some("0.1.0".into()),
@@ -642,7 +642,7 @@ ARGS:
                 "rossmacarthur/sheldon-test",
                 "--branch",
                 "feature",
-                "--protocol",
+                "--proto",
                 "https",
                 "--directory",
                 "missing",
@@ -661,7 +661,7 @@ ARGS:
                 github: Some("rossmacarthur/sheldon-test".parse().unwrap()),
                 remote: None,
                 local: None,
-                protocol: Some("https".parse().unwrap()),
+                proto: Some("https".parse().unwrap()),
                 branch: Some("feature".into()),
                 rev: None,
                 tag: None,
@@ -696,7 +696,7 @@ ARGS:
                 github: None,
                 remote: Some("https://raw.githubusercontent.com/rossmacarthur/sheldon-test/master/test.plugin.zsh".parse().unwrap()),
                 local: None,
-                protocol: None,
+                proto: None,
                 branch: None,
                 rev: None,
                 tag: None,
@@ -731,7 +731,7 @@ ARGS:
                 github: None,
                 remote: None,
                 local: Some("~/.dotfiles/zsh/pure".into()),
-                protocol: None,
+                proto: None,
                 branch: None,
                 rev: None,
                 tag: None,
@@ -802,7 +802,7 @@ ARGS:
                 "test",
                 "--git",
                 "https://github.com/rossmacarthur/sheldon-test",
-                "--protocol",
+                "--proto",
                 "ssh",
             ])
             .kind,
@@ -819,7 +819,7 @@ ARGS:
                 "test",
                 "--remote",
                 "https://raw.githubusercontent.com/rossmacarthur/sheldon-test/master/test.plugin.zsh",
-                "--protocol",
+                "--proto",
                 "ssh",
             ])
             .kind,
@@ -836,7 +836,7 @@ ARGS:
                 "test",
                 "--local",
                 "~/.dotfiles/zsh/pure",
-                "--protocol",
+                "--proto",
                 "ssh",
             ])
             .kind,
