@@ -1,6 +1,6 @@
 //! Edit the configuration file.
 
-use std::{fs, path::Path};
+use std::{fmt, fs, path::Path};
 
 use anyhow::{bail, Context as ResultExt, Result};
 
@@ -15,6 +15,7 @@ pub struct Plugin {
 /// An editable config.
 #[derive(Debug, Default)]
 pub struct Config {
+    /// The parsed TOML version of the config.
     doc: toml_edit::Document,
 }
 
@@ -24,14 +25,20 @@ impl From<RawPlugin> for Plugin {
     }
 }
 
+impl fmt::Display for Config {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.doc)
+    }
+}
+
 impl Config {
     /// Read a `Config` from the given string.
-    pub fn from_string<S>(s: S) -> Result<Self>
+    pub fn from_str<S>(s: S) -> Result<Self>
     where
-        S: Into<String>,
+        S: AsRef<str>,
     {
         let doc = s
-            .into()
+            .as_ref()
             .parse::<toml_edit::Document>()
             .context("failed to deserialize contents as TOML")?;
         Ok(Self { doc })
@@ -43,11 +50,9 @@ impl Config {
         P: AsRef<Path>,
     {
         let path = path.as_ref();
-        let contents = String::from_utf8(
-            fs::read(&path).with_context(s!("failed to read from `{}`", path.display()))?,
-        )
-        .context("config file contents are not valid UTF-8")?;
-        Self::from_string(contents)
+        let contents = fs::read_to_string(path)
+            .with_context(s!("failed to read from `{}`", path.display()))?;
+        Self::from_str(contents)
     }
 
     /// Add a new plugin.
@@ -94,7 +99,7 @@ impl Config {
         P: AsRef<Path>,
     {
         let path = path.as_ref();
-        fs::write(path, self.doc.to_string())
+        fs::write(path, self.to_string())
             .with_context(s!("failed to write config to `{}`", path.display()))
     }
 }
@@ -111,8 +116,8 @@ mod tests {
     use url::Url;
 
     #[test]
-    fn config_from_string_invalid() {
-        Config::from_string("x = \n").unwrap_err();
+    fn config_from_str_invalid() {
+        Config::from_str("x = \n").unwrap_err();
     }
 
     #[test]
@@ -142,7 +147,7 @@ tag = "0.1.0"
 
     #[test]
     fn config_empty_add_git() {
-        let mut config = Config::from_string("").unwrap();
+        let mut config = Config::from_str("").unwrap();
         config
             .add(
                 "sheldon-test",
@@ -165,7 +170,7 @@ branch = 'feature'
 
     #[test]
     fn config_empty_add_github() {
-        let mut config = Config::from_string("").unwrap();
+        let mut config = Config::from_str("").unwrap();
         config
             .add(
                 "sheldon-test",
@@ -188,7 +193,7 @@ tag = '0.1.0'
 
     #[test]
     fn config_others_add_git() {
-        let mut config = Config::from_string(
+        let mut config = Config::from_str(
             r#"
 # test configuration file
 apply = ["PATH", "source"]

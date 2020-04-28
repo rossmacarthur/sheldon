@@ -97,6 +97,9 @@ enum RawCommand {
     #[structopt(help_message = HELP_MESSAGE)]
     Add(Box<Add>),
 
+    /// Open up the config file in the default editor.
+    Edit,
+
     /// Remove a plugin from the config file.
     #[structopt(help_message = HELP_MESSAGE)]
     Remove {
@@ -182,6 +185,8 @@ struct RawOpt {
 pub enum Command {
     /// Add a new plugin to the config file.
     Add { name: String, plugin: Box<Plugin> },
+    /// Open up the config file in the default editor.
+    Edit,
     /// Remove a plugin from the config file.
     Remove { name: String },
     /// Install the plugins sources and generate the lock file.
@@ -312,6 +317,7 @@ impl Opt {
                     plugin: Box::new(plugin),
                 }
             }
+            RawCommand::Edit => Command::Edit,
             RawCommand::Remove { name } => Command::Remove { name },
             RawCommand::Lock { reinstall } => Command::Lock { reinstall },
             RawCommand::Source { reinstall, relock } => Command::Source { reinstall, relock },
@@ -404,6 +410,7 @@ OPTIONS:
 
 SUBCOMMANDS:
     add       Add a new plugin to the config file
+    edit      Open up the config file in the default editor
     remove    Remove a plugin from the config file
     lock      Install the plugins sources and generate the lock file
     source    Generate and print out the script",
