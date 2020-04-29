@@ -248,6 +248,7 @@ impl Plugin {
                 dir,
                 uses,
                 apply,
+                rest: None,
             }),
         )
     }

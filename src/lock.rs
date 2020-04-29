@@ -577,8 +577,7 @@ impl LockedConfig {
     }
 
     /// Clean the clone and download directories.
-    pub fn clean(&self, ctx: &Context) -> Vec<Error> {
-        let mut warnings = Vec::new();
+    pub fn clean(&self, ctx: &Context, warnings: &mut Vec<Error>) {
         let clean_clone_dir = self.settings.clone_dir().starts_with(self.settings.root());
         let clean_download_dir = self
             .settings
@@ -586,7 +585,7 @@ impl LockedConfig {
             .starts_with(self.settings.root());
 
         if !clean_clone_dir && !clean_download_dir {
-            return warnings;
+            return;
         }
 
         // Track the source directories, all the plugin directory parents, and all the
@@ -638,8 +637,6 @@ impl LockedConfig {
                 }
             }
         }
-
-        warnings
     }
 
     /// Generate the script.
@@ -1219,7 +1216,7 @@ mod tests {
             reinstall: false,
         };
 
-        let mut config = Config::from_path(ctx.config_file()).unwrap();
+        let mut config = Config::from_path(ctx.config_file(), &mut Vec::new()).unwrap();
         {
             match &mut config.plugins[2] {
                 Plugin::External(ref mut plugin) => {
@@ -1334,7 +1331,9 @@ ip_netns_prompt_info() {
                 .unwrap();
         }
 
-        assert_eq!(locked.clean(&ctx).len(), 0);
+        let mut warnings = Vec::new();
+        locked.clean(&ctx, &mut warnings);
+        assert!(warnings.is_empty());
         assert!(ctx
             .clone_dir()
             .join("github.com/rossmacarthur/sheldon-test")

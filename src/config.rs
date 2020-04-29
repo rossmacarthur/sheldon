@@ -9,7 +9,7 @@ use std::{
     str::FromStr,
 };
 
-use anyhow::{bail, Context as ResultExt, Result};
+use anyhow::{anyhow, bail, Context as ResultExt, Error, Result};
 use indexmap::IndexMap;
 use lazy_static::lazy_static;
 use regex::Regex;
@@ -125,6 +125,9 @@ pub struct RawPlugin {
     /// What templates to apply to each matched file. If this is `None` then the
     /// default templates will be applied.
     pub apply: Option<Vec<String>>,
+    /// Any extra keys,
+    #[serde(flatten, deserialize_with = "deserialize_rest_toml_value")]
+    pub rest: Option<toml::Value>,
 }
 
 /// An external configured plugin.
@@ -171,6 +174,9 @@ pub struct RawConfig {
     templates: IndexMap<String, Template>,
     /// A map of name to plugin.
     pub plugins: IndexMap<String, RawPlugin>,
+    /// Any extra keys,
+    #[serde(flatten, deserialize_with = "deserialize_rest_toml_value")]
+    pub rest: Option<toml::Value>,
 }
 
 /// The user configuration.
@@ -459,9 +465,45 @@ impl_deserialize_from_str!(git_protocol, GitProtocol, "a Git protocol type");
 impl_deserialize_from_str!(gist_repository, GistRepository, "a Gist identifier");
 impl_deserialize_from_str!(github_repository, GitHubRepository, "a GitHub repository");
 
+/// Deserialize the remaining keys into a `Option<toml::Value>`. Empty tables
+/// are coerced to `None`.
+fn deserialize_rest_toml_value<'de, D>(deserializer: D) -> Result<Option<toml::Value>, D::Error>
+where
+    D: de::Deserializer<'de>,
+{
+    let value: toml::Value = de::Deserialize::deserialize(deserializer)?;
+    Ok(match value {
+        toml::Value::Table(table) => {
+            if table.is_empty() {
+                None
+            } else {
+                Some(toml::Value::Table(table))
+            }
+        }
+        value => Some(value),
+    })
+}
+
 /////////////////////////////////////////////////////////////////////////
 // Normalization implementations
 /////////////////////////////////////////////////////////////////////////
+
+/// Check for extra TOML keys, and if they exist then call the given function on
+/// the key.
+fn check_extra_toml<F>(rest: Option<toml::Value>, mut f: F)
+where
+    F: FnMut(&str) -> (),
+{
+    match rest {
+        Some(toml::Value::Table(table)) => {
+            for key in table.keys() {
+                f(key)
+            }
+        }
+        Some(_) => unreachable!(), // unreachable because we are using #[serde(flatten)]
+        None => {}
+    }
+}
 
 /// Check whether the specifed templates actually exist.
 fn validate_template_names(
@@ -517,7 +559,12 @@ enum TempSource {
 impl RawPlugin {
     /// Normalize a `RawPlugin` into a `Plugin` which is simpler and easier
     /// to handle.
-    pub fn normalize(self, name: String, templates: &IndexMap<String, Template>) -> Result<Plugin> {
+    pub fn normalize(
+        self,
+        name: String,
+        templates: &IndexMap<String, Template>,
+        warnings: &mut Vec<Error>,
+    ) -> Result<Plugin> {
         let Self {
             git,
             gist,
@@ -530,6 +577,7 @@ impl RawPlugin {
             dir,
             uses,
             apply,
+            rest,
         } = self;
 
         let is_reference_some = reference.is_some();
@@ -581,6 +629,10 @@ impl RawPlugin {
                 bail!("plugin `{}` has multiple source fields", name);
             }
         };
+
+        check_extra_toml(rest, |key| {
+            warnings.push(anyhow!("unused config key: `plugins.{}.{}`", name, key))
+        });
 
         match raw_source {
             TempSource::External(source) => {
@@ -639,12 +691,13 @@ impl RawConfig {
     }
 
     /// Normalize a `RawConfig` into a `Config`.
-    fn normalize(self) -> Result<Config> {
+    fn normalize(self, mut warnings: &mut Vec<Error>) -> Result<Config> {
         let Self {
             matches,
             apply,
             templates,
             plugins,
+            rest,
         } = self;
 
         // Check that the templates can be compiled.
@@ -666,10 +719,14 @@ impl RawConfig {
         for (name, plugin) in plugins {
             normalized_plugins.push(
                 plugin
-                    .normalize(name.clone(), &templates)
+                    .normalize(name.clone(), &templates, &mut warnings)
                     .with_context(s!("failed to normalize plugin `{}`", name))?,
             );
         }
+
+        check_extra_toml(rest, |key| {
+            warnings.push(anyhow!("unused config key: `{}`", key))
+        });
 
         Ok(Config {
             matches,
@@ -682,11 +739,11 @@ impl RawConfig {
 
 impl Config {
     /// Read a `Config` from the given path.
-    pub fn from_path<P>(path: P) -> Result<Self>
+    pub fn from_path<P>(path: P, mut warnings: &mut Vec<Error>) -> Result<Self>
     where
         P: AsRef<Path>,
     {
-        Ok(RawConfig::from_path(path)?.normalize()?)
+        Ok(RawConfig::from_path(path)?.normalize(&mut warnings)?)
     }
 }
 
@@ -896,7 +953,7 @@ mod tests {
                 let text = format!("{} = '{}'\n{} = '{}'", a, example_a, b, example_b);
                 let e = toml::from_str::<RawPlugin>(&text)
                     .unwrap()
-                    .normalize("test".to_string(), &IndexMap::new())
+                    .normalize("test".to_string(), &IndexMap::new(), &mut Vec::new())
                     .unwrap_err();
                 assert_eq!(e.to_string(), "plugin `test` has multiple source fields")
             }
@@ -922,7 +979,9 @@ mod tests {
             ..Default::default()
         };
         assert_eq!(
-            raw_plugin.normalize(name, &IndexMap::new()).unwrap(),
+            raw_plugin
+                .normalize(name, &IndexMap::new(), &mut Vec::new())
+                .unwrap(),
             expected
         );
     }
@@ -950,7 +1009,9 @@ mod tests {
             ..Default::default()
         };
         assert_eq!(
-            raw_plugin.normalize(name, &IndexMap::new()).unwrap(),
+            raw_plugin
+                .normalize(name, &IndexMap::new(), &mut Vec::new())
+                .unwrap(),
             expected
         );
     }
@@ -974,7 +1035,9 @@ mod tests {
             ..Default::default()
         };
         assert_eq!(
-            raw_plugin.normalize(name, &IndexMap::new()).unwrap(),
+            raw_plugin
+                .normalize(name, &IndexMap::new(), &mut Vec::new())
+                .unwrap(),
             expected
         );
     }
@@ -1003,7 +1066,9 @@ mod tests {
             ..Default::default()
         };
         assert_eq!(
-            raw_plugin.normalize(name, &IndexMap::new()).unwrap(),
+            raw_plugin
+                .normalize(name, &IndexMap::new(), &mut Vec::new())
+                .unwrap(),
             expected
         );
     }
@@ -1030,7 +1095,9 @@ mod tests {
             ..Default::default()
         };
         assert_eq!(
-            raw_plugin.normalize(name, &IndexMap::new()).unwrap(),
+            raw_plugin
+                .normalize(name, &IndexMap::new(), &mut Vec::new())
+                .unwrap(),
             expected
         );
     }
@@ -1056,7 +1123,9 @@ mod tests {
             ..Default::default()
         };
         assert_eq!(
-            raw_plugin.normalize(name, &IndexMap::new()).unwrap(),
+            raw_plugin
+                .normalize(name, &IndexMap::new(), &mut Vec::new())
+                .unwrap(),
             expected
         );
     }
@@ -1083,7 +1152,9 @@ mod tests {
             ..Default::default()
         };
         assert_eq!(
-            raw_plugin.normalize(name, &IndexMap::new()).unwrap(),
+            raw_plugin
+                .normalize(name, &IndexMap::new(), &mut Vec::new())
+                .unwrap(),
             expected
         );
     }
@@ -1106,7 +1177,9 @@ mod tests {
             ..Default::default()
         };
         assert_eq!(
-            raw_plugin.normalize(name, &IndexMap::new()).unwrap(),
+            raw_plugin
+                .normalize(name, &IndexMap::new(), &mut Vec::new())
+                .unwrap(),
             expected
         );
     }
@@ -1124,7 +1197,7 @@ mod tests {
             ..Default::default()
         };
         let error = raw_plugin
-            .normalize("test".to_string(), &IndexMap::new())
+            .normalize("test".to_string(), &IndexMap::new(), &mut Vec::new())
             .unwrap_err();
         assert_eq!(
             error.to_string(),
@@ -1145,7 +1218,7 @@ mod tests {
             ..Default::default()
         };
         let error = raw_plugin
-            .normalize("test".to_string(), &IndexMap::new())
+            .normalize("test".to_string(), &IndexMap::new(), &mut Vec::new())
             .unwrap_err();
         assert_eq!(
             error.to_string(),
@@ -1170,7 +1243,9 @@ mod tests {
             ..Default::default()
         };
         assert_eq!(
-            raw_plugin.normalize(name, &IndexMap::new()).unwrap(),
+            raw_plugin
+                .normalize(name, &IndexMap::new(), &mut Vec::new())
+                .unwrap(),
             expected
         );
     }
@@ -1187,7 +1262,9 @@ mod tests {
             ..Default::default()
         };
         assert_eq!(
-            raw_plugin.normalize(name, &IndexMap::new()).unwrap(),
+            raw_plugin
+                .normalize(name, &IndexMap::new(), &mut Vec::new())
+                .unwrap(),
             expected
         );
     }
@@ -1200,7 +1277,7 @@ mod tests {
             ..Default::default()
         };
         let error = raw_plugin
-            .normalize("test".to_string(), &IndexMap::new())
+            .normalize("test".to_string(), &IndexMap::new(), &mut Vec::new())
             .unwrap_err();
         assert_eq!(
             error.to_string(),
@@ -1219,7 +1296,7 @@ mod tests {
             ..Default::default()
         };
         let error = raw_plugin
-            .normalize("test".to_string(), &IndexMap::new())
+            .normalize("test".to_string(), &IndexMap::new(), &mut Vec::new())
             .unwrap_err();
         assert_eq!(error.to_string(), "unknown template `test`");
     }
@@ -1228,6 +1305,6 @@ mod tests {
     fn config_from_path_example() {
         let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         path.push("docs/plugins.example.toml");
-        Config::from_path(path).unwrap();
+        Config::from_path(path, &mut Vec::new()).unwrap();
     }
 }

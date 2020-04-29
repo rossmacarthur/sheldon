@@ -120,16 +120,17 @@ impl Sheldon {
 
     /// Reads the config from the config file path, locks it, and returns the
     /// locked config.
-    fn locked(ctx: &LockContext) -> Result<LockedConfig> {
+    fn locked(ctx: &LockContext, mut warnings: &mut Vec<Error>) -> Result<LockedConfig> {
         let path = ctx.config_file();
-        let config = Config::from_path(path).context("failed to load config file")?;
+        let config =
+            Config::from_path(path, &mut warnings).context("failed to load config file")?;
         header!(ctx, "Loaded", path);
         config.lock(ctx)
     }
 
     /// Locks the config and writes it to the lock file.
-    fn lock(ctx: &LockContext) -> Result<()> {
-        let mut locked = Self::locked(ctx)?;
+    fn lock(ctx: &LockContext, mut warnings: &mut Vec<Error>) -> Result<()> {
+        let mut locked = Self::locked(ctx, &mut warnings)?;
 
         if let Some(last) = locked.errors.pop() {
             for err in locked.errors {
@@ -137,26 +138,23 @@ impl Sheldon {
             }
             Err(last)
         } else {
-            let warnings = locked.clean(ctx);
+            locked.clean(ctx, &mut warnings);
             let path = ctx.lock_file();
             locked.to_path(path).context("failed to write lock file")?;
             header!(ctx, "Locked", path);
-            for warning in warnings {
-                error_w!(ctx, &warning);
-            }
             Ok(())
         }
     }
 
     /// Generates the script.
-    fn source(ctx: &LockContext, relock: bool) -> Result<()> {
+    fn source(ctx: &LockContext, relock: bool, mut warnings: &mut Vec<Error>) -> Result<()> {
         let config_path = ctx.config_file();
         let lock_path = ctx.lock_file();
 
         let mut to_path = true;
 
         let locked = if relock || config_path.newer_than(lock_path) {
-            Self::locked(ctx)?
+            Self::locked(ctx, &mut warnings)?
         } else {
             match LockedConfig::from_path(lock_path) {
                 Ok(locked) => {
@@ -165,24 +163,21 @@ impl Sheldon {
                         header_v!(ctx, "Unlocked", lock_path);
                         locked
                     } else {
-                        Self::locked(ctx)?
+                        Self::locked(ctx, &mut warnings)?
                     }
                 }
-                Err(_) => Self::locked(ctx)?,
+                Err(_) => Self::locked(ctx, &mut warnings)?,
             }
         };
 
         let script = locked.source(ctx).context("failed to render source")?;
 
         if to_path && locked.errors.is_empty() {
-            let warnings = locked.clean(ctx);
+            locked.clean(ctx, &mut warnings);
             locked
                 .to_path(lock_path)
                 .context("failed to write lock file")?;
             header_v!(ctx, "Locked", lock_path);
-            for warning in warnings {
-                error_w!(ctx, &warning);
-            }
         } else {
             for err in &locked.errors {
                 error!(ctx, &err);
@@ -209,6 +204,8 @@ impl Sheldon {
             Mutex::acquire(&ctx, settings.root())
         };
 
+        let mut warnings = Vec::new();
+
         match command {
             Command::Add { name, plugin } => {
                 let ctx = EditContext { settings, output };
@@ -228,7 +225,7 @@ impl Sheldon {
                     output,
                     reinstall,
                 };
-                Self::lock(&ctx)
+                Self::lock(&ctx, &mut warnings)
             }
             Command::Source { relock, reinstall } => {
                 let ctx = LockContext {
@@ -236,12 +233,20 @@ impl Sheldon {
                     output,
                     reinstall,
                 };
-                Self::source(&ctx, relock)
+                Self::source(&ctx, relock, &mut warnings)
             }
         }
-        .map_err(|e| {
-            error!(&output, &e);
-            e
+        .map(|()| {
+            for warning in &warnings {
+                error_w!(&output, warning)
+            }
+        })
+        .map_err(|err| {
+            for warning in &warnings {
+                error_w!(&output, warning)
+            }
+            error!(&output, &err);
+            err
         })
     }
 }
