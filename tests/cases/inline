@@ -13,13 +13,13 @@ home = "<root>"
 root = "<root>"
 config_file = "<root>/plugins.toml"
 lock_file = "<root>/plugins.lock"
-clone_dir = "<root>/repositories"
+clone_dir = "<root>/repos"
 download_dir = "<root>/downloads"
 
 [[plugins]]
 name = "test"
-source_dir = "<root>/repositories/github.com/rossmacarthur/sheldon-test"
-files = ["<root>/repositories/github.com/rossmacarthur/sheldon-test/test.plugin.zsh"]
+source_dir = "<root>/repos/github.com/rossmacarthur/sheldon-test"
+files = ["<root>/repos/github.com/rossmacarthur/sheldon-test/test.plugin.zsh"]
 apply = ["source"]
 
 [[plugins]]
@@ -36,7 +36,7 @@ raw = "echo 'testing...'\n"
 [LOCKED] ~/plugins.lock
 
 # source.stdout
-source "<root>/repositories/github.com/rossmacarthur/sheldon-test/test.plugin.zsh"
+source "<root>/repos/github.com/rossmacarthur/sheldon-test/test.plugin.zsh"
 echo 'testing...'
 
 

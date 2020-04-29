@@ -106,12 +106,12 @@ cargo install sheldon --force
 ## Getting started
 
 The config file uses the [TOML] file format. Create a configuration file at
-`~/.zsh/plugins.toml` and add details for your first plugin by adding a unique
-key to the `plugins` table. In the example configuration file below we add a new
-Github type plugin with a unique name `oh-my-zsh`.
+`~/.sheldon/plugins.toml` and add details for your first plugin by adding a
+unique key to the `plugins` table. In the example configuration file below we
+add a new Github type plugin with a unique name `oh-my-zsh`.
 
 ```toml
-# ~/.zsh/plugins.toml
+# ~/.sheldon/plugins.toml
 
 #            ┌─ Unique name for the plugin
 #        ┌───┴───┐
@@ -188,10 +188,10 @@ The output of this command is highly configurable. You can define your own
 | Option                  | Environment variable   | Description                                                 |
 | ----------------------- | ---------------------- | ----------------------------------------------------------- |
 | `--home <path>`         | `HOME`                 | Set the home directory.                                     |
-| `--root <path>`         | `SHELDON_ROOT`         | Set the root directory. (*default:* `<home>/.zsh`)          |
+| `--root <path>`         | `SHELDON_ROOT`         | Set the root directory. (*default:* `<home>/.sheldon`)      |
 | `--config-file <path>`  | `SHELDON_CONFIG_FILE`  | Set the config file. (*default:*  `<root>/plugins.toml`)    |
 | `--lock-file <path>`    | `SHELDON_LOCK_FILE`    | Set the lock file. (*default:* `<config-file>.lock`)        |
-| `--clone-dir <path>`    | `SHELDON_CLONE_DIR`    | Set the clone directory. (*default:* `<root>/repositories`) |
+| `--clone-dir <path>`    | `SHELDON_CLONE_DIR`    | Set the clone directory. (*default:* `<root>/repos`)        |
 | `--download-dir <path>` | `SHELDON_DOWNLOAD_DIR` | Set the download directory. (*default:* `<root>/downloads`) |
 
 **Note:** in rare circumstances **sheldon** will not be able to automatically
@@ -299,7 +299,7 @@ current user's home directory.
 
 ```toml
 [plugins.pure]
-local = "~/Downloads/repositories/pure"
+local = "~/Downloads/repos/pure"
 ```
 
 ## Configuration: plugin options
@@ -409,12 +409,13 @@ You can use the following global information in templates
 
 ### Example: symlinking files
 
-Lets say we would like a template to symlink files into the `~/.zsh/functions`
-directory. We could create a new template with name **function**, like this
+Lets say we would like a template to symlink files into the
+`~/.sheldon/functions` directory. We could create a new template with name
+**function**, like this
 
 ```toml
 [templates]
-function = { value = 'ln -sf "{{ file }}" "~/.zsh/functions/{{ name }}"', each = true }
+function = { value = 'ln -sf "{{ file }}" "~/.sheldon/functions/{{ name }}"', each = true }
 ```
 
 It can then be applied to the plugin like this

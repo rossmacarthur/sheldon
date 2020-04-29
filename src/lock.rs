@@ -784,7 +784,7 @@ mod tests {
                 home: "/".into(),
                 config_file: root.join("config.toml"),
                 lock_file: root.join("config.lock"),
-                clone_dir: root.join("repositories"),
+                clone_dir: root.join("repos"),
                 download_dir: root.join("downloads"),
                 root: root.to_path_buf(), // must come after the joins above
             },
@@ -1044,7 +1044,7 @@ mod tests {
 
         assert_eq!(
             locked.dir,
-            dir.join("repositories/github.com/rossmacarthur/sheldon-test")
+            dir.join("repos/github.com/rossmacarthur/sheldon-test")
         );
         assert_eq!(locked.file, None)
     }
@@ -1087,7 +1087,7 @@ mod tests {
             apply: None,
         };
         let locked_source = plugin.source.clone().lock(&ctx).unwrap();
-        let clone_dir = dir.join("repositories/github.com/rossmacarthur/sheldon-test");
+        let clone_dir = dir.join("repos/github.com/rossmacarthur/sheldon-test");
 
         let locked = plugin
             .lock(&ctx, locked_source, &[], &["hello".into()])
@@ -1121,7 +1121,7 @@ mod tests {
             apply: None,
         };
         let locked_source = plugin.source.clone().lock(&ctx).unwrap();
-        let clone_dir = dir.join("repositories/github.com/rossmacarthur/sheldon-test");
+        let clone_dir = dir.join("repos/github.com/rossmacarthur/sheldon-test");
 
         let locked = plugin
             .lock(
@@ -1200,7 +1200,7 @@ mod tests {
         let root = temp1.path();
         let config_file = manifest_dir.join("docs/plugins.example.toml");
         let lock_file = root.join("plugins.lock");
-        let clone_dir = root.join("repositories");
+        let clone_dir = root.join("repos");
         let download_dir = root.join("downloads");
         let ctx = Context {
             settings: Settings {
@@ -1240,16 +1240,16 @@ mod tests {
             vec![
                 LockedPlugin::External(LockedExternalPlugin {
                     name: "async".to_string(),
-                    source_dir: root.join("repositories/github.com/mafredri/zsh-async"),
+                    source_dir: root.join("repos/github.com/mafredri/zsh-async"),
                     plugin_dir: None,
-                    files: vec![root.join("repositories/github.com/mafredri/zsh-async/async.zsh")],
+                    files: vec![root.join("repos/github.com/mafredri/zsh-async/async.zsh")],
                     apply: vec_into!["function"]
                 }),
                 LockedPlugin::External(LockedExternalPlugin {
                     name: "pure".to_string(),
-                    source_dir: root.join("repositories/github.com/sindresorhus/pure"),
+                    source_dir: root.join("repos/github.com/sindresorhus/pure"),
                     plugin_dir: None,
-                    files: vec![root.join("repositories/github.com/sindresorhus/pure/pure.zsh")],
+                    files: vec![root.join("repos/github.com/sindresorhus/pure/pure.zsh")],
                     apply: vec_into!["prompt"]
                 }),
                 LockedPlugin::External(LockedExternalPlugin {
@@ -1275,11 +1275,10 @@ ip_netns_prompt_info() {
                 }),
                 LockedPlugin::External(LockedExternalPlugin {
                     name: "docker-destroy-all".to_string(),
-                    source_dir: root.join("repositories/gist.github.com/79ee61f7c140c63d2786"),
+                    source_dir: root.join("repos/gist.github.com/79ee61f7c140c63d2786"),
                     plugin_dir: None,
-                    files: vec![root.join(
-                        "repositories/gist.github.com/79ee61f7c140c63d2786/get_last_pane_path.sh"
-                    )],
+                    files: vec![root
+                        .join("repos/gist.github.com/79ee61f7c140c63d2786/get_last_pane_path.sh")],
                     apply: vec_into!["PATH"]
                 })
             ]
@@ -1356,7 +1355,7 @@ home = "<root>"
 root = "<root>"
 config_file = "<root>/plugins.toml"
 lock_file = "<root>/plugins.lock"
-clone_dir = "<root>/repositories"
+clone_dir = "<root>/repos"
 download_dir = "<root>/downloads"
 plugins = []
 

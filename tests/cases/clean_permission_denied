@@ -6,7 +6,7 @@ home = "<root>"
 root = "<root>"
 config_file = "<root>/plugins.toml"
 lock_file = "<root>/plugins.lock"
-clone_dir = "<root>/repositories"
+clone_dir = "<root>/repos"
 download_dir = "<root>/downloads"
 plugins = []
 
@@ -18,7 +18,7 @@ plugins = []
 [LOADED] ~/plugins.toml
 [LOCKED] ~/plugins.lock
 
-[WARNING] failed to remove directory `~/repositories/test.com`
+[WARNING] failed to remove directory `~/repos/test.com`
   due to: Permission denied (os error 13)
 
 # source.stdout

@@ -16,7 +16,7 @@ github = "rossmacarthur/sheldon-bad-url"
   due to: remote authentication required but none available
 
 # source.stdout
-source "<root>/repositories/github.com/rossmacarthur/sheldon-test/test.plugin.zsh"
+source "<root>/repos/github.com/rossmacarthur/sheldon-test/test.plugin.zsh"
 
 # source.stderr
 [LOADED] ~/plugins.toml

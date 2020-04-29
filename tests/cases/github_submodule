@@ -10,14 +10,14 @@ home = "<root>"
 root = "<root>"
 config_file = "<root>/plugins.toml"
 lock_file = "<root>/plugins.lock"
-clone_dir = "<root>/repositories"
+clone_dir = "<root>/repos"
 download_dir = "<root>/downloads"
 
 [[plugins]]
 name = "test"
-source_dir = "<root>/repositories/github.com/rossmacarthur/sheldon-test"
-plugin_dir = "<root>/repositories/github.com/rossmacarthur/sheldon-test/self/self"
-files = ["<root>/repositories/github.com/rossmacarthur/sheldon-test/self/self/test.plugin.zsh"]
+source_dir = "<root>/repos/github.com/rossmacarthur/sheldon-test"
+plugin_dir = "<root>/repos/github.com/rossmacarthur/sheldon-test/self/self"
+files = ["<root>/repos/github.com/rossmacarthur/sheldon-test/self/self/test.plugin.zsh"]
 apply = ["source"]
 
 [templates]
@@ -30,7 +30,7 @@ apply = ["source"]
 [LOCKED] ~/plugins.lock
 
 # source.stdout
-source "<root>/repositories/github.com/rossmacarthur/sheldon-test/self/self/test.plugin.zsh"
+source "<root>/repos/github.com/rossmacarthur/sheldon-test/self/self/test.plugin.zsh"
 
 # source.stderr
 [UNLOCKED] ~/plugins.lock

@@ -219,7 +219,7 @@ impl RepositoryExt for git2::Repository {
 
 // Check that sheldon-test was in fact cloned.
 fn check_sheldon_test(root: &Path) -> Result<(), git2::Error> {
-    let dir = root.join("repositories/github.com/rossmacarthur/sheldon-test");
+    let dir = root.join("repos/github.com/rossmacarthur/sheldon-test");
     let file = dir.join("test.plugin.zsh");
     assert!(dir.is_dir());
     assert!(file.is_file());
@@ -242,12 +242,12 @@ fn check_sheldon_test(root: &Path) -> Result<(), git2::Error> {
 fn lock_and_source_clean() -> io::Result<()> {
     let case = TestCase::load("clean")?;
     let root = case.root.path();
-    fs::create_dir_all(&root.join("repositories/test.com"))?;
+    fs::create_dir_all(&root.join("repos/test.com"))?;
     {
         fs::OpenOptions::new()
             .create(true)
             .write(true)
-            .open(&root.join("repositories/test.com/test.txt"))?;
+            .open(&root.join("repos/test.com/test.txt"))?;
     }
 
     case.run()?;
@@ -261,22 +261,22 @@ fn lock_and_source_clean_permission_denied() -> io::Result<()> {
 
     let case = TestCase::load("clean_permission_denied")?;
     let root = case.root.path();
-    fs::create_dir_all(&root.join("repositories/test.com"))?;
+    fs::create_dir_all(&root.join("repos/test.com"))?;
     {
         fs::OpenOptions::new()
             .create(true)
             .write(true)
-            .open(&root.join("repositories/test.com/test.txt"))?;
+            .open(&root.join("repos/test.com/test.txt"))?;
     }
     fs::set_permissions(
-        &root.join("repositories/test.com"),
+        &root.join("repos/test.com"),
         fs::Permissions::from_mode(0o000),
     )?;
 
     case.run()?;
 
     fs::set_permissions(
-        &root.join("repositories/test.com"),
+        &root.join("repos/test.com"),
         fs::Permissions::from_mode(0o777),
     )?;
 
@@ -313,7 +313,7 @@ fn lock_and_source_github_branch() -> io::Result<()> {
     let dir = case
         .root
         .path()
-        .join("repositories/github.com/rossmacarthur/sheldon-test");
+        .join("repos/github.com/rossmacarthur/sheldon-test");
     let file = dir.join("test.plugin.zsh");
     assert!(dir.is_dir());
     assert!(file.is_file());
@@ -339,7 +339,7 @@ fn lock_and_source_github_submodule() -> io::Result<()> {
     let dir = case
         .root
         .path()
-        .join("repositories/github.com/rossmacarthur/sheldon-test");
+        .join("repos/github.com/rossmacarthur/sheldon-test");
     let file = dir.join("test.plugin.zsh");
     assert!(dir.is_dir());
     assert!(file.is_file());
