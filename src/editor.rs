@@ -101,7 +101,7 @@ impl Child {
             let contents =
                 fs::read_to_string(&file.path).context("failed to read from temporary file")?;
             if contents == original_contents {
-                bail!("Aborted editing!");
+                bail!("aborted editing!");
             } else {
                 edit::Config::from_str(&contents)
                     .context("edited config is invalid, not updating config file")

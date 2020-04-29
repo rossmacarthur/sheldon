@@ -13,7 +13,7 @@ pub struct Plugin {
 }
 
 /// An editable config.
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct Config {
     /// The parsed TOML version of the config.
     doc: toml_edit::Document,
@@ -22,6 +22,12 @@ pub struct Config {
 impl From<RawPlugin> for Plugin {
     fn from(raw_plugin: RawPlugin) -> Self {
         Self { inner: raw_plugin }
+    }
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Self::from_str(include_str!("plugins.toml")).unwrap()
     }
 }
 
@@ -57,10 +63,10 @@ impl Config {
 
     /// Add a new plugin.
     pub fn add(&mut self, name: &str, plugin: Plugin) -> Result<()> {
-        let content =
+        let contents =
             toml::to_string_pretty(&plugin.inner).expect("failed to serialize plugin as TOML");
 
-        let mini = content
+        let mini = contents
             .parse::<toml_edit::Document>()
             .expect("failed to parse valid TOML");
 

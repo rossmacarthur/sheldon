@@ -31,7 +31,7 @@ const VERSION_MESSAGE: &str = "Show the version and exit";
     group = ArgGroup::with_name("git-reference")
 )]
 struct Add {
-    /// A name for this plugin.
+    /// A unique name for this plugin.
     #[structopt(value_name = "NAME")]
     name: String,
 
@@ -103,7 +103,7 @@ enum RawCommand {
     /// Remove a plugin from the config file.
     #[structopt(help_message = HELP_MESSAGE)]
     Remove {
-        /// A name for this plugin.
+        /// A unique name for this plugin.
         #[structopt(value_name = "NAME")]
         name: String,
     },
@@ -536,7 +536,7 @@ OPTIONS:
         --apply <TEMPLATE>...    Templates to apply to this plugin
 
 ARGS:
-    <NAME>    A name for this plugin",
+    <NAME>    A unique name for this plugin",
                 name = crate_name!(),
                 version = crate_version!()
             )

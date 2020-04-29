@@ -38,6 +38,7 @@ use crate::{
 
 /// The main application.
 #[derive(Debug)]
+#[doc(hidden)]
 pub struct Sheldon;
 
 impl Sheldon {
@@ -48,7 +49,7 @@ impl Sheldon {
                 "Initialize new config file `{}`?",
                 &ctx.replace_home(path).display()
             )) {
-                bail!("Aborted initialization!");
+                bail!("aborted initialization!");
             };
             if let Some(parent) = path.parent() {
                 fs::create_dir_all(parent).with_context(s!(
@@ -92,6 +93,8 @@ impl Sheldon {
             }
             Err(err) => {
                 let config = Self::init_config(ctx, path, err)?;
+                config.to_path(path)?;
+                header!(ctx, "Initialized", path);
                 config.to_string()
             }
         };
