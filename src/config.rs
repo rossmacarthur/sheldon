@@ -106,7 +106,6 @@ pub struct RawPlugin {
     /// An inline script.
     pub inline: Option<String>,
     /// What protocol to use when cloning a repository.
-    #[serde(alias = "protocol")]
     pub proto: Option<GitProtocol>,
     /// The Git reference to checkout.
     #[serde(flatten)]
@@ -114,7 +113,6 @@ pub struct RawPlugin {
     /// Which directory to use in this plugin.
     ///
     /// This directory can contain template parameters.
-    #[serde(alias = "directory")]
     pub dir: Option<String>,
     /// Which files to use in this plugin's directory. If this is `None` then
     /// this will figured out based on the global `matches` field.
@@ -488,6 +486,27 @@ where
 // Normalization implementations
 /////////////////////////////////////////////////////////////////////////
 
+/// Pop the TOML value from the table, if it is parseable.
+fn pop_toml_value<T>(rest: &mut Option<toml::Value>, key: &str) -> Option<T>
+where
+    T: FromStr,
+{
+    match rest {
+        Some(toml::Value::Table(table)) => match table.get(key) {
+            Some(toml::Value::String(s)) => {
+                let result = s.parse().ok();
+                if result.is_some() {
+                    table.remove(key);
+                }
+                result
+            }
+            Some(_) | None => None,
+        },
+        Some(_) => unreachable!(), // unreachable because we are using #[serde(flatten)]
+        None => None,
+    }
+}
+
 /// Check for extra TOML keys, and if they exist then call the given function on
 /// the key.
 fn check_extra_toml<F>(rest: Option<toml::Value>, mut f: F)
@@ -572,16 +591,42 @@ impl RawPlugin {
             remote,
             local,
             inline,
-            proto,
+            mut proto,
             reference,
-            dir,
+            mut dir,
             uses,
             apply,
-            rest,
+            mut rest,
         } = self;
 
         let is_reference_some = reference.is_some();
         let is_gist_or_github = gist.is_some() || github.is_some();
+
+        // Handle some deprecated items :/
+        if proto.is_none() {
+            if let Some(protocol) = pop_toml_value(&mut rest, "protocol") {
+                warnings.push(anyhow!(
+                    "use of deprecated config key: `plugins.{name}.protocol`, please use \
+                     `plugins.{name}.proto` instead",
+                    name = name,
+                ));
+                proto = Some(protocol);
+            }
+        }
+        if dir.is_none() {
+            if let Some(directory) = pop_toml_value(&mut rest, "directory") {
+                warnings.push(anyhow!(
+                    "deprecated config key used: `plugins.{name}.directory`, please use \
+                     `plugins.{name}.dir` instead",
+                    name = name,
+                ));
+                dir = Some(directory);
+            }
+        }
+
+        check_extra_toml(rest, |key| {
+            warnings.push(anyhow!("unused config key: `plugins.{}.{}`", name, key))
+        });
 
         let raw_source = match (git, gist, github, remote, local, inline) {
             // `git` type
@@ -629,10 +674,6 @@ impl RawPlugin {
                 bail!("plugin `{}` has multiple source fields", name);
             }
         };
-
-        check_extra_toml(rest, |key| {
-            warnings.push(anyhow!("unused config key: `plugins.{}.{}`", name, key))
-        });
 
         match raw_source {
             TempSource::External(source) => {
@@ -700,14 +741,29 @@ impl RawConfig {
             rest,
         } = self;
 
-        // Check that the templates can be compiled.
-        {
-            let mut handlebars = handlebars::Handlebars::new();
-            handlebars.set_strict_mode(true);
-            for (name, template) in &templates {
-                handlebars
-                    .register_template_string(&name, &template.value)
-                    .with_context(s!("failed to compile template `{}`", name))?
+        check_extra_toml(rest, |key| {
+            warnings.push(anyhow!("unused config key: `{}`", key))
+        });
+
+        for (name, template) in &templates {
+            // Check that the templates can be compiled.
+            handlebars::Template::compile(&template.value)
+                .with_context(s!("failed to compile template `{}`", name))?;
+            // Simplistic check for deprecated template variables.
+            let replaced = template.value.replace(" ", "");
+            for (old, to_check, new) in &[
+                ("directory", "{{directory}}", "dir"),
+                ("filename", "{{filename}}", "file"),
+            ] {
+                if replaced.contains(to_check) {
+                    warnings.push(anyhow!(
+                        "deprecated template variable used in `templates.{}`: `{}`, please use \
+                         `{}` instead",
+                        name,
+                        old,
+                        new,
+                    ));
+                }
             }
         }
 
@@ -723,10 +779,6 @@ impl RawConfig {
                     .with_context(s!("failed to normalize plugin `{}`", name))?,
             );
         }
-
-        check_extra_toml(rest, |key| {
-            warnings.push(anyhow!("unused config key: `{}`", key))
-        });
 
         Ok(Config {
             matches,
