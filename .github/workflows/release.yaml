@@ -28,7 +28,7 @@ jobs:
         run: echo "::set-env name=VERSION::${GITHUB_REF#refs/tags/}"
 
       - name: Check tag against package version
-        run: grep '^version = ' Cargo.toml | grep -q "$VERSION"
+        run: grep "^version = \"$VERSION\"\$" Cargo.toml
 
       - uses: actions/create-release@v1
         id: release
