@@ -2,7 +2,7 @@
 
 ## 0.5.0
 
-*Unreleased*
+*Released on May 2nd, 2020*
 
 ### Features
 
