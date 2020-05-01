@@ -1,0 +1,32 @@
+# plugins.toml
+[plugins.test]
+github = "rossmacarthur/sheldon-test"
+tag = "bad-tag"
+
+# plugins.lock
+version = "<version>"
+home = "<root>"
+root = "<root>"
+config_file = "<root>/plugins.toml"
+lock_file = "<root>/plugins.lock"
+clone_dir = "<root>/repos"
+download_dir = "<root>/downloads"
+
+[[plugins]]
+name = "test"
+source_dir = "<root>/repos/github.com/rossmacarthur/sheldon-test"
+files = ["<root>/repos/github.com/rossmacarthur/sheldon-test/test.plugin.zsh"]
+apply = ["source"]
+
+[templates]
+
+# lock.stdout
+
+# lock.stderr
+[LOADED] ~/plugins.toml
+
+[ERROR] failed to install source `https://github.com/rossmacarthur/sheldon-test@bad-tag`
+  due to: failed to find tag `bad-tag`
+  due to: reference 'refs/tags/bad-tag' not found; class=Reference (4); code=NotFound (-3)
+
+# end

@@ -135,12 +135,17 @@ impl TestCommand {
 impl TestCase {
     /// Load the test case with the given name.
     fn load(name: &str) -> io::Result<Self> {
+        let root = tempfile::tempdir()?;
+        Self::load_with_root(name, root)
+    }
+
+    /// Load the test case in the given root directory.
+    fn load_with_root(name: &str, root: tempfile::TempDir) -> io::Result<Self> {
         let path = Path::new(env!("CARGO_MANIFEST_DIR"))
             .join("tests/cases")
             .join(name);
         let case = &fs::read_to_string(path)?;
         let parsed = TestCaseParser::parse(Rule::case, &case).expect("failed to parse case");
-        let root = tempfile::tempdir()?;
         let data: HashMap<String, String> = parsed
             .filter_map(|pair| {
                 if pair.as_rule() == Rule::element {
@@ -408,6 +413,31 @@ fn lock_and_source_github_bad_url() -> io::Result<()> {
     case.run_command("source")?;
 
     assert!(!case.root.path().join("plugins.lock").exists());
+
+    Ok(())
+}
+
+#[test]
+fn lock_and_source_github_bad_reinstall() -> io::Result<()> {
+    // first setup up a correct situation
+    let case = TestCase::load("github_tag")?;
+    case.run()?;
+    check_sheldon_test(case.root.path()).unwrap();
+
+    // Now use a bad URL and try reinstall
+    let case = TestCase::load_with_root("github_bad_reinstall", case.root)?;
+    case.write_file("plugins.toml")?;
+    TestCommand::new(case.root.path())
+        .expect_exit_code(2)
+        .expect_stdout(case.get("lock.stdout"))
+        .expect_stderr(case.get("lock.stderr"))
+        .arg("lock")
+        .arg("--reinstall")
+        .run()?;
+
+    // check that the previously installed plugin and lock file is okay
+    check_sheldon_test(case.root.path()).unwrap();
+    case.assert_contents("plugins.lock")?;
 
     Ok(())
 }

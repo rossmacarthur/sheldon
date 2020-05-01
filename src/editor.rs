@@ -8,7 +8,7 @@ use std::{
 
 use anyhow::{anyhow, bail, Context as ResultExt, Result};
 
-use crate::edit;
+use crate::{edit, util::TempPath};
 
 /// Possible environment variables.
 const ENV_VARS: &[&str] = &["VISUAL", "EDITOR"];
@@ -20,12 +20,6 @@ const EDITORS: &[&str] = &["code --wait", "nano", "vim", "vi", "emacs"];
 /// Possible editors to use.
 #[cfg(target_os = "windows")]
 const EDITORS: &[&str] = &["code.exe --wait", "notepad.exe"];
-
-/// Holds a temporary file path that is removed when dropped.
-struct TempFile {
-    /// The file path that we will edit.
-    path: PathBuf,
-}
 
 /// Represents the default editor.
 pub struct Editor {
@@ -40,7 +34,7 @@ pub struct Child {
     /// A handle for the editor child process.
     child: process::Child,
     /// The temporary file that the editor is editing.
-    file: TempFile,
+    file: TempPath,
 }
 
 /// Convert a string command to a binary and the rest of the arguments.
@@ -52,14 +46,6 @@ where
     let bin: PathBuf = split.next()?.into();
     let args: Vec<String> = split.map(Into::into).collect();
     Some((bin, args))
-}
-
-impl TempFile {
-    /// Create a new `TempFile`.
-    fn new(original_path: &Path) -> Self {
-        let path = original_path.with_extension(format!("tmp-{}.toml", process::id()));
-        Self { path }
-    }
 }
 
 impl Editor {
@@ -80,12 +66,12 @@ impl Editor {
 
     /// Open a file for editing with initial contents.
     pub fn edit(self, path: &Path, contents: &str) -> Result<Child> {
-        let file = TempFile::new(path);
+        let file = TempPath::new(path);
         let Self { bin, args } = self;
-        fs::write(&file.path, &contents).context("failed to write to temporary file")?;
+        fs::write(file.path(), &contents).context("failed to write to temporary file")?;
         let child = Command::new(bin)
             .args(args)
-            .arg(&file.path)
+            .arg(file.path())
             .spawn()
             .context("failed to spawn editor subprocess")?;
         Ok(Child { child, file })
@@ -99,7 +85,7 @@ impl Child {
         let exit_status = child.wait()?;
         if exit_status.success() {
             let contents =
-                fs::read_to_string(&file.path).context("failed to read from temporary file")?;
+                fs::read_to_string(file.path()).context("failed to read from temporary file")?;
             if contents == original_contents {
                 bail!("aborted editing!");
             } else {
@@ -109,11 +95,5 @@ impl Child {
         } else {
             bail!("editor terminated with {}", exit_status)
         }
-    }
-}
-
-impl Drop for TempFile {
-    fn drop(&mut self) {
-        fs::remove_file(&self.path).ok();
     }
 }

@@ -7,7 +7,7 @@ use std::{
     cmp,
     collections::{HashMap, HashSet},
     convert::TryInto,
-    fmt, fs, io,
+    fmt, fs,
     path::{Path, PathBuf},
     result, sync,
 };
@@ -24,7 +24,7 @@ use walkdir::WalkDir;
 use crate::{
     config::{Config, ExternalPlugin, GitReference, InlinePlugin, Plugin, Source, Template},
     context::{LockContext as Context, Settings, SettingsExt},
-    util::git,
+    util::{git, TempPath},
 };
 
 /// The maximmum number of threads to use while downloading sources.
@@ -166,54 +166,59 @@ impl Source {
         url: Url,
         reference: Option<GitReference>,
     ) -> Result<LockedSource> {
-        if ctx.reinstall {
-            if let Err(e) = fs::remove_dir_all(&dir) {
-                if e.kind() != io::ErrorKind::NotFound {
-                    return Err(e).with_context(s!("failed to remove dir `{}`", &dir.display()));
+        let checkout = |repo, status| -> Result<()> {
+            match reference {
+                Some(reference) => {
+                    git::checkout(&repo, reference.lock(&repo)?.0)?;
+                    git::submodule_update(&repo).context("failed to recursively update")?;
+                    status!(ctx, status, &format!("{}@{}", &url, reference));
                 }
+                None => {
+                    git::submodule_update(&repo).context("failed to recursively update")?;
+                    status!(ctx, status, &url);
+                }
+            }
+            Ok(())
+        };
+
+        if !ctx.reinstall {
+            if let Ok(repo) = git::open(&dir) {
+                checkout(repo, "Checked")?;
+                return Ok(LockedSource { dir, file: None });
             }
         }
 
-        let (cloned, repo) = git::clone_or_open(&url, &dir)?;
-        let status = if cloned { "Cloned" } else { "Checked" };
-
-        // Checkout the configured revision.
-        if let Some(reference) = reference {
-            git::checkout(&repo, reference.lock(&repo)?.0)?;
-            status!(ctx, status, &format!("{}@{}", &url, reference));
-        } else {
-            status!(ctx, status, &url);
-        }
-
-        // Recursively update Git submodules.
-        git::submodule_update(&repo).context("failed to recursively update submodules")?;
+        let temp_dir = TempPath::new(&dir);
+        let repo = git::clone(&url, &temp_dir.path())?;
+        checkout(repo, "Cloned")?;
+        temp_dir
+            .rename(&dir)
+            .context("failed to rename temporary clone directory")?;
 
         Ok(LockedSource { dir, file: None })
     }
 
     /// Downloads a Remote source.
     fn lock_remote(ctx: &Context, dir: PathBuf, file: PathBuf, url: Url) -> Result<LockedSource> {
-        if ctx.reinstall {
-            if let Err(e) = fs::remove_file(&file) {
-                if e.kind() != io::ErrorKind::NotFound {
-                    return Err(e).with_context(s!("failed to remove file `{}`", &file.display()));
-                }
-            }
+        if !ctx.reinstall && file.exists() {
+            status!(ctx, "Checked", &url);
+            return Ok(LockedSource {
+                dir,
+                file: Some(file),
+            });
         }
 
-        if file.exists() {
-            status!(ctx, "Checked", &url);
-        } else {
-            fs::create_dir_all(&dir)
-                .with_context(s!("failed to create dir `{}`", dir.display()))?;
-            let mut response = reqwest::blocking::get(url.clone())
-                .with_context(s!("failed to download `{}`", url))?;
-            let mut out = fs::File::create(&file)
-                .with_context(s!("failed to create `{}`", file.display()))?;
-            io::copy(&mut response, &mut out)
-                .with_context(s!("failed to copy contents to `{}`", file.display()))?;
-            status!(ctx, "Fetched", &url);
-        }
+        let mut response =
+            reqwest::blocking::get(url.clone()).with_context(s!("failed to download `{}`", url))?;
+        fs::create_dir_all(&dir).with_context(s!("failed to create dir `{}`", dir.display()))?;
+        let mut temp_file = TempPath::new(&file);
+        temp_file.write(&mut response).with_context(s!(
+            "failed to copy contents to `{}`",
+            temp_file.path().display()
+        ))?;
+        temp_file
+            .rename(&file)
+            .context("failed to rename temporary download file")?;
 
         Ok(LockedSource {
             dir,
@@ -757,7 +762,7 @@ mod tests {
     use super::*;
     use std::{
         fs,
-        io::{Read, Write},
+        io::{self, Read, Write},
         process::Command,
         thread, time,
     };
@@ -920,7 +925,6 @@ mod tests {
         thread::sleep(time::Duration::from_secs(1));
         ctx.reinstall = true;
         let locked = Source::lock_git(&ctx, dir.to_path_buf(), url, None).unwrap();
-
         assert_eq!(locked.dir, dir);
         assert_eq!(locked.file, None);
         let repo = git2::Repository::open(&dir).unwrap();
@@ -928,7 +932,7 @@ mod tests {
             repo.head().unwrap().target().unwrap().to_string(),
             "be8fde277e76f35efbe46848fb352cee68549962"
         );
-        assert!(fs::metadata(&dir).unwrap().modified().unwrap() > modified)
+        assert!(fs::metadata(&dir).unwrap().modified().unwrap() > modified);
     }
 
     #[test]

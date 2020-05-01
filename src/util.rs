@@ -4,7 +4,7 @@ use std::{
     fs::{self, File},
     io,
     path::{Path, PathBuf},
-    time,
+    process, time,
 };
 
 use anyhow::{Context as ResultExt, Error, Result};
@@ -21,6 +21,19 @@ pub fn underlying_io_error_kind(error: &Error) -> Option<io::ErrorKind> {
     }
     None
 }
+
+/// Remove a file or directory.
+fn nuke_path(path: &Path) -> io::Result<()> {
+    if path.is_dir() {
+        fs::remove_dir_all(path)
+    } else {
+        fs::remove_file(path)
+    }
+}
+
+/////////////////////////////////////////////////////////////////////////
+// PathExt trait
+/////////////////////////////////////////////////////////////////////////
 
 /// An extension trait for [`Path`] types.
 ///
@@ -84,6 +97,73 @@ impl PathExt for Path {
     }
 }
 
+/////////////////////////////////////////////////////////////////////////
+// TempPath type
+/////////////////////////////////////////////////////////////////////////
+
+/// Holds a temporary directory or file path that is removed when dropped.
+pub struct TempPath {
+    /// The temporary directory or file path.
+    pub path: Option<PathBuf>,
+}
+
+impl TempPath {
+    /// Create a new `TempPath`.
+    pub fn new(original_path: &Path) -> Self {
+        let mut path = original_path.parent().unwrap().to_path_buf();
+        let mut file_name = original_path.file_stem().unwrap().to_os_string();
+        file_name.push(format!("-tmp-{}", process::id()));
+        if let Some(ext) = original_path.extension() {
+            file_name.push(".");
+            file_name.push(ext);
+        }
+        path.push(file_name);
+        Self { path: Some(path) }
+    }
+
+    /// Access the underlying `Path`.
+    pub fn path(&self) -> &Path {
+        self.path.as_ref().unwrap()
+    }
+
+    /// Copy the contents of a stream to this `TempPath`.
+    pub fn write<R>(&mut self, mut reader: &mut R) -> io::Result<()>
+    where
+        R: io::Read,
+    {
+        let mut file = fs::File::create(self.path())?;
+        io::copy(&mut reader, &mut file)?;
+        Ok(())
+    }
+
+    /// Move the temporary path to a new location.
+    pub fn rename(mut self, new_path: &Path) -> io::Result<()> {
+        if let Err(err) = nuke_path(new_path) {
+            if err.kind() != io::ErrorKind::NotFound {
+                return Err(err);
+            }
+        };
+        if let Some(path) = &self.path {
+            fs::rename(path, new_path)?;
+            // This is so that the Drop impl doesn't try delete a non-existent file.
+            self.path = None;
+        }
+        Ok(())
+    }
+}
+
+impl Drop for TempPath {
+    fn drop(&mut self) {
+        if let Some(path) = &self.path {
+            nuke_path(&path).ok();
+        }
+    }
+}
+
+/////////////////////////////////////////////////////////////////////////
+// Mutex type
+/////////////////////////////////////////////////////////////////////////
+
 #[derive(Debug)]
 pub struct Mutex(File);
 
@@ -123,11 +203,15 @@ impl Drop for Mutex {
     }
 }
 
+/////////////////////////////////////////////////////////////////////////
+// Git module
+/////////////////////////////////////////////////////////////////////////
+
 pub mod git {
     use std::path::Path;
 
     use git2::{
-        build::RepoBuilder, BranchType, Cred, CredentialType, Error, ErrorCode, FetchOptions, Oid,
+        build::RepoBuilder, BranchType, Cred, CredentialType, Error, FetchOptions, Oid,
         RemoteCallbacks, Repository, ResetType,
     };
     use url::Url;
@@ -158,28 +242,21 @@ pub mod git {
         f(opts)
     }
 
-    /// Clone or open a Git repository.
-    pub fn clone_or_open(url: &Url, dir: &Path) -> anyhow::Result<(bool, Repository)> {
+    /// Open a Git repository.
+    pub fn open(dir: &Path) -> anyhow::Result<Repository> {
+        let repo = Repository::open(dir)
+            .with_context(s!("failed to open repository at `{}`", dir.display()))?;
+        Ok(repo)
+    }
+
+    /// Clone a Git repository.
+    pub fn clone(url: &Url, dir: &Path) -> anyhow::Result<Repository> {
         with_fetch_options(|opts| {
-            let mut cloned = false;
-            let repo = match RepoBuilder::new()
+            let repo = RepoBuilder::new()
                 .fetch_options(opts)
                 .clone(url.as_str(), dir)
-            {
-                Ok(repo) => {
-                    cloned = true;
-                    repo
-                }
-                Err(e) => {
-                    if e.code() == ErrorCode::Exists {
-                        Repository::open(dir)
-                            .with_context(s!("failed to open repository at `{}`", dir.display()))?
-                    } else {
-                        return Err(e).with_context(s!("failed to git clone `{}`", url));
-                    }
-                }
-            };
-            Ok((cloned, repo))
+                .with_context(s!("failed to git clone `{}`", url))?;
+            Ok(repo)
         })
     }
 
