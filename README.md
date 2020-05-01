@@ -16,7 +16,7 @@
   <a href="https://github.com/rossmacarthur/sheldon/actions?query=workflow%3Abuild">
     <img src="https://img.shields.io/github/workflow/status/rossmacarthur/sheldon/build/master" alt="Build status" />
   </a>
-  <a href="https://github.com/rossmacarthur/sheldon/releases/latest">
+  <a href="https://github.com/rossmacarthur/sheldon/actions?query=workflow%3Arelease">
     <img src="https://img.shields.io/github/workflow/status/rossmacarthur/sheldon/release?label=release" alt="Release status" />
   </a>
 </div>
@@ -35,13 +35,12 @@
 - Highly configurable install methods using [handlebars] templating.
 - Shell agnostic, with sensible defaults for [Zsh].
 - Super-fast parallel installation.
-- Configuration file using [TOML] syntax.
+- Config file using [TOML] syntax.
 - Uses a lock file for much faster loading of plugins.
+- Clean `~/.zshrc` or `~/.bashrc` (just add 1 line).
 
 ## Table of Contents
 
-- [Features](#features)
-- [Table of Contents](#table-of-contents)
 - [Installation](#installation)
   - [Pre-built binaries](#pre-built-binaries)
   - [Cargo](#cargo)
@@ -49,6 +48,9 @@
 - [Command line interface](#command-line-interface)
   - [`lock` command](#lock-command)
   - [`source` command](#source-command)
+  - [`add` command](#add-command)
+  - [`edit` command](#edit-command)
+  - [`remove` command](#remove-command)
   - [Flags](#flags)
   - [Options](#options)
 - [Configuration: plugin sources](#configuration-plugin-sources)
@@ -58,6 +60,7 @@
     - [`git`](#git-1)
     - [Specifying a branch, tag, or commit](#specifying-a-branch-tag-or-commit)
     - [Cloning with Git or SSH protocols](#cloning-with-git-or-ssh-protocols)
+    - [Private Git repositories](#private-git-repositories)
   - [Remote](#remote)
   - [Local](#local)
 - [Configuration: plugin options](#configuration-plugin-options)
@@ -90,25 +93,156 @@ curl --proto '=https' -fLsS https://rossmacarthur.github.io/install/crate.sh \
 
 ### Cargo
 
-**sheldon** can be installed using [cargo], the Rust language package manager.
-Install [cargo] using [rustup] then run
+**sheldon** can be installed using [cargo], the Rust package manager. Install
+[cargo] using [rustup] then run the following command to install or update
+**sheldon**.
 
 ```sh
 cargo install sheldon
 ```
 
-Updating can be done using
-
-```sh
-cargo install sheldon --force
-```
-
 ## Getting started
 
-The config file uses the [TOML] file format. Create a configuration file at
-`~/.sheldon/plugins.toml` and add details for your first plugin by adding a
-unique key to the `plugins` table. In the example configuration file below we
-add a new Github type plugin with a unique name `oh-my-zsh`.
+**sheldon** works by specifying all plugin information in a [TOML] configuration
+file. Then sourcing the output of `sheldon source` in your `~/.zshrc` or
+`~/.bashrc` file. When this command is run **sheldon** will download all the
+required plugin sources, generate a lock file, and then output shell source.
+
+By default the config file is located at `~/.sheldon/plugins.toml`. You can
+either edit this file directly or use the provided command line interface to add
+or remove plugins. To add your first plugin to the config file run the `sheldon
+add` command.
+
+```sh
+sheldon add oh-my-zsh --github robbyrussell/oh-my-zsh
+```
+
+The first argument given here `oh-my-zsh` is a unique name for the plugin. The
+`--github` option specifies that we want **sheldon** to manage a clone of
+http://github.com/robbyrussell/oh-my-zsh. If this is the first time you are
+running **sheldon**, you will be asked if you want to initialize a new config
+file at `~/.sheldon/plugins.toml`.
+
+You can then use `sheldon source` to install the configured plugins, generate
+the lock file, and print out the shell script to source. Simply add the
+following to your `~/.zshrc` or `~/.bashrc` file.
+
+```sh
+# ~/.zshrc or ~/.bashrc
+
+source <(sheldon source)
+```
+
+## Command line interface
+
+### `lock` command
+
+The `lock` command installs the plugins sources and generates the lock file.
+Rerunning this command will not reinstall plugin sources, just check that they
+are all okay. It will always regenerate the lock file.
+
+```sh
+sheldon lock
+```
+
+To force a reinstall of all plugin sources you can use the `--reinstall` flag.
+
+```sh
+sheldon lock --reinstall
+```
+
+### `source` command
+
+This command generates the shell script. This command will first check if there
+is an up to date lock file, if not, then it will first do the equivalent of the
+lock command above. This command is usually used with the built-in shell
+`source` command.
+
+```sh
+source <(sheldon source)
+```
+
+If we now modify our config file and run this command again it will relock the
+configuration prior to generating the script. The output of this command is
+highly configurable. You can define your own [custom
+templates](#configuration-templates) to apply to your plugins.
+
+### `add` command
+
+This command adds a new plugin to the config file. It does nothing else but edit
+the config file. In the following command we add a GitHub repository as a
+source.
+
+```sh
+sheldon add my-repo --git http://github.com/owner/repo.git
+```
+
+An example usage of this command for each source type is shown in the
+[Configuration: plugin sources](#configuration-plugin-sources) section.
+
+### `edit` command
+
+This command will open the config file in the default editor and only overwrite
+the contents if the updated config file is valid. To override the editor that is
+used you should set the `EDITOR` environment variable.
+
+For example using `vim`
+```sh
+EDITOR=vim sheldon edit
+```
+
+Or with Visual Studio Code
+```sh
+EDITOR="code --wait" sheldon edit
+```
+
+### `remove` command
+
+This command removes a plugin from the config file. In the following command we
+remove the plugin with name `my-repo`.
+
+```sh
+sheldon remove my-repo
+```
+
+### Flags
+
+**sheldon** accepts the following global command line flags.
+
+| Flag              | Description                       |
+| ----------------- | --------------------------------- |
+| `-q`, `--quiet`   | Suppress any informational output |
+| `-v`, `--verbose` | Use verbose output                |
+| `--no-color`      | Do not use ANSI colored output    |
+| `-h`, `--help`    | Show the help message and exit    |
+| `-V`, `--version` | Show the version and exit         |
+
+### Options
+
+**sheldon** accepts the following global command line options.
+
+| Option                  | Environment variable   | Description                                                 |
+| ----------------------- | ---------------------- | ----------------------------------------------------------- |
+| `--home <path>`         | `HOME`                 | Set the home directory. (*default:* auto)                   |
+| `--root <path>`         | `SHELDON_ROOT`         | Set the root directory. (*default:* `<home>/.sheldon`)      |
+| `--config-file <path>`  | `SHELDON_CONFIG_FILE`  | Set the config file. (*default:*  `<root>/plugins.toml`)    |
+| `--lock-file <path>`    | `SHELDON_LOCK_FILE`    | Set the lock file. (*default:* `<config-file>.lock`)        |
+| `--clone-dir <path>`    | `SHELDON_CLONE_DIR`    | Set the clone directory. (*default:* `<root>/repos`)        |
+| `--download-dir <path>` | `SHELDON_DOWNLOAD_DIR` | Set the download directory. (*default:* `<root>/downloads`) |
+
+The priority order for setting these values is the following
+
+1. Command line option.
+2. Environment variable.
+3. Default value.
+
+## Configuration: plugin sources
+
+A plugin is defined by adding a new unique name to the `plugins` table in the
+[TOML] config file. This can be done by either editing the file directly or
+using the provided **sheldon** commands. A plugin must the location of the
+source. There are three types of sources, each kind is described in this
+section. A plugin may only specify _one_ source type.
 
 ```toml
 # ~/.sheldon/plugins.toml
@@ -122,95 +256,6 @@ github = "robbyrussell/oh-my-zsh"
 #               └─ GitHub user or organization
 ```
 
-You can then use `sheldon source` to install the configured plugins, generate
-the lock file, and print out the script to source. Simply add the following to
-your `~/.zshrc` file
-
-```sh
-# ~/.zshrc
-
-source <(sheldon source)
-```
-
-For a more fleshed out example configuration file see
-[here](docs/plugins.example.toml).
-
-## Command line interface
-
-### `lock` command
-
-This command installs the plugins sources and generates the lock file. If we ran
-this on the example configuration file above, then the following output would be
-produced.
-
-<img width="437" alt="sheldon lock output"
-src="https://user-images.githubusercontent.com/17109887/60550355-059def80-9d28-11e9-8b1e-67b5fb10e74d.png">
-
-Running it again would not redownload the plugin
-
-<img width="437" alt="image"
-src="https://user-images.githubusercontent.com/17109887/60550441-4433aa00-9d28-11e9-8429-e6380889e348.png">
-
-### `source` command
-
-This command generates the shell script to be sourced. This command will first
-check if there is an up to date lock file otherwise it will relock the
-configuration file.
-
-<img width="688" alt="image"
-src="https://user-images.githubusercontent.com/17109887/60550596-cae88700-9d28-11e9-906b-74f6f5d80149.png">
-
-If we now modify our configuration file and run this command again it will
-relock the configuration prior to generating the script.
-
-<img width="691" alt="image"
-src="https://user-images.githubusercontent.com/17109887/60550665-02573380-9d29-11e9-84e9-5dfa89b11895.png">
-
-The output of this command is highly configurable. You can define your own
-[custom templates](#configuration-templates) to apply to your plugins.
-
-### Flags
-
-**sheldon** accepts the following global command line flags.
-
-| Flag              | Description                        |
-| ----------------- | ---------------------------------- |
-| `-q`, `--quiet`   | Suppress any informational output. |
-| `-v`, `--verbose` | Use verbose output.                |
-| `--no-color`      | Do not use ANSI colored output.    |
-| `-h`, `--help`    | Show the help message and exit.    |
-| `-V`, `--version` | Show the version and exit.         |
-
-### Options
-
-**sheldon** accepts the following global command line options.
-
-| Option                  | Environment variable   | Description                                                 |
-| ----------------------- | ---------------------- | ----------------------------------------------------------- |
-| `--home <path>`         | `HOME`                 | Set the home directory.                                     |
-| `--root <path>`         | `SHELDON_ROOT`         | Set the root directory. (*default:* `<home>/.sheldon`)      |
-| `--config-file <path>`  | `SHELDON_CONFIG_FILE`  | Set the config file. (*default:*  `<root>/plugins.toml`)    |
-| `--lock-file <path>`    | `SHELDON_LOCK_FILE`    | Set the lock file. (*default:* `<config-file>.lock`)        |
-| `--clone-dir <path>`    | `SHELDON_CLONE_DIR`    | Set the clone directory. (*default:* `<root>/repos`)        |
-| `--download-dir <path>` | `SHELDON_DOWNLOAD_DIR` | Set the download directory. (*default:* `<root>/downloads`) |
-
-**Note:** in rare circumstances **sheldon** will not be able to automatically
-detect the user's home directory. You should only have to set the `--home`
-option in these cases.
-
-The priority order for setting these values is the following
-
-1. Command line option.
-2. Environment variable.
-3. Default value.
-
-## Configuration: plugin sources
-
-A plugin is defined by adding a new unique name to the `plugins` table in the
-[TOML] configuration file. A plugin must define the location of the source.
-There are three types of sources, each kind is described below. A plugin may
-only specify _one_ source type.
-
 ### Git
 
 Git sources specify a remote Git repository that will be cloned to the
@@ -220,30 +265,50 @@ Git sources specify a remote Git repository that will be cloned to the
 
 A GitHub source must set the `github` field and specify the repository. This
 should be the username or organization and the repository name separated by a
-forward slash.
+forward slash. Add the following to the **sheldon** config file.
 
 ```toml
 [plugins.pure]
 github = "sindresorhus/pure"
 ```
 
+Or run **sheldon add** with the `--github` option.
+
+```sh
+sheldon add pure --github sindresorhus/pure
+```
+
 #### `gist`
 
 A Gist source must set the `gist` field and specify the repository. This should
-be the hash or username and hash of the Gist.
+be the hash or username and hash of the Gist.  Add the following to the
+**sheldon** config file.
 
 ```toml
 [plugins.pure]
 gist = "579d02802b1cc17baed07753d09f5009"
 ```
 
+Or run **sheldon add** with the `--gist` option.
+
+```sh
+sheldon add pure --gist 579d02802b1cc17baed07753d09f5009
+```
+
 #### `git`
 
-A Git source must set the `git` field and specify the URL.
+A Git source must set the `git` field and specify the URL to clone. Add the
+following to the **sheldon** config file.
 
 ```toml
 [plugins.pure]
 git = "https://github.com/sindresorhus/pure"
+```
+
+Or run **sheldon add** with the `--git` option.
+
+```sh
+sheldon add pure --git https://github.com/sindresorhus/pure
 ```
 
 #### Specifying a branch, tag, or commit
@@ -254,7 +319,14 @@ fields. **sheldon** will then checkout the repository at this reference.
 ```toml
 [plugins.pure]
 github = "sindresorhus/pure"
-tag = "1.9.0"
+tag = "v1.12.0"
+```
+
+Or run **sheldon add** with the `--tag`, `--branch`, or `--rev` option when
+adding the plugin.
+
+```sh
+sheldon add pure --github sindresorhus/pure --tag v1.12.0
 ```
 
 #### Cloning with Git or SSH protocols
@@ -269,7 +341,7 @@ github = "sindresorhus/pure"
 proto = "ssh"
 ```
 
-For a plain Git source you should specify the URL with a `git://` or `ssh://` «.
+For a plain Git source you should specify the URL with a `git://` or `ssh://`.
 For SSH you will need to specify the username as well (it is `git` for GitHub).
 
 ```toml
@@ -277,29 +349,45 @@ For SSH you will need to specify the username as well (it is `git` for GitHub).
 git = "ssh://git@github.com/sindresorhus/pure"
 ```
 
-**Note:** Currently **sheldon** only supports authentication when cloning using
-SSH and only via the SSH agent.
+#### Private Git repositories
+
+Currently **sheldon** only supports authentication when cloning using SSH and
+only with authentication via the SSH agent. This means if you have a plugin
+source that is a private repository you will have to use the SSH protocol for
+cloning.
 
 ### Remote
 
 Remote sources specify a remote file that will be downloaded to the **sheldon**
 root directory. A Remote source must set the  `remote` field and specify the
-URL.
+URL. Add the following to the **sheldon** config file.
 
 ```toml
 [plugins.pure]
 remote = "https://github.com/rossmacarthur/pure/raw/master/pure.zsh"
 ```
 
+Or run **sheldon add** with the `--remote` option.
+
+```sh
+sheldon add pure --remote https://github.com/rossmacarthur/pure/raw/master/pure.zsh
+```
+
 ### Local
 
 Local sources reference local directories. A Local source must set the `local`
 field and specify a directory. Tildes may be used and will be expanded to the
-current user's home directory.
+current user's home directory. Add the following to the **sheldon** config file.
 
 ```toml
 [plugins.pure]
 local = "~/Downloads/repos/pure"
+```
+
+Or run **sheldon add** with the `--local` option.
+
+```sh
+sheldon add pure --local '~/Downloads/repos/pure'
 ```
 
 ## Configuration: plugin options
@@ -308,7 +396,10 @@ These are options that are common to all the above plugins.
 
 ### `use`
 
-A list of files / globs to use in the plugin's source directory.
+A list of files / globs to use in the plugin's source directory. If this field
+is not given then the first pattern in the global [`match`](#match) field that
+matches any files will be used. Add the following to the **sheldon** config
+file.
 
 ```toml
 [plugins.pure]
@@ -316,8 +407,11 @@ github = "sindresorhus/pure"
 use = ["*.zsh"]
 ```
 
-If this field is not given then the first pattern in the global `match` field
-that matches any files will be used.
+Or run **sheldon add** with the `--use` option when adding the plugin.
+
+```sh
+sheldon add pure --github sindresorhus/pure --use '*.zsh'
+```
 
 ### `apply`
 
@@ -328,6 +422,12 @@ A list of template names to apply to this plugin. This defaults to the global
 [plugins.pure]
 github = "sindresorhus/pure"
 apply = ["source", "PATH"]
+```
+
+Or run **sheldon add** with the `--apply` option when adding the plugin.
+
+```sh
+sheldon add pure --github sindresorhus/pure --apply source PATH
 ```
 
 You can define your own [custom templates](#custom-templates) to apply to your
@@ -341,7 +441,9 @@ set the `inline` field and specify the raw source.
 ```toml
 [plugins.pure]
 inline = """
-echo 'not really `pure`'
+pure() {
+  echo 'not really :P'
+}
 """
 ```
 
@@ -489,7 +591,6 @@ This project is licensed under either of
 - MIT license ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
 
 [cargo]: https://doc.rust-lang.org/cargo/
-[configuration]: docs/Configuration.md
 [handlebars]: http://handlebarsjs.com
 [releases]: https://github.com/rossmacarthur/sheldon/releases
 [rust-lang]: https://www.rust-lang.org/

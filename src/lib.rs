@@ -177,7 +177,7 @@ impl Sheldon {
             locked
                 .to_path(lock_path)
                 .context("failed to write lock file")?;
-            header_v!(ctx, "Locked", lock_path);
+            header!(ctx, "Locked", lock_path);
         } else {
             for err in &locked.errors {
                 error!(ctx, &err);
