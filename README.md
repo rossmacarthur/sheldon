@@ -44,6 +44,7 @@
 - [Installation](#installation)
   - [Pre-built binaries](#pre-built-binaries)
   - [Cargo](#cargo)
+  - [Release notes](#release-notes)
 - [Getting started](#getting-started)
 - [Command line interface](#command-line-interface)
   - [`lock` command](#lock-command)
@@ -100,6 +101,10 @@ curl --proto '=https' -fLsS https://rossmacarthur.github.io/install/crate.sh \
 ```sh
 cargo install sheldon
 ```
+
+### Release notes
+
+Please see all release notes [here](RELEASES.md).
 
 ## Getting started
 
@@ -584,11 +589,13 @@ apply = ["source"]
 
 ## License
 
-This project is licensed under either of
+Licensed under either of
 
-- Apache License, Version 2.0, ([LICENSE-APACHE](LICENSE-APACHE) or
+- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or
   http://www.apache.org/licenses/LICENSE-2.0)
 - MIT license ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
+
+at your option.
 
 [cargo]: https://doc.rust-lang.org/cargo/
 [handlebars]: http://handlebarsjs.com

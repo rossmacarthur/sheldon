@@ -1,5 +1,96 @@
 # Releases
 
+## 0.5.0
+
+*Unreleased*
+
+### Features
+
+- [Add `add` and `remove` commands to edit config.](140d171) These commands will
+  edit the config file for you.
+
+  For example
+
+  ```sh
+  sheldon add pure --github sindresorhus/pure --tag v1.12.0
+  ```
+
+  will add the following to the config file
+
+  ```toml
+  [plugins.pure]
+  github = "sindresorhus/pure"
+  tag = "v1.12.0"
+  ```
+
+  The following will remove it again.
+
+  ```sh
+  sheldon remove pure
+  ```
+
+- [Add `edit` command.](5b63843) Adds a new command to **sheldon** which allows
+  you to open the config file in the default editor. Simply run `sheldon edit`.
+- [Add initial config file.](75a39b3) When running `add` or `edit` **sheldon**
+  will attempt to initialize a new config file at
+  [`~/.sheldon/plugins.toml`](src/plugins.toml).
+- [Warn about unused config keys.](11ff287) Anytime **sheldon** loads the config
+  file it will log warnings when there are unused config keys. Great for
+  catching typos!
+
+[11ff287]: https://github.com/rossmacarthur/sheldon/commit/11ff2875e5ecb04851b435c3e95fecbe7e453a97
+[75a39b3]: https://github.com/rossmacarthur/sheldon/commit/75a39b398bb2982ef77e44bf1269cbd6f762bf99
+[5b63843]: https://github.com/rossmacarthur/sheldon/commit/5b6384370128d410e82153b52c398dcfd1f8422c
+[140d171]: https://github.com/rossmacarthur/sheldon/commit/140d17142d5be2b0653f559612aebffbd3c39ce1
+
+### Breaking changes
+
+- [Update default root directory and clone directory.](1845483) The root
+  directory now defaults to `~/.sheldon` and the clone directory now defaults to
+  `{root}/repos`. To migrate you should do the following:
+
+  ```sh
+  mv ~/.zsh ~/.sheldon
+  mv ~/.sheldon/repositories ~/.sheldon/repos
+  ```
+
+  Or to preserve the old behavior you should export the following before running
+  **sheldon**.
+
+  ```sh
+  export SHELDON_ROOT="$HOME/.zsh"
+  export SHELDON_CLONE_DIR="$SHELDON_ROOT/repositories"
+  ```
+
+### Fixes
+
+- [Download/clone sources to a temporary path first.](7293cbf)
+
+  This fixes an issue ([#99]) where if someone tried to reinstall they would be
+  left without any plugins because they would all be nuked up front prior to
+  trying to download them.
+
+[#99]: https://github.com/rossmacarthur/sheldon/issues/99
+[7293cbf]: https://github.com/rossmacarthur/sheldon/commit/7293cbf61240a40333ef139b6ac6e7ab173f0f97
+
+### Deprecations
+
+Most of these are still supported, however **sheldon** will log a deprecation
+warning if you use them.
+
+- [Rename `filename` to `file`](c62600a) This affects both the the config file
+  and the template rendering context.
+- [Rename `directory` to `dir`.](f8d5647) This affects both the the config file
+  and the template rendering context.
+- [Rename `protocol` plugin config key to `proto`.](ce4d8e2)
+- [Rename `revision` plugin config key to `rev`.](92bb588)
+
+[1845483]: https://github.com/rossmacarthur/sheldon/commit/18454834cb6f1b2b1ebf2ef52617449b58917f28
+[c62600a]: https://github.com/rossmacarthur/sheldon/commit/c62600a46116457c4bd682e348af344c00709e67
+[f8d5647]: https://github.com/rossmacarthur/sheldon/commit/f8d564770e5fac66d92511fdb404869f2cbb6f4f
+[ce4d8e2]: https://github.com/rossmacarthur/sheldon/commit/ce4d8e29e19d52a7ab9d5c83b93cfe91b643a227
+[92bb588]: https://github.com/rossmacarthur/sheldon/commit/92bb588612e58498fe668e0f7f4fa274b6f9cb11
+
 ## 0.4.8
 
 *Released on November 3rd, 2019*
