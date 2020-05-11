@@ -119,13 +119,12 @@ enum RawCommand {
     /// Generate and print out the script.
     #[structopt(help_message = HELP_MESSAGE)]
     Source {
-        /// Reinstall all plugin sources.
-        #[structopt(long)]
-        reinstall: bool,
-
         /// Regenerate the lock file.
         #[structopt(long)]
         relock: bool,
+        /// Reinstall all plugin sources (implies --relock).
+        #[structopt(long)]
+        reinstall: bool,
     },
 }
 
@@ -321,7 +320,10 @@ impl Opt {
             RawCommand::Edit => Command::Edit,
             RawCommand::Remove { name } => Command::Remove { name },
             RawCommand::Lock { reinstall } => Command::Lock { reinstall },
-            RawCommand::Source { reinstall, relock } => Command::Source { reinstall, relock },
+            RawCommand::Source { relock, reinstall } => Command::Source {
+                relock: relock || reinstall,
+                reinstall,
+            },
         };
 
         Self {
@@ -892,8 +894,8 @@ USAGE:
     {name} source [FLAGS]
 
 FLAGS:
-        --reinstall    Reinstall all plugin sources
         --relock       Regenerate the lock file
+        --reinstall    Reinstall all plugin sources (implies --relock)
     -h, --help         Show this message and exit",
                 name = crate_name!(),
                 version = crate_version!()
