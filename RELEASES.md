@@ -2,7 +2,7 @@
 
 ## 0.5.1
 
-*Unreleased*
+*Released on May 11th, 2020*
 
 - [Using `--reinstall` on source command now implies `--relock`.][081f940]
 - [Support aarch64 linux.][eb6aaf4]
