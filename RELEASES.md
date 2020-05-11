@@ -1,5 +1,18 @@
 # Releases
 
+## 0.5.1
+
+*Unreleased*
+
+- [Using `--reinstall` on source command now implies `--relock`.][081f940]
+- [Support aarch64 linux.][eb6aaf4]
+- [Update Docker images to use OpenSSL 1.1.1g.][4b14975] This affects the
+  shipped musl binaries which statically bundle OpenSSL.
+
+[081f940]: https://github.com/rossmacarthur/sheldon/commit/081f940bc75711d3a587673178c738dd9ad40258
+[eb6aaf4]: https://github.com/rossmacarthur/sheldon/commit/eb6aaf49bacbccff00359ec86135d1f4050a6d35
+[4b14975]: https://github.com/rossmacarthur/sheldon/commit/4b14975238412a9ae83fcc9a202586bd725b331b
+
 ## 0.5.0
 
 *Released on May 2nd, 2020*
