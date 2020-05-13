@@ -219,6 +219,7 @@ impl Source {
         temp_file
             .rename(&file)
             .context("failed to rename temporary download file")?;
+        status!(ctx, "Fetched", &url);
 
         Ok(LockedSource {
             dir,
