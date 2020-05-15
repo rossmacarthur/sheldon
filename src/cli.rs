@@ -281,7 +281,7 @@ impl Opt {
             no_color,
         };
 
-        let home = match home.or_else(dirs::home_dir).ok_or_else(|| {
+        let home = match home.or_else(home::home_dir).ok_or_else(|| {
             anyhow!(
                 "failed to determine the current user's home directory, try using the `--home` \
                  option"
