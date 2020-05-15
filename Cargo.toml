@@ -15,7 +15,7 @@ build = "build.rs"
 
 [dependencies]
 ansi_term = "0.11.0"
-anyhow = "1.0.28"
+anyhow = "1.0.31"
 casual = "0.1.1"
 fs2 = "0.4.3"
 git2 = "0.13.5"
@@ -29,9 +29,9 @@ maplit = "1.0.2"
 regex = "1.3.7"
 reqwest = { version = "0.10.4", features = ["blocking"] }
 scoped_threadpool = "0.1.9"
-serde = { version = "1.0.106", features = ["derive"] }
+serde = { version = "1.0.110", features = ["derive"] }
 structopt = "0.3.14"
-toml = "0.5.6"
+toml = { version = "0.5.6", features = ["preserve_order"] }
 toml_edit = "0.1.5"
 url = { version = "2.1.1", features = ["serde"] }
 walkdir = "2.3.1"
