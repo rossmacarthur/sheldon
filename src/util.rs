@@ -327,6 +327,7 @@ pub mod git {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use pretty_assertions::assert_eq;
 
     #[test]
     fn path_buf_expand_tilde_with_root() {

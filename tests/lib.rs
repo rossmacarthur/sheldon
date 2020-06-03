@@ -8,6 +8,7 @@ use std::{
 use itertools::Itertools;
 use pest::Parser;
 use pest_derive::Parser;
+use pretty_assertions::assert_eq;
 
 /////////////////////////////////////////////////////////////////////////
 // Utilities
@@ -118,7 +119,6 @@ impl TestCommand {
 
     fn run(mut self) -> io::Result<()> {
         let result = self.command.output()?;
-        println!("{:#?}", result);
         if let Some(exit_code) = self.expect_exit_code {
             assert_eq!(result.status.code().unwrap(), exit_code);
         }

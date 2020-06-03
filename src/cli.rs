@@ -347,6 +347,7 @@ impl Opt {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use pretty_assertions::assert_eq;
     use std::{env, iter};
     use structopt::clap::{crate_authors, crate_description, crate_name};
 

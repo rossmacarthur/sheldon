@@ -118,6 +118,7 @@ impl Config {
 mod tests {
     use super::*;
     use crate::config::GitReference;
+    use pretty_assertions::assert_eq;
     use std::{io::Write, path::PathBuf};
     use url::Url;
 
