@@ -2,7 +2,7 @@
 
 ## 0.5.2
 
-*Unreleased*
+*Released on June 4th, 2020*
 
 ### Fixes
 
