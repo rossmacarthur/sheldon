@@ -9,6 +9,7 @@ use std::{
 
 use anyhow::{Context as ResultExt, Error, Result};
 use fs2::{lock_contended_error, FileExt};
+use url::Url;
 
 use crate::context::{Context, SettingsExt};
 
@@ -29,6 +30,11 @@ fn nuke_path(path: &Path) -> io::Result<()> {
     } else {
         fs::remove_file(path)
     }
+}
+
+/// Download a remote file and handle status code errors.
+pub fn download(url: Url) -> reqwest::Result<reqwest::blocking::Response> {
+    Ok(reqwest::blocking::get(url)?.error_for_status()?)
 }
 
 /////////////////////////////////////////////////////////////////////////

@@ -24,7 +24,7 @@ use walkdir::WalkDir;
 use crate::{
     config::{Config, ExternalPlugin, GitReference, InlinePlugin, Plugin, Source, Template},
     context::{LockContext as Context, Settings, SettingsExt},
-    util::{git, TempPath},
+    util::{self, git, TempPath},
 };
 
 /// The maximmum number of threads to use while downloading sources.
@@ -209,7 +209,7 @@ impl Source {
         }
 
         let mut response =
-            reqwest::blocking::get(url.clone()).with_context(s!("failed to download `{}`", url))?;
+            util::download(url.clone()).with_context(s!("failed to download `{}`", url))?;
         fs::create_dir_all(&dir).with_context(s!("failed to create dir `{}`", dir.display()))?;
         let mut temp_file = TempPath::new(&file);
         temp_file.write(&mut response).with_context(s!(
