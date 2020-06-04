@@ -1,5 +1,27 @@
 # Releases
 
+## 0.5.2
+
+*Unreleased*
+
+### Fixes
+
+- [Fix not erroring out on a bad HTTP status code.][4ae6432] This fixes remote
+  sources from silently not being downloaded correctly.
+- [Fix missing status log.][4ba5822] This fixes a missing status log for when
+  fetching remote sources.
+
+[4ae6432]: https://github.com/rossmacarthur/sheldon/commit/4ae64325fd8239dfb6e35f9efc05067c9c4a24d4
+[4ba5822]: https://github.com/rossmacarthur/sheldon/commit/4ba58227be394e961d721804d7e6b02b882495ec
+
+### Other
+
+- [Only ship musl binaries.][3ef9d7a] The [download
+  script](https://github.com/rossmacarthur/install) will figure this out
+  automatically.
+
+[3ef9d7a]: https://github.com/rossmacarthur/sheldon/commit/3ef9d7a7a8fd6b429e8405ba3e9ba7c621326543
+
 ## 0.5.1
 
 *Released on May 11th, 2020*
