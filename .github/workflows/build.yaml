@@ -42,7 +42,7 @@ jobs:
         - { os: ubuntu-latest, target: aarch64-unknown-linux-musl, toolchain: nightly }
         - { os: ubuntu-latest, target: armv7-unknown-linux-musleabihf, toolchain: stable }
         - { os: ubuntu-latest, target: armv7-unknown-linux-musleabihf, toolchain: beta }
-        - { os: ubuntu-latest, target: armv7-unknown-linux-musleabihf, toolchain: nightly }
+        # - { os: ubuntu-latest, target: armv7-unknown-linux-musleabihf, toolchain: nightly }
 
     name: test (${{ matrix.toolchain }}, ${{ matrix.target }})
     runs-on: ${{ matrix.os }}
