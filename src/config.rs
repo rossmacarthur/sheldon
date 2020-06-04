@@ -511,7 +511,7 @@ where
 /// the key.
 fn check_extra_toml<F>(rest: Option<toml::Value>, mut f: F)
 where
-    F: FnMut(&str) -> (),
+    F: FnMut(&str),
 {
     match rest {
         Some(toml::Value::Table(table)) => {
