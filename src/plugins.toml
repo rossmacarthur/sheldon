@@ -14,5 +14,5 @@
 
 # For example:
 #
-# [plugins.pure]
-# github = "sindresorhus/pure"
+# [plugins.base16]
+# github = "chriskempson/base16-shell"

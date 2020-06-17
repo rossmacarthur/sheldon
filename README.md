@@ -76,6 +76,8 @@
   - [`match`](#match)
   - [`apply`](#apply-1)
 - [Examples](#examples)
+  - [Zsh frameworks](#zsh-frameworks)
+    - [ohmyzsh](#ohmyzsh)
   - [Zsh plugins](#zsh-plugins)
     - [autosuggestions](#autosuggestions)
     - [autojump](#autojump)
@@ -132,14 +134,14 @@ or remove plugins. To add your first plugin to the config file run the `sheldon
 add` command.
 
 ```sh
-sheldon add oh-my-zsh --github robbyrussell/oh-my-zsh
+sheldon add oh-my-zsh --github "ohmyzsh/ohmyzsh"
 ```
 
 The first argument given here `oh-my-zsh` is a unique name for the plugin. The
 `--github` option specifies that we want **sheldon** to manage a clone of
-http://github.com/robbyrussell/oh-my-zsh. If this is the first time you are
-running **sheldon**, you will be asked if you want to initialize a new config
-file at `~/.sheldon/plugins.toml`.
+http://github.com/ohmyzsh/ohmyzsh. If this is the first time you are running
+**sheldon**, you will be asked if you want to initialize a new config file at
+`~/.sheldon/plugins.toml`.
 
 You can then use `sheldon source` to install the configured plugins, generate
 the lock file, and print out the shell script to source. Simply add the
@@ -192,7 +194,7 @@ the config file. In the following command we add a GitHub repository as a
 source.
 
 ```sh
-sheldon add my-repo --git http://github.com/owner/repo.git
+sheldon add my-repo --git https://github.com/owner/repo.git
 ```
 
 An example usage of this command for each source type is shown in the
@@ -268,10 +270,10 @@ section. A plugin may only specify _one_ source type.
 #            ┌─ Unique name for the plugin
 #        ┌───┴───┐
 [plugins.oh-my-zsh]
-github = "robbyrussell/oh-my-zsh"
-#         └─────┬────┘ └───┬───┘
-#               │          └─ GitHub repository name
-#               └─ GitHub user or organization
+github = "ohmyzsh/ohmyzsh"
+#         └──┬──┘ └──┬──┘
+#            │       └─ GitHub repository name
+#            └─ GitHub user or organization
 ```
 
 ### Git
@@ -286,31 +288,31 @@ should be the username or organization and the repository name separated by a
 forward slash. Add the following to the **sheldon** config file.
 
 ```toml
-[plugins.pure]
-github = "sindresorhus/pure"
+[plugins.example]
+github = "owner/repo"
 ```
 
 Or run **sheldon add** with the `--github` option.
 
 ```sh
-sheldon add pure --github sindresorhus/pure
+sheldon add example --github owner/repo
 ```
 
 #### `gist`
 
 A Gist source must set the `gist` field and specify the repository. This should
-be the hash or username and hash of the Gist.  Add the following to the
+be the hash or username and hash of the Gist. Add the following to the
 **sheldon** config file.
 
 ```toml
-[plugins.pure]
+[plugins.example]
 gist = "579d02802b1cc17baed07753d09f5009"
 ```
 
 Or run **sheldon add** with the `--gist` option.
 
 ```sh
-sheldon add pure --gist 579d02802b1cc17baed07753d09f5009
+sheldon add example --gist 579d02802b1cc17baed07753d09f5009
 ```
 
 #### `git`
@@ -319,14 +321,14 @@ A Git source must set the `git` field and specify the URL to clone. Add the
 following to the **sheldon** config file.
 
 ```toml
-[plugins.pure]
-git = "https://github.com/sindresorhus/pure"
+[plugins.example]
+git = "https://github.com/owner/repo"
 ```
 
 Or run **sheldon add** with the `--git` option.
 
 ```sh
-sheldon add pure --git https://github.com/sindresorhus/pure
+sheldon add example --git https://github.com/owner/repo
 ```
 
 #### Specifying a branch, tag, or commit
@@ -335,16 +337,16 @@ All Git sources also allow setting of one of the `branch`, `tag` or `rev`
 fields. **sheldon** will then checkout the repository at this reference.
 
 ```toml
-[plugins.pure]
-github = "sindresorhus/pure"
-tag = "v1.12.0"
+[plugins.example]
+github = "owner/repo"
+tag = "v0.1.0"
 ```
 
 Or run **sheldon add** with the `--tag`, `--branch`, or `--rev` option when
 adding the plugin.
 
 ```sh
-sheldon add pure --github sindresorhus/pure --tag v1.12.0
+sheldon add example --github owner/repo --tag v0.1.0
 ```
 
 #### Cloning with Git or SSH protocols
@@ -354,8 +356,8 @@ Git or SSH should be used by setting the `proto` field to the protocol type.
 This must be one of `git`, `https`, or `ssh`.
 
 ```toml
-[plugins.pure]
-github = "sindresorhus/pure"
+[plugins.example]
+github = "owner/repo"
 proto = "ssh"
 ```
 
@@ -363,8 +365,8 @@ For a plain Git source you should specify the URL with a `git://` or `ssh://`.
 For SSH you will need to specify the username as well (it is `git` for GitHub).
 
 ```toml
-[plugins.pure]
-git = "ssh://git@github.com/sindresorhus/pure"
+[plugins.example]
+git = "ssh://git@github.com/owner/repo"
 ```
 
 #### Private Git repositories
@@ -381,14 +383,14 @@ root directory. A Remote source must set the  `remote` field and specify the
 URL. Add the following to the **sheldon** config file.
 
 ```toml
-[plugins.pure]
-remote = "https://github.com/rossmacarthur/pure/raw/master/pure.zsh"
+[plugins.example]
+remote = "https://github.com/owner/repo/raw/master/plugin.zsh"
 ```
 
 Or run **sheldon add** with the `--remote` option.
 
 ```sh
-sheldon add pure --remote https://github.com/rossmacarthur/pure/raw/master/pure.zsh
+sheldon add example --remote https://github.com/owner/repo/raw/master/plugin.zsh
 ```
 
 ### Local
@@ -398,14 +400,14 @@ field and specify a directory. Tildes may be used and will be expanded to the
 current user's home directory. Add the following to the **sheldon** config file.
 
 ```toml
-[plugins.pure]
-local = "~/Downloads/repos/pure"
+[plugins.example]
+local = "~/Downloads/plugin"
 ```
 
 Or run **sheldon add** with the `--local` option.
 
 ```sh
-sheldon add pure --local '~/Downloads/repos/pure'
+sheldon add example --local '~/Downloads/plugin'
 ```
 
 ## Configuration: plugin options
@@ -420,15 +422,15 @@ matches any files will be used. Add the following to the **sheldon** config
 file.
 
 ```toml
-[plugins.pure]
-github = "sindresorhus/pure"
+[plugins.example]
+github = "owner/repo"
 use = ["*.zsh"]
 ```
 
 Or run **sheldon add** with the `--use` option when adding the plugin.
 
 ```sh
-sheldon add pure --github sindresorhus/pure --use '*.zsh'
+sheldon add example --github owner/repo --use '*.zsh'
 ```
 
 ### `apply`
@@ -437,15 +439,15 @@ A list of template names to apply to this plugin. This defaults to the global
 [`apply`](#apply-1).
 
 ```toml
-[plugins.pure]
-github = "sindresorhus/pure"
+[plugins.example]
+github = "owner/repo"
 apply = ["source", "PATH"]
 ```
 
 Or run **sheldon add** with the `--apply` option when adding the plugin.
 
 ```sh
-sheldon add pure --github sindresorhus/pure --apply source PATH
+sheldon add example --github owner/repo --apply source PATH
 ```
 
 You can define your own [custom templates](#custom-templates) to apply to your
@@ -457,12 +459,8 @@ For convenience it also possible to define Inline plugins. An Inline plugin must
 set the `inline` field and specify the raw source.
 
 ```toml
-[plugins.pure]
-inline = """
-pure() {
-  echo 'not really :P'
-}
-"""
+[plugins.example]
+inline = 'example() { echo "Just an example of inline shell code" }'
 ```
 
 ## Configuration: templates
@@ -476,7 +474,6 @@ Available built in templates are
 
 - **source**: source each file in a plugin.
 - **PATH**: add the plugin directory to the `PATH` variable.
-- **FPATH**: add the plugin directory to the `FPATH` variable.
 - **path**: add the plugin directory to the `path` variable.
 - **fpath**: add the plugin directory to the `fpath` variable.
 
@@ -486,7 +483,6 @@ As template strings they could be represented like this
 [templates]
 source = { value = 'source "{{ file }}"', each = true }
 PATH = 'export PATH="{{ dir }}:$PATH"'
-FPATH = 'export FPATH="{{ dir }}:$FPATH"'
 path = 'path=( "{{ dir }}" $path )'
 fpath = 'fpath=( "{{ dir }}" $fpath )'
 ```
@@ -496,9 +492,8 @@ add the plugin directory to the `PATH` and append it to the `fpath`. The plugin
 will not be sourced.
 
 ```toml
-[plugins.pure]
-source = "github"
-repository = "sindresorhus/pure"
+[plugins.example]
+github = "owner/repo"
 apply = ["PATH", "fpath"]
 ```
 
@@ -535,14 +530,14 @@ Lets say we would like a template to symlink files into the
 
 ```toml
 [templates]
-function = { value = 'ln -sf "{{ file }}" "~/.sheldon/functions/{{ name }}"', each = true }
+function = { value = 'ln -sf "{{ file }}" "~/.zsh/functions/{{ name }}"', each = true }
 ```
 
 It can then be applied to the plugin like this
 
 ```toml
-[plugins.pure]
-github = "sindresorhus/pure"
+[plugins.example]
+github = "owner/repo"
 apply = ["function"]
 ```
 
@@ -560,8 +555,8 @@ PATH = 'export PATH="$PATH:{{ dir }}"'
 You can then apply it to the plugin like this
 
 ```toml
-[plugins.pure]
-github = "sindresorhus/pure"
+[plugins.example]
+github = "owner/repo"
 apply = ["source", "PATH"]
 ```
 
@@ -577,14 +572,14 @@ defaults to
 
 ```toml
 match = [
-  "{{ name }}.plugin.zsh",
-  "{{ name }}.zsh",
-  "{{ name }}.sh",
-  "{{ name }}.zsh-theme",
-  "*.plugin.zsh",
-  "*.zsh",
-  "*.sh",
-  "*.zsh-theme",
+    "{{ name }}.plugin.zsh",
+    "{{ name }}.zsh",
+    "{{ name }}.sh",
+    "{{ name }}.zsh-theme",
+    "*.plugin.zsh",
+    "*.zsh",
+    "*.sh",
+    "*.zsh-theme"
 ]
 ```
 
@@ -605,6 +600,35 @@ apply = ["source"]
 This section demonstrates the configuration file contents for some popular
 plugins and themes.
 
+### Zsh frameworks
+
+#### [ohmyzsh](https://github.com/ohmyzsh/ohmyzsh)
+
+Add the following to the **sheldon** config file.
+
+```toml
+[plugins.oh-my-zsh]
+github = "ohmyzsh/ohmyzsh"
+````
+
+Or run the following to automatically add it.
+
+```sh
+sheldon add oh-my-zsh --github "ohmyzsh/ohmyzsh"
+```
+
+Add the following to your `~/.zshrc` file.
+
+```
+# ~/.zshrc
+
+export ZSH="$HOME/.sheldon/repos/github.com/ohmyzsh/ohmyzsh"
+
+# Oh My Zsh settings here
+
+source <(sheldon source)
+```
+
 ### Zsh plugins
 
 #### [autosuggestions](https://github.com/zsh-users/zsh-autosuggestions)
@@ -620,7 +644,7 @@ use = ["{{ name }}.zsh"]
 Or run the following to automatically add it.
 
 ```sh
-sheldon add --github "zsh-users/zsh-autosuggestions" --use '{{ name }}.zsh'
+sheldon add zsh-autosuggestions --github zsh-users/zsh-autosuggestions --use '{{ name }}.zsh'
 ```
 
 #### [autojump](https://github.com/wting/autojump)
@@ -637,7 +661,7 @@ apply = ["PATH", "source"]
 Or run the following to automatically add it.
 
 ```sh
-sheldon add autojump --github "wting/autojump" --dir "bin" --apply "PATH" "source"
+sheldon add autojump --github wting/autojump --dir bin --apply PATH source
 ```
 
 #### [syntax-highlighting](https://github.com/zsh-users/zsh-syntax-highlighting)
@@ -652,7 +676,7 @@ github = "zsh-users/zsh-syntax-highlighting"
 Or run the following to automatically add it.
 
 ```sh
-sheldon add zsh-syntax-highlighting --github "zsh-users/zsh-syntax-highlighting"
+sheldon add zsh-syntax-highlighting --github zsh-users/zsh-syntax-highlighting
 ```
 
 #### [blackbox](https://github.com/StackExchange/blackbox)
@@ -667,7 +691,7 @@ github = "StackExchange/blackbox"
 Or run the following to automatically add it.
 
 ```sh
-sheldon add blackbox --github "StackExchange/blackbox"
+sheldon add blackbox --github StackExchange/blackbox
 ```
 
 #### [z.lua](https://github.com/skywind3000/z.lua)
@@ -682,7 +706,7 @@ github = "skywind3000/z.lua"
 Or run the following to automatically add it.
 
 ```sh
-sheldon add z.lua --github "skywind3000/z.lua"
+sheldon add z.lua --github skywind3000/z.lua
 ```
 
 #### [enhancd](https://github.com/b4b4r07/enhancd)
@@ -697,7 +721,7 @@ github = "b4b4r07/enhancd"
 Or run the following to automatically add it.
 
 ```sh
-sheldon add enhancd --github "b4b4r07/enhancd"
+sheldon add enhancd --github b4b4r07/enhancd
 ```
 
 #### [base16](https://github.com/chriskempson/base16-shell)
@@ -712,7 +736,7 @@ github = "chriskempson/base16-shell"
 Or run the following to automatically add it.
 
 ```sh
-sheldon add base16 --github "chriskempson/base16-shell"
+sheldon add base16 --github chriskempson/base16-shell
 ```
 
 ### Zsh themes
@@ -729,7 +753,7 @@ github = "romkatv/powerlevel10k"
 Or run the following to automatically add it.
 
 ```
-sheldon add powerlevel10k --github "romkatv/powerlevel10k"
+sheldon add powerlevel10k --github romkatv/powerlevel10k
 ```
 
 #### [spaceship]( https://github.com/denysdovhan/spaceship-prompt)
@@ -744,7 +768,7 @@ github = "denysdovhan/spaceship-prompt"
 Or run the following to automatically add it.
 
 ```sh
-sheldon add spaceship --github "denysdovhan/spaceship-prompt"
+sheldon add spaceship --github denysdovhan/spaceship-prompt
 ```
 
 #### [pure](https://github.com/sindresorhus/pure)
@@ -754,13 +778,13 @@ Add the following to the **sheldon** config file.
 ```toml
 [plugins.pure]
 github = "sindresorhus/pure"
-use = ["*.zsh"]
+use = ["async.zsh", "pure.zsh"]
 ```
 
 Or run the following to automatically add it.
 
 ```sh
-sheldon add pure --github "sindresorhus/pure" --use '*.zsh'
+sheldon add pure --github sindresorhus/pure --use async.zsh pure.zsh
 ```
 
 ## License

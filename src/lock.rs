@@ -1224,14 +1224,15 @@ mod tests {
 
         let mut config = Config::from_path(ctx.config_file(), &mut Vec::new()).unwrap();
         {
-            match &mut config.plugins[2] {
+            match &mut config.plugins[1] {
                 Plugin::External(ref mut plugin) => {
                     plugin.name = "sheldon-test".to_string();
+                    plugin.dir = None;
                     plugin.source = Source::Local {
                         dir: local_dir.to_path_buf(),
                     };
                 }
-                _ => panic!("expected the 3rd plugin to be external"),
+                _ => panic!("expected the 2nd plugin to be external"),
             }
         }
 
@@ -1242,64 +1243,29 @@ mod tests {
             locked.plugins,
             vec![
                 LockedPlugin::External(LockedExternalPlugin {
-                    name: "async".to_string(),
-                    source_dir: root.join("repos/github.com/mafredri/zsh-async"),
-                    plugin_dir: None,
-                    files: vec![root.join("repos/github.com/mafredri/zsh-async/async.zsh")],
-                    apply: vec_into!["function"]
-                }),
-                LockedPlugin::External(LockedExternalPlugin {
                     name: "pure".to_string(),
                     source_dir: root.join("repos/github.com/sindresorhus/pure"),
                     plugin_dir: None,
-                    files: vec![root.join("repos/github.com/sindresorhus/pure/pure.zsh")],
-                    apply: vec_into!["prompt"]
+                    files: vec![
+                        root.join("repos/github.com/sindresorhus/pure/async.zsh"),
+                        root.join("repos/github.com/sindresorhus/pure/pure.zsh")
+                    ],
+                    apply: vec_into!["source"]
                 }),
                 LockedPlugin::External(LockedExternalPlugin {
                     name: "sheldon-test".to_string(),
                     source_dir: local_dir.to_path_buf(),
                     plugin_dir: None,
                     files: vec![root.join(local_dir.join("test.plugin.zsh"))],
-                    apply: vec_into!["PATH", "source"]
+                    apply: vec_into!["source"]
                 }),
                 LockedPlugin::Inline(InlinePlugin {
-                    name: "ip-netns".to_string(),
-                    raw: r#"# Get ip netns information
-ip_netns_prompt_info() {
-  if (( $+commands[ip] )); then
-    local ref="$(ip netns identify $$)"
-    if [[ ! -z "$ref" ]]; then
-      echo "${ZSH_THEME_IP_NETNS_PREFIX:=(}${ref}${ZSH_THEME_IP_NETNS_SUFFIX:=)}"
-    fi
-  fi
-}
-"#
-                    .to_string()
+                    name: "www".to_string(),
+                    raw: r#"www() { python3 -m http.server "$@" }"#.to_string()
                 }),
-                LockedPlugin::External(LockedExternalPlugin {
-                    name: "docker-destroy-all".to_string(),
-                    source_dir: root.join("repos/gist.github.com/79ee61f7c140c63d2786"),
-                    plugin_dir: None,
-                    files: vec![root
-                        .join("repos/gist.github.com/79ee61f7c140c63d2786/get_last_pane_path.sh")],
-                    apply: vec_into!["PATH"]
-                })
             ]
         );
-        assert_eq!(
-            locked.templates,
-            indexmap_into![
-                "function" => Template {
-                    value: "ln -sf \"{{ file }}\" \"{{ root }}/functions/{{ name }}\"".to_string(),
-                    each: true
-                },
-                "prompt" => Template {
-                    value:
-                        "ln -sf \"{{ file }}\" \"{{ root }}/functions/prompt_{{ name }}_setup\"".to_string(),
-                    each: true
-                }
-            ]
-        );
+        assert_eq!(locked.templates, *DEFAULT_TEMPLATES);
         assert_eq!(locked.errors.len(), 0);
     }
 

@@ -47,21 +47,21 @@
   For example
 
   ```sh
-  sheldon add pure --github sindresorhus/pure --tag v1.12.0
+  sheldon add example --github owner/repo --tag v0.1.0
   ```
 
   will add the following to the config file
 
   ```toml
-  [plugins.pure]
-  github = "sindresorhus/pure"
-  tag = "v1.12.0"
+  [plugins.example]
+  github = "owner/repo"
+  tag = "v0.1.0"
   ```
 
   The following will remove it again.
 
   ```sh
-  sheldon remove pure
+  sheldon remove example
   ```
 
 - [Add `edit` command.](5b63843) Adds a new command to **sheldon** which allows

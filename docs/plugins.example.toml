@@ -1,60 +1,86 @@
-# Example ~/.zsh/plugins.toml file
-# --------------------------------
+# Example ~/.sheldon/plugins.toml file
+#
+# This file mostly shows the default values for config settings. Most of the
+# time you won't need to modify these values.
+#
+# You can also use `sheldon edit` to open up the config file in the default
+# editor.
+#
+# See the documentation for more https://github.com/rossmacarthur/sheldon#readme
+# ---------------------------------------------------------------------------- #
 
-# Global matches, if a plugin doesn't provide a `use` field then the first one
-# of the following that matches more than zero files will be used.
+# The `match` value specifies a global match sequence. If a plugin doesn't
+# provide a `use` field then the first one of the following that matches at
+# least one file will be used. The following is the default value.
+
 match = [
-  "{{ name }}.zsh",
-  "*.zsh",
-  "*.sh",
+    "{{ name }}.plugin.zsh",
+    "{{ name }}.zsh",
+    "{{ name }}.sh",
+    "{{ name }}.zsh-theme",
+    "*.plugin.zsh",
+    "*.zsh",
+    "*.sh",
+    "*.zsh-theme"
 ]
 
-# Global templates to apply by default, if a plugin doesn't provide an `apply`
-# field then these will be used.
-apply = ["PATH", "source"]
+# ---------------------------------------------------------------------------- #
 
-# Custom user defined templates, the `each` field means that these will be
-# applied for all matched files.
+# The `apply` value specifies global templates to apply by default. If a plugin
+# doesn't provide an `apply` field then these will be used. The following is the
+# default value.
+
+apply = ["source"]
+
+# ---------------------------------------------------------------------------- #
+
+# The `[templates]` table defines templates available for use with plugins when
+# they are rendered. The `each` field means that the template will be applied
+# for each 'used' file in the plugin. You can override templates on an
+# individual basis and add your own custom ones. The following is the default
+# selection of provided templates (i.e. you don't have to put them in your
+# config file).
+
 [templates]
-function = { value = 'ln -sf "{{ file }}" "{{ root }}/functions/{{ name }}"', each = true }
-prompt = { value = 'ln -sf "{{ file }}" "{{ root }}/functions/prompt_{{ name }}_setup"', each = true }
+PATH = 'export PATH="{{ dir }}:$PATH"'
+path = 'path=( "{{ dir }}" $path )'
+fpath = 'fpath=( "{{ dir }}" $fpath )'
+source = { value = 'source "{{ file }}"', each = true }
 
-[plugins.async]
-# `github` sources provide the repository in the form {username}/{repository}.
-github = "mafredri/zsh-async"
-# `github', `git`, or `gist` sources may provide a `branch`, `tag`, or `rev`.
-tag = "v1.7.1"
-# All plugins can specify the template names that will be applied.
-apply = ["function"]
+# ---------------------------------------------------------------------------- #
+
+# The `[plugins]` table defines the plugins to load. You can modify this table
+# directly or you can use one of the following `sheldon` commands which are
+# provided to assist in editing the config file:
+#
+# - `sheldon add` to add a new plugin to the config file
+# - `sheldon remove` to remove a plugin from the config file
+
+# Example: add the Pure prompt under the name `pure`.
+# ---------------------------------------------------
 
 [plugins.pure]
-# `git` sources must provide the Git URL.
-git = "https://github.com/sindresorhus/pure"
-# All plugins can specify the template names that will be applied.
-apply = ["prompt"]
-# All plugins can specify which files templates should be applied to.
-use = ["{{ name }}.zsh"]
+# `github` sources provide the repository in the form {owner}/{repository}.
+github = "sindresorhus/pure"
+# `github`, git`, or `gist` sources may provide `branch`, `tag`, or `rev`.
+tag = "v1.12.0"
+# Apply the templates to these files in the plugin.
+use = ["async.zsh", "pure.zsh"]
+# Apply the `source` template to each of the above files.
+apply = ["source"]
+
+# Example: a plugin from a local directory.
+# -----------------------------------------
 
 [plugins.pyenv]
 # `local` sources must provide the path to the source directory.
-local = "~/.dotfiles/plugins/pyenv"
+local = "~/.dotfiles/plugins"
+# Most plugins can specify a directory within the source.
+directory = 'pyenv'
 
-[plugins.ip-netns]
-# `inline` plugins should provide the raw source.
-inline = """
-# Get ip netns information
-ip_netns_prompt_info() {
-  if (( $+commands[ip] )); then
-    local ref="$(ip netns identify $$)"
-    if [[ ! -z "$ref" ]]; then
-      echo "${ZSH_THEME_IP_NETNS_PREFIX:=(}${ref}${ZSH_THEME_IP_NETNS_SUFFIX:=)}"
-    fi
-  fi
-}
-"""
+# Example: an inline plugin.
+# --------------------------
 
-[plugins.docker-destroy-all]
-# `gist` sources must be provide the Gist identifier.
-gist = "79ee61f7c140c63d2786"
-# All plugins can specify the template names that will be applied.
-apply = ["PATH"]
+[plugins.www]
+# `inline` plugins should provide the raw source to be rendered.
+inline = 'www() { python3 -m http.server "$@" }'
