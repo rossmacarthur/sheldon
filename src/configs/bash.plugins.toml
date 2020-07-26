@@ -1,0 +1,30 @@
+# `sheldon` configuration file
+# ----------------------------
+#
+# You can modify this file directly or you can use one of the following
+# `sheldon` commands which are provided to assist in editing the config file:
+#
+# - `sheldon add` to add a new plugin to the config file
+# - `sheldon edit` to open up the config file in the default editor
+# - `sheldon remove` to remove a plugin from the config file
+#
+# See the documentation for more https://github.com/rossmacarthur/sheldon#readme
+
+# This config field is overridden to use Bash relevant file matches.
+match = [
+    "{{ name }}.plugin.bash",
+    "{{ name }}.plugin.sh",
+    "{{ name }}.bash",
+    "{{ name }}.sh",
+    "*.plugin.bash",
+    "*.plugin.sh",
+    "*.bash",
+    "*.sh",
+]
+
+[plugins]
+
+# For example:
+#
+# [plugins.base16]
+# github = "chriskempson/base16-shell"

@@ -29,7 +29,7 @@ use anyhow::{bail, Context as ResultExt, Error, Result};
 
 use crate::{
     cli::{Command, Opt},
-    config::Config,
+    config::{Config, Shell},
     context::{Context, EditContext, LockContext, SettingsExt},
     edit::Plugin,
     lock::LockedConfig,
@@ -51,16 +51,41 @@ impl Sheldon {
             )) {
                 bail!("aborted initialization!");
             };
+
+            let shell = ctx.shell.unwrap_or_else(|| {
+                casual::prompt("Are you using sheldon with Bash or Zsh? [default: zsh] ")
+                    .default(Shell::default())
+                    .get()
+            });
+
             if let Some(parent) = path.parent() {
                 fs::create_dir_all(parent).with_context(s!(
                     "failed to create directory `{}`",
                     &ctx.replace_home(parent).display()
                 ))?;
             }
-            Ok(edit::Config::default())
+            Ok(edit::Config::default(shell))
         } else {
             Err(err)
         }
+    }
+
+    // /// Initialize a new config file.
+    fn init(ctx: &EditContext) -> Result<()> {
+        let path = ctx.config_file();
+        match path
+            .metadata()
+            .with_context(s!("failed to check `{}`", path.display()))
+        {
+            Ok(_) => {
+                header!(ctx, "Checked", path);
+            }
+            Err(err) => {
+                Self::init_config(ctx, path, err)?.to_path(path)?;
+                header!(ctx, "Initialized", path);
+            }
+        }
+        Ok(())
     }
 
     /// Adds a new plugin to the config file.
@@ -207,16 +232,36 @@ impl Sheldon {
         let mut warnings = Vec::new();
 
         match command {
+            Command::Init { shell } => {
+                let ctx = EditContext {
+                    settings,
+                    output,
+                    shell,
+                };
+                Self::init(&ctx)
+            }
             Command::Add { name, plugin } => {
-                let ctx = EditContext { settings, output };
+                let ctx = EditContext {
+                    settings,
+                    output,
+                    shell: None,
+                };
                 Self::add(&ctx, name, *plugin)
             }
             Command::Edit => {
-                let ctx = EditContext { settings, output };
+                let ctx = EditContext {
+                    settings,
+                    output,
+                    shell: None,
+                };
                 Self::edit(&ctx)
             }
             Command::Remove { name } => {
-                let ctx = EditContext { settings, output };
+                let ctx = EditContext {
+                    settings,
+                    output,
+                    shell: None,
+                };
                 Self::remove(&ctx, name)
             }
             Command::Lock { reinstall } => {

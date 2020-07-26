@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
 
-use crate::{log::Output, util::PathExt};
+use crate::{config::Shell, log::Output, util::PathExt};
 
 /// Settings to use over the entire program.
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
@@ -34,13 +34,15 @@ pub struct Context<'a> {
     pub output: &'a Output,
 }
 
-/// Contextual information to use while running edit tasks (add, remove).
+/// Contextual information to use while running edit tasks (init, add, remove).
 #[derive(Debug)]
 pub struct EditContext {
     /// Common data.
     pub settings: Settings,
     /// The output style.
     pub output: Output,
+    /// The type of shell.
+    pub shell: Option<Shell>,
 }
 
 /// Contextual information to use while running the main tasks (lock and

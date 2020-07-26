@@ -31,7 +31,7 @@ use crate::{
 const MAX_THREADS: u32 = 8;
 
 lazy_static! {
-    /// The default files to match on.
+    /// The default files to match on (for Zsh)
     pub static ref DEFAULT_MATCHES: Vec<String> = vec_into![
         "{{ name }}.plugin.zsh",
         "{{ name }}.zsh",

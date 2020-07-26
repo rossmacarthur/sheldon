@@ -28,6 +28,13 @@ const GITHUB_HOST: &str = "github.com";
 // Configuration definitions
 /////////////////////////////////////////////////////////////////////////
 
+/// The type of shell that we are using.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum Shell {
+    Bash,
+    Zsh,
+}
+
 /// A wrapper around a template string.
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct Template {
@@ -194,6 +201,16 @@ pub struct Config {
 // Serialization implementations
 /////////////////////////////////////////////////////////////////////////
 
+impl fmt::Display for Shell {
+    /// Displays a `Shell`.
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::Bash => f.write_str("bash"),
+            Self::Zsh => f.write_str("zsh"),
+        }
+    }
+}
+
 impl fmt::Display for GitProtocol {
     /// Displays a `GitProtocol`.
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -248,6 +265,33 @@ impl_serialize_as_str!(GitHubRepository);
 /////////////////////////////////////////////////////////////////////////
 // Deserialization implementations
 /////////////////////////////////////////////////////////////////////////
+
+impl Default for Shell {
+    fn default() -> Self {
+        Self::Zsh
+    }
+}
+
+#[derive(Debug)]
+pub struct ParseShellError;
+
+impl fmt::Display for ParseShellError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str("expected one of `bash` or `zsh`")
+    }
+}
+
+impl str::FromStr for Shell {
+    type Err = ParseShellError;
+
+    fn from_str(s: &str) -> result::Result<Self, Self::Err> {
+        match &*s.to_lowercase() {
+            "bash" => Ok(Self::Bash),
+            "zsh" => Ok(Self::Zsh),
+            _ => Err(ParseShellError),
+        }
+    }
+}
 
 /// A visitor to deserialize a `Template` from a string or a struct.
 struct TemplateVisitor;

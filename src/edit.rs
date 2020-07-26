@@ -4,7 +4,7 @@ use std::{fmt, fs, path::Path};
 
 use anyhow::{bail, Context as ResultExt, Result};
 
-use crate::config::RawPlugin;
+use crate::config::{RawPlugin, Shell};
 
 /// An editable plugin.
 #[derive(Debug)]
@@ -25,12 +25,6 @@ impl From<RawPlugin> for Plugin {
     }
 }
 
-impl Default for Config {
-    fn default() -> Self {
-        Self::from_str(include_str!("plugins.toml")).unwrap()
-    }
-}
-
 impl fmt::Display for Config {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.doc)
@@ -38,6 +32,13 @@ impl fmt::Display for Config {
 }
 
 impl Config {
+    pub fn default(shell: Shell) -> Self {
+        match shell {
+            Shell::Bash => Self::from_str(include_str!("configs/bash.plugins.toml")).unwrap(),
+            Shell::Zsh => Self::from_str(include_str!("configs/zsh.plugins.toml")).unwrap(),
+        }
+    }
+
     /// Read a `Config` from the given string.
     pub fn from_str<S>(s: S) -> Result<Self>
     where

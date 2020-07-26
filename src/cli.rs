@@ -10,7 +10,7 @@ use structopt::{
 use url::Url;
 
 use crate::{
-    config::{GistRepository, GitHubRepository, GitProtocol, GitReference, RawPlugin},
+    config::{GistRepository, GitHubRepository, GitProtocol, GitReference, RawPlugin, Shell},
     context::Settings,
     edit::Plugin,
     log::{Output, Verbosity},
@@ -93,6 +93,14 @@ struct Add {
 
 #[derive(Debug, PartialEq, StructOpt)]
 enum RawCommand {
+    /// Initialize a new config file.
+    #[structopt(help_message = HELP_MESSAGE)]
+    Init {
+        /// The type of shell, accepted values are: bash, zsh.
+        #[structopt(long, value_name = "SHELL")]
+        shell: Option<Shell>,
+    },
+
     /// Add a new plugin to the config file.
     #[structopt(help_message = HELP_MESSAGE)]
     Add(Box<Add>),
@@ -182,6 +190,8 @@ struct RawOpt {
 /// The resolved command.
 #[derive(Debug)]
 pub enum Command {
+    /// Initialize a new config file.
+    Init { shell: Option<Shell> },
     /// Add a new plugin to the config file.
     Add { name: String, plugin: Box<Plugin> },
     /// Open up the config file in the default editor.
@@ -310,6 +320,7 @@ impl Opt {
         };
 
         let command = match command {
+            RawCommand::Init { shell } => Command::Init { shell },
             RawCommand::Add(add) => {
                 let (name, plugin) = Plugin::from_add(*add);
                 Command::Add {
@@ -413,6 +424,7 @@ OPTIONS:
                      SHELDON_DOWNLOAD_DIR=]
 
 SUBCOMMANDS:
+    init      Initialize a new config file
     add       Add a new plugin to the config file
     edit      Open up the config file in the default editor
     remove    Remove a plugin from the config file
@@ -505,6 +517,42 @@ For more information try --help",
         );
         assert_eq!(err.kind, structopt::clap::ErrorKind::MissingSubcommand);
         assert_eq!(err.info, None);
+    }
+
+    #[test]
+    fn raw_opt_init_help() {
+        setup();
+        let err = raw_opt_err(&["init", "--help"]);
+        assert_eq!(
+            err.message,
+            format!(
+                "\
+{name}-init {version}
+Initialize a new config file
+
+USAGE:
+    sheldon init [OPTIONS]
+
+FLAGS:
+    -h, --help    Show this message and exit
+
+OPTIONS:
+        --shell <SHELL>    The type of shell, accepted values are: bash, zsh",
+                name = crate_name!(),
+                version = crate_version!()
+            )
+        );
+        assert_eq!(err.kind, structopt::clap::ErrorKind::HelpDisplayed);
+        assert_eq!(err.info, None);
+    }
+
+    #[test]
+    fn raw_opt_init_with_invalid_shell() {
+        setup();
+        assert_eq!(
+            raw_opt_err(&["init", "--shell", "ksh",]).kind,
+            structopt::clap::ErrorKind::ValueValidation
+        );
     }
 
     #[test]
