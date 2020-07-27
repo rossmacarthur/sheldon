@@ -29,7 +29,7 @@ use anyhow::{bail, Context as ResultExt, Error, Result};
 
 use crate::{
     cli::{Command, Opt},
-    config::{Config, Shell},
+    config::Config,
     context::{Context, EditContext, LockContext, SettingsExt},
     edit::Plugin,
     lock::LockedConfig,
@@ -52,19 +52,13 @@ impl Sheldon {
                 bail!("aborted initialization!");
             };
 
-            let shell = ctx.shell.unwrap_or_else(|| {
-                casual::prompt("Are you using sheldon with Bash or Zsh? [default: zsh] ")
-                    .default(Shell::default())
-                    .get()
-            });
-
             if let Some(parent) = path.parent() {
                 fs::create_dir_all(parent).with_context(s!(
                     "failed to create directory `{}`",
                     &ctx.replace_home(parent).display()
                 ))?;
             }
-            Ok(edit::Config::default(shell))
+            Ok(edit::Config::default(ctx.shell))
         } else {
             Err(err)
         }
@@ -78,7 +72,7 @@ impl Sheldon {
             .with_context(s!("failed to check `{}`", path.display()))
         {
             Ok(_) => {
-                header!(ctx, "Checked", path);
+                header!(ctx, "Already initialized", path);
             }
             Err(err) => {
                 Self::init_config(ctx, path, err)?.to_path(path)?;

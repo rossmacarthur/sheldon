@@ -22,7 +22,7 @@ use url::Url;
 use walkdir::WalkDir;
 
 use crate::{
-    config::{Config, ExternalPlugin, GitReference, InlinePlugin, Plugin, Source, Template},
+    config::{Config, ExternalPlugin, GitReference, InlinePlugin, Plugin, Shell, Source, Template},
     context::{LockContext as Context, Settings, SettingsExt},
     util::{self, git, TempPath},
 };
@@ -31,8 +31,22 @@ use crate::{
 const MAX_THREADS: u32 = 8;
 
 lazy_static! {
-    /// The default files to match on (for Zsh)
-    pub static ref DEFAULT_MATCHES: Vec<String> = vec_into![
+    /// The default files to match on (for Bash).
+    pub static ref DEFAULT_MATCHES_BASH: Vec<String> = vec_into![
+        "{{ name }}.plugin.bash",
+        "{{ name }}.plugin.sh",
+        "{{ name }}.bash",
+        "{{ name }}.sh",
+        "*.plugin.bash",
+        "*.plugin.sh",
+        "*.bash",
+        "*.sh"
+    ];
+}
+
+lazy_static! {
+    /// The default files to match on (for Zsh).
+    pub static ref DEFAULT_MATCHES_ZSH: Vec<String> = vec_into![
         "{{ name }}.plugin.zsh",
         "{{ name }}.zsh",
         "{{ name }}.sh",
@@ -408,6 +422,8 @@ impl Config {
     /// validates that local plugins are present, and checks that templates
     /// can compile.
     pub fn lock(self, ctx: &Context) -> Result<LockedConfig> {
+        let shell = self.shell;
+
         // Partition the plugins into external and inline plugins.
         let (externals, inlines): (Vec<_>, Vec<_>) = self
             .plugins
@@ -426,7 +442,10 @@ impl Config {
                 .push((index, plugin));
         }
 
-        let matches = &self.matches.as_ref().unwrap_or(&*DEFAULT_MATCHES);
+        let matches = &self.matches.as_ref().unwrap_or_else(|| match shell {
+            Some(Shell::Bash) => &*DEFAULT_MATCHES_BASH,
+            Some(Shell::Zsh) | None => &*DEFAULT_MATCHES_ZSH,
+        });
         let apply = &self.apply.as_ref().unwrap_or(&*DEFAULT_APPLY);
         let count = map.len();
         let mut errors = Vec::new();
@@ -1177,6 +1196,7 @@ mod tests {
         let dir = temp.path();
         let ctx = create_test_context(dir);
         let config = Config {
+            shell: None,
             matches: None,
             apply: None,
             templates: IndexMap::new(),
@@ -1274,6 +1294,7 @@ mod tests {
         let temp = tempfile::tempdir().expect("create temporary directory");
         let ctx = create_test_context(temp.path());
         let config = Config {
+            shell: None,
             matches: None,
             apply: None,
             templates: DEFAULT_TEMPLATES

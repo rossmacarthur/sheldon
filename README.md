@@ -49,6 +49,7 @@
 - [Command line interface](#command-line-interface)
   - [`lock` command](#lock-command)
   - [`source` command](#source-command)
+  - [`init` command](#init-command)
   - [`add` command](#add-command)
   - [`edit` command](#edit-command)
   - [`remove` command](#remove-command)
@@ -73,6 +74,7 @@
   - [Example: symlinking files](#example-symlinking-files)
   - [Example: overriding the PATH template](#example-overriding-the-path-template)
 - [Configuration: global options](#configuration-global-options)
+  - [`shell`](#shell)
   - [`match`](#match)
   - [`apply`](#apply-1)
 - [Examples](#examples)
@@ -130,8 +132,19 @@ required plugin sources, generate a lock file, and then output shell source.
 
 By default the config file is located at `~/.sheldon/plugins.toml`. You can
 either edit this file directly or use the provided command line interface to add
-or remove plugins. To add your first plugin to the config file run the `sheldon
-add` command.
+or remove plugins. To initialize this file run the following.
+
+```sh
+sheldon init --shell bash
+```
+
+or if you're using Zsh
+
+```sh
+sheldon init
+```
+
+To add your first plugin to the config file run the `sheldon add` command.
 
 ```sh
 sheldon add oh-my-zsh --github "ohmyzsh/ohmyzsh"
@@ -139,9 +152,7 @@ sheldon add oh-my-zsh --github "ohmyzsh/ohmyzsh"
 
 The first argument given here `oh-my-zsh` is a unique name for the plugin. The
 `--github` option specifies that we want **sheldon** to manage a clone of
-http://github.com/ohmyzsh/ohmyzsh. If this is the first time you are running
-**sheldon**, you will be asked if you want to initialize a new config file at
-`~/.sheldon/plugins.toml`.
+http://github.com/ohmyzsh/ohmyzsh.
 
 You can then use `sheldon source` to install the configured plugins, generate
 the lock file, and print out the shell script to source. Simply add the
@@ -186,6 +197,23 @@ If we now modify our config file and run this command again it will relock the
 configuration prior to generating the script. The output of this command is
 highly configurable. You can define your own [custom
 templates](#configuration-templates) to apply to your plugins.
+
+### `init` command
+
+This command initializes a new config file. If a config file exists then this
+command is a noop.
+
+For example
+
+```sh
+sheldon init
+```
+
+Or you can specify the shell.
+
+```sh
+sheldon init --shell bash
+```
 
 ### `add` command
 
@@ -564,6 +592,17 @@ apply = ["source", "PATH"]
 
 ## Configuration: global options
 
+### `shell`
+
+Indicates the shell that you are using **sheldon** with. If this field is set to
+`bash` the global [`match`](#match) default configuration will use Bash relevant
+defaults. If you are using Zsh you don't need to set this value but you may set
+it to `zsh`. For example
+
+```toml
+shell = "bash"
+```
+
 ### `match`
 
 A list of glob patterns to match against a plugin's contents. The first pattern
@@ -583,8 +622,20 @@ match = [
 ]
 ```
 
-**Note:** if you are not using [Zsh] then you should probably change this
-setting.
+If `shell = "bash"` then this defaults to
+
+```toml
+match = [
+    "{{ name }}.plugin.bash",
+    "{{ name }}.plugin.sh",
+    "{{ name }}.bash",
+    "{{ name }}.sh",
+    "*.plugin.bash",
+    "*.plugin.sh",
+    "*.bash",
+    "*.sh"
+]
+```
 
 ### `apply`
 

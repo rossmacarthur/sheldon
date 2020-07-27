@@ -32,10 +32,20 @@ impl fmt::Display for Config {
 }
 
 impl Config {
-    pub fn default(shell: Shell) -> Self {
+    /// Returns the default `Config` for the given shell.
+    pub fn default(shell: Option<Shell>) -> Self {
+        let config = include_str!("plugins.toml");
         match shell {
-            Shell::Bash => Self::from_str(include_str!("configs/bash.plugins.toml")).unwrap(),
-            Shell::Zsh => Self::from_str(include_str!("configs/zsh.plugins.toml")).unwrap(),
+            Some(shell) => {
+                // FIXME: figure out how to do this with `toml_edit`, it always places
+                //        shell = ... above the header comment.
+                let config = config.replace(
+                    "\n[plugins]",
+                    &format!("\nshell = \"{}\"\n\n[plugins]", shell),
+                );
+                Self::from_str(config).unwrap()
+            }
+            None => Self::from_str(config).unwrap(),
         }
     }
 
@@ -122,6 +132,21 @@ mod tests {
     use pretty_assertions::assert_eq;
     use std::{io::Write, path::PathBuf};
     use url::Url;
+
+    #[test]
+    fn config_default() {
+        Config::default(None);
+    }
+
+    #[test]
+    fn config_default_bash() {
+        Config::default(Some(Shell::Bash));
+    }
+
+    #[test]
+    fn config_default_zsh() {
+        Config::default(Some(Shell::Zsh));
+    }
 
     #[test]
     fn config_from_str_invalid() {

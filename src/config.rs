@@ -29,7 +29,7 @@ const GITHUB_HOST: &str = "github.com";
 /////////////////////////////////////////////////////////////////////////
 
 /// The type of shell that we are using.
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Shell {
     Bash,
     Zsh,
@@ -170,6 +170,8 @@ pub enum Plugin {
 #[derive(Debug, Default, Deserialize)]
 #[serde(default)]
 pub struct RawConfig {
+    /// What type of shell is being used.
+    pub shell: Option<Shell>,
     /// Which files to match and use in a plugin's directory.
     #[serde(rename = "match")]
     matches: Option<Vec<String>>,
@@ -187,6 +189,8 @@ pub struct RawConfig {
 /// The user configuration.
 #[derive(Debug)]
 pub struct Config {
+    /// What type of shell is being used.
+    pub shell: Option<Shell>,
     /// Which files to match and use in a plugin's directory.
     pub matches: Option<Vec<String>>,
     /// The default list of template names to apply to each matched file.
@@ -258,6 +262,7 @@ macro_rules! impl_serialize_as_str {
     };
 }
 
+impl_serialize_as_str!(Shell);
 impl_serialize_as_str!(GitProtocol);
 impl_serialize_as_str!(GistRepository);
 impl_serialize_as_str!(GitHubRepository);
@@ -503,6 +508,7 @@ macro_rules! impl_deserialize_from_str {
     };
 }
 
+impl_deserialize_from_str!(shell, Shell, "a supported shell type");
 impl_deserialize_from_str!(git_protocol, GitProtocol, "a Git protocol type");
 impl_deserialize_from_str!(gist_repository, GistRepository, "a Gist identifier");
 impl_deserialize_from_str!(github_repository, GitHubRepository, "a GitHub repository");
@@ -775,6 +781,7 @@ impl RawConfig {
     /// Normalize a `RawConfig` into a `Config`.
     fn normalize(self, mut warnings: &mut Vec<Error>) -> Result<Config> {
         let Self {
+            shell,
             matches,
             apply,
             templates,
@@ -822,6 +829,7 @@ impl RawConfig {
         }
 
         Ok(Config {
+            shell,
             matches,
             apply,
             templates,
@@ -849,9 +857,10 @@ mod tests {
     use super::*;
     use pretty_assertions::assert_eq;
 
-    #[derive(Debug, Deserialize)]
-    struct TemplateTest {
-        t: Template,
+    #[test]
+    fn shell_to_string() {
+        assert_eq!(Shell::Bash.to_string(), "bash");
+        assert_eq!(Shell::Zsh.to_string(), "zsh");
     }
 
     #[test]
@@ -882,6 +891,31 @@ mod tests {
             name: "sheldon-test".to_string(),
         };
         assert_eq!(test.to_string(), "rossmacarthur/sheldon-test");
+    }
+
+    #[derive(Debug, Deserialize)]
+    struct ShellTest {
+        s: Shell,
+    }
+
+    #[test]
+    fn shell_deserialize_as_str() {
+        let test: ShellTest = toml::from_str("s = 'bash'").unwrap();
+        assert_eq!(test.s, Shell::Bash)
+    }
+
+    #[test]
+    fn shell_deserialize_invalid() {
+        let error = toml::from_str::<ShellTest>("s = 'ksh'").unwrap_err();
+        assert_eq!(
+            error.to_string(),
+            "expected one of `bash` or `zsh` for key `s` at line 1 column 5"
+        )
+    }
+
+    #[derive(Debug, Deserialize)]
+    struct TemplateTest {
+        t: Template,
     }
 
     #[test]
