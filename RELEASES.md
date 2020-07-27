@@ -1,5 +1,20 @@
 # Releases
 
+## 0.5.3
+
+*Unreleased*
+
+### Features
+
+- [Add `init` command.][131576d] Adds a new command to **sheldon** which
+  initializes a config file. Simply run `sheldon init`.
+- [Add `shell` config key.][ed872e9] Indicates to **sheldon** what type of shell
+  is being used. Certain other config values will have different defaults if
+  this value is set.
+
+[131576d]: https://github.com/rossmacarthur/sheldon/commit/131576dfddc53ec76e87ce6ee64326ae119a383c
+[ed872e9]: https://github.com/rossmacarthur/sheldon/commit/ed872e9ca6e7ca23569ed68bcdc09d43c6973374
+
 ## 0.5.2
 
 *Released on June 4th, 2020*
