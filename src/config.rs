@@ -951,7 +951,7 @@ mod tests {
         );
     }
 
-    #[derive(Deserialize)]
+    #[derive(Debug, Deserialize)]
     struct TestGitReference {
         #[serde(flatten)]
         g: GitReference,
@@ -975,7 +975,7 @@ mod tests {
         assert_eq!(test.g, GitReference::Rev(String::from("cd65e828")));
     }
 
-    #[derive(Deserialize)]
+    #[derive(Debug, Deserialize)]
     struct TestGistRepository {
         g: GistRepository,
     }
@@ -994,21 +994,29 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
     fn gist_repository_deserialize_two_slashes() {
-        toml::from_str::<TestGistRepository>(
+        let error = toml::from_str::<TestGistRepository>(
             "g = 'rossmacarthur/579d02802b1cc17baed07753d09f5009/test'",
         )
-        .unwrap();
+        .unwrap_err();
+        assert_eq!(
+            error.to_string(),
+            "not a valid Gist identifier, the hash or username/hash should be provided for key \
+             `g` at line 1 column 5"
+        );
     }
 
     #[test]
-    #[should_panic]
     fn gist_repository_deserialize_not_hex() {
-        toml::from_str::<TestGistRepository>("g = 'nothex'").unwrap();
+        let error = toml::from_str::<TestGistRepository>("g = 'nothex'").unwrap_err();
+        assert_eq!(
+            error.to_string(),
+            "not a valid Gist identifier, the hash or username/hash should be provided for key \
+             `g` at line 1 column 5"
+        );
     }
 
-    #[derive(Deserialize)]
+    #[derive(Debug, Deserialize)]
     struct TestGitHubRepository {
         g: GitHubRepository,
     }
@@ -1027,15 +1035,24 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
     fn github_repository_deserialize_two_slashes() {
-        toml::from_str::<TestGitHubRepository>("g = 'rossmacarthur/sheldon/test'").unwrap();
+        let error =
+            toml::from_str::<TestGitHubRepository>("g = 'rossmacarthur/sheldon/test'").unwrap_err();
+        assert_eq!(
+            error.to_string(),
+            "not a valid GitHub repository, the username/repository should be provided for key \
+             `g` at line 1 column 5"
+        );
     }
 
     #[test]
-    #[should_panic]
     fn github_repository_deserialize_no_slashes() {
-        toml::from_str::<TestGitHubRepository>("g = 'noslash'").unwrap();
+        let error = toml::from_str::<TestGitHubRepository>("g = 'noslash'").unwrap_err();
+        assert_eq!(
+            error.to_string(),
+            "not a valid GitHub repository, the username/repository should be provided for key \
+             `g` at line 1 column 5"
+        );
     }
 
     #[test]
