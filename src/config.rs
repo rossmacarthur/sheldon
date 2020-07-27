@@ -604,10 +604,7 @@ impl GitProtocol {
 impl Source {
     /// Whether the `Source` is a `Source::Git` variant.
     fn is_git(&self) -> bool {
-        match *self {
-            Self::Git { .. } => true,
-            _ => false,
-        }
+        matches!(*self, Self::Git { .. })
     }
 }
 
