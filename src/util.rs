@@ -1,11 +1,10 @@
 //! Utility traits and functions.
 
-use std::{
-    fs::{self, File},
-    io,
-    path::{Path, PathBuf},
-    process, time,
-};
+use std::fs::{self, File};
+use std::io;
+use std::path::{Path, PathBuf};
+use std::process;
+use std::time;
 
 use anyhow::{Context as ResultExt, Error, Result};
 use fs2::{lock_contended_error, FileExt};
@@ -364,6 +363,7 @@ pub mod git {
 #[cfg(test)]
 mod tests {
     use super::*;
+
     use pretty_assertions::assert_eq;
 
     #[test]

@@ -1,20 +1,19 @@
 //! Command line interface.
 
-use std::{path::PathBuf, process};
+use std::path::PathBuf;
+use std::process;
 
 use anyhow::anyhow;
-use structopt::{
-    clap::{crate_version, AppSettings, ArgGroup},
-    StructOpt,
-};
+use structopt::clap::{crate_version, AppSettings, ArgGroup};
+use structopt::StructOpt;
 use url::Url;
 
-use crate::{
-    config::{GistRepository, GitHubRepository, GitProtocol, GitReference, RawPlugin, Shell},
-    context::{LockMode, Settings},
-    edit::Plugin,
-    log::{Output, Verbosity},
+use crate::config::{
+    GistRepository, GitHubRepository, GitProtocol, GitReference, RawPlugin, Shell,
 };
+use crate::context::{LockMode, Settings};
+use crate::edit::Plugin;
+use crate::log::{Output, Verbosity};
 
 const SETTINGS: &[AppSettings] = &[
     AppSettings::ColorNever,
@@ -385,8 +384,11 @@ impl Opt {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    use std::env;
+    use std::iter;
+
     use pretty_assertions::assert_eq;
-    use std::{env, iter};
     use structopt::clap::{crate_authors, crate_description, crate_name};
 
     fn setup() {

@@ -23,18 +23,18 @@ mod lock;
 mod log;
 mod util;
 
-use std::{fs, io, path::Path};
+use std::fs;
+use std::io;
+use std::path::Path;
 
 use anyhow::{bail, Context as ResultExt, Error, Result};
 
-use crate::{
-    cli::{Command, Opt},
-    config::Config,
-    context::{Context, EditContext, LockContext, SettingsExt},
-    edit::Plugin,
-    lock::LockedConfig,
-    util::{underlying_io_error_kind, Mutex, PathExt},
-};
+use crate::cli::{Command, Opt};
+use crate::config::Config;
+use crate::context::{Context, EditContext, LockContext, SettingsExt};
+use crate::edit::Plugin;
+use crate::lock::LockedConfig;
+use crate::util::{underlying_io_error_kind, Mutex, PathExt};
 
 /// The main application.
 #[derive(Debug)]

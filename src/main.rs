@@ -1,4 +1,5 @@
-use std::{panic, process};
+use std::panic;
+use std::process;
 
 fn run() {
     if sheldon::Sheldon::run().is_err() {

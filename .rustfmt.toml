@@ -1,14 +1,11 @@
 # Stable options
-edition = "2018"
 newline_style = "Unix"
-use_try_shorthand = true
 
 # Unstable Options
 unstable_features = true
 wrap_comments = true
 condense_wildcard_suffixes = true
 format_strings = true
-merge_imports = true
 normalize_comments = true
 normalize_doc_attributes = true
 reorder_impl_items = true

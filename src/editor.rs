@@ -1,14 +1,14 @@
 //! Open the config file in the default text editor.
 
-use std::{
-    env, fs,
-    path::{Path, PathBuf},
-    process::{self, Command},
-};
+use std::env;
+use std::fs;
+use std::path::{Path, PathBuf};
+use std::process::{self, Command};
 
 use anyhow::{anyhow, bail, Context as ResultExt, Result};
 
-use crate::{edit, util::TempPath};
+use crate::edit;
+use crate::util::TempPath;
 
 /// Possible environment variables.
 const ENV_VARS: &[&str] = &["VISUAL", "EDITOR"];

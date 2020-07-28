@@ -3,14 +3,14 @@
 //! This module handles the downloading of `Source`s and figuring out which
 //! files to use for `Plugins`.
 
-use std::{
-    cmp,
-    collections::{HashMap, HashSet},
-    convert::TryInto,
-    fmt, fs,
-    path::{Path, PathBuf},
-    result, sync,
-};
+use std::cmp;
+use std::collections::{HashMap, HashSet};
+use std::convert::TryInto;
+use std::fmt;
+use std::fs;
+use std::path::{Path, PathBuf};
+use std::result;
+use std::sync;
 
 use anyhow::{anyhow, bail, Context as ResultExt, Error, Result};
 use indexmap::{indexmap, IndexMap};
@@ -21,11 +21,12 @@ use serde::{Deserialize, Serialize};
 use url::Url;
 use walkdir::WalkDir;
 
-use crate::{
-    config::{Config, ExternalPlugin, GitReference, InlinePlugin, Plugin, Shell, Source, Template},
-    context::{LockContext as Context, LockMode as Mode, Settings, SettingsExt},
-    util::{self, git, TempPath},
+use crate::config::{
+    Config, ExternalPlugin, GitReference, InlinePlugin, Plugin, Shell, Source, Template,
 };
+use crate::context::{LockContext as Context, LockMode as Mode, Settings, SettingsExt};
+use crate::util::git;
+use crate::util::{self, TempPath};
 
 /// The maximmum number of threads to use while downloading sources.
 const MAX_THREADS: u32 = 8;
@@ -545,8 +546,7 @@ impl Config {
                 scoped.join_all();
             });
 
-            rx
-                .iter()
+            rx.iter()
                 // all threads must send a response
                 .take(count)
                 // collect into a `Vec<_>`
@@ -835,13 +835,14 @@ impl LockedConfig {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    use std::fs;
+    use std::io::{self, Read, Write};
+    use std::process::Command;
+    use std::thread;
+    use std::time;
+
     use pretty_assertions::assert_eq;
-    use std::{
-        fs,
-        io::{self, Read, Write},
-        process::Command,
-        thread, time,
-    };
     use url::Url;
 
     fn git_clone_sheldon_test(temp: &tempfile::TempDir) -> git2::Repository {

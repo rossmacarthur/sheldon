@@ -2,12 +2,12 @@
 //!
 //! This module handles the defining and deserialization of the config file.
 
-use std::{
-    error, fmt, fs,
-    path::{Path, PathBuf},
-    result, str,
-    str::FromStr,
-};
+use std::error;
+use std::fmt;
+use std::fs;
+use std::path::{Path, PathBuf};
+use std::result;
+use std::str::{self, FromStr};
 
 use anyhow::{anyhow, bail, Context as ResultExt, Error, Result};
 use indexmap::IndexMap;
@@ -855,6 +855,7 @@ impl Config {
 #[cfg(test)]
 mod tests {
     use super::*;
+
     use pretty_assertions::assert_eq;
 
     #[test]

@@ -1,6 +1,8 @@
 //! Edit the configuration file.
 
-use std::{fmt, fs, path::Path};
+use std::fmt;
+use std::fs;
+use std::path::Path;
 
 use anyhow::{bail, Context as ResultExt, Result};
 
@@ -128,10 +130,14 @@ impl Config {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::config::GitReference;
+
+    use std::io::Write;
+    use std::path::PathBuf;
+
     use pretty_assertions::assert_eq;
-    use std::{io::Write, path::PathBuf};
     use url::Url;
+
+    use crate::config::GitReference;
 
     #[test]
     fn config_default() {

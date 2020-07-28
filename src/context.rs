@@ -4,7 +4,9 @@ use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
 
-use crate::{config::Shell, log::Output, util::PathExt};
+use crate::config::Shell;
+use crate::log::Output;
+use crate::util::PathExt;
 
 /// Settings to use over the entire program.
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]

@@ -1,6 +1,7 @@
 //! Logging helpers.
 
-use std::{fmt, path::Path};
+use std::fmt;
+use std::path::Path;
 
 pub use ansi_term::Color;
 use anyhow::Error;
