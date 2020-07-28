@@ -217,9 +217,10 @@ pub mod git {
     use std::path::Path;
 
     use git2::{
-        build::RepoBuilder, BranchType, Cred, CredentialType, Error, FetchOptions, Oid,
-        RemoteCallbacks, Repository, ResetType,
+        BranchType, Cred, CredentialType, Error, FetchOptions, Oid, RemoteCallbacks, Repository,
+        ResetType,
     };
+    use lazy_static::lazy_static;
     use url::Url;
 
     use anyhow::Context as ResultExt;
@@ -255,15 +256,33 @@ pub mod git {
         Ok(repo)
     }
 
+    lazy_static! {
+        static ref DEFAULT_REFSPECS: Vec<String> = vec_into![
+            "refs/heads/*:refs/remotes/origin/*",
+            "HEAD:refs/remotes/origin/HEAD"
+        ];
+    }
+
     /// Clone a Git repository.
     pub fn clone(url: &Url, dir: &Path) -> anyhow::Result<Repository> {
-        with_fetch_options(|opts| {
-            let repo = RepoBuilder::new()
-                .fetch_options(opts)
-                .clone(url.as_str(), dir)
-                .with_context(s!("failed to git clone `{}`", url))?;
+        with_fetch_options(|mut opts| {
+            let repo = Repository::init(dir)?;
+            repo.remote("origin", url.as_str())?
+                .fetch(&DEFAULT_REFSPECS, Some(&mut opts), None)?;
             Ok(repo)
         })
+        .with_context(s!("failed to git clone `{}`", url))
+    }
+
+    /// Fetch a Git repository.
+    pub fn fetch(repo: &Repository) -> anyhow::Result<()> {
+        with_fetch_options(|mut opts| {
+            repo.find_remote("origin")
+                .context("failed to find remote `origin`")?
+                .fetch(&DEFAULT_REFSPECS, Some(&mut opts), None)?;
+            Ok(())
+        })
+        .context("failed to git fetch")
     }
 
     /// Checkout at repository at a particular revision.
@@ -292,6 +311,18 @@ pub mod git {
             _submodule_update(&repo, &mut repos)?;
         }
         Ok(())
+    }
+
+    fn resolve_refname(repo: &Repository, refname: &str) -> Result<Oid, Error> {
+        let ref_id = repo.refname_to_id(refname)?;
+        let obj = repo.find_object(ref_id, None)?;
+        let obj = obj.peel(git2::ObjectType::Commit)?;
+        Ok(obj.id())
+    }
+
+    /// Get the *remote* HEAD as an object identifier.
+    pub fn resolve_head(repo: &Repository) -> anyhow::Result<Oid> {
+        resolve_refname(repo, "refs/remotes/origin/HEAD").context("failed to find remote HEAD")
     }
 
     /// Resolve a branch to a object identifier.

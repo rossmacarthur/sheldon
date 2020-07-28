@@ -45,6 +45,17 @@ pub struct EditContext {
     pub shell: Option<Shell>,
 }
 
+/// Behaviour when locking a config file.
+#[derive(Debug)]
+pub enum LockMode {
+    /// Apply any changed configuration.
+    Normal,
+    /// Apply any changed configuration and update all plugins.
+    Update,
+    /// Apply any changed configuration and reinstall all plugins.
+    Reinstall,
+}
+
 /// Contextual information to use while running the main tasks (lock and
 /// source).
 #[derive(Debug)]
@@ -53,8 +64,8 @@ pub struct LockContext {
     pub settings: Settings,
     /// The output style.
     pub output: Output,
-    /// Whether to reinstall plugin sources.
-    pub reinstall: bool,
+    /// The relock mode.
+    pub mode: LockMode,
 }
 
 macro_rules! setting_access {

@@ -23,7 +23,7 @@ use walkdir::WalkDir;
 
 use crate::{
     config::{Config, ExternalPlugin, GitReference, InlinePlugin, Plugin, Shell, Source, Template},
-    context::{LockContext as Context, Settings, SettingsExt},
+    context::{LockContext as Context, LockMode as Mode, Settings, SettingsExt},
     util::{self, git, TempPath},
 };
 
@@ -77,9 +77,17 @@ lazy_static! {
 // Locked configuration definitions
 /////////////////////////////////////////////////////////////////////////
 
-/// A locked `GitReference`.
 #[derive(Clone, Debug)]
-struct LockedGitReference(git2::Oid);
+enum GitCheckout {
+    /// Checkout the latest of the default branch (HEAD).
+    DefaultBranch,
+    /// Checkout the tip of a branch.
+    Branch(String),
+    /// Checkout a specific revision.
+    Rev(String),
+    /// Checkout a tag.
+    Tag(String),
+}
 
 /// A locked `Source`.
 #[derive(Clone, Debug)]
@@ -135,86 +143,133 @@ pub struct LockedConfig {
 // Lock implementations.
 /////////////////////////////////////////////////////////////////////////
 
-impl fmt::Display for GitReference {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Self::Branch(s) | Self::Rev(s) | Self::Tag(s) => write!(f, "{}", s),
+impl From<Option<GitReference>> for GitCheckout {
+    fn from(reference: Option<GitReference>) -> Self {
+        match reference {
+            None => Self::DefaultBranch,
+            Some(GitReference::Branch(s)) => Self::Branch(s),
+            Some(GitReference::Rev(s)) => Self::Rev(s),
+            Some(GitReference::Tag(s)) => Self::Tag(s),
         }
     }
 }
 
-impl GitReference {
-    /// Consume the `GitReference` and convert it to a `LockedGitReference`.
-    ///
-    /// This code is take from [Cargo].
-    ///
-    /// [Cargo]: https://github.com/rust-lang/cargo/blob/master/src/cargo/sources/git/utils.rs#L207-L232
-    fn lock(&self, repo: &git2::Repository) -> Result<LockedGitReference> {
+impl fmt::Display for GitCheckout {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
+            Self::DefaultBranch => write!(f, ""),
+            Self::Branch(s) | Self::Rev(s) | Self::Tag(s) => write!(f, "@{}", s),
+        }
+    }
+}
+
+impl GitCheckout {
+    /// Resolve `GitCheckout` to a Git object identifier.
+    ///
+    /// From Cargo: https://github.com/rust-lang/cargo/blob/b49ccadb/src/cargo/sources/git/utils.rs#L308-L381
+    fn resolve(&self, repo: &git2::Repository) -> Result<git2::Oid> {
+        match self {
+            Self::DefaultBranch => git::resolve_head(repo),
             Self::Branch(s) => git::resolve_branch(repo, s),
             Self::Rev(s) => git::resolve_rev(repo, s),
             Self::Tag(s) => git::resolve_tag(repo, s),
         }
-        .map(LockedGitReference)
     }
 }
 
 impl fmt::Display for Source {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Self::Git {
-                url,
-                reference: Some(reference),
-            } => write!(f, "{}@{}", url, reference),
-            Self::Git { url, .. } | Self::Remote { url } => write!(f, "{}", url),
+            Self::Git { url, reference } => {
+                let checkout: GitCheckout = reference.clone().into();
+                write!(f, "{}{}", url, checkout)
+            }
+            Self::Remote { url, .. } => write!(f, "{}", url),
             Self::Local { dir } => write!(f, "{}", dir.display()),
         }
     }
 }
 
 impl Source {
+    fn lock_git_install(
+        ctx: &Context,
+        dir: PathBuf,
+        url: Url,
+        checkout: GitCheckout,
+    ) -> Result<LockedSource> {
+        let temp_dir = TempPath::new(&dir);
+        let repo = git::clone(&url, &temp_dir.path())?;
+        git::checkout(&repo, checkout.resolve(&repo)?)?;
+        git::submodule_update(&repo).context("failed to recursively update")?;
+        temp_dir
+            .rename(&dir)
+            .context("failed to rename temporary clone directory")?;
+        status!(ctx, "Cloned", &format!("{}{}", url, checkout));
+        Ok(LockedSource { dir, file: None })
+    }
+
+    /// Checks if a repository is correctly checked out, if not checks it out.
+    fn lock_git_checkout(
+        ctx: &Context,
+        repo: &git2::Repository,
+        url: &Url,
+        checkout: GitCheckout,
+    ) -> Result<()> {
+        let current_oid = repo.head()?.target().context("current HEAD as no target")?;
+        let expected_oid = checkout.resolve(&repo)?;
+        if current_oid == expected_oid {
+            status!(ctx, "Checked", &format!("{}{}", url, checkout))
+        } else {
+            git::checkout(&repo, expected_oid)?;
+            git::submodule_update(&repo).context("failed to recursively update")?;
+            status!(
+                ctx,
+                "Updated",
+                &format!(
+                    "{}{} ({} to {})",
+                    url,
+                    checkout,
+                    &current_oid.to_string()[..7],
+                    &expected_oid.to_string()[..7]
+                )
+            );
+        }
+        Ok(())
+    }
+
     /// Clones a Git repository and checks it out at a particular revision.
     fn lock_git(
         ctx: &Context,
         dir: PathBuf,
         url: Url,
-        reference: Option<GitReference>,
+        checkout: GitCheckout,
     ) -> Result<LockedSource> {
-        let checkout = |repo, status| -> Result<()> {
-            match reference {
-                Some(reference) => {
-                    git::checkout(&repo, reference.lock(&repo)?.0)?;
-                    git::submodule_update(&repo).context("failed to recursively update")?;
-                    status!(ctx, status, &format!("{}@{}", &url, reference));
+        match ctx.mode {
+            Mode::Normal => match git::open(&dir) {
+                Ok(repo) => {
+                    if Self::lock_git_checkout(ctx, &repo, &url, checkout.clone()).is_err() {
+                        git::fetch(&repo)?;
+                        Self::lock_git_checkout(ctx, &repo, &url, checkout)?;
+                    }
+                    Ok(LockedSource { dir, file: None })
                 }
-                None => {
-                    git::submodule_update(&repo).context("failed to recursively update")?;
-                    status!(ctx, status, &url);
+                Err(_) => Self::lock_git_install(ctx, dir, url, checkout),
+            },
+            Mode::Update => match git::open(&dir) {
+                Ok(repo) => {
+                    git::fetch(&repo)?;
+                    Self::lock_git_checkout(ctx, &repo, &url, checkout)?;
+                    Ok(LockedSource { dir, file: None })
                 }
-            }
-            Ok(())
-        };
-
-        if !ctx.reinstall {
-            if let Ok(repo) = git::open(&dir) {
-                checkout(repo, "Checked")?;
-                return Ok(LockedSource { dir, file: None });
-            }
+                Err(_) => Self::lock_git_install(ctx, dir, url, checkout),
+            },
+            Mode::Reinstall => Self::lock_git_install(ctx, dir, url, checkout),
         }
-
-        let temp_dir = TempPath::new(&dir);
-        let repo = git::clone(&url, &temp_dir.path())?;
-        checkout(repo, "Cloned")?;
-        temp_dir
-            .rename(&dir)
-            .context("failed to rename temporary clone directory")?;
-
-        Ok(LockedSource { dir, file: None })
     }
 
     /// Downloads a Remote source.
     fn lock_remote(ctx: &Context, dir: PathBuf, file: PathBuf, url: Url) -> Result<LockedSource> {
-        if !ctx.reinstall && file.exists() {
+        if matches!(ctx.mode, Mode::Normal) && file.exists() {
             status!(ctx, "Checked", &url);
             return Ok(LockedSource {
                 dir,
@@ -289,7 +344,7 @@ impl Source {
                         .with_context(s!("URL `{}` has no host", url))?,
                 );
                 dir.push(url.path().trim_start_matches('/'));
-                Self::lock_git(ctx, dir, url, reference)
+                Self::lock_git(ctx, dir, url, reference.into())
             }
             Self::Remote { url } => {
                 let mut dir = ctx.download_dir().to_path_buf();
@@ -815,7 +870,7 @@ mod tests {
                 verbosity: crate::log::Verbosity::Quiet,
                 no_color: true,
             },
-            reinstall: false,
+            mode: Mode::Normal,
         }
     }
 
@@ -827,66 +882,57 @@ mod tests {
     }
 
     #[test]
-    fn git_reference_to_string() {
+    fn git_checkout_to_string() {
         assert_eq!(
-            GitReference::Branch("feature".to_string()).to_string(),
-            "feature"
+            GitCheckout::Branch("feature".to_string()).to_string(),
+            "@feature"
         );
         assert_eq!(
-            GitReference::Rev("ad149784a".to_string()).to_string(),
-            "ad149784a"
+            GitCheckout::Rev("ad149784a".to_string()).to_string(),
+            "@ad149784a"
         );
-        assert_eq!(GitReference::Tag("0.2.3".to_string()).to_string(), "0.2.3");
+        assert_eq!(GitCheckout::Tag("0.2.3".to_string()).to_string(), "@0.2.3");
     }
 
     #[test]
-    fn git_reference_lock_branch() {
+    fn git_checkout_resolve_branch() {
         let temp = tempfile::tempdir().expect("create temporary directory");
         let repo = git_clone_sheldon_test(&temp);
 
-        let reference = GitReference::Branch("feature".to_string());
-        let locked = reference.lock(&repo).expect("lock git reference");
-        assert_eq!(
-            locked.0.to_string(),
-            "09ead574b20bb573ae0a53c1a5c546181cfa41c8"
-        );
+        let checkout = GitCheckout::Branch("feature".to_string());
+        let oid = checkout.resolve(&repo).expect("lock git checkout");
+        assert_eq!(oid.to_string(), "09ead574b20bb573ae0a53c1a5c546181cfa41c8");
 
-        let reference = GitReference::Branch("not-a-branch".to_string());
-        let error = reference.lock(&repo).unwrap_err();
+        let checkout = GitCheckout::Branch("not-a-branch".to_string());
+        let error = checkout.resolve(&repo).unwrap_err();
         assert_eq!(error.to_string(), "failed to find branch `not-a-branch`");
     }
 
     #[test]
-    fn git_reference_lock_rev() {
+    fn git_checkout_resolve_rev() {
         let temp = tempfile::tempdir().expect("create temporary directory");
         let repo = git_clone_sheldon_test(&temp);
 
-        let reference = GitReference::Rev("ad149784a".to_string());
-        let locked = reference.lock(&repo).unwrap();
-        assert_eq!(
-            locked.0.to_string(),
-            "ad149784a1538291f2477fb774eeeed4f4d29e45"
-        );
+        let checkout = GitCheckout::Rev("ad149784a".to_string());
+        let oid = checkout.resolve(&repo).unwrap();
+        assert_eq!(oid.to_string(), "ad149784a1538291f2477fb774eeeed4f4d29e45");
 
-        let reference = GitReference::Rev("2c4ed7710".to_string());
-        let error = reference.lock(&repo).unwrap_err();
+        let checkout = GitCheckout::Rev("2c4ed7710".to_string());
+        let error = checkout.resolve(&repo).unwrap_err();
         assert_eq!(error.to_string(), "failed to find revision `2c4ed7710`");
     }
 
     #[test]
-    fn git_reference_lock_tag() {
+    fn git_checkout_resolve_tag() {
         let temp = tempfile::tempdir().expect("create temporary directory");
         let repo = git_clone_sheldon_test(&temp);
 
-        let reference = GitReference::Tag("v0.1.0".to_string());
-        let locked = reference.lock(&repo).unwrap();
-        assert_eq!(
-            locked.0.to_string(),
-            "be8fde277e76f35efbe46848fb352cee68549962"
-        );
+        let checkout = GitCheckout::Tag("v0.1.0".to_string());
+        let oid = checkout.resolve(&repo).unwrap();
+        assert_eq!(oid.to_string(), "be8fde277e76f35efbe46848fb352cee68549962");
 
-        let reference = GitReference::Tag("v0.2.0".to_string());
-        let error = reference.lock(&repo).unwrap_err();
+        let checkout = GitCheckout::Tag("v0.2.0".to_string());
+        let error = checkout.resolve(&repo).unwrap_err();
         assert_eq!(error.to_string(), "failed to find tag `v0.2.0`");
     }
 
@@ -932,7 +978,13 @@ mod tests {
         let mut ctx = create_test_context(dir);
         let url = Url::parse("https://github.com/rossmacarthur/sheldon-test").unwrap();
 
-        let locked = Source::lock_git(&ctx, dir.to_path_buf(), url.clone(), None).unwrap();
+        let locked = Source::lock_git(
+            &ctx,
+            dir.to_path_buf(),
+            url.clone(),
+            GitCheckout::DefaultBranch,
+        )
+        .unwrap();
 
         assert_eq!(locked.dir, dir);
         assert_eq!(locked.file, None);
@@ -944,8 +996,9 @@ mod tests {
 
         let modified = fs::metadata(&dir).unwrap().modified().unwrap();
         thread::sleep(time::Duration::from_secs(1));
-        ctx.reinstall = true;
-        let locked = Source::lock_git(&ctx, dir.to_path_buf(), url, None).unwrap();
+        ctx.mode = Mode::Reinstall;
+        let locked =
+            Source::lock_git(&ctx, dir.to_path_buf(), url, GitCheckout::DefaultBranch).unwrap();
         assert_eq!(locked.dir, dir);
         assert_eq!(locked.file, None);
         let repo = git2::Repository::open(&dir).unwrap();
@@ -957,7 +1010,7 @@ mod tests {
     }
 
     #[test]
-    fn source_lock_git_with_reference() {
+    fn source_lock_git_https_with_checkout() {
         let temp = tempfile::tempdir().expect("create temporary directory");
         let dir = temp.path();
 
@@ -965,9 +1018,7 @@ mod tests {
             &create_test_context(dir),
             dir.to_path_buf(),
             Url::parse("https://github.com/rossmacarthur/sheldon-test").unwrap(),
-            Some(GitReference::Rev(
-                "ad149784a1538291f2477fb774eeeed4f4d29e45".to_string(),
-            )),
+            GitCheckout::Rev("ad149784a1538291f2477fb774eeeed4f4d29e45".to_string()),
         )
         .unwrap();
 
@@ -982,7 +1033,7 @@ mod tests {
     }
 
     #[test]
-    fn source_lock_git_with_git() {
+    fn source_lock_git_git_with_checkout() {
         let temp = tempfile::tempdir().expect("create temporary directory");
         let dir = temp.path();
 
@@ -990,9 +1041,7 @@ mod tests {
             &create_test_context(dir),
             dir.to_path_buf(),
             Url::parse("git://github.com/rossmacarthur/sheldon-test").unwrap(),
-            Some(GitReference::Rev(
-                "ad149784a1538291f2477fb774eeeed4f4d29e45".to_string(),
-            )),
+            GitCheckout::Rev("ad149784a1538291f2477fb774eeeed4f4d29e45".to_string()),
         )
         .unwrap();
 
@@ -1028,7 +1077,7 @@ mod tests {
 
         let modified = fs::metadata(&file).unwrap().modified().unwrap();
         thread::sleep(time::Duration::from_secs(1));
-        ctx.reinstall = true;
+        ctx.mode = Mode::Reinstall;
         let locked = Source::lock_remote(&ctx, dir.to_path_buf(), file.clone(), url).unwrap();
 
         assert_eq!(locked.dir, dir);
@@ -1239,7 +1288,7 @@ mod tests {
                 verbosity: crate::log::Verbosity::Quiet,
                 no_color: true,
             },
-            reinstall: false,
+            mode: Mode::Normal,
         };
 
         let mut config = Config::from_path(ctx.config_file(), &mut Vec::new()).unwrap();

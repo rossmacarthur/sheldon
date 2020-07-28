@@ -11,7 +11,7 @@ use url::Url;
 
 use crate::{
     config::{GistRepository, GitHubRepository, GitProtocol, GitReference, RawPlugin, Shell},
-    context::Settings,
+    context::{LockMode, Settings},
     edit::Plugin,
     log::{Output, Verbosity},
 };
@@ -119,8 +119,12 @@ enum RawCommand {
     /// Install the plugins sources and generate the lock file.
     #[structopt(help_message = HELP_MESSAGE)]
     Lock {
-        /// Reinstall all plugin sources.
+        /// Update all plugin sources.
         #[structopt(long)]
+        update: bool,
+
+        /// Reinstall all plugin sources.
+        #[structopt(long, conflicts_with = "update")]
         reinstall: bool,
     },
 
@@ -130,8 +134,13 @@ enum RawCommand {
         /// Regenerate the lock file.
         #[structopt(long)]
         relock: bool,
-        /// Reinstall all plugin sources (implies --relock).
+
+        /// Update all plugin sources (implies --relock).
         #[structopt(long)]
+        update: bool,
+
+        /// Reinstall all plugin sources (implies --relock).
+        #[structopt(long, conflicts_with = "update")]
         reinstall: bool,
     },
 }
@@ -199,9 +208,9 @@ pub enum Command {
     /// Remove a plugin from the config file.
     Remove { name: String },
     /// Install the plugins sources and generate the lock file.
-    Lock { reinstall: bool },
+    Lock { mode: LockMode },
     /// Generate and print out the script.
-    Source { reinstall: bool, relock: bool },
+    Source { relock: bool, mode: LockMode },
 }
 
 /// Resolved command line options with defaults set.
@@ -213,6 +222,17 @@ pub struct Opt {
     pub output: Output,
     /// The subcommand.
     pub command: Command,
+}
+
+impl LockMode {
+    fn from_lock_opts(update: bool, reinstall: bool) -> Self {
+        match (update, reinstall) {
+            (true, false) => Self::Update,
+            (false, true) => Self::Reinstall,
+            (false, false) => Self::Normal,
+            (true, true) => unreachable!(),
+        }
+    }
 }
 
 impl Plugin {
@@ -330,11 +350,18 @@ impl Opt {
             }
             RawCommand::Edit => Command::Edit,
             RawCommand::Remove { name } => Command::Remove { name },
-            RawCommand::Lock { reinstall } => Command::Lock { reinstall },
-            RawCommand::Source { relock, reinstall } => Command::Source {
-                relock: relock || reinstall,
+            RawCommand::Lock { update, reinstall } => {
+                let mode = LockMode::from_lock_opts(update, reinstall);
+                Command::Lock { mode }
+            }
+            RawCommand::Source {
+                relock,
+                update,
                 reinstall,
-            },
+            } => {
+                let mode = LockMode::from_lock_opts(update, reinstall);
+                Command::Source { relock, mode }
+            }
         };
 
         Self {
@@ -456,7 +483,10 @@ SUBCOMMANDS:
                 lock_file: None,
                 clone_dir: None,
                 download_dir: None,
-                command: RawCommand::Lock { reinstall: false },
+                command: RawCommand::Lock {
+                    update: false,
+                    reinstall: false
+                },
             }
         );
     }
@@ -493,7 +523,10 @@ SUBCOMMANDS:
                 lock_file: Some("/test/plugins.lock".into()),
                 clone_dir: Some("/repos".into()),
                 download_dir: Some("/downloads".into()),
-                command: RawCommand::Lock { reinstall: false },
+                command: RawCommand::Lock {
+                    update: false,
+                    reinstall: false
+                },
             }
         );
     }
@@ -918,6 +951,7 @@ USAGE:
     {name} lock [FLAGS]
 
 FLAGS:
+        --update       Update all plugin sources
         --reinstall    Reinstall all plugin sources
     -h, --help         Show this message and exit",
                 name = crate_name!(),
@@ -926,6 +960,15 @@ FLAGS:
         );
         assert_eq!(err.kind, structopt::clap::ErrorKind::HelpDisplayed);
         assert_eq!(err.info, None);
+    }
+
+    #[test]
+    fn raw_opt_lock_with_update_and_reinstall_expect_conflict() {
+        setup();
+        assert_eq!(
+            raw_opt_err(&["lock", "--update", "--reinstall"]).kind,
+            structopt::clap::ErrorKind::ArgumentConflict
+        );
     }
 
     #[test]
@@ -944,6 +987,7 @@ USAGE:
 
 FLAGS:
         --relock       Regenerate the lock file
+        --update       Update all plugin sources (implies --relock)
         --reinstall    Reinstall all plugin sources (implies --relock)
     -h, --help         Show this message and exit",
                 name = crate_name!(),
@@ -952,5 +996,14 @@ FLAGS:
         );
         assert_eq!(err.kind, structopt::clap::ErrorKind::HelpDisplayed);
         assert_eq!(err.info, None);
+    }
+
+    #[test]
+    fn raw_opt_source_with_update_and_reinstall_expect_conflict() {
+        setup();
+        assert_eq!(
+            raw_opt_err(&["source", "--update", "--reinstall"]).kind,
+            structopt::clap::ErrorKind::ArgumentConflict
+        );
     }
 }

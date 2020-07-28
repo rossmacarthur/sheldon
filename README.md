@@ -176,6 +176,12 @@ are all okay. It will always regenerate the lock file.
 sheldon lock
 ```
 
+To update all plugin sources you can use the `--update` flag.
+
+```sh
+sheldon lock --update
+```
+
 To force a reinstall of all plugin sources you can use the `--reinstall` flag.
 
 ```sh

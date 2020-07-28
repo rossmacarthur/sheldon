@@ -258,19 +258,19 @@ impl Sheldon {
                 };
                 Self::remove(&ctx, name)
             }
-            Command::Lock { reinstall } => {
+            Command::Lock { mode } => {
                 let ctx = LockContext {
                     settings,
                     output,
-                    reinstall,
+                    mode,
                 };
                 Self::lock(&ctx, &mut warnings)
             }
-            Command::Source { relock, reinstall } => {
+            Command::Source { relock, mode } => {
                 let ctx = LockContext {
                     settings,
                     output,
-                    reinstall,
+                    mode,
                 };
                 Self::source(&ctx, relock, &mut warnings)
             }
