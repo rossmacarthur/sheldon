@@ -2,7 +2,7 @@
 
 ## 0.5.3
 
-*Unreleased*
+*Released on July 28th, 2020*
 
 ### Features
 
@@ -11,9 +11,12 @@
 - [Add `shell` config key.][ed872e9] Indicates to **sheldon** what type of shell
   is being used. Certain other config values will have different defaults if
   this value is set.
+- [Support updating of plugins via `--update` option.][5a8254d] Simply run
+  `sheldon lock --update` to update all plugin sources.
 
 [131576d]: https://github.com/rossmacarthur/sheldon/commit/131576dfddc53ec76e87ce6ee64326ae119a383c
 [ed872e9]: https://github.com/rossmacarthur/sheldon/commit/ed872e9ca6e7ca23569ed68bcdc09d43c6973374
+[5a8254d]: https://github.com/rossmacarthur/sheldon/commit/5a8254d36c73e79cf67782160cf63e9e6f5c3d9b
 
 ## 0.5.2
 
