@@ -3,20 +3,18 @@
 //! This module handles the downloading of `Source`s and figuring out which
 //! files to use for `Plugins`.
 
-use std::cmp;
 use std::collections::{HashMap, HashSet};
-use std::convert::TryInto;
 use std::fmt;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::result;
-use std::sync;
 
 use anyhow::{anyhow, bail, Context as ResultExt, Error, Result};
 use indexmap::{indexmap, IndexMap};
 use itertools::{Either, Itertools};
 use lazy_static::lazy_static;
 use maplit::hashmap;
+use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use url::Url;
 use walkdir::WalkDir;
@@ -27,9 +25,6 @@ use crate::config::{
 use crate::context::{LockContext as Context, LockMode as Mode, Settings, SettingsExt};
 use crate::util::git;
 use crate::util::{self, TempPath};
-
-/// The maximmum number of threads to use while downloading sources.
-const MAX_THREADS: u32 = 8;
 
 lazy_static! {
     /// The default files to match on (for Bash).
@@ -43,9 +38,7 @@ lazy_static! {
         "*.bash",
         "*.sh"
     ];
-}
 
-lazy_static! {
     /// The default files to match on (for Zsh).
     pub static ref DEFAULT_MATCHES_ZSH: Vec<String> = vec_into![
         "{{ name }}.plugin.zsh",
@@ -57,14 +50,10 @@ lazy_static! {
         "*.sh",
         "*.zsh-theme"
     ];
-}
 
-lazy_static! {
     /// The default template names to apply.
     pub static ref DEFAULT_APPLY: Vec<String> = vec_into!["source"];
-}
 
-lazy_static! {
     /// The default templates.
     pub static ref DEFAULT_TEMPLATES: IndexMap<String, Template> = indexmap_into! {
         "PATH" => "export PATH=\"{{ dir }}:$PATH\"",
@@ -512,48 +501,32 @@ impl Config {
                 .map(|(_, locked)| locked)
                 .collect::<Vec<_>>()
         } else {
-            // Create a thread pool and install the sources in parallel.
-            let thread_count = cmp::min(count.try_into().unwrap_or(MAX_THREADS), MAX_THREADS);
-            let mut pool = scoped_threadpool::Pool::new(thread_count);
-            let (tx, rx) = sync::mpsc::channel();
+            // Install the sources in parallel.
+            map.into_par_iter()
+                .map(|(source, plugins)| {
+                    let source_name = source.to_string();
+                    let source = source
+                        .lock(ctx)
+                        .with_context(s!("failed to install source `{}`", source_name))?;
 
-            pool.scoped(|scoped| {
-                for (source, plugins) in map {
-                    let tx = tx.clone();
-                    scoped.execute(move || {
-                        tx.send((|| {
-                            let source_name = source.to_string();
-                            let source = source
-                                .lock(ctx)
-                                .with_context(s!("failed to install source `{}`", source_name))?;
-
-                            let mut locked = Vec::with_capacity(plugins.len());
-                            for (index, plugin) in plugins {
-                                let name = plugin.name.clone();
-                                locked.push((
-                                    index,
-                                    plugin
-                                        .lock(ctx, source.clone(), matches, apply)
-                                        .with_context(s!("failed to install plugin `{}`", name)),
-                                ));
-                            }
-
-                            Ok(locked)
-                        })())
-                        .expect("oops! did main thread die?");
-                    })
-                }
-                scoped.join_all();
-            });
-
-            rx.iter()
-                // all threads must send a response
-                .take(count)
-                // collect into a `Vec<_>`
+                    let mut locked = Vec::with_capacity(plugins.len());
+                    for (index, plugin) in plugins {
+                        let name = plugin.name.clone();
+                        locked.push((
+                            index,
+                            plugin
+                                .lock(ctx, source.clone(), matches, apply)
+                                .with_context(s!("failed to install plugin `{}`", name)),
+                        ));
+                    }
+                    Ok(locked)
+                })
+                // The result of this is basically an `Iter<Result<Vec<(usize, Result)>, _>>`
+                // The first thing we need to do is to filter out the failures and record the
+                // errors that occurred while installing the source in our `errors` list.
+                // Finally, we flatten the sub lists into a single iterator.
                 .collect::<Vec<_>>()
-                // iterate over the `Vec<Result<_>>`
                 .into_iter()
-                // store `Err`s and filter them out
                 .filter_map(|result| match result {
                     Ok(ok) => Some(ok),
                     Err(err) => {
@@ -561,13 +534,16 @@ impl Config {
                         None
                     }
                 })
-                // flatten the `Iter<Vec<_>>`
                 .flatten()
-                // collect into a `Vec<_>`
+                // The result of this is basically a `Iter<(usize, Result<LockedExternalPlugin>)`.
+                // Similar to the above, we filter out the failures that
+                // occurred during locking of individual plugins and record the
+                // errors. Next, we combine this with the inline plugins which
+                // didn't have to be installed. Finally we sort by the original index
+                // to end up wih an iterator of `LockedPlugin`s which we can collect into a
+                // `Vec<_>`.
                 .collect::<Vec<_>>()
-                // iterate over the `Vec<(index, Result<LockedExternalPlugin>)>>`
                 .into_iter()
-                // store `Err`s and filter them out
                 .filter_map(|(index, result)| match result {
                     Ok(plugin) => Some((index, LockedPlugin::External(plugin))),
                     Err(err) => {
@@ -575,13 +551,9 @@ impl Config {
                         None
                     }
                 })
-                // chain inline plugins
                 .chain(inlines.into_iter())
-                // sort by the original index
                 .sorted_by_key(|(index, _)| *index)
-                // remove the index
                 .map(|(_, locked)| locked)
-                // finally collect into a `Vec<LockedPlugin>`
                 .collect::<Vec<_>>()
         };
 
