@@ -59,7 +59,7 @@
 
 ### Features
 
-- [Add `add` and `remove` commands to edit config.](140d171) These commands will
+- [Add `add` and `remove` commands to edit config.][140d171] These commands will
   edit the config file for you.
 
   For example
@@ -82,12 +82,11 @@
   sheldon remove example
   ```
 
-- [Add `edit` command.](5b63843) Adds a new command to **sheldon** which allows
+- [Add `edit` command.][5b63843] Adds a new command to **sheldon** which allows
   you to open the config file in the default editor. Simply run `sheldon edit`.
-- [Add initial config file.](75a39b3) When running `add` or `edit` **sheldon**
-  will attempt to initialize a new config file at
-  [`~/.sheldon/plugins.toml`](src/plugins.toml).
-- [Warn about unused config keys.](11ff287) Anytime **sheldon** loads the config
+- [Add initial config file.][75a39b3] When running `add` or `edit` **sheldon**
+  will attempt to initialize a new config file at `~/.sheldon/plugins.toml`.
+- [Warn about unused config keys.][11ff287] Anytime **sheldon** loads the config
   file it will log warnings when there are unused config keys. Great for
   catching typos!
 
@@ -98,7 +97,7 @@
 
 ### Breaking changes
 
-- [Update default root directory and clone directory.](1845483) The root
+- [Update default root directory and clone directory.][1845483] The root
   directory now defaults to `~/.sheldon` and the clone directory now defaults to
   `{root}/repos`. To migrate you should do the following:
 
@@ -117,7 +116,7 @@
 
 ### Fixes
 
-- [Download/clone sources to a temporary path first.](7293cbf)
+- [Download/clone sources to a temporary path first.][7293cbf]
 
   This fixes an issue ([#99]) where if someone tried to reinstall they would be
   left without any plugins because they would all be nuked up front prior to
@@ -131,12 +130,12 @@
 Most of these are still supported, however **sheldon** will log a deprecation
 warning if you use them.
 
-- [Rename `filename` to `file`](c62600a) This affects both the the config file
+- [Rename `filename` to `file`][c62600a] This affects both the the config file
   and the template rendering context.
-- [Rename `directory` to `dir`.](f8d5647) This affects both the the config file
+- [Rename `directory` to `dir`.][f8d5647] This affects both the the config file
   and the template rendering context.
-- [Rename `protocol` plugin config key to `proto`.](ce4d8e2)
-- [Rename `revision` plugin config key to `rev`.](92bb588)
+- [Rename `protocol` plugin config key to `proto`.][ce4d8e2]
+- [Rename `revision` plugin config key to `rev`.][92bb588]
 
 [1845483]: https://github.com/rossmacarthur/sheldon/commit/18454834cb6f1b2b1ebf2ef52617449b58917f28
 [c62600a]: https://github.com/rossmacarthur/sheldon/commit/c62600a46116457c4bd682e348af344c00709e67
