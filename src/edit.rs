@@ -178,13 +178,6 @@ tag = "0.1.0"
     }
 
     #[test]
-    fn config_from_path_example() {
-        let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        path.push("docs/plugins.example.toml");
-        Config::from_path(path).unwrap();
-    }
-
-    #[test]
     fn config_empty_add_git() {
         let mut config = Config::from_str("").unwrap();
         config

@@ -1446,11 +1446,4 @@ mod tests {
             .unwrap_err();
         assert_eq!(error.to_string(), "unknown template `test`");
     }
-
-    #[test]
-    fn config_from_path_example() {
-        let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        path.push("docs/plugins.example.toml");
-        Config::from_path(path, &mut Vec::new()).unwrap();
-    }
 }
