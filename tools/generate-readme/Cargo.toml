@@ -1,0 +1,16 @@
+[package]
+name = "generate-readme"
+version = "0.0.0"
+authors = ["Ross MacArthur <ross@macarthur.io>"]
+edition = "2018"
+publish = false
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0.32"
+handlebars = "3.3.0"
+maplit = "1.0.2"
+pulldown-cmark = "0.7.2"
+pulldown-cmark-to-cmark = "5.0.0"
+pulldown-cmark-toc = "0.1.1"

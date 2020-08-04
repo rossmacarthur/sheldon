@@ -1,0 +1,8 @@
+[book]
+authors = ["Ross MacArthur"]
+title = "sheldon docs"
+
+[output.html]
+git-repository-url = "https://github.com/rossmacarthur/sheldon"
+
+[output.linkcheck]
