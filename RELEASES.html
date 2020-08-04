@@ -1,0 +1,392 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>RELEASES - sheldon docs</title>
+        
+        
+
+
+        <!-- Custom HTML head -->
+        
+
+
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        
+        <link rel="stylesheet" href="fonts/fonts.css">
+        
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        
+
+        
+    </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script type="text/javascript">
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script type="text/javascript">
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script type="text/javascript">
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script type="text/javascript">
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="Introduction.html">Introduction</a></li><li class="chapter-item expanded "><a href="Installation.html"><strong aria-hidden="true">1.</strong> Installation</a></li><li class="chapter-item expanded "><a href="Getting-started.html"><strong aria-hidden="true">2.</strong> Getting started</a></li><li class="chapter-item expanded "><a href="Command-line-interface.html"><strong aria-hidden="true">3.</strong> Command line interface</a></li><li class="chapter-item expanded "><a href="Configuration.html"><strong aria-hidden="true">4.</strong> Configuration</a></li><li class="chapter-item expanded "><a href="Examples.html"><strong aria-hidden="true">5.</strong> Examples</a></li><li class="chapter-item expanded "><a href="RELEASES.html" class="active"><strong aria-hidden="true">6.</strong> RELEASES</a></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                        
+                    </div>
+
+                    <h1 class="menu-title">sheldon docs</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        
+                        <a href="https://github.com/rossmacarthur/sheldon" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                        
+                    </div>
+                </div>
+
+                
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" name="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+                
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script type="text/javascript">
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1><a class="header" href="#releases" id="releases">Releases</a></h1>
+<h2><a class="header" href="#053" id="053">0.5.3</a></h2>
+<p><em>Released on July 28th, 2020</em></p>
+<h3><a class="header" href="#features" id="features">Features</a></h3>
+<ul>
+<li><a href="https://github.com/rossmacarthur/sheldon/commit/131576dfddc53ec76e87ce6ee64326ae119a383c">Add <code>init</code> command.</a> Adds a new command to <strong>sheldon</strong> which
+initializes a config file. Simply run <code>sheldon init</code>.</li>
+<li><a href="https://github.com/rossmacarthur/sheldon/commit/ed872e9ca6e7ca23569ed68bcdc09d43c6973374">Add <code>shell</code> config key.</a> Indicates to <strong>sheldon</strong> what type of shell
+is being used. Certain other config values will have different defaults if
+this value is set.</li>
+<li><a href="https://github.com/rossmacarthur/sheldon/commit/5a8254d36c73e79cf67782160cf63e9e6f5c3d9b">Support updating of plugins via <code>--update</code> option.</a> Simply run
+<code>sheldon lock --update</code> to update all plugin sources.</li>
+</ul>
+<h2><a class="header" href="#052" id="052">0.5.2</a></h2>
+<p><em>Released on June 4th, 2020</em></p>
+<h3><a class="header" href="#fixes" id="fixes">Fixes</a></h3>
+<ul>
+<li><a href="https://github.com/rossmacarthur/sheldon/commit/4ae64325fd8239dfb6e35f9efc05067c9c4a24d4">Fix not erroring out on a bad HTTP status code.</a> This fixes remote
+sources from silently not being downloaded correctly.</li>
+<li><a href="https://github.com/rossmacarthur/sheldon/commit/4ba58227be394e961d721804d7e6b02b882495ec">Fix missing status log.</a> This fixes a missing status log for when
+fetching remote sources.</li>
+</ul>
+<h3><a class="header" href="#other" id="other">Other</a></h3>
+<ul>
+<li><a href="https://github.com/rossmacarthur/sheldon/commit/3ef9d7a7a8fd6b429e8405ba3e9ba7c621326543">Only ship musl binaries.</a> The <a href="https://github.com/rossmacarthur/install">download
+script</a> will figure this out
+automatically.</li>
+</ul>
+<h2><a class="header" href="#051" id="051">0.5.1</a></h2>
+<p><em>Released on May 11th, 2020</em></p>
+<ul>
+<li><a href="https://github.com/rossmacarthur/sheldon/commit/081f940bc75711d3a587673178c738dd9ad40258">Using <code>--reinstall</code> on source command now implies <code>--relock</code>.</a></li>
+<li><a href="https://github.com/rossmacarthur/sheldon/commit/eb6aaf49bacbccff00359ec86135d1f4050a6d35">Support aarch64 linux.</a></li>
+<li><a href="https://github.com/rossmacarthur/sheldon/commit/4b14975238412a9ae83fcc9a202586bd725b331b">Update Docker images to use OpenSSL 1.1.1g.</a> This affects the
+shipped musl binaries which statically bundle OpenSSL.</li>
+</ul>
+<h2><a class="header" href="#050" id="050">0.5.0</a></h2>
+<p><em>Released on May 2nd, 2020</em></p>
+<h3><a class="header" href="#features-1" id="features-1">Features</a></h3>
+<ul>
+<li>
+<p><a href="https://github.com/rossmacarthur/sheldon/commit/140d17142d5be2b0653f559612aebffbd3c39ce1">Add <code>add</code> and <code>remove</code> commands to edit config.</a> These commands will
+edit the config file for you.</p>
+<p>For example</p>
+<pre><code class="language-sh">sheldon add example --github owner/repo --tag v0.1.0
+</code></pre>
+<p>will add the following to the config file</p>
+<pre><code class="language-toml">[plugins.example]
+github = &quot;owner/repo&quot;
+tag = &quot;v0.1.0&quot;
+</code></pre>
+<p>The following will remove it again.</p>
+<pre><code class="language-sh">sheldon remove example
+</code></pre>
+</li>
+<li>
+<p><a href="https://github.com/rossmacarthur/sheldon/commit/5b6384370128d410e82153b52c398dcfd1f8422c">Add <code>edit</code> command.</a> Adds a new command to <strong>sheldon</strong> which allows
+you to open the config file in the default editor. Simply run <code>sheldon edit</code>.</p>
+</li>
+<li>
+<p><a href="https://github.com/rossmacarthur/sheldon/commit/75a39b398bb2982ef77e44bf1269cbd6f762bf99">Add initial config file.</a> When running <code>add</code> or <code>edit</code> <strong>sheldon</strong>
+will attempt to initialize a new config file at <code>~/.sheldon/plugins.toml</code>.</p>
+</li>
+<li>
+<p><a href="https://github.com/rossmacarthur/sheldon/commit/11ff2875e5ecb04851b435c3e95fecbe7e453a97">Warn about unused config keys.</a> Anytime <strong>sheldon</strong> loads the config
+file it will log warnings when there are unused config keys. Great for
+catching typos!</p>
+</li>
+</ul>
+<h3><a class="header" href="#breaking-changes" id="breaking-changes">Breaking changes</a></h3>
+<ul>
+<li>
+<p><a href="https://github.com/rossmacarthur/sheldon/commit/18454834cb6f1b2b1ebf2ef52617449b58917f28">Update default root directory and clone directory.</a> The root
+directory now defaults to <code>~/.sheldon</code> and the clone directory now defaults to
+<code>{root}/repos</code>. To migrate you should do the following:</p>
+<pre><code class="language-sh">mv ~/.zsh ~/.sheldon
+mv ~/.sheldon/repositories ~/.sheldon/repos
+</code></pre>
+<p>Or to preserve the old behavior you should export the following before running
+<strong>sheldon</strong>.</p>
+<pre><code class="language-sh">export SHELDON_ROOT=&quot;$HOME/.zsh&quot;
+export SHELDON_CLONE_DIR=&quot;$SHELDON_ROOT/repositories&quot;
+</code></pre>
+</li>
+</ul>
+<h3><a class="header" href="#fixes-1" id="fixes-1">Fixes</a></h3>
+<ul>
+<li>
+<p><a href="https://github.com/rossmacarthur/sheldon/commit/7293cbf61240a40333ef139b6ac6e7ab173f0f97">Download/clone sources to a temporary path first.</a></p>
+<p>This fixes an issue (<a href="https://github.com/rossmacarthur/sheldon/issues/99">#99</a>) where if someone tried to reinstall they would be
+left without any plugins because they would all be nuked up front prior to
+trying to download them.</p>
+</li>
+</ul>
+<h3><a class="header" href="#deprecations" id="deprecations">Deprecations</a></h3>
+<p>Most of these are still supported, however <strong>sheldon</strong> will log a deprecation
+warning if you use them.</p>
+<ul>
+<li><a href="https://github.com/rossmacarthur/sheldon/commit/c62600a46116457c4bd682e348af344c00709e67">Rename <code>filename</code> to <code>file</code></a> This affects both the the config file
+and the template rendering context.</li>
+<li><a href="https://github.com/rossmacarthur/sheldon/commit/f8d564770e5fac66d92511fdb404869f2cbb6f4f">Rename <code>directory</code> to <code>dir</code>.</a> This affects both the the config file
+and the template rendering context.</li>
+<li><a href="https://github.com/rossmacarthur/sheldon/commit/ce4d8e29e19d52a7ab9d5c83b93cfe91b643a227">Rename <code>protocol</code> plugin config key to <code>proto</code>.</a></li>
+<li><a href="https://github.com/rossmacarthur/sheldon/commit/92bb588612e58498fe668e0f7f4fa274b6f9cb11">Rename <code>revision</code> plugin config key to <code>rev</code>.</a></li>
+</ul>
+<h2><a class="header" href="#048" id="048">0.4.8</a></h2>
+<p><em>Released on November 3rd, 2019</em></p>
+<ul>
+<li><a href="https://github.com/rossmacarthur/sheldon/pull/87">Auto clean clone and download directories</a>. Unused source directories
+and files will now be automatically removed.</li>
+<li><a href="https://github.com/rossmacarthur/sheldon/pull/84">Support Git submodules.</a> After cloning and checking out a repository
+submodules will now be recursively fetched.</li>
+<li><a href="https://github.com/rossmacarthur/sheldon/pull/83">Support Git source cloning using Git and SSH protocols.</a> This adds an
+optional <code>protocol</code> field to plugin configuration which can be used to specify
+the protocol for Gist and GitHub sources. Additionally, Git sources can now
+specify URLs with protocols <code>git://</code> and <code>ssh://</code>.</li>
+</ul>
+<h2><a class="header" href="#047" id="047">0.4.7</a></h2>
+<p><em>Released on October 22nd, 2019</em></p>
+<ul>
+<li><a href="https://github.com/rossmacarthur/sheldon/pull/76">Add <code>--clone-dir</code> and <code>--download-dir</code> options.</a> The directories where
+Git plugin sources are cloned to, and remote sources are downloaded to, are
+now configurable. Environment variables for setting these options are also
+now available.</li>
+<li><a href="https://github.com/rossmacarthur/sheldon/pull/72">Fix <code>--config-file</code> and <code>--lock-file</code> options.</a> These two options were
+previously ignored and only the environment variables were recognized.</li>
+</ul>
+<h2><a class="header" href="#046" id="046">0.4.6</a></h2>
+<p><em>Released on August 18th, 2019</em></p>
+<ul>
+<li><a href="https://github.com/rossmacarthur/sheldon/pull/66">Support globs in local plugin directories.</a> Globs should match only one
+directory.</li>
+<li><a href="https://github.com/rossmacarthur/sheldon/pull/65">Support for inline plugins.</a></li>
+</ul>
+<h2><a class="header" href="#045" id="045">0.4.5</a></h2>
+<p><em>Released on July 19th, 2019</em></p>
+<ul>
+<li><a href="https://github.com/rossmacarthur/sheldon/pull/58">Require mutex to run a <code>sheldon</code> commmand.</a> Makes sure multiple
+instances of <code>sheldon</code> do not interfere with each other!</li>
+</ul>
+<h2><a class="header" href="#044" id="044">0.4.4</a></h2>
+<p><em>Released on July 7th, 2019</em></p>
+<ul>
+<li><a href="https://github.com/rossmacarthur/sheldon/pull/54">Warn instead of erroring when running <code>sheldon source</code>.</a> This allows
+at least some plugins to be sourced, this only happens if there is already a
+lock file.</li>
+</ul>
+<h2><a class="header" href="#043" id="043">0.4.3</a></h2>
+<p><em>Released on July 3rd, 2019</em></p>
+<ul>
+<li><a href="https://github.com/rossmacarthur/sheldon/pull/47">Verify that locked directories and filenames exist when running
+<code>sheldon source</code>.</a> If they do not then <code>sheldon lock</code> will be run again.</li>
+</ul>
+<h2><a class="header" href="#042" id="042">0.4.2</a></h2>
+<p><em>Released on June 27th, 2019</em></p>
+<ul>
+<li><a href="https://github.com/rossmacarthur/sheldon/pull/44">Improve output granularity and add <code>--verbose</code> option.</a></li>
+</ul>
+<h2><a class="header" href="#041" id="041">0.4.1</a></h2>
+<p><em>Released on June 2nd, 2019</em></p>
+<ul>
+<li><a href="https://github.com/rossmacarthur/sheldon/pull/43">Add <code>--no-color</code> option.</a></li>
+<li><a href="https://github.com/rossmacarthur/sheldon/pull/43">Replace home directory with tilde in output.</a></li>
+<li><a href="https://github.com/rossmacarthur/sheldon/pull/42">Support directory key for plugins.</a> The plugin directory can now be
+configured to be a sub directory of the source.</li>
+</ul>
+<h2><a class="header" href="#040" id="040">0.4.0</a></h2>
+<p><em>Released on May 26th, 2019</em></p>
+<p>Complete refactor including breaking changes to the configuration file from
+prior versions.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                        
+                            <a rel="prev" href="Examples.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+                        
+
+                        
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                
+                    <a rel="prev" href="Examples.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+                
+
+                
+            </nav>
+
+        </div>
+
+        
+
+        
+
+        
+
+        
+        <script type="text/javascript">
+            window.playground_copyable = true;
+        </script>
+        
+
+        
+
+        
+        <script src="elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="searcher.js" type="text/javascript" charset="utf-8"></script>
+        
+
+        <script src="clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="book.js" type="text/javascript" charset="utf-8"></script>
+
+        <!-- Custom JS scripts -->
+        
+
+        
+
+    </body>
+</html>

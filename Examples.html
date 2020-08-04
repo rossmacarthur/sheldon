@@ -1,0 +1,337 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Examples - sheldon docs</title>
+        
+        
+
+
+        <!-- Custom HTML head -->
+        
+
+
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        
+        <link rel="stylesheet" href="fonts/fonts.css">
+        
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        
+
+        
+    </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script type="text/javascript">
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script type="text/javascript">
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script type="text/javascript">
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script type="text/javascript">
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="Introduction.html">Introduction</a></li><li class="chapter-item expanded "><a href="Installation.html"><strong aria-hidden="true">1.</strong> Installation</a></li><li class="chapter-item expanded "><a href="Getting-started.html"><strong aria-hidden="true">2.</strong> Getting started</a></li><li class="chapter-item expanded "><a href="Command-line-interface.html"><strong aria-hidden="true">3.</strong> Command line interface</a></li><li class="chapter-item expanded "><a href="Configuration.html"><strong aria-hidden="true">4.</strong> Configuration</a></li><li class="chapter-item expanded "><a href="Examples.html" class="active"><strong aria-hidden="true">5.</strong> Examples</a></li><li class="chapter-item expanded "><a href="RELEASES.html"><strong aria-hidden="true">6.</strong> RELEASES</a></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                        
+                    </div>
+
+                    <h1 class="menu-title">sheldon docs</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        
+                        <a href="https://github.com/rossmacarthur/sheldon" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                        
+                    </div>
+                </div>
+
+                
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" name="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+                
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script type="text/javascript">
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1><a class="header" href="#examples" id="examples">Examples</a></h1>
+<p>This section demonstrates the configuration file contents for some popular
+plugins and themes.</p>
+<h2><a class="header" href="#zsh-frameworks" id="zsh-frameworks">Zsh frameworks</a></h2>
+<h3><a class="header" href="#a-hrefhttpsgithubcomohmyzshohmyzshohmyzsha" id="a-hrefhttpsgithubcomohmyzshohmyzshohmyzsha"><a href="https://github.com/ohmyzsh/ohmyzsh">ohmyzsh</a></a></h3>
+<p>Add the following to the <strong>sheldon</strong> config file.</p>
+<pre><code class="language-toml">[plugins.oh-my-zsh]
+github = &quot;ohmyzsh/ohmyzsh&quot;
+</code></pre>
+<p>Or run the following to automatically add it.</p>
+<pre><code class="language-sh">sheldon add oh-my-zsh --github &quot;ohmyzsh/ohmyzsh&quot;
+</code></pre>
+<p>Add the following to your <code>~/.zshrc</code> file.</p>
+<pre><code class="language-sh"># ~/.zshrc
+
+export ZSH=&quot;$HOME/.sheldon/repos/github.com/ohmyzsh/ohmyzsh&quot;
+
+# Oh My Zsh settings here
+
+source &lt;(sheldon source)
+</code></pre>
+<h2><a class="header" href="#zsh-plugins" id="zsh-plugins">Zsh plugins</a></h2>
+<h3><a class="header" href="#a-hrefhttpsgithubcomzsh-userszsh-autosuggestionsautosuggestionsa" id="a-hrefhttpsgithubcomzsh-userszsh-autosuggestionsautosuggestionsa"><a href="https://github.com/zsh-users/zsh-autosuggestions">autosuggestions</a></a></h3>
+<p>Add the following to the <strong>sheldon</strong> config file.</p>
+<pre><code class="language-toml">[plugins.zsh-autosuggestions]
+github = &quot;zsh-users/zsh-autosuggestions&quot;
+use = [&quot;{{ name }}.zsh&quot;]
+</code></pre>
+<p>Or run the following to automatically add it.</p>
+<pre><code class="language-sh">sheldon add zsh-autosuggestions --github zsh-users/zsh-autosuggestions --use '{{ name }}.zsh'
+</code></pre>
+<h3><a class="header" href="#a-hrefhttpsgithubcomwtingautojumpautojumpa" id="a-hrefhttpsgithubcomwtingautojumpautojumpa"><a href="https://github.com/wting/autojump">autojump</a></a></h3>
+<p>Add the following to the <strong>sheldon</strong> config file.</p>
+<pre><code class="language-toml">[plugins.autojump]
+github = &quot;wting/autojump&quot;
+dir = &quot;bin&quot;
+apply = [&quot;PATH&quot;, &quot;source&quot;]
+</code></pre>
+<p>Or run the following to automatically add it.</p>
+<pre><code class="language-sh">sheldon add autojump --github wting/autojump --dir bin --apply PATH source
+</code></pre>
+<h3><a class="header" href="#a-hrefhttpsgithubcomzsh-userszsh-syntax-highlightingsyntax-highlightinga" id="a-hrefhttpsgithubcomzsh-userszsh-syntax-highlightingsyntax-highlightinga"><a href="https://github.com/zsh-users/zsh-syntax-highlighting">syntax-highlighting</a></a></h3>
+<p>Add the following to the <strong>sheldon</strong> config file.</p>
+<pre><code class="language-toml">[plugins.zsh-syntax-highlighting]
+github = &quot;zsh-users/zsh-syntax-highlighting&quot;
+</code></pre>
+<p>Or run the following to automatically add it.</p>
+<pre><code class="language-sh">sheldon add zsh-syntax-highlighting --github zsh-users/zsh-syntax-highlighting
+</code></pre>
+<h3><a class="header" href="#a-hrefhttpsgithubcomstackexchangeblackboxblackboxa" id="a-hrefhttpsgithubcomstackexchangeblackboxblackboxa"><a href="https://github.com/StackExchange/blackbox">blackbox</a></a></h3>
+<p>Add the following to the <strong>sheldon</strong> config file.</p>
+<pre><code class="language-toml">[plugins.blackbox]
+github = &quot;StackExchange/blackbox&quot;
+</code></pre>
+<p>Or run the following to automatically add it.</p>
+<pre><code class="language-sh">sheldon add blackbox --github StackExchange/blackbox
+</code></pre>
+<h3><a class="header" href="#a-hrefhttpsgithubcomskywind3000zluazluaa" id="a-hrefhttpsgithubcomskywind3000zluazluaa"><a href="https://github.com/skywind3000/z.lua">z.lua</a></a></h3>
+<p>Add the following to the <strong>sheldon</strong> config file.</p>
+<pre><code class="language-toml">[plugins.&quot;z.lua&quot;]
+github = &quot;skywind3000/z.lua&quot;
+</code></pre>
+<p>Or run the following to automatically add it.</p>
+<pre><code class="language-sh">sheldon add z.lua --github skywind3000/z.lua
+</code></pre>
+<h3><a class="header" href="#a-hrefhttpsgithubcomb4b4r07enhancdenhancda" id="a-hrefhttpsgithubcomb4b4r07enhancdenhancda"><a href="https://github.com/b4b4r07/enhancd">enhancd</a></a></h3>
+<p>Add the following to the <strong>sheldon</strong> config file.</p>
+<pre><code class="language-toml">[plugins.enhancd]
+github = &quot;b4b4r07/enhancd&quot;
+</code></pre>
+<p>Or run the following to automatically add it.</p>
+<pre><code class="language-sh">sheldon add enhancd --github b4b4r07/enhancd
+</code></pre>
+<h3><a class="header" href="#a-hrefhttpsgithubcomchriskempsonbase16-shellbase16a" id="a-hrefhttpsgithubcomchriskempsonbase16-shellbase16a"><a href="https://github.com/chriskempson/base16-shell">base16</a></a></h3>
+<p>Add the following to the <strong>sheldon</strong> config file.</p>
+<pre><code class="language-toml">[plugins.base16]
+github = &quot;chriskempson/base16-shell&quot;
+</code></pre>
+<p>Or run the following to automatically add it.</p>
+<pre><code class="language-sh">sheldon add base16 --github chriskempson/base16-shell
+</code></pre>
+<h2><a class="header" href="#zsh-themes" id="zsh-themes">Zsh themes</a></h2>
+<h3><a class="header" href="#a-hrefhttpsgithubcomromkatvpowerlevel10kpowerlevel10ka" id="a-hrefhttpsgithubcomromkatvpowerlevel10kpowerlevel10ka"><a href="https://github.com/romkatv/powerlevel10k">powerlevel10k</a></a></h3>
+<p>Add the following to the <strong>sheldon</strong> config file.</p>
+<pre><code class="language-toml">[plugins.powerlevel10k]
+github = &quot;romkatv/powerlevel10k&quot;
+</code></pre>
+<p>Or run the following to automatically add it.</p>
+<pre><code>sheldon add powerlevel10k --github romkatv/powerlevel10k
+</code></pre>
+<h3><a class="header" href="#a-hrefhttpsgithubcomdenysdovhanspaceship-promptspaceshipa" id="a-hrefhttpsgithubcomdenysdovhanspaceship-promptspaceshipa"><a href="https://github.com/denysdovhan/spaceship-prompt">spaceship</a></a></h3>
+<p>Add the following to the <strong>sheldon</strong> config file.</p>
+<pre><code class="language-toml">[plugins.spaceship]
+github = &quot;denysdovhan/spaceship-prompt&quot;
+</code></pre>
+<p>Or run the following to automatically add it.</p>
+<pre><code class="language-sh">sheldon add spaceship --github denysdovhan/spaceship-prompt
+</code></pre>
+<h3><a class="header" href="#a-hrefhttpsgithubcomsindresorhuspurepurea" id="a-hrefhttpsgithubcomsindresorhuspurepurea"><a href="https://github.com/sindresorhus/pure">pure</a></a></h3>
+<p>Add the following to the <strong>sheldon</strong> config file.</p>
+<pre><code class="language-toml">[plugins.pure]
+github = &quot;sindresorhus/pure&quot;
+use = [&quot;async.zsh&quot;, &quot;pure.zsh&quot;]
+</code></pre>
+<p>Or run the following to automatically add it.</p>
+<pre><code class="language-sh">sheldon add pure --github sindresorhus/pure --use async.zsh pure.zsh
+</code></pre>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                        
+                            <a rel="prev" href="Configuration.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+                        
+
+                        
+                            <a rel="next" href="RELEASES.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+                        
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                
+                    <a rel="prev" href="Configuration.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+                
+
+                
+                    <a rel="next" href="RELEASES.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+                
+            </nav>
+
+        </div>
+
+        
+
+        
+
+        
+
+        
+        <script type="text/javascript">
+            window.playground_copyable = true;
+        </script>
+        
+
+        
+
+        
+        <script src="elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="searcher.js" type="text/javascript" charset="utf-8"></script>
+        
+
+        <script src="clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="book.js" type="text/javascript" charset="utf-8"></script>
+
+        <!-- Custom JS scripts -->
+        
+
+        
+
+    </body>
+</html>

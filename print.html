@@ -1,0 +1,904 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>sheldon docs</title>
+        
+        <meta name="robots" content="noindex" />
+        
+        
+
+
+        <!-- Custom HTML head -->
+        
+
+
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        
+        <link rel="stylesheet" href="fonts/fonts.css">
+        
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        
+
+        
+    </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script type="text/javascript">
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script type="text/javascript">
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script type="text/javascript">
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script type="text/javascript">
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="Introduction.html">Introduction</a></li><li class="chapter-item expanded "><a href="Installation.html"><strong aria-hidden="true">1.</strong> Installation</a></li><li class="chapter-item expanded "><a href="Getting-started.html"><strong aria-hidden="true">2.</strong> Getting started</a></li><li class="chapter-item expanded "><a href="Command-line-interface.html"><strong aria-hidden="true">3.</strong> Command line interface</a></li><li class="chapter-item expanded "><a href="Configuration.html"><strong aria-hidden="true">4.</strong> Configuration</a></li><li class="chapter-item expanded "><a href="Examples.html"><strong aria-hidden="true">5.</strong> Examples</a></li><li class="chapter-item expanded "><a href="RELEASES.html"><strong aria-hidden="true">6.</strong> RELEASES</a></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                        
+                    </div>
+
+                    <h1 class="menu-title">sheldon docs</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        
+                        <a href="https://github.com/rossmacarthur/sheldon" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                        
+                    </div>
+                </div>
+
+                
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" name="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+                
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script type="text/javascript">
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <p><br><br></p>
+<p><strong>sheldon</strong> is a fast, configurable command line tool to manage your shell
+plugins.</p>
+<h2><a class="header" href="#how-does-it-work" id="how-does-it-work">How does it work?</a></h2>
+<p>Plugins are specified in a <a href="https://toml.io">TOML</a> configuration file and
+<strong>sheldon</strong> renders an install script using user configurable
+<a href="http://handlebarsjs.com">handlebars</a> templates.</p>
+<p>A <code>~/.zshrc</code> or <code>~/.bashrc</code> that uses <strong>sheldon</strong> simply contains the following.</p>
+<pre><code class="language-sh">source &lt;(sheldon source)
+</code></pre>
+<p><strong>sheldon</strong> can manage Git repositories, arbitrary remote scripts or binaries,
+local plugins, and inline plugins. Plugins are installed and updated in parallel
+and as a result <strong>sheldon</strong> is blazingly fast.</p>
+<h2><a class="header" href="#source-code" id="source-code">Source code</a></h2>
+<p><strong>sheldon</strong> open source and you can find the code on
+<a href="https://github.com/rossmacarthur/sheldon">GitHub</a>.</p>
+<h2><a class="header" href="#license" id="license">License</a></h2>
+<p><strong>sheldon</strong> and its source code is licensed under either of</p>
+<ul>
+<li><a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a></li>
+<li><a href="http://opensource.org/licenses/MIT">MIT license</a></li>
+</ul>
+<p>at your option.</p>
+<h1><a class="header" href="#installation" id="installation">Installation</a></h1>
+<h2><a class="header" href="#pre-built-binaries" id="pre-built-binaries">Pre-built binaries</a></h2>
+<p>Pre-built binaries for Linux (x86-64, aarch64, armv7) and macOS (x86-64) can be
+found on <a href="https://github.com/rossmacarthur/sheldon/releases">the releases page</a>.</p>
+<p>Alternatively, the following script can be used to automatically detect your
+host system, download the required artefact, and extract the <strong>sheldon</strong> binary.</p>
+<pre><code class="language-sh">curl --proto '=https' -fLsS https://rossmacarthur.github.io/install/crate.sh \
+    | bash -s -- --repo &quot;rossmacarthur/sheldon&quot; --to ~/.local/bin
+</code></pre>
+<h2><a class="header" href="#cargo" id="cargo">Cargo</a></h2>
+<p><strong>sheldon</strong> can be installed using <a href="https://doc.rust-lang.org/cargo/">Cargo</a>,
+the Rust package manager. Install Cargo using <a href="https://rustup.rs/">rustup</a> then
+run the following command to install or update <strong>sheldon</strong>.</p>
+<pre><code class="language-sh">cargo install sheldon
+</code></pre>
+<h1><a class="header" href="#getting-started" id="getting-started">Getting started</a></h1>
+<h2><a class="header" href="#initializing" id="initializing">Initializing</a></h2>
+<p><strong>sheldon</strong> works by specifying plugin information in a <a href="https://toml.io">TOML</a>
+configuration file. You can initialize this file by running <code>sheldon init</code>.</p>
+<pre><code class="language-sh">sheldon init --shell zsh
+</code></pre>
+<p>or</p>
+<pre><code class="language-sh">sheldon init --shell bash
+</code></pre>
+<p>This will create the <code>~/.sheldon</code> directory with an empty <code>plugins.toml</code> file.
+You can either edit this file directly or use the provided command line
+interface to add or remove plugins.</p>
+<h2><a class="header" href="#adding-a-plugin" id="adding-a-plugin">Adding a plugin</a></h2>
+<p>To add your first plugin add the following to the <strong>sheldon</strong> config file.</p>
+<pre><code class="language-toml"># ~/.sheldon/plugins.toml
+
+[plugins.base16]
+github = &quot;chriskempson/base16-shell&quot;
+</code></pre>
+<p>Or use <code>sheldon add</code> to automatically add it.</p>
+<pre><code class="language-sh">sheldon add base16 --github chriskempson/base16-shell
+</code></pre>
+<p>The first argument given here <code>base16</code> is a unique name for the plugin. The
+<code>--github</code> option specifies that we want <strong>sheldon</strong> to manage a clone of the
+<a href="https://github.com/chriskempson/base16-shell">https://github.com/chriskempson/base16-shell</a>
+repository.</p>
+<h2><a class="header" href="#loading-plugins" id="loading-plugins">Loading plugins</a></h2>
+<p>You can then use <code>sheldon source</code> to install this plugin, generate a lock file,
+and print out the shell script to source. Simply add the following to your
+<code>~/.zshrc</code> or <code>~/.bashrc</code> file.</p>
+<pre><code class="language-sh"># ~/.zshrc or ~/.bashrc
+
+source &lt;(sheldon source)
+</code></pre>
+<h1><a class="header" href="#command-line-interface" id="command-line-interface">Command line interface</a></h1>
+<h2><a class="header" href="#lock-command" id="lock-command"><code>lock</code> command</a></h2>
+<p>The <code>lock</code> command installs the plugins sources and generates the lock file.
+Rerunning this command will not reinstall plugin sources, just verify that they
+are correctly installed. It will always regenerate the lock file.</p>
+<pre><code class="language-sh">sheldon lock
+</code></pre>
+<p>To update all plugin sources you can use the <code>--update</code> flag.</p>
+<pre><code class="language-sh">sheldon lock --update
+</code></pre>
+<p>To force a reinstall of all plugin sources you can use the <code>--reinstall</code> flag.</p>
+<pre><code class="language-sh">sheldon lock --reinstall
+</code></pre>
+<h2><a class="header" href="#source-command" id="source-command"><code>source</code> command</a></h2>
+<p>This command generates the shell script. This command will first check if there
+is an up to date lock file, if not, then it will first do the equivalent of the
+lock command above. This command is usually used with the built-in shell
+<code>source</code> command.</p>
+<pre><code class="language-sh">source &lt;(sheldon source)
+</code></pre>
+<p>If we now modify our config file and run this command again it will relock the
+configuration prior to generating the script. The output of this command is
+highly configurable. You can define your own <a href="Command-line-interface.html#configuration-templates">custom
+templates</a> to apply to your plugins.</p>
+<h2><a class="header" href="#init-command" id="init-command"><code>init</code> command</a></h2>
+<p>This command initializes a new config file. If a config file exists then this
+command does nothing.</p>
+<p>For example</p>
+<pre><code class="language-sh">sheldon init
+</code></pre>
+<p>Or you can specify the shell.</p>
+<pre><code class="language-sh">sheldon init --shell bash
+</code></pre>
+<h2><a class="header" href="#add-command" id="add-command"><code>add</code> command</a></h2>
+<p>This command adds a new plugin to the config file. It does nothing else but edit
+the config file. In the following command we add a GitHub repository as a
+source.</p>
+<pre><code class="language-sh">sheldon add my-repo --git https://github.com/owner/repo.git
+</code></pre>
+<p>An example usage of this command for each source type is shown in the
+<a href="Command-line-interface.html#configuration-plugin-sources">Configuration: plugin sources</a> section.</p>
+<h2><a class="header" href="#edit-command" id="edit-command"><code>edit</code> command</a></h2>
+<p>This command will open the config file in the default editor and only overwrite
+the contents if the updated config file is valid. To override the editor that is
+used you should set the <code>EDITOR</code> environment variable.</p>
+<p>For example using <code>vim</code></p>
+<pre><code class="language-sh">EDITOR=vim sheldon edit
+</code></pre>
+<p>Or with Visual Studio Code</p>
+<pre><code class="language-sh">EDITOR=&quot;code --wait&quot; sheldon edit
+</code></pre>
+<h2><a class="header" href="#remove-command" id="remove-command"><code>remove</code> command</a></h2>
+<p>This command removes a plugin from the config file. It does nothing else but
+edit the config file. In the following command we remove the plugin with name
+<code>my-repo</code>.</p>
+<pre><code class="language-sh">sheldon remove my-repo
+</code></pre>
+<h2><a class="header" href="#flags" id="flags">Flags</a></h2>
+<p><strong>sheldon</strong> accepts the following global command line flags.</p>
+<table><thead><tr><th>Flag</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>-q</code>, <code>--quiet</code></td><td>Suppress any informational output</td></tr>
+<tr><td><code>-v</code>, <code>--verbose</code></td><td>Use verbose output</td></tr>
+<tr><td><code>--no-color</code></td><td>Do not use ANSI colored output</td></tr>
+<tr><td><code>-h</code>, <code>--help</code></td><td>Show the help message and exit</td></tr>
+<tr><td><code>-V</code>, <code>--version</code></td><td>Show the version and exit</td></tr>
+</tbody></table>
+<h2><a class="header" href="#options" id="options">Options</a></h2>
+<p><strong>sheldon</strong> accepts the following global command line options.</p>
+<table><thead><tr><th>Option</th><th>Environment variable</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>--home &lt;path&gt;</code></td><td><code>HOME</code></td><td>Set the home directory. (<em>default:</em> auto)</td></tr>
+<tr><td><code>--root &lt;path&gt;</code></td><td><code>SHELDON_ROOT</code></td><td>Set the root directory. (<em>default:</em> <code>&lt;home&gt;/.sheldon</code>)</td></tr>
+<tr><td><code>--config-file &lt;path&gt;</code></td><td><code>SHELDON_CONFIG_FILE</code></td><td>Set the config file. (<em>default:</em>  <code>&lt;root&gt;/plugins.toml</code>)</td></tr>
+<tr><td><code>--lock-file &lt;path&gt;</code></td><td><code>SHELDON_LOCK_FILE</code></td><td>Set the lock file. (<em>default:</em> <code>&lt;config-file&gt;.lock</code>)</td></tr>
+<tr><td><code>--clone-dir &lt;path&gt;</code></td><td><code>SHELDON_CLONE_DIR</code></td><td>Set the clone directory. (<em>default:</em> <code>&lt;root&gt;/repos</code>)</td></tr>
+<tr><td><code>--download-dir &lt;path&gt;</code></td><td><code>SHELDON_DOWNLOAD_DIR</code></td><td>Set the download directory. (<em>default:</em> <code>&lt;root&gt;/downloads</code>)</td></tr>
+</tbody></table>
+<p>The priority order for setting these values is the following</p>
+<ol>
+<li>Command line option.</li>
+<li>Environment variable.</li>
+<li>Default value.</li>
+</ol>
+<h1><a class="header" href="#configuration" id="configuration">Configuration</a></h1>
+<h2><a class="header" href="#plugin-sources" id="plugin-sources">Plugin sources</a></h2>
+<p>A plugin is defined by adding a new unique name to the <code>plugins</code> table in the
+<a href="https://toml.io">TOML</a> config file. This can be done by either editing the file
+directly or using the provided <strong>sheldon</strong> commands. A plugin must provide the
+location of the source. There are three types of sources, each kind is described
+in this section. A plugin may only specify <em>one</em> source type.</p>
+<pre><code class="language-toml"># ~/.sheldon/plugins.toml
+
+#           ┌─ Unique name for the plugin
+#        ┌──┴─┐
+[plugins.base16]
+github = &quot;chriskempson/base16-shell&quot;
+#         └─────┬────┘ └─────┬────┘
+#               │            └─ GitHub repository name
+#               └─ GitHub user or organization
+</code></pre>
+<h3><a class="header" href="#git" id="git">Git</a></h3>
+<p>Git sources specify a remote Git repository that will be cloned to the
+<strong>sheldon</strong> root directory. There are three flavors of Git sources.</p>
+<h4><a class="header" href="#github" id="github"><code>github</code></a></h4>
+<p>A GitHub source must set the <code>github</code> field and specify the repository. This
+should be the username or organization and the repository name separated by a
+forward slash. Add the following to the <strong>sheldon</strong> config file.</p>
+<pre><code class="language-toml">[plugins.example]
+github = &quot;owner/repo&quot;
+</code></pre>
+<p>Or run <strong>sheldon add</strong> with the <code>--github</code> option.</p>
+<pre><code class="language-sh">sheldon add example --github owner/repo
+</code></pre>
+<h4><a class="header" href="#gist" id="gist"><code>gist</code></a></h4>
+<p>A Gist source must set the <code>gist</code> field and specify the repository. This should
+be the hash or username and hash of the Gist. Add the following to the
+<strong>sheldon</strong> config file.</p>
+<pre><code class="language-toml">[plugins.example]
+gist = &quot;579d02802b1cc17baed07753d09f5009&quot;
+</code></pre>
+<p>Or run <strong>sheldon add</strong> with the <code>--gist</code> option.</p>
+<pre><code class="language-sh">sheldon add example --gist 579d02802b1cc17baed07753d09f5009
+</code></pre>
+<h4><a class="header" href="#git-1" id="git-1"><code>git</code></a></h4>
+<p>A Git source must set the <code>git</code> field and specify the URL to clone. Add the
+following to the <strong>sheldon</strong> config file.</p>
+<pre><code class="language-toml">[plugins.example]
+git = &quot;https://github.com/owner/repo&quot;
+</code></pre>
+<p>Or run <strong>sheldon add</strong> with the <code>--git</code> option.</p>
+<pre><code class="language-sh">sheldon add example --git https://github.com/owner/repo
+</code></pre>
+<h4><a class="header" href="#specifying-a-branch-tag-or-commit" id="specifying-a-branch-tag-or-commit">Specifying a branch, tag, or commit</a></h4>
+<p>All Git sources also allow setting of one of the <code>branch</code>, <code>tag</code> or <code>rev</code>
+fields. <strong>sheldon</strong> will then checkout the repository at this reference.</p>
+<pre><code class="language-toml">[plugins.example]
+github = &quot;owner/repo&quot;
+tag = &quot;v0.1.0&quot;
+</code></pre>
+<p>Or run <strong>sheldon add</strong> with the <code>--tag</code>, <code>--branch</code>, or <code>--rev</code> option when
+adding the plugin.</p>
+<pre><code class="language-sh">sheldon add example --github owner/repo --tag v0.1.0
+</code></pre>
+<h4><a class="header" href="#cloning-with-git-or-ssh-protocols" id="cloning-with-git-or-ssh-protocols">Cloning with Git or SSH protocols</a></h4>
+<p>GitHub and Gist sources are cloned using HTTPS by default. You can specify that
+Git or SSH should be used by setting the <code>proto</code> field to the protocol type.
+This must be one of <code>git</code>, <code>https</code>, or <code>ssh</code>.</p>
+<pre><code class="language-toml">[plugins.example]
+github = &quot;owner/repo&quot;
+proto = &quot;ssh&quot;
+</code></pre>
+<p>For a plain Git source you should specify the URL with a <code>git://</code> or <code>ssh://</code>.
+For SSH you will need to specify the username as well (it is <code>git</code> for GitHub).</p>
+<pre><code class="language-toml">[plugins.example]
+git = &quot;ssh://git@github.com/owner/repo&quot;
+</code></pre>
+<h4><a class="header" href="#private-git-repositories" id="private-git-repositories">Private Git repositories</a></h4>
+<p>Currently <strong>sheldon</strong> only supports authentication when cloning using SSH and
+only with authentication via the SSH agent. This means if you have a plugin
+source that is a private repository you will have to use the SSH protocol for
+cloning.</p>
+<h3><a class="header" href="#remote" id="remote">Remote</a></h3>
+<p>Remote sources specify a remote file that will be downloaded by <strong>sheldon</strong>. A
+Remote source must set the  <code>remote</code> field and specify the URL. Add the
+following to the <strong>sheldon</strong> config file.</p>
+<pre><code class="language-toml">[plugins.example]
+remote = &quot;https://github.com/owner/repo/raw/master/plugin.zsh&quot;
+</code></pre>
+<p>Or run <strong>sheldon add</strong> with the <code>--remote</code> option.</p>
+<pre><code class="language-sh">sheldon add example --remote https://github.com/owner/repo/raw/master/plugin.zsh
+</code></pre>
+<h3><a class="header" href="#local" id="local">Local</a></h3>
+<p>Local sources reference local directories. A Local source must set the <code>local</code>
+field and specify a directory. Tildes may be used and will be expanded to the
+current user's home directory. Add the following to the <strong>sheldon</strong> config file.</p>
+<pre><code class="language-toml">[plugins.example]
+local = &quot;~/Downloads/plugin&quot;
+</code></pre>
+<p>Or run <strong>sheldon add</strong> with the <code>--local</code> option.</p>
+<pre><code class="language-sh">sheldon add example --local '~/Downloads/plugin'
+</code></pre>
+<h2><a class="header" href="#plugin-options" id="plugin-options">Plugin options</a></h2>
+<p>These are options that are common to all the above plugins.</p>
+<h3><a class="header" href="#use" id="use"><code>use</code></a></h3>
+<p>A list of files / globs to use in the plugin's source directory. If this field
+is not given then the first pattern in the global <a href="Configuration.html#match"><code>match</code></a> field that
+matches any files will be used. Add the following to the <strong>sheldon</strong> config
+file.</p>
+<pre><code class="language-toml">[plugins.example]
+github = &quot;owner/repo&quot;
+use = [&quot;*.zsh&quot;]
+</code></pre>
+<p>Or run <strong>sheldon add</strong> with the <code>--use</code> option when adding the plugin.</p>
+<pre><code class="language-sh">sheldon add example --github owner/repo --use '*.zsh'
+</code></pre>
+<h3><a class="header" href="#apply" id="apply"><code>apply</code></a></h3>
+<p>A list of template names to apply to this plugin. This defaults to the global
+<a href="Configuration.html#apply-1"><code>apply</code></a>.</p>
+<pre><code class="language-toml">[plugins.example]
+github = &quot;owner/repo&quot;
+apply = [&quot;source&quot;, &quot;PATH&quot;]
+</code></pre>
+<p>Or run <strong>sheldon add</strong> with the <code>--apply</code> option when adding the plugin.</p>
+<pre><code class="language-sh">sheldon add example --github owner/repo --apply source PATH
+</code></pre>
+<p>You can define your own <a href="Configuration.html#custom-templates">custom templates</a> to apply to your
+plugins.</p>
+<h2><a class="header" href="#inline-plugins" id="inline-plugins">Inline plugins</a></h2>
+<p>For convenience it also possible to define Inline plugins. An Inline plugin must
+set the <code>inline</code> field and specify the raw source.</p>
+<pre><code class="language-toml">[plugins.example]
+inline = 'example() { echo &quot;Just an example of inline shell code&quot; }'
+</code></pre>
+<h2><a class="header" href="#templates" id="templates">Templates</a></h2>
+<p>A template defines how the shell source for a particular plugin is generated.
+For example the <strong>PATH</strong> template adds the plugin directory to the shell <code>PATH</code>
+variable. A template will be applied to a plugin if you add the template name to
+the <a href="Configuration.html#apply"><code>apply</code></a> field on a plugin.</p>
+<p>Available built in templates are</p>
+<ul>
+<li><strong>source</strong>: source each file in a plugin.</li>
+<li><strong>PATH</strong>: add the plugin directory to the <code>PATH</code> variable.</li>
+<li><strong>path</strong>: add the plugin directory to the <code>path</code> variable.</li>
+<li><strong>fpath</strong>: add the plugin directory to the <code>fpath</code> variable.
+As template strings they could be represented like this</li>
+</ul>
+<pre><code class="language-toml">[templates]
+source = { value = 'source &quot;{{ file }}&quot;', each = true }
+PATH = 'export PATH=&quot;{{ dir }}:$PATH&quot;'
+path = 'path=( &quot;{{ dir }}&quot; $path )'
+fpath = 'fpath=( &quot;{{ dir }}&quot; $fpath )'
+</code></pre>
+<p>For example if we change the <code>apply</code> field for the below plugin, it will only
+add the plugin directory to the <code>PATH</code> and append it to the <code>fpath</code>. The plugin
+will not be sourced.</p>
+<pre><code class="language-toml">[plugins.example]
+github = &quot;owner/repo&quot;
+apply = [&quot;PATH&quot;, &quot;fpath&quot;]
+</code></pre>
+<p>The <code>each</code> value, as used in the <code>source</code> template above, specifies that the
+template should be applied to each matched file for the plugin. This defaults to
+<code>false</code>.</p>
+<h3><a class="header" href="#custom-templates" id="custom-templates">Custom templates</a></h3>
+<p>It is possible to create your own custom templates, and you can even override
+the built in ones.</p>
+<p>Plugins all have the following information that can be used in templates</p>
+<ul>
+<li>
+<p><strong>A unique name.</strong> This is completely arbitrary, and it is the value specified
+for the plugin in the plugins table. However, it is often the name of the
+plugin, so it can be useful to use this name in templates with <code>{{ name }}</code>.</p>
+</li>
+<li>
+<p><strong>A directory.</strong> In git sources this is the location of the cloned repository,
+for local sources, it is the directory specified. This directory can be used
+in templates with <code>{{ dir }}</code>.</p>
+</li>
+<li>
+<p><strong>Zero or more files.</strong> These are the matched files in the plugin directory
+either discovered using the the global <code>match</code> field or specified as a plugin
+option with <code>use</code>. These can be used in templates using <code>{{ file }}</code>.
+You can use the following global information in templates</p>
+</li>
+<li>
+<p><strong>The sheldon root.</strong> This folder can be used as <code>{{ root }}</code>.</p>
+</li>
+</ul>
+<h3><a class="header" href="#example-symlinking-files" id="example-symlinking-files">Example: symlinking files</a></h3>
+<p>Lets say we would like a template to symlink files into the
+<code>~/.sheldon/functions</code> directory. We could create a new template with name
+<strong>function</strong>, like this</p>
+<pre><code class="language-toml">[templates]
+function = { value = 'ln -sf &quot;{{ file }}&quot; &quot;~/.zsh/functions/{{ name }}&quot;', each = true }
+</code></pre>
+<p>It can then be applied to the plugin like this</p>
+<pre><code class="language-toml">[plugins.example]
+github = &quot;owner/repo&quot;
+apply = [&quot;function&quot;]
+</code></pre>
+<h3><a class="header" href="#example-overriding-the-path-template" id="example-overriding-the-path-template">Example: overriding the PATH template</a></h3>
+<p>The built in <strong>PATH</strong> template adds the directory path to the beginning of the
+<code>PATH</code> variable, we might want to change it to the be added at the end. We could
+do this like this</p>
+<pre><code class="language-toml">[templates]
+PATH = 'export PATH=&quot;$PATH:{{ dir }}&quot;'
+</code></pre>
+<p>You can then apply it to the plugin like this</p>
+<pre><code class="language-toml">[plugins.example]
+github = &quot;owner/repo&quot;
+apply = [&quot;source&quot;, &quot;PATH&quot;]
+</code></pre>
+<p><strong>Note:</strong> this would change the behavior of <strong>PATH</strong> for <em>all</em> plugins using it.</p>
+<h2><a class="header" href="#global-options" id="global-options">Global options</a></h2>
+<h3><a class="header" href="#shell" id="shell"><code>shell</code></a></h3>
+<p>Indicates the shell that you are using <strong>sheldon</strong> with. If this field is set to
+<code>bash</code> the global <a href="Configuration.html#match"><code>match</code></a> default configuration will use Bash relevant
+defaults. If you are using Zsh you don't need to set this value but you may set
+it to <code>zsh</code>. For example</p>
+<pre><code class="language-toml">shell = &quot;bash&quot;
+</code></pre>
+<h3><a class="header" href="#match" id="match"><code>match</code></a></h3>
+<p>A list of glob patterns to match against a plugin's contents. The first pattern
+that matches any files will be used by default as a plugin's <code>use</code> field. This
+defaults to</p>
+<pre><code class="language-toml">match = [
+    &quot;{{ name }}.plugin.zsh&quot;,
+    &quot;{{ name }}.zsh&quot;,
+    &quot;{{ name }}.sh&quot;,
+    &quot;{{ name }}.zsh-theme&quot;,
+    &quot;*.plugin.zsh&quot;,
+    &quot;*.zsh&quot;,
+    &quot;*.sh&quot;,
+    &quot;*.zsh-theme&quot;
+]
+</code></pre>
+<p>If <code>shell = &quot;bash&quot;</code> then this defaults to</p>
+<pre><code class="language-toml">match = [
+    &quot;{{ name }}.plugin.bash&quot;,
+    &quot;{{ name }}.plugin.sh&quot;,
+    &quot;{{ name }}.bash&quot;,
+    &quot;{{ name }}.sh&quot;,
+    &quot;*.plugin.bash&quot;,
+    &quot;*.plugin.sh&quot;,
+    &quot;*.bash&quot;,
+    &quot;*.sh&quot;
+]
+</code></pre>
+<h3><a class="header" href="#apply-1" id="apply-1"><code>apply</code></a></h3>
+<p>A list of template names to apply to all plugins by default (see
+<a href="Configuration.html#apply"><code>apply</code></a>). This defaults to</p>
+<pre><code class="language-toml">apply = [&quot;source&quot;]
+</code></pre>
+<h1><a class="header" href="#examples" id="examples">Examples</a></h1>
+<p>This section demonstrates the configuration file contents for some popular
+plugins and themes.</p>
+<h2><a class="header" href="#zsh-frameworks" id="zsh-frameworks">Zsh frameworks</a></h2>
+<h3><a class="header" href="#a-hrefhttpsgithubcomohmyzshohmyzshohmyzsha" id="a-hrefhttpsgithubcomohmyzshohmyzshohmyzsha"><a href="https://github.com/ohmyzsh/ohmyzsh">ohmyzsh</a></a></h3>
+<p>Add the following to the <strong>sheldon</strong> config file.</p>
+<pre><code class="language-toml">[plugins.oh-my-zsh]
+github = &quot;ohmyzsh/ohmyzsh&quot;
+</code></pre>
+<p>Or run the following to automatically add it.</p>
+<pre><code class="language-sh">sheldon add oh-my-zsh --github &quot;ohmyzsh/ohmyzsh&quot;
+</code></pre>
+<p>Add the following to your <code>~/.zshrc</code> file.</p>
+<pre><code class="language-sh"># ~/.zshrc
+
+export ZSH=&quot;$HOME/.sheldon/repos/github.com/ohmyzsh/ohmyzsh&quot;
+
+# Oh My Zsh settings here
+
+source &lt;(sheldon source)
+</code></pre>
+<h2><a class="header" href="#zsh-plugins" id="zsh-plugins">Zsh plugins</a></h2>
+<h3><a class="header" href="#a-hrefhttpsgithubcomzsh-userszsh-autosuggestionsautosuggestionsa" id="a-hrefhttpsgithubcomzsh-userszsh-autosuggestionsautosuggestionsa"><a href="https://github.com/zsh-users/zsh-autosuggestions">autosuggestions</a></a></h3>
+<p>Add the following to the <strong>sheldon</strong> config file.</p>
+<pre><code class="language-toml">[plugins.zsh-autosuggestions]
+github = &quot;zsh-users/zsh-autosuggestions&quot;
+use = [&quot;{{ name }}.zsh&quot;]
+</code></pre>
+<p>Or run the following to automatically add it.</p>
+<pre><code class="language-sh">sheldon add zsh-autosuggestions --github zsh-users/zsh-autosuggestions --use '{{ name }}.zsh'
+</code></pre>
+<h3><a class="header" href="#a-hrefhttpsgithubcomwtingautojumpautojumpa" id="a-hrefhttpsgithubcomwtingautojumpautojumpa"><a href="https://github.com/wting/autojump">autojump</a></a></h3>
+<p>Add the following to the <strong>sheldon</strong> config file.</p>
+<pre><code class="language-toml">[plugins.autojump]
+github = &quot;wting/autojump&quot;
+dir = &quot;bin&quot;
+apply = [&quot;PATH&quot;, &quot;source&quot;]
+</code></pre>
+<p>Or run the following to automatically add it.</p>
+<pre><code class="language-sh">sheldon add autojump --github wting/autojump --dir bin --apply PATH source
+</code></pre>
+<h3><a class="header" href="#a-hrefhttpsgithubcomzsh-userszsh-syntax-highlightingsyntax-highlightinga" id="a-hrefhttpsgithubcomzsh-userszsh-syntax-highlightingsyntax-highlightinga"><a href="https://github.com/zsh-users/zsh-syntax-highlighting">syntax-highlighting</a></a></h3>
+<p>Add the following to the <strong>sheldon</strong> config file.</p>
+<pre><code class="language-toml">[plugins.zsh-syntax-highlighting]
+github = &quot;zsh-users/zsh-syntax-highlighting&quot;
+</code></pre>
+<p>Or run the following to automatically add it.</p>
+<pre><code class="language-sh">sheldon add zsh-syntax-highlighting --github zsh-users/zsh-syntax-highlighting
+</code></pre>
+<h3><a class="header" href="#a-hrefhttpsgithubcomstackexchangeblackboxblackboxa" id="a-hrefhttpsgithubcomstackexchangeblackboxblackboxa"><a href="https://github.com/StackExchange/blackbox">blackbox</a></a></h3>
+<p>Add the following to the <strong>sheldon</strong> config file.</p>
+<pre><code class="language-toml">[plugins.blackbox]
+github = &quot;StackExchange/blackbox&quot;
+</code></pre>
+<p>Or run the following to automatically add it.</p>
+<pre><code class="language-sh">sheldon add blackbox --github StackExchange/blackbox
+</code></pre>
+<h3><a class="header" href="#a-hrefhttpsgithubcomskywind3000zluazluaa" id="a-hrefhttpsgithubcomskywind3000zluazluaa"><a href="https://github.com/skywind3000/z.lua">z.lua</a></a></h3>
+<p>Add the following to the <strong>sheldon</strong> config file.</p>
+<pre><code class="language-toml">[plugins.&quot;z.lua&quot;]
+github = &quot;skywind3000/z.lua&quot;
+</code></pre>
+<p>Or run the following to automatically add it.</p>
+<pre><code class="language-sh">sheldon add z.lua --github skywind3000/z.lua
+</code></pre>
+<h3><a class="header" href="#a-hrefhttpsgithubcomb4b4r07enhancdenhancda" id="a-hrefhttpsgithubcomb4b4r07enhancdenhancda"><a href="https://github.com/b4b4r07/enhancd">enhancd</a></a></h3>
+<p>Add the following to the <strong>sheldon</strong> config file.</p>
+<pre><code class="language-toml">[plugins.enhancd]
+github = &quot;b4b4r07/enhancd&quot;
+</code></pre>
+<p>Or run the following to automatically add it.</p>
+<pre><code class="language-sh">sheldon add enhancd --github b4b4r07/enhancd
+</code></pre>
+<h3><a class="header" href="#a-hrefhttpsgithubcomchriskempsonbase16-shellbase16a" id="a-hrefhttpsgithubcomchriskempsonbase16-shellbase16a"><a href="https://github.com/chriskempson/base16-shell">base16</a></a></h3>
+<p>Add the following to the <strong>sheldon</strong> config file.</p>
+<pre><code class="language-toml">[plugins.base16]
+github = &quot;chriskempson/base16-shell&quot;
+</code></pre>
+<p>Or run the following to automatically add it.</p>
+<pre><code class="language-sh">sheldon add base16 --github chriskempson/base16-shell
+</code></pre>
+<h2><a class="header" href="#zsh-themes" id="zsh-themes">Zsh themes</a></h2>
+<h3><a class="header" href="#a-hrefhttpsgithubcomromkatvpowerlevel10kpowerlevel10ka" id="a-hrefhttpsgithubcomromkatvpowerlevel10kpowerlevel10ka"><a href="https://github.com/romkatv/powerlevel10k">powerlevel10k</a></a></h3>
+<p>Add the following to the <strong>sheldon</strong> config file.</p>
+<pre><code class="language-toml">[plugins.powerlevel10k]
+github = &quot;romkatv/powerlevel10k&quot;
+</code></pre>
+<p>Or run the following to automatically add it.</p>
+<pre><code>sheldon add powerlevel10k --github romkatv/powerlevel10k
+</code></pre>
+<h3><a class="header" href="#a-hrefhttpsgithubcomdenysdovhanspaceship-promptspaceshipa" id="a-hrefhttpsgithubcomdenysdovhanspaceship-promptspaceshipa"><a href="https://github.com/denysdovhan/spaceship-prompt">spaceship</a></a></h3>
+<p>Add the following to the <strong>sheldon</strong> config file.</p>
+<pre><code class="language-toml">[plugins.spaceship]
+github = &quot;denysdovhan/spaceship-prompt&quot;
+</code></pre>
+<p>Or run the following to automatically add it.</p>
+<pre><code class="language-sh">sheldon add spaceship --github denysdovhan/spaceship-prompt
+</code></pre>
+<h3><a class="header" href="#a-hrefhttpsgithubcomsindresorhuspurepurea" id="a-hrefhttpsgithubcomsindresorhuspurepurea"><a href="https://github.com/sindresorhus/pure">pure</a></a></h3>
+<p>Add the following to the <strong>sheldon</strong> config file.</p>
+<pre><code class="language-toml">[plugins.pure]
+github = &quot;sindresorhus/pure&quot;
+use = [&quot;async.zsh&quot;, &quot;pure.zsh&quot;]
+</code></pre>
+<p>Or run the following to automatically add it.</p>
+<pre><code class="language-sh">sheldon add pure --github sindresorhus/pure --use async.zsh pure.zsh
+</code></pre>
+<h1><a class="header" href="#releases" id="releases">Releases</a></h1>
+<h2><a class="header" href="#053" id="053">0.5.3</a></h2>
+<p><em>Released on July 28th, 2020</em></p>
+<h3><a class="header" href="#features" id="features">Features</a></h3>
+<ul>
+<li><a href="https://github.com/rossmacarthur/sheldon/commit/131576dfddc53ec76e87ce6ee64326ae119a383c">Add <code>init</code> command.</a> Adds a new command to <strong>sheldon</strong> which
+initializes a config file. Simply run <code>sheldon init</code>.</li>
+<li><a href="https://github.com/rossmacarthur/sheldon/commit/ed872e9ca6e7ca23569ed68bcdc09d43c6973374">Add <code>shell</code> config key.</a> Indicates to <strong>sheldon</strong> what type of shell
+is being used. Certain other config values will have different defaults if
+this value is set.</li>
+<li><a href="https://github.com/rossmacarthur/sheldon/commit/5a8254d36c73e79cf67782160cf63e9e6f5c3d9b">Support updating of plugins via <code>--update</code> option.</a> Simply run
+<code>sheldon lock --update</code> to update all plugin sources.</li>
+</ul>
+<h2><a class="header" href="#052" id="052">0.5.2</a></h2>
+<p><em>Released on June 4th, 2020</em></p>
+<h3><a class="header" href="#fixes" id="fixes">Fixes</a></h3>
+<ul>
+<li><a href="https://github.com/rossmacarthur/sheldon/commit/4ae64325fd8239dfb6e35f9efc05067c9c4a24d4">Fix not erroring out on a bad HTTP status code.</a> This fixes remote
+sources from silently not being downloaded correctly.</li>
+<li><a href="https://github.com/rossmacarthur/sheldon/commit/4ba58227be394e961d721804d7e6b02b882495ec">Fix missing status log.</a> This fixes a missing status log for when
+fetching remote sources.</li>
+</ul>
+<h3><a class="header" href="#other" id="other">Other</a></h3>
+<ul>
+<li><a href="https://github.com/rossmacarthur/sheldon/commit/3ef9d7a7a8fd6b429e8405ba3e9ba7c621326543">Only ship musl binaries.</a> The <a href="https://github.com/rossmacarthur/install">download
+script</a> will figure this out
+automatically.</li>
+</ul>
+<h2><a class="header" href="#051" id="051">0.5.1</a></h2>
+<p><em>Released on May 11th, 2020</em></p>
+<ul>
+<li><a href="https://github.com/rossmacarthur/sheldon/commit/081f940bc75711d3a587673178c738dd9ad40258">Using <code>--reinstall</code> on source command now implies <code>--relock</code>.</a></li>
+<li><a href="https://github.com/rossmacarthur/sheldon/commit/eb6aaf49bacbccff00359ec86135d1f4050a6d35">Support aarch64 linux.</a></li>
+<li><a href="https://github.com/rossmacarthur/sheldon/commit/4b14975238412a9ae83fcc9a202586bd725b331b">Update Docker images to use OpenSSL 1.1.1g.</a> This affects the
+shipped musl binaries which statically bundle OpenSSL.</li>
+</ul>
+<h2><a class="header" href="#050" id="050">0.5.0</a></h2>
+<p><em>Released on May 2nd, 2020</em></p>
+<h3><a class="header" href="#features-1" id="features-1">Features</a></h3>
+<ul>
+<li>
+<p><a href="https://github.com/rossmacarthur/sheldon/commit/140d17142d5be2b0653f559612aebffbd3c39ce1">Add <code>add</code> and <code>remove</code> commands to edit config.</a> These commands will
+edit the config file for you.</p>
+<p>For example</p>
+<pre><code class="language-sh">sheldon add example --github owner/repo --tag v0.1.0
+</code></pre>
+<p>will add the following to the config file</p>
+<pre><code class="language-toml">[plugins.example]
+github = &quot;owner/repo&quot;
+tag = &quot;v0.1.0&quot;
+</code></pre>
+<p>The following will remove it again.</p>
+<pre><code class="language-sh">sheldon remove example
+</code></pre>
+</li>
+<li>
+<p><a href="https://github.com/rossmacarthur/sheldon/commit/5b6384370128d410e82153b52c398dcfd1f8422c">Add <code>edit</code> command.</a> Adds a new command to <strong>sheldon</strong> which allows
+you to open the config file in the default editor. Simply run <code>sheldon edit</code>.</p>
+</li>
+<li>
+<p><a href="https://github.com/rossmacarthur/sheldon/commit/75a39b398bb2982ef77e44bf1269cbd6f762bf99">Add initial config file.</a> When running <code>add</code> or <code>edit</code> <strong>sheldon</strong>
+will attempt to initialize a new config file at <code>~/.sheldon/plugins.toml</code>.</p>
+</li>
+<li>
+<p><a href="https://github.com/rossmacarthur/sheldon/commit/11ff2875e5ecb04851b435c3e95fecbe7e453a97">Warn about unused config keys.</a> Anytime <strong>sheldon</strong> loads the config
+file it will log warnings when there are unused config keys. Great for
+catching typos!</p>
+</li>
+</ul>
+<h3><a class="header" href="#breaking-changes" id="breaking-changes">Breaking changes</a></h3>
+<ul>
+<li>
+<p><a href="https://github.com/rossmacarthur/sheldon/commit/18454834cb6f1b2b1ebf2ef52617449b58917f28">Update default root directory and clone directory.</a> The root
+directory now defaults to <code>~/.sheldon</code> and the clone directory now defaults to
+<code>{root}/repos</code>. To migrate you should do the following:</p>
+<pre><code class="language-sh">mv ~/.zsh ~/.sheldon
+mv ~/.sheldon/repositories ~/.sheldon/repos
+</code></pre>
+<p>Or to preserve the old behavior you should export the following before running
+<strong>sheldon</strong>.</p>
+<pre><code class="language-sh">export SHELDON_ROOT=&quot;$HOME/.zsh&quot;
+export SHELDON_CLONE_DIR=&quot;$SHELDON_ROOT/repositories&quot;
+</code></pre>
+</li>
+</ul>
+<h3><a class="header" href="#fixes-1" id="fixes-1">Fixes</a></h3>
+<ul>
+<li>
+<p><a href="https://github.com/rossmacarthur/sheldon/commit/7293cbf61240a40333ef139b6ac6e7ab173f0f97">Download/clone sources to a temporary path first.</a></p>
+<p>This fixes an issue (<a href="https://github.com/rossmacarthur/sheldon/issues/99">#99</a>) where if someone tried to reinstall they would be
+left without any plugins because they would all be nuked up front prior to
+trying to download them.</p>
+</li>
+</ul>
+<h3><a class="header" href="#deprecations" id="deprecations">Deprecations</a></h3>
+<p>Most of these are still supported, however <strong>sheldon</strong> will log a deprecation
+warning if you use them.</p>
+<ul>
+<li><a href="https://github.com/rossmacarthur/sheldon/commit/c62600a46116457c4bd682e348af344c00709e67">Rename <code>filename</code> to <code>file</code></a> This affects both the the config file
+and the template rendering context.</li>
+<li><a href="https://github.com/rossmacarthur/sheldon/commit/f8d564770e5fac66d92511fdb404869f2cbb6f4f">Rename <code>directory</code> to <code>dir</code>.</a> This affects both the the config file
+and the template rendering context.</li>
+<li><a href="https://github.com/rossmacarthur/sheldon/commit/ce4d8e29e19d52a7ab9d5c83b93cfe91b643a227">Rename <code>protocol</code> plugin config key to <code>proto</code>.</a></li>
+<li><a href="https://github.com/rossmacarthur/sheldon/commit/92bb588612e58498fe668e0f7f4fa274b6f9cb11">Rename <code>revision</code> plugin config key to <code>rev</code>.</a></li>
+</ul>
+<h2><a class="header" href="#048" id="048">0.4.8</a></h2>
+<p><em>Released on November 3rd, 2019</em></p>
+<ul>
+<li><a href="https://github.com/rossmacarthur/sheldon/pull/87">Auto clean clone and download directories</a>. Unused source directories
+and files will now be automatically removed.</li>
+<li><a href="https://github.com/rossmacarthur/sheldon/pull/84">Support Git submodules.</a> After cloning and checking out a repository
+submodules will now be recursively fetched.</li>
+<li><a href="https://github.com/rossmacarthur/sheldon/pull/83">Support Git source cloning using Git and SSH protocols.</a> This adds an
+optional <code>protocol</code> field to plugin configuration which can be used to specify
+the protocol for Gist and GitHub sources. Additionally, Git sources can now
+specify URLs with protocols <code>git://</code> and <code>ssh://</code>.</li>
+</ul>
+<h2><a class="header" href="#047" id="047">0.4.7</a></h2>
+<p><em>Released on October 22nd, 2019</em></p>
+<ul>
+<li><a href="https://github.com/rossmacarthur/sheldon/pull/76">Add <code>--clone-dir</code> and <code>--download-dir</code> options.</a> The directories where
+Git plugin sources are cloned to, and remote sources are downloaded to, are
+now configurable. Environment variables for setting these options are also
+now available.</li>
+<li><a href="https://github.com/rossmacarthur/sheldon/pull/72">Fix <code>--config-file</code> and <code>--lock-file</code> options.</a> These two options were
+previously ignored and only the environment variables were recognized.</li>
+</ul>
+<h2><a class="header" href="#046" id="046">0.4.6</a></h2>
+<p><em>Released on August 18th, 2019</em></p>
+<ul>
+<li><a href="https://github.com/rossmacarthur/sheldon/pull/66">Support globs in local plugin directories.</a> Globs should match only one
+directory.</li>
+<li><a href="https://github.com/rossmacarthur/sheldon/pull/65">Support for inline plugins.</a></li>
+</ul>
+<h2><a class="header" href="#045" id="045">0.4.5</a></h2>
+<p><em>Released on July 19th, 2019</em></p>
+<ul>
+<li><a href="https://github.com/rossmacarthur/sheldon/pull/58">Require mutex to run a <code>sheldon</code> commmand.</a> Makes sure multiple
+instances of <code>sheldon</code> do not interfere with each other!</li>
+</ul>
+<h2><a class="header" href="#044" id="044">0.4.4</a></h2>
+<p><em>Released on July 7th, 2019</em></p>
+<ul>
+<li><a href="https://github.com/rossmacarthur/sheldon/pull/54">Warn instead of erroring when running <code>sheldon source</code>.</a> This allows
+at least some plugins to be sourced, this only happens if there is already a
+lock file.</li>
+</ul>
+<h2><a class="header" href="#043" id="043">0.4.3</a></h2>
+<p><em>Released on July 3rd, 2019</em></p>
+<ul>
+<li><a href="https://github.com/rossmacarthur/sheldon/pull/47">Verify that locked directories and filenames exist when running
+<code>sheldon source</code>.</a> If they do not then <code>sheldon lock</code> will be run again.</li>
+</ul>
+<h2><a class="header" href="#042" id="042">0.4.2</a></h2>
+<p><em>Released on June 27th, 2019</em></p>
+<ul>
+<li><a href="https://github.com/rossmacarthur/sheldon/pull/44">Improve output granularity and add <code>--verbose</code> option.</a></li>
+</ul>
+<h2><a class="header" href="#041" id="041">0.4.1</a></h2>
+<p><em>Released on June 2nd, 2019</em></p>
+<ul>
+<li><a href="https://github.com/rossmacarthur/sheldon/pull/43">Add <code>--no-color</code> option.</a></li>
+<li><a href="https://github.com/rossmacarthur/sheldon/pull/43">Replace home directory with tilde in output.</a></li>
+<li><a href="https://github.com/rossmacarthur/sheldon/pull/42">Support directory key for plugins.</a> The plugin directory can now be
+configured to be a sub directory of the source.</li>
+</ul>
+<h2><a class="header" href="#040" id="040">0.4.0</a></h2>
+<p><em>Released on May 26th, 2019</em></p>
+<p>Complete refactor including breaking changes to the configuration file from
+prior versions.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                        
+
+                        
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                
+
+                
+            </nav>
+
+        </div>
+
+        
+
+        
+
+        
+
+        
+        <script type="text/javascript">
+            window.playground_copyable = true;
+        </script>
+        
+
+        
+
+        
+        <script src="elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="searcher.js" type="text/javascript" charset="utf-8"></script>
+        
+
+        <script src="clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="book.js" type="text/javascript" charset="utf-8"></script>
+
+        <!-- Custom JS scripts -->
+        
+
+        
+        
+        <script type="text/javascript">
+        window.addEventListener('load', function() {
+            window.setTimeout(window.print, 100);
+        });
+        </script>
+        
+        
+
+    </body>
+</html>
