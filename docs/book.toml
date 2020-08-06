@@ -6,3 +6,5 @@ title = "sheldon docs"
 git-repository-url = "https://github.com/rossmacarthur/sheldon"
 
 [output.linkcheck]
+# See https://github.com/rust-lang/crates.io/issues/788 for why we exclude this.
+exclude = ['crates.io']
