@@ -132,7 +132,6 @@ mod tests {
     use super::*;
 
     use std::io::Write;
-    use std::path::PathBuf;
 
     use pretty_assertions::assert_eq;
     use url::Url;

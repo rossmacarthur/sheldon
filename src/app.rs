@@ -1,27 +1,4 @@
-//! A fast, configurable, shell plugin manager.
-//!
-//! This crate provides a command line interface and is not intended to be used
-//! as a library. You can install the `sheldon` command line tool using
-//!
-//! ```sh
-//! cargo install sheldon
-//! ```
-//!
-//! Read up more at the project homepage [here][homepage].
-//!
-//! [homepage]: https://github.com/rossmacarthur/sheldon#sheldon
-
-#[macro_use]
-mod _macros;
-
-mod cli;
-mod config;
-mod context;
-mod edit;
-mod editor;
-mod lock;
-mod log;
-mod util;
+//! The top level application.
 
 use std::fs;
 use std::io;
@@ -32,13 +9,13 @@ use anyhow::{bail, Context as ResultExt, Error, Result};
 use crate::cli::{Command, Opt};
 use crate::config::Config;
 use crate::context::{Context, EditContext, LockContext, SettingsExt};
-use crate::edit::Plugin;
+use crate::edit::{self, Plugin};
+use crate::editor;
 use crate::lock::LockedConfig;
 use crate::util::{underlying_io_error_kind, Mutex, PathExt};
 
 /// The main application.
 #[derive(Debug)]
-#[doc(hidden)]
 pub struct Sheldon;
 
 impl Sheldon {

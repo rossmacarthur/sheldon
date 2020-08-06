@@ -1,8 +1,21 @@
+#[macro_use]
+mod _macros;
+
+mod app;
+mod cli;
+mod config;
+mod context;
+mod edit;
+mod editor;
+mod lock;
+mod log;
+mod util;
+
 use std::panic;
 use std::process;
 
 fn run() {
-    if sheldon::Sheldon::run().is_err() {
+    if crate::app::Sheldon::run().is_err() {
         process::exit(2);
     }
 }
