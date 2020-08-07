@@ -186,19 +186,33 @@ and as a result <strong>sheldon</strong> is blazingly fast.</p>
 <p>at your option.</p>
 <h1><a class="header" href="#installation" id="installation">Installation</a></h1>
 <h2><a class="header" href="#pre-built-binaries" id="pre-built-binaries">Pre-built binaries</a></h2>
-<p>Pre-built binaries for Linux (x86-64, aarch64, armv7) and macOS (x86-64) can be
-found on <a href="https://github.com/rossmacarthur/sheldon/releases">the releases page</a>.</p>
-<p>Alternatively, the following script can be used to automatically detect your
-host system, download the required artefact, and extract the <strong>sheldon</strong> binary.</p>
+<p>Pre-built binaries for Linux (x86-64, aarch64, armv7) and macOS (x86-64) are
+provided. The following script can be used to automatically detect your host
+system, download the required artefact, and extract the <strong>sheldon</strong> binary to
+the given directory.</p>
 <pre><code class="language-sh">curl --proto '=https' -fLsS https://rossmacarthur.github.io/install/crate.sh \
-    | bash -s -- --repo &quot;rossmacarthur/sheldon&quot; --to ~/.local/bin
+    | bash -s -- --repo rossmacarthur/sheldon --to ~/.local/bin
+</code></pre>
+<p>Alternatively, you can download an artifact directly from the <a href="https://github.com/rossmacarthur/sheldon/releases">the releases
+page</a>.</p>
+<h2><a class="header" href="#homebrew" id="homebrew">Homebrew</a></h2>
+<p><strong>sheldon</strong> can be installed using Homebrew.</p>
+<pre><code class="language-sh">brew install sheldon
 </code></pre>
 <h2><a class="header" href="#cargo" id="cargo">Cargo</a></h2>
-<p><strong>sheldon</strong> can be installed using <a href="https://doc.rust-lang.org/cargo/">Cargo</a>,
-the Rust package manager. Install Cargo using <a href="https://rustup.rs/">rustup</a> then
-run the following command to install or update <strong>sheldon</strong>.</p>
+<p><strong>sheldon</strong> can be installed from <a href="https://crates.io/crates/sheldon">Crates.io</a>
+using <a href="https://doc.rust-lang.org/cargo/">Cargo</a>, the Rust package manager.</p>
 <pre><code class="language-sh">cargo install sheldon
 </code></pre>
+<h2><a class="header" href="#building-from-source" id="building-from-source">Building from source</a></h2>
+<p><strong>sheldon</strong> is written in Rust, so to install it from source you will first need
+to install Rust and Cargo using <a href="https://rustup.rs/">rustup</a>. Then you can run
+the following to build <strong>sheldon</strong>.</p>
+<pre><code class="language-sh">git clone https://github.com/rossmacarthur/sheldon.git
+cd sheldon
+cargo build --release
+</code></pre>
+<p>The binary will be found at <code>target/release/sheldon</code>.</p>
 <h1><a class="header" href="#getting-started" id="getting-started">Getting started</a></h1>
 <h2><a class="header" href="#initializing" id="initializing">Initializing</a></h2>
 <p><strong>sheldon</strong> works by specifying plugin information in a <a href="https://toml.io">TOML</a>
