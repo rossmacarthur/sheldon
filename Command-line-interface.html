@@ -160,10 +160,19 @@
                 <div id="content" class="content">
                     <main>
                         <h1><a class="header" href="#command-line-interface" id="command-line-interface">Command line interface</a></h1>
-<h2><a class="header" href="#lock-command" id="lock-command"><code>lock</code> command</a></h2>
-<p>The <code>lock</code> command installs the plugins sources and generates the lock file.
-Rerunning this command will not reinstall plugin sources, just verify that they
-are correctly installed. It will always regenerate the lock file.</p>
+<p>Sheldon has three different types of commands.</p>
+<ul>
+<li><a href="#init"><code>init</code></a> initializes a new config file.</li>
+<li><a href="#lock"><code>lock</code></a> and <a href="#source"><code>source</code></a> deal with plugin downloading,
+installation, and generation of shell source code.</li>
+<li><a href="#add"><code>add</code></a>, <a href="#edit"><code>edit</code></a>, and <a href="#remove"><code>remove</code></a> automate editing of
+the config file.</li>
+</ul>
+<h2><a class="header" href="#lock" id="lock"><code>lock</code></a></h2>
+<p>The <code>lock</code> command installs the plugins sources and generates the lock file
+(<code>~/.sheldon/plugins.lock</code>). Rerunning this command will not reinstall plugin
+sources, just verify that they are correctly installed. It will always
+regenerate the lock file.</p>
 <pre><code class="language-sh">sheldon lock
 </code></pre>
 <p>To update all plugin sources you can use the <code>--update</code> flag.</p>
@@ -172,18 +181,17 @@ are correctly installed. It will always regenerate the lock file.</p>
 <p>To force a reinstall of all plugin sources you can use the <code>--reinstall</code> flag.</p>
 <pre><code class="language-sh">sheldon lock --reinstall
 </code></pre>
-<h2><a class="header" href="#source-command" id="source-command"><code>source</code> command</a></h2>
+<h2><a class="header" href="#source" id="source"><code>source</code></a></h2>
 <p>This command generates the shell script. This command will first check if there
 is an up to date lock file, if not, then it will first do the equivalent of the
 lock command above. This command is usually used with the built-in shell
 <code>source</code> command.</p>
 <pre><code class="language-sh">source &lt;(sheldon source)
 </code></pre>
-<p>If we now modify our config file and run this command again it will relock the
-configuration prior to generating the script. The output of this command is
-highly configurable. You can define your own <a href="#configuration-templates">custom
-templates</a> to apply to your plugins.</p>
-<h2><a class="header" href="#init-command" id="init-command"><code>init</code> command</a></h2>
+<p>But you can also run it directly to inspect the output. The output of this
+command is highly configurable. You can define your own custom templates to
+apply to your plugins.</p>
+<h2><a class="header" href="#init" id="init"><code>init</code></a></h2>
 <p>This command initializes a new config file. If a config file exists then this
 command does nothing.</p>
 <p>For example</p>
@@ -192,7 +200,7 @@ command does nothing.</p>
 <p>Or you can specify the shell.</p>
 <pre><code class="language-sh">sheldon init --shell bash
 </code></pre>
-<h2><a class="header" href="#add-command" id="add-command"><code>add</code> command</a></h2>
+<h2><a class="header" href="#add" id="add"><code>add</code></a></h2>
 <p>This command adds a new plugin to the config file. It does nothing else but edit
 the config file. In the following command we add a GitHub repository as a
 source.</p>
@@ -200,7 +208,7 @@ source.</p>
 </code></pre>
 <p>An example usage of this command for each source type is shown in the
 <a href="#configuration-plugin-sources">Configuration: plugin sources</a> section.</p>
-<h2><a class="header" href="#edit-command" id="edit-command"><code>edit</code> command</a></h2>
+<h2><a class="header" href="#edit" id="edit"><code>edit</code></a></h2>
 <p>This command will open the config file in the default editor and only overwrite
 the contents if the updated config file is valid. To override the editor that is
 used you should set the <code>EDITOR</code> environment variable.</p>
@@ -210,14 +218,14 @@ used you should set the <code>EDITOR</code> environment variable.</p>
 <p>Or with Visual Studio Code</p>
 <pre><code class="language-sh">EDITOR=&quot;code --wait&quot; sheldon edit
 </code></pre>
-<h2><a class="header" href="#remove-command" id="remove-command"><code>remove</code> command</a></h2>
+<h2><a class="header" href="#remove" id="remove"><code>remove</code></a></h2>
 <p>This command removes a plugin from the config file. It does nothing else but
 edit the config file. In the following command we remove the plugin with name
 <code>my-repo</code>.</p>
 <pre><code class="language-sh">sheldon remove my-repo
 </code></pre>
 <h2><a class="header" href="#flags" id="flags">Flags</a></h2>
-<p><strong>sheldon</strong> accepts the following global command line flags.</p>
+<p>Sheldon accepts the following global command line flags.</p>
 <table><thead><tr><th>Flag</th><th>Description</th></tr></thead><tbody>
 <tr><td><code>-q</code>, <code>--quiet</code></td><td>Suppress any informational output</td></tr>
 <tr><td><code>-v</code>, <code>--verbose</code></td><td>Use verbose output</td></tr>
@@ -226,7 +234,7 @@ edit the config file. In the following command we remove the plugin with name
 <tr><td><code>-V</code>, <code>--version</code></td><td>Show the version and exit</td></tr>
 </tbody></table>
 <h2><a class="header" href="#options" id="options">Options</a></h2>
-<p><strong>sheldon</strong> accepts the following global command line options.</p>
+<p>Sheldon accepts the following global command line options.</p>
 <table><thead><tr><th>Option</th><th>Environment variable</th><th>Description</th></tr></thead><tbody>
 <tr><td><code>--home &lt;path&gt;</code></td><td><code>HOME</code></td><td>Set the home directory. (<em>default:</em> auto)</td></tr>
 <tr><td><code>--root &lt;path&gt;</code></td><td><code>SHELDON_ROOT</code></td><td>Set the root directory. (<em>default:</em> <code>&lt;home&gt;/.sheldon</code>)</td></tr>

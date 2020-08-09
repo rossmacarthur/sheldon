@@ -161,7 +161,7 @@
                     <main>
                         <h1><a class="header" href="#getting-started" id="getting-started">Getting started</a></h1>
 <h2><a class="header" href="#initializing" id="initializing">Initializing</a></h2>
-<p><strong>sheldon</strong> works by specifying plugin information in a <a href="https://toml.io">TOML</a>
+<p>Sheldon works by specifying plugin information in a <a href="https://toml.io">TOML</a>
 configuration file. You can initialize this file by running <code>sheldon init</code>.</p>
 <pre><code class="language-sh">sheldon init --shell zsh
 </code></pre>
@@ -172,17 +172,17 @@ configuration file. You can initialize this file by running <code>sheldon init</
 You can either edit this file directly or use the provided command line
 interface to add or remove plugins.</p>
 <h2><a class="header" href="#adding-a-plugin" id="adding-a-plugin">Adding a plugin</a></h2>
-<p>To add your first plugin add the following to the <strong>sheldon</strong> config file.</p>
+<p>To add your first plugin add the following to the Sheldon config file.</p>
 <pre><code class="language-toml"># ~/.sheldon/plugins.toml
 
 [plugins.base16]
 github = &quot;chriskempson/base16-shell&quot;
 </code></pre>
-<p>Or use <code>sheldon add</code> to automatically add it.</p>
+<p>Or use the <code>add</code> command to automatically add it.</p>
 <pre><code class="language-sh">sheldon add base16 --github chriskempson/base16-shell
 </code></pre>
 <p>The first argument given here <code>base16</code> is a unique name for the plugin. The
-<code>--github</code> option specifies that we want <strong>sheldon</strong> to manage a clone of the
+<code>--github</code> option specifies that we want Sheldon to manage a clone of the
 <a href="https://github.com/chriskempson/base16-shell">https://github.com/chriskempson/base16-shell</a>
 repository.</p>
 <h2><a class="header" href="#loading-plugins" id="loading-plugins">Loading plugins</a></h2>

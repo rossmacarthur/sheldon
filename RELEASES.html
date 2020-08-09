@@ -161,19 +161,19 @@
                     <main>
                         <h1><a class="header" href="#releases" id="releases">Releases</a></h1>
 <h2><a class="header" href="#053" id="053">0.5.3</a></h2>
-<p><em>Released on July 28th, 2020</em></p>
+<p><em>July 28th, 2020</em></p>
 <h3><a class="header" href="#features" id="features">Features</a></h3>
 <ul>
-<li><a href="https://github.com/rossmacarthur/sheldon/commit/131576dfddc53ec76e87ce6ee64326ae119a383c">Add <code>init</code> command.</a> Adds a new command to <strong>sheldon</strong> which
-initializes a config file. Simply run <code>sheldon init</code>.</li>
-<li><a href="https://github.com/rossmacarthur/sheldon/commit/ed872e9ca6e7ca23569ed68bcdc09d43c6973374">Add <code>shell</code> config key.</a> Indicates to <strong>sheldon</strong> what type of shell
-is being used. Certain other config values will have different defaults if
-this value is set.</li>
+<li><a href="https://github.com/rossmacarthur/sheldon/commit/131576dfddc53ec76e87ce6ee64326ae119a383c">Add <code>init</code> command.</a> Adds a new command to Sheldon which initializes
+a config file. Simply run <code>sheldon init</code>.</li>
+<li><a href="https://github.com/rossmacarthur/sheldon/commit/ed872e9ca6e7ca23569ed68bcdc09d43c6973374">Add <code>shell</code> config key.</a> Indicates to Sheldon what type of shell is
+being used. Certain other config values will have different defaults if this
+value is set.</li>
 <li><a href="https://github.com/rossmacarthur/sheldon/commit/5a8254d36c73e79cf67782160cf63e9e6f5c3d9b">Support updating of plugins via <code>--update</code> option.</a> Simply run
 <code>sheldon lock --update</code> to update all plugin sources.</li>
 </ul>
 <h2><a class="header" href="#052" id="052">0.5.2</a></h2>
-<p><em>Released on June 4th, 2020</em></p>
+<p><em>June 4th, 2020</em></p>
 <h3><a class="header" href="#fixes" id="fixes">Fixes</a></h3>
 <ul>
 <li><a href="https://github.com/rossmacarthur/sheldon/commit/4ae64325fd8239dfb6e35f9efc05067c9c4a24d4">Fix not erroring out on a bad HTTP status code.</a> This fixes remote
@@ -188,7 +188,7 @@ script</a> will figure this out
 automatically.</li>
 </ul>
 <h2><a class="header" href="#051" id="051">0.5.1</a></h2>
-<p><em>Released on May 11th, 2020</em></p>
+<p><em>May 11th, 2020</em></p>
 <ul>
 <li><a href="https://github.com/rossmacarthur/sheldon/commit/081f940bc75711d3a587673178c738dd9ad40258">Using <code>--reinstall</code> on source command now implies <code>--relock</code>.</a></li>
 <li><a href="https://github.com/rossmacarthur/sheldon/commit/eb6aaf49bacbccff00359ec86135d1f4050a6d35">Support aarch64 linux.</a></li>
@@ -196,7 +196,7 @@ automatically.</li>
 shipped musl binaries which statically bundle OpenSSL.</li>
 </ul>
 <h2><a class="header" href="#050" id="050">0.5.0</a></h2>
-<p><em>Released on May 2nd, 2020</em></p>
+<p><em>May 2nd, 2020</em></p>
 <h3><a class="header" href="#features-1" id="features-1">Features</a></h3>
 <ul>
 <li>
@@ -215,15 +215,15 @@ tag = &quot;v0.1.0&quot;
 </code></pre>
 </li>
 <li>
-<p><a href="https://github.com/rossmacarthur/sheldon/commit/5b6384370128d410e82153b52c398dcfd1f8422c">Add <code>edit</code> command.</a> Adds a new command to <strong>sheldon</strong> which allows
-you to open the config file in the default editor. Simply run <code>sheldon edit</code>.</p>
+<p><a href="https://github.com/rossmacarthur/sheldon/commit/5b6384370128d410e82153b52c398dcfd1f8422c">Add <code>edit</code> command.</a> Adds a new command to Sheldon which allows you
+to open the config file in the default editor. Simply run <code>sheldon edit</code>.</p>
 </li>
 <li>
-<p><a href="https://github.com/rossmacarthur/sheldon/commit/75a39b398bb2982ef77e44bf1269cbd6f762bf99">Add initial config file.</a> When running <code>add</code> or <code>edit</code> <strong>sheldon</strong>
-will attempt to initialize a new config file at <code>~/.sheldon/plugins.toml</code>.</p>
+<p><a href="https://github.com/rossmacarthur/sheldon/commit/75a39b398bb2982ef77e44bf1269cbd6f762bf99">Add initial config file.</a> When running <code>add</code> or <code>edit</code> Sheldon will
+attempt to initialize a new config file at <code>~/.sheldon/plugins.toml</code>.</p>
 </li>
 <li>
-<p><a href="https://github.com/rossmacarthur/sheldon/commit/11ff2875e5ecb04851b435c3e95fecbe7e453a97">Warn about unused config keys.</a> Anytime <strong>sheldon</strong> loads the config
+<p><a href="https://github.com/rossmacarthur/sheldon/commit/11ff2875e5ecb04851b435c3e95fecbe7e453a97">Warn about unused config keys.</a> Anytime Sheldon loads the config
 file it will log warnings when there are unused config keys. Great for
 catching typos!</p>
 </li>
@@ -238,7 +238,7 @@ directory now defaults to <code>~/.sheldon</code> and the clone directory now de
 mv ~/.sheldon/repositories ~/.sheldon/repos
 </code></pre>
 <p>Or to preserve the old behavior you should export the following before running
-<strong>sheldon</strong>.</p>
+Sheldon.</p>
 <pre><code class="language-sh">export SHELDON_ROOT=&quot;$HOME/.zsh&quot;
 export SHELDON_CLONE_DIR=&quot;$SHELDON_ROOT/repositories&quot;
 </code></pre>
@@ -254,7 +254,7 @@ trying to download them.</p>
 </li>
 </ul>
 <h3><a class="header" href="#deprecations" id="deprecations">Deprecations</a></h3>
-<p>Most of these are still supported, however <strong>sheldon</strong> will log a deprecation
+<p>Most of these are still supported, however Sheldon will log a deprecation
 warning if you use them.</p>
 <ul>
 <li><a href="https://github.com/rossmacarthur/sheldon/commit/c62600a46116457c4bd682e348af344c00709e67">Rename <code>filename</code> to <code>file</code></a> This affects both the the config file
@@ -265,7 +265,7 @@ and the template rendering context.</li>
 <li><a href="https://github.com/rossmacarthur/sheldon/commit/92bb588612e58498fe668e0f7f4fa274b6f9cb11">Rename <code>revision</code> plugin config key to <code>rev</code>.</a></li>
 </ul>
 <h2><a class="header" href="#048" id="048">0.4.8</a></h2>
-<p><em>Released on November 3rd, 2019</em></p>
+<p><em>November 3rd, 2019</em></p>
 <ul>
 <li><a href="https://github.com/rossmacarthur/sheldon/pull/87">Auto clean clone and download directories</a>. Unused source directories
 and files will now be automatically removed.</li>
@@ -277,48 +277,47 @@ the protocol for Gist and GitHub sources. Additionally, Git sources can now
 specify URLs with protocols <code>git://</code> and <code>ssh://</code>.</li>
 </ul>
 <h2><a class="header" href="#047" id="047">0.4.7</a></h2>
-<p><em>Released on October 22nd, 2019</em></p>
+<p><em>October 22nd, 2019</em></p>
 <ul>
 <li><a href="https://github.com/rossmacarthur/sheldon/pull/76">Add <code>--clone-dir</code> and <code>--download-dir</code> options.</a> The directories where
 Git plugin sources are cloned to, and remote sources are downloaded to, are
-now configurable. Environment variables for setting these options are also
-now available.</li>
+now configurable. Environment variables for setting these options are also now
+available.</li>
 <li><a href="https://github.com/rossmacarthur/sheldon/pull/72">Fix <code>--config-file</code> and <code>--lock-file</code> options.</a> These two options were
 previously ignored and only the environment variables were recognized.</li>
 </ul>
 <h2><a class="header" href="#046" id="046">0.4.6</a></h2>
-<p><em>Released on August 18th, 2019</em></p>
+<p><em>August 18th, 2019</em></p>
 <ul>
 <li><a href="https://github.com/rossmacarthur/sheldon/pull/66">Support globs in local plugin directories.</a> Globs should match only one
 directory.</li>
 <li><a href="https://github.com/rossmacarthur/sheldon/pull/65">Support for inline plugins.</a></li>
 </ul>
 <h2><a class="header" href="#045" id="045">0.4.5</a></h2>
-<p><em>Released on July 19th, 2019</em></p>
+<p><em>July 19th, 2019</em></p>
 <ul>
-<li><a href="https://github.com/rossmacarthur/sheldon/pull/58">Require mutex to run a <code>sheldon</code> commmand.</a> Makes sure multiple
-instances of <code>sheldon</code> do not interfere with each other!</li>
+<li><a href="https://github.com/rossmacarthur/sheldon/pull/58">Require mutex to run a Sheldon command.</a> Makes sure multiple instances
+of Sheldon do not interfere with each other!</li>
 </ul>
 <h2><a class="header" href="#044" id="044">0.4.4</a></h2>
-<p><em>Released on July 7th, 2019</em></p>
+<p><em>July 7th, 2019</em></p>
 <ul>
-<li><a href="https://github.com/rossmacarthur/sheldon/pull/54">Warn instead of erroring when running <code>sheldon source</code>.</a> This allows
-at least some plugins to be sourced, this only happens if there is already a
-lock file.</li>
+<li><a href="https://github.com/rossmacarthur/sheldon/pull/54">Warn instead of erroring when running <code>sheldon source</code>.</a> This allows at
+least some plugins to be sourced, this only happens if there is already a lock
+file.</li>
 </ul>
 <h2><a class="header" href="#043" id="043">0.4.3</a></h2>
-<p><em>Released on July 3rd, 2019</em></p>
+<p><em>July 3rd, 2019</em></p>
 <ul>
-<li><a href="https://github.com/rossmacarthur/sheldon/pull/47">Verify that locked directories and filenames exist when running
-<code>sheldon source</code>.</a> If they do not then <code>sheldon lock</code> will be run again.</li>
+<li><a href="https://github.com/rossmacarthur/sheldon/pull/47">Verify that locked directories and filenames exist when running <code>sheldon source</code>.</a> If they do not then <code>sheldon lock</code> will be run again.</li>
 </ul>
 <h2><a class="header" href="#042" id="042">0.4.2</a></h2>
-<p><em>Released on June 27th, 2019</em></p>
+<p><em>June 27th, 2019</em></p>
 <ul>
 <li><a href="https://github.com/rossmacarthur/sheldon/pull/44">Improve output granularity and add <code>--verbose</code> option.</a></li>
 </ul>
 <h2><a class="header" href="#041" id="041">0.4.1</a></h2>
-<p><em>Released on June 2nd, 2019</em></p>
+<p><em>June 2nd, 2019</em></p>
 <ul>
 <li><a href="https://github.com/rossmacarthur/sheldon/pull/43">Add <code>--no-color</code> option.</a></li>
 <li><a href="https://github.com/rossmacarthur/sheldon/pull/43">Replace home directory with tilde in output.</a></li>
@@ -326,7 +325,7 @@ lock file.</li>
 configured to be a sub directory of the source.</li>
 </ul>
 <h2><a class="header" href="#040" id="040">0.4.0</a></h2>
-<p><em>Released on May 26th, 2019</em></p>
+<p><em>May 26th, 2019</em></p>
 <p>Complete refactor including breaking changes to the configuration file from
 prior versions.</p>
 

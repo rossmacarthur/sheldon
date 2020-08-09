@@ -163,7 +163,7 @@
 <h2><a class="header" href="#plugin-sources" id="plugin-sources">Plugin sources</a></h2>
 <p>A plugin is defined by adding a new unique name to the <code>plugins</code> table in the
 <a href="https://toml.io">TOML</a> config file. This can be done by either editing the file
-directly or using the provided <strong>sheldon</strong> commands. A plugin must provide the
+directly or using the provided Sheldon commands. A plugin must provide the
 location of the source. There are three types of sources, each kind is described
 in this section. A plugin may only specify <em>one</em> source type.</p>
 <pre><code class="language-toml"># ~/.sheldon/plugins.toml
@@ -177,46 +177,45 @@ github = &quot;chriskempson/base16-shell&quot;
 #               └─ GitHub user or organization
 </code></pre>
 <h3><a class="header" href="#git" id="git">Git</a></h3>
-<p>Git sources specify a remote Git repository that will be cloned to the
-<strong>sheldon</strong> root directory. There are three flavors of Git sources.</p>
+<p>Git sources specify a remote Git repository that will be cloned to the Sheldon
+root directory. There are three flavors of Git sources.</p>
 <h4><a class="header" href="#github" id="github"><code>github</code></a></h4>
 <p>A GitHub source must set the <code>github</code> field and specify the repository. This
 should be the username or organization and the repository name separated by a
-forward slash. Add the following to the <strong>sheldon</strong> config file.</p>
+forward slash. Add the following to the Sheldon config file.</p>
 <pre><code class="language-toml">[plugins.example]
 github = &quot;owner/repo&quot;
 </code></pre>
-<p>Or run <strong>sheldon add</strong> with the <code>--github</code> option.</p>
+<p>Or run <code>add</code> with the <code>--github</code> option.</p>
 <pre><code class="language-sh">sheldon add example --github owner/repo
 </code></pre>
 <h4><a class="header" href="#gist" id="gist"><code>gist</code></a></h4>
 <p>A Gist source must set the <code>gist</code> field and specify the repository. This should
-be the hash or username and hash of the Gist. Add the following to the
-<strong>sheldon</strong> config file.</p>
+be the hash or username and hash of the Gist. Add the following to the Sheldon
+config file.</p>
 <pre><code class="language-toml">[plugins.example]
 gist = &quot;579d02802b1cc17baed07753d09f5009&quot;
 </code></pre>
-<p>Or run <strong>sheldon add</strong> with the <code>--gist</code> option.</p>
+<p>Or run <code>add</code> with the <code>--gist</code> option.</p>
 <pre><code class="language-sh">sheldon add example --gist 579d02802b1cc17baed07753d09f5009
 </code></pre>
 <h4><a class="header" href="#git-1" id="git-1"><code>git</code></a></h4>
 <p>A Git source must set the <code>git</code> field and specify the URL to clone. Add the
-following to the <strong>sheldon</strong> config file.</p>
+following to the Sheldon config file.</p>
 <pre><code class="language-toml">[plugins.example]
 git = &quot;https://github.com/owner/repo&quot;
 </code></pre>
-<p>Or run <strong>sheldon add</strong> with the <code>--git</code> option.</p>
+<p>Or run <code>add</code> with the <code>--git</code> option.</p>
 <pre><code class="language-sh">sheldon add example --git https://github.com/owner/repo
 </code></pre>
 <h4><a class="header" href="#specifying-a-branch-tag-or-commit" id="specifying-a-branch-tag-or-commit">Specifying a branch, tag, or commit</a></h4>
 <p>All Git sources also allow setting of one of the <code>branch</code>, <code>tag</code> or <code>rev</code>
-fields. <strong>sheldon</strong> will then checkout the repository at this reference.</p>
+fields. Sheldon will then checkout the repository at this reference.</p>
 <pre><code class="language-toml">[plugins.example]
 github = &quot;owner/repo&quot;
 tag = &quot;v0.1.0&quot;
 </code></pre>
-<p>Or run <strong>sheldon add</strong> with the <code>--tag</code>, <code>--branch</code>, or <code>--rev</code> option when
-adding the plugin.</p>
+<p>Or run <code>add</code> with the <code>--tag</code>, <code>--branch</code>, or <code>--rev</code> option.</p>
 <pre><code class="language-sh">sheldon add example --github owner/repo --tag v0.1.0
 </code></pre>
 <h4><a class="header" href="#cloning-with-git-or-ssh-protocols" id="cloning-with-git-or-ssh-protocols">Cloning with Git or SSH protocols</a></h4>
@@ -233,28 +232,28 @@ For SSH you will need to specify the username as well (it is <code>git</code> fo
 git = &quot;ssh://git@github.com/owner/repo&quot;
 </code></pre>
 <h4><a class="header" href="#private-git-repositories" id="private-git-repositories">Private Git repositories</a></h4>
-<p>Currently <strong>sheldon</strong> only supports authentication when cloning using SSH and
-only with authentication via the SSH agent. This means if you have a plugin
+<p>Currently Sheldon only supports authentication when cloning using SSH and
+requires an SSH agent to provide credentials. This means if you have a plugin
 source that is a private repository you will have to use the SSH protocol for
 cloning.</p>
 <h3><a class="header" href="#remote" id="remote">Remote</a></h3>
-<p>Remote sources specify a remote file that will be downloaded by <strong>sheldon</strong>. A
-Remote source must set the  <code>remote</code> field and specify the URL. Add the
-following to the <strong>sheldon</strong> config file.</p>
+<p>Remote sources specify a remote file that will be downloaded by Sheldon. A
+remote source must set the <code>remote</code> field and specify the URL. Add the following
+to the Sheldon config file.</p>
 <pre><code class="language-toml">[plugins.example]
 remote = &quot;https://github.com/owner/repo/raw/master/plugin.zsh&quot;
 </code></pre>
-<p>Or run <strong>sheldon add</strong> with the <code>--remote</code> option.</p>
+<p>Or run <code>add</code> with the <code>--remote</code> option.</p>
 <pre><code class="language-sh">sheldon add example --remote https://github.com/owner/repo/raw/master/plugin.zsh
 </code></pre>
 <h3><a class="header" href="#local" id="local">Local</a></h3>
-<p>Local sources reference local directories. A Local source must set the <code>local</code>
+<p>Local sources reference local directories. A local source must set the <code>local</code>
 field and specify a directory. Tildes may be used and will be expanded to the
-current user's home directory. Add the following to the <strong>sheldon</strong> config file.</p>
+current user's home directory. Add the following to the Sheldon config file.</p>
 <pre><code class="language-toml">[plugins.example]
 local = &quot;~/Downloads/plugin&quot;
 </code></pre>
-<p>Or run <strong>sheldon add</strong> with the <code>--local</code> option.</p>
+<p>Or run <code>add</code> with the <code>--local</code> option.</p>
 <pre><code class="language-sh">sheldon add example --local '~/Downloads/plugin'
 </code></pre>
 <h2><a class="header" href="#plugin-options" id="plugin-options">Plugin options</a></h2>
@@ -262,13 +261,12 @@ local = &quot;~/Downloads/plugin&quot;
 <h3><a class="header" href="#use" id="use"><code>use</code></a></h3>
 <p>A list of files / globs to use in the plugin's source directory. If this field
 is not given then the first pattern in the global <a href="#match"><code>match</code></a> field that
-matches any files will be used. Add the following to the <strong>sheldon</strong> config
-file.</p>
+matches any files will be used. Add the following to the Sheldon config file.</p>
 <pre><code class="language-toml">[plugins.example]
 github = &quot;owner/repo&quot;
 use = [&quot;*.zsh&quot;]
 </code></pre>
-<p>Or run <strong>sheldon add</strong> with the <code>--use</code> option when adding the plugin.</p>
+<p>Or run <code>add</code> with the <code>--use</code> option when adding the plugin.</p>
 <pre><code class="language-sh">sheldon add example --github owner/repo --use '*.zsh'
 </code></pre>
 <h3><a class="header" href="#apply" id="apply"><code>apply</code></a></h3>
@@ -278,7 +276,7 @@ use = [&quot;*.zsh&quot;]
 github = &quot;owner/repo&quot;
 apply = [&quot;source&quot;, &quot;PATH&quot;]
 </code></pre>
-<p>Or run <strong>sheldon add</strong> with the <code>--apply</code> option when adding the plugin.</p>
+<p>Or run <code>add</code> with the <code>--apply</code> option when adding the plugin.</p>
 <pre><code class="language-sh">sheldon add example --github owner/repo --apply source PATH
 </code></pre>
 <p>You can define your own <a href="#custom-templates">custom templates</a> to apply to your
@@ -299,8 +297,8 @@ the <a href="#apply"><code>apply</code></a> field on a plugin.</p>
 <li><strong>source</strong>: source each file in a plugin.</li>
 <li><strong>PATH</strong>: add the plugin directory to the <code>PATH</code> variable.</li>
 <li><strong>path</strong>: add the plugin directory to the <code>path</code> variable.</li>
-<li><strong>fpath</strong>: add the plugin directory to the <code>fpath</code> variable.
-As template strings they could be represented like this</li>
+<li><strong>fpath</strong>: add the plugin directory to the <code>fpath</code> variable. As template
+strings they could be represented like this</li>
 </ul>
 <pre><code class="language-toml">[templates]
 source = { value = 'source &quot;{{ file }}&quot;', each = true }
@@ -336,8 +334,8 @@ in templates with <code>{{ dir }}</code>.</p>
 <li>
 <p><strong>Zero or more files.</strong> These are the matched files in the plugin directory
 either discovered using the the global <code>match</code> field or specified as a plugin
-option with <code>use</code>. These can be used in templates using <code>{{ file }}</code>.
-You can use the following global information in templates</p>
+option with <code>use</code>. These can be used in templates using <code>{{ file }}</code>. You can
+use the following global information in templates</p>
 </li>
 <li>
 <p><strong>The sheldon root.</strong> This folder can be used as <code>{{ root }}</code>.</p>
@@ -370,7 +368,7 @@ apply = [&quot;source&quot;, &quot;PATH&quot;]
 <p><strong>Note:</strong> this would change the behavior of <strong>PATH</strong> for <em>all</em> plugins using it.</p>
 <h2><a class="header" href="#global-options" id="global-options">Global options</a></h2>
 <h3><a class="header" href="#shell" id="shell"><code>shell</code></a></h3>
-<p>Indicates the shell that you are using <strong>sheldon</strong> with. If this field is set to
+<p>Indicates the shell that you are using Sheldon with. If this field is set to
 <code>bash</code> the global <a href="#match"><code>match</code></a> default configuration will use Bash relevant
 defaults. If you are using Zsh you don't need to set this value but you may set
 it to <code>zsh</code>. For example</p>
