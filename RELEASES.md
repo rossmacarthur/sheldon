@@ -2,15 +2,15 @@
 
 ## 0.5.3
 
-*Released on July 28th, 2020*
+*July 28th, 2020*
 
 ### Features
 
-- [Add `init` command.][131576d] Adds a new command to **sheldon** which
-  initializes a config file. Simply run `sheldon init`.
-- [Add `shell` config key.][ed872e9] Indicates to **sheldon** what type of shell
-  is being used. Certain other config values will have different defaults if
-  this value is set.
+- [Add `init` command.][131576d] Adds a new command to Sheldon which initializes
+  a config file. Simply run `sheldon init`.
+- [Add `shell` config key.][ed872e9] Indicates to Sheldon what type of shell is
+  being used. Certain other config values will have different defaults if this
+  value is set.
 - [Support updating of plugins via `--update` option.][5a8254d] Simply run
   `sheldon lock --update` to update all plugin sources.
 
@@ -20,7 +20,7 @@
 
 ## 0.5.2
 
-*Released on June 4th, 2020*
+*June 4th, 2020*
 
 ### Fixes
 
@@ -42,7 +42,7 @@
 
 ## 0.5.1
 
-*Released on May 11th, 2020*
+*May 11th, 2020*
 
 - [Using `--reinstall` on source command now implies `--relock`.][081f940]
 - [Support aarch64 linux.][eb6aaf4]
@@ -55,7 +55,7 @@
 
 ## 0.5.0
 
-*Released on May 2nd, 2020*
+*May 2nd, 2020*
 
 ### Features
 
@@ -82,11 +82,11 @@
   sheldon remove example
   ```
 
-- [Add `edit` command.][5b63843] Adds a new command to **sheldon** which allows
-  you to open the config file in the default editor. Simply run `sheldon edit`.
-- [Add initial config file.][75a39b3] When running `add` or `edit` **sheldon**
-  will attempt to initialize a new config file at `~/.sheldon/plugins.toml`.
-- [Warn about unused config keys.][11ff287] Anytime **sheldon** loads the config
+- [Add `edit` command.][5b63843] Adds a new command to Sheldon which allows you
+  to open the config file in the default editor. Simply run `sheldon edit`.
+- [Add initial config file.][75a39b3] When running `add` or `edit` Sheldon will
+  attempt to initialize a new config file at `~/.sheldon/plugins.toml`.
+- [Warn about unused config keys.][11ff287] Anytime Sheldon loads the config
   file it will log warnings when there are unused config keys. Great for
   catching typos!
 
@@ -107,7 +107,7 @@
   ```
 
   Or to preserve the old behavior you should export the following before running
-  **sheldon**.
+  Sheldon.
 
   ```sh
   export SHELDON_ROOT="$HOME/.zsh"
@@ -127,7 +127,7 @@
 
 ### Deprecations
 
-Most of these are still supported, however **sheldon** will log a deprecation
+Most of these are still supported, however Sheldon will log a deprecation
 warning if you use them.
 
 - [Rename `filename` to `file`][c62600a] This affects both the the config file
@@ -145,7 +145,7 @@ warning if you use them.
 
 ## 0.4.8
 
-*Released on November 3rd, 2019*
+*November 3rd, 2019*
 
 - [Auto clean clone and download directories][#87]. Unused source directories
   and files will now be automatically removed.
@@ -162,12 +162,12 @@ warning if you use them.
 
 ## 0.4.7
 
-*Released on October 22nd, 2019*
+*October 22nd, 2019*
 
 - [Add `--clone-dir` and `--download-dir` options.][#76] The directories where
   Git plugin sources are cloned to, and remote sources are downloaded to, are
-  now configurable. Environment variables for setting these options are also
-  now available.
+  now configurable. Environment variables for setting these options are also now
+  available.
 - [Fix `--config-file` and `--lock-file` options.][#72] These two options were
   previously ignored and only the environment variables were recognized.
 
@@ -176,7 +176,7 @@ warning if you use them.
 
 ## 0.4.6
 
-*Released on August 18th, 2019*
+*August 18th, 2019*
 
 - [Support globs in local plugin directories.][#66] Globs should match only one
   directory.
@@ -187,35 +187,35 @@ warning if you use them.
 
 ## 0.4.5
 
-*Released on July 19th, 2019*
+*July 19th, 2019*
 
-- [Require mutex to run a `sheldon` commmand.][#58] Makes sure multiple
-  instances of `sheldon` do not interfere with each other!
+- [Require mutex to run a Sheldon command.][#58] Makes sure multiple instances
+  of Sheldon do not interfere with each other!
 
 [#58]: https://github.com/rossmacarthur/sheldon/pull/58
 
 ## 0.4.4
 
-*Released on July 7th, 2019*
+*July 7th, 2019*
 
-- [Warn instead of erroring when running `sheldon source`.][#54] This allows
-  at least some plugins to be sourced, this only happens if there is already a
-  lock file.
+- [Warn instead of erroring when running `sheldon source`.][#54] This allows at
+  least some plugins to be sourced, this only happens if there is already a lock
+  file.
 
 [#54]: https://github.com/rossmacarthur/sheldon/pull/54
 
 ## 0.4.3
 
-*Released on July 3rd, 2019*
+*July 3rd, 2019*
 
-- [Verify that locked directories and filenames exist when running
-  `sheldon source`.][#47] If they do not then `sheldon lock` will be run again.
+- [Verify that locked directories and filenames exist when running `sheldon
+  source`.][#47] If they do not then `sheldon lock` will be run again.
 
 [#47]: https://github.com/rossmacarthur/sheldon/pull/47
 
 ## 0.4.2
 
-*Released on June 27th, 2019*
+*June 27th, 2019*
 
 - [Improve output granularity and add `--verbose` option.][#44]
 
@@ -223,7 +223,7 @@ warning if you use them.
 
 ## 0.4.1
 
-*Released on June 2nd, 2019*
+*June 2nd, 2019*
 
 - [Add `--no-color` option.][#43]
 - [Replace home directory with tilde in output.][#43]
@@ -235,7 +235,7 @@ warning if you use them.
 
 ## 0.4.0
 
-*Released on May 26th, 2019*
+*May 26th, 2019*
 
 Complete refactor including breaking changes to the configuration file from
 prior versions.

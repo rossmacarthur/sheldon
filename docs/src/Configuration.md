@@ -4,7 +4,7 @@
 
 A plugin is defined by adding a new unique name to the `plugins` table in the
 [TOML](https://toml.io) config file. This can be done by either editing the file
-directly or using the provided **sheldon** commands. A plugin must provide the
+directly or using the provided Sheldon commands. A plugin must provide the
 location of the source. There are three types of sources, each kind is described
 in this section. A plugin may only specify *one* source type.
 
@@ -22,21 +22,21 @@ github = "chriskempson/base16-shell"
 
 ### Git
 
-Git sources specify a remote Git repository that will be cloned to the
-**sheldon** root directory. There are three flavors of Git sources.
+Git sources specify a remote Git repository that will be cloned to the Sheldon
+root directory. There are three flavors of Git sources.
 
 #### `github`
 
 A GitHub source must set the `github` field and specify the repository. This
 should be the username or organization and the repository name separated by a
-forward slash. Add the following to the **sheldon** config file.
+forward slash. Add the following to the Sheldon config file.
 
 ```toml
 [plugins.example]
 github = "owner/repo"
 ```
 
-Or run **sheldon add** with the `--github` option.
+Or run `add` with the `--github` option.
 
 ```sh
 sheldon add example --github owner/repo
@@ -45,15 +45,15 @@ sheldon add example --github owner/repo
 #### `gist`
 
 A Gist source must set the `gist` field and specify the repository. This should
-be the hash or username and hash of the Gist. Add the following to the
-**sheldon** config file.
+be the hash or username and hash of the Gist. Add the following to the Sheldon
+config file.
 
 ```toml
 [plugins.example]
 gist = "579d02802b1cc17baed07753d09f5009"
 ```
 
-Or run **sheldon add** with the `--gist` option.
+Or run `add` with the `--gist` option.
 
 ```sh
 sheldon add example --gist 579d02802b1cc17baed07753d09f5009
@@ -62,14 +62,14 @@ sheldon add example --gist 579d02802b1cc17baed07753d09f5009
 #### `git`
 
 A Git source must set the `git` field and specify the URL to clone. Add the
-following to the **sheldon** config file.
+following to the Sheldon config file.
 
 ```toml
 [plugins.example]
 git = "https://github.com/owner/repo"
 ```
 
-Or run **sheldon add** with the `--git` option.
+Or run `add` with the `--git` option.
 
 ```sh
 sheldon add example --git https://github.com/owner/repo
@@ -78,7 +78,7 @@ sheldon add example --git https://github.com/owner/repo
 #### Specifying a branch, tag, or commit
 
 All Git sources also allow setting of one of the `branch`, `tag` or `rev`
-fields. **sheldon** will then checkout the repository at this reference.
+fields. Sheldon will then checkout the repository at this reference.
 
 ```toml
 [plugins.example]
@@ -86,8 +86,7 @@ github = "owner/repo"
 tag = "v0.1.0"
 ```
 
-Or run **sheldon add** with the `--tag`, `--branch`, or `--rev` option when
-adding the plugin.
+Or run `add` with the `--tag`, `--branch`, or `--rev` option.
 
 ```sh
 sheldon add example --github owner/repo --tag v0.1.0
@@ -115,23 +114,23 @@ git = "ssh://git@github.com/owner/repo"
 
 #### Private Git repositories
 
-Currently **sheldon** only supports authentication when cloning using SSH and
-only with authentication via the SSH agent. This means if you have a plugin
+Currently Sheldon only supports authentication when cloning using SSH and
+requires an SSH agent to provide credentials. This means if you have a plugin
 source that is a private repository you will have to use the SSH protocol for
 cloning.
 
 ### Remote
 
-Remote sources specify a remote file that will be downloaded by **sheldon**. A
-Remote source must set the  `remote` field and specify the URL. Add the
-following to the **sheldon** config file.
+Remote sources specify a remote file that will be downloaded by Sheldon. A
+remote source must set the `remote` field and specify the URL. Add the following
+to the Sheldon config file.
 
 ```toml
 [plugins.example]
 remote = "https://github.com/owner/repo/raw/master/plugin.zsh"
 ```
 
-Or run **sheldon add** with the `--remote` option.
+Or run `add` with the `--remote` option.
 
 ```sh
 sheldon add example --remote https://github.com/owner/repo/raw/master/plugin.zsh
@@ -139,16 +138,16 @@ sheldon add example --remote https://github.com/owner/repo/raw/master/plugin.zsh
 
 ### Local
 
-Local sources reference local directories. A Local source must set the `local`
+Local sources reference local directories. A local source must set the `local`
 field and specify a directory. Tildes may be used and will be expanded to the
-current user's home directory. Add the following to the **sheldon** config file.
+current user's home directory. Add the following to the Sheldon config file.
 
 ```toml
 [plugins.example]
 local = "~/Downloads/plugin"
 ```
 
-Or run **sheldon add** with the `--local` option.
+Or run `add` with the `--local` option.
 
 ```sh
 sheldon add example --local '~/Downloads/plugin'
@@ -162,8 +161,7 @@ These are options that are common to all the above plugins.
 
 A list of files / globs to use in the plugin's source directory. If this field
 is not given then the first pattern in the global [`match`](#match) field that
-matches any files will be used. Add the following to the **sheldon** config
-file.
+matches any files will be used. Add the following to the Sheldon config file.
 
 ```toml
 [plugins.example]
@@ -171,7 +169,7 @@ github = "owner/repo"
 use = ["*.zsh"]
 ```
 
-Or run **sheldon add** with the `--use` option when adding the plugin.
+Or run `add` with the `--use` option when adding the plugin.
 
 ```sh
 sheldon add example --github owner/repo --use '*.zsh'
@@ -188,7 +186,7 @@ github = "owner/repo"
 apply = ["source", "PATH"]
 ```
 
-Or run **sheldon add** with the `--apply` option when adding the plugin.
+Or run `add` with the `--apply` option when adding the plugin.
 
 ```sh
 sheldon add example --github owner/repo --apply source PATH
@@ -219,8 +217,8 @@ Available built in templates are
 * **source**: source each file in a plugin.
 * **PATH**: add the plugin directory to the `PATH` variable.
 * **path**: add the plugin directory to the `path` variable.
-* **fpath**: add the plugin directory to the `fpath` variable.
-  As template strings they could be represented like this
+* **fpath**: add the plugin directory to the `fpath` variable. As template
+  strings they could be represented like this
 
 ```toml
 [templates]
@@ -261,8 +259,8 @@ Plugins all have the following information that can be used in templates
 
 * **Zero or more files.** These are the matched files in the plugin directory
   either discovered using the the global `match` field or specified as a plugin
-  option with `use`. These can be used in templates using `{{ file }}`.
-  You can use the following global information in templates
+  option with `use`. These can be used in templates using `{{ file }}`. You can
+  use the following global information in templates
 
 * **The sheldon root.** This folder can be used as `{{ root }}`.
 
@@ -310,7 +308,7 @@ apply = ["source", "PATH"]
 
 ### `shell`
 
-Indicates the shell that you are using **sheldon** with. If this field is set to
+Indicates the shell that you are using Sheldon with. If this field is set to
 `bash` the global [`match`](#match) default configuration will use Bash relevant
 defaults. If you are using Zsh you don't need to set this value but you may set
 it to `zsh`. For example

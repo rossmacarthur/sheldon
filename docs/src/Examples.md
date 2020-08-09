@@ -7,7 +7,7 @@ plugins and themes.
 
 ### [ohmyzsh](https://github.com/ohmyzsh/ohmyzsh)
 
-Add the following to the **sheldon** config file.
+Add the following to the Sheldon config file.
 
 ```toml
 [plugins.oh-my-zsh]
@@ -36,7 +36,7 @@ source <(sheldon source)
 
 ### [autosuggestions](https://github.com/zsh-users/zsh-autosuggestions)
 
-Add the following to the **sheldon** config file.
+Add the following to the Sheldon config file.
 
 ```toml
 [plugins.zsh-autosuggestions]
@@ -52,7 +52,7 @@ sheldon add zsh-autosuggestions --github zsh-users/zsh-autosuggestions --use '{{
 
 ### [autojump](https://github.com/wting/autojump)
 
-Add the following to the **sheldon** config file.
+Add the following to the Sheldon config file.
 
 ```toml
 [plugins.autojump]
@@ -69,7 +69,7 @@ sheldon add autojump --github wting/autojump --dir bin --apply PATH source
 
 ### [syntax-highlighting](https://github.com/zsh-users/zsh-syntax-highlighting)
 
-Add the following to the **sheldon** config file.
+Add the following to the Sheldon config file.
 
 ```toml
 [plugins.zsh-syntax-highlighting]
@@ -84,7 +84,7 @@ sheldon add zsh-syntax-highlighting --github zsh-users/zsh-syntax-highlighting
 
 ### [blackbox](https://github.com/StackExchange/blackbox)
 
-Add the following to the **sheldon** config file.
+Add the following to the Sheldon config file.
 
 ```toml
 [plugins.blackbox]
@@ -99,7 +99,7 @@ sheldon add blackbox --github StackExchange/blackbox
 
 ### [z.lua](https://github.com/skywind3000/z.lua)
 
-Add the following to the **sheldon** config file.
+Add the following to the Sheldon config file.
 
 ```toml
 [plugins."z.lua"]
@@ -114,7 +114,7 @@ sheldon add z.lua --github skywind3000/z.lua
 
 ### [enhancd](https://github.com/b4b4r07/enhancd)
 
-Add the following to the **sheldon** config file.
+Add the following to the Sheldon config file.
 
 ```toml
 [plugins.enhancd]
@@ -129,7 +129,7 @@ sheldon add enhancd --github b4b4r07/enhancd
 
 ### [base16](https://github.com/chriskempson/base16-shell)
 
-Add the following to the **sheldon** config file.
+Add the following to the Sheldon config file.
 
 ```toml
 [plugins.base16]
@@ -146,7 +146,7 @@ sheldon add base16 --github chriskempson/base16-shell
 
 ### [powerlevel10k](https://github.com/romkatv/powerlevel10k)
 
-Add the following to the **sheldon** config file.
+Add the following to the Sheldon config file.
 
 ```toml
 [plugins.powerlevel10k]
@@ -161,7 +161,7 @@ sheldon add powerlevel10k --github romkatv/powerlevel10k
 
 ### [spaceship](https://github.com/denysdovhan/spaceship-prompt)
 
-Add the following to the **sheldon** config file.
+Add the following to the Sheldon config file.
 
 ```toml
 [plugins.spaceship]
@@ -176,7 +176,7 @@ sheldon add spaceship --github denysdovhan/spaceship-prompt
 
 ### [pure](https://github.com/sindresorhus/pure)
 
-Add the following to the **sheldon** config file.
+Add the following to the Sheldon config file.
 
 ```toml
 [plugins.pure]

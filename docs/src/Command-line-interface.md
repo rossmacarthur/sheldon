@@ -1,10 +1,19 @@
 # Command line interface
 
-## `lock` command
+Sheldon has three different types of commands.
 
-The `lock` command installs the plugins sources and generates the lock file.
-Rerunning this command will not reinstall plugin sources, just verify that they
-are correctly installed. It will always regenerate the lock file.
+- [`init`](#init) initializes a new config file.
+- [`lock`](#lock) and [`source`](#source) deal with plugin downloading,
+  installation, and generation of shell source code.
+- [`add`](#add), [`edit`](#edit), and [`remove`](#remove) automate editing of
+  the config file.
+
+## `lock`
+
+The `lock` command installs the plugins sources and generates the lock file
+(`~/.sheldon/plugins.lock`). Rerunning this command will not reinstall plugin
+sources, just verify that they are correctly installed. It will always
+regenerate the lock file.
 
 ```sh
 sheldon lock
@@ -22,7 +31,7 @@ To force a reinstall of all plugin sources you can use the `--reinstall` flag.
 sheldon lock --reinstall
 ```
 
-## `source` command
+## `source`
 
 This command generates the shell script. This command will first check if there
 is an up to date lock file, if not, then it will first do the equivalent of the
@@ -33,12 +42,11 @@ lock command above. This command is usually used with the built-in shell
 source <(sheldon source)
 ```
 
-If we now modify our config file and run this command again it will relock the
-configuration prior to generating the script. The output of this command is
-highly configurable. You can define your own [custom
-templates](#configuration-templates) to apply to your plugins.
+But you can also run it directly to inspect the output. The output of this
+command is highly configurable. You can define your own custom templates to
+apply to your plugins.
 
-## `init` command
+## `init`
 
 This command initializes a new config file. If a config file exists then this
 command does nothing.
@@ -55,7 +63,7 @@ Or you can specify the shell.
 sheldon init --shell bash
 ```
 
-## `add` command
+## `add`
 
 This command adds a new plugin to the config file. It does nothing else but edit
 the config file. In the following command we add a GitHub repository as a
@@ -68,7 +76,7 @@ sheldon add my-repo --git https://github.com/owner/repo.git
 An example usage of this command for each source type is shown in the
 [Configuration: plugin sources](#configuration-plugin-sources) section.
 
-## `edit` command
+## `edit`
 
 This command will open the config file in the default editor and only overwrite
 the contents if the updated config file is valid. To override the editor that is
@@ -86,7 +94,7 @@ Or with Visual Studio Code
 EDITOR="code --wait" sheldon edit
 ```
 
-## `remove` command
+## `remove`
 
 This command removes a plugin from the config file. It does nothing else but
 edit the config file. In the following command we remove the plugin with name
@@ -98,7 +106,7 @@ sheldon remove my-repo
 
 ## Flags
 
-**sheldon** accepts the following global command line flags.
+Sheldon accepts the following global command line flags.
 
 | Flag              | Description                       |
 | ----------------- | --------------------------------- |
@@ -110,7 +118,7 @@ sheldon remove my-repo
 
 ## Options
 
-**sheldon** accepts the following global command line options.
+Sheldon accepts the following global command line options.
 
 | Option                  | Environment variable   | Description                                                 |
 | ----------------------- | ---------------------- | ----------------------------------------------------------- |

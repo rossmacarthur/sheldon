@@ -54,12 +54,12 @@
   - [Adding a plugin](#adding-a-plugin)
   - [Loading plugins](#loading-plugins)
 - [Command line interface](#command-line-interface)
-  - [`lock` command](#lock-command)
-  - [`source` command](#source-command)
-  - [`init` command](#init-command)
-  - [`add` command](#add-command)
-  - [`edit` command](#edit-command)
-  - [`remove` command](#remove-command)
+  - [`lock`](#lock)
+  - [`source`](#source)
+  - [`init`](#init)
+  - [`add`](#add)
+  - [`edit`](#edit)
+  - [`remove`](#remove)
   - [Flags](#flags)
   - [Options](#options)
 - [Configuration: Plugin sources](#configuration-plugin-sources)
@@ -107,8 +107,8 @@
 
 Pre-built binaries for Linux (x86-64, aarch64, armv7) and macOS (x86-64) are
 provided. The following script can be used to automatically detect your host
-system, download the required artefact, and extract the **sheldon** binary to
-the given directory.
+system, download the required artefact, and extract the `sheldon` binary to the
+given directory.
 
 ```sh
 curl --proto '=https' -fLsS https://rossmacarthur.github.io/install/crate.sh \
@@ -120,7 +120,7 @@ page](https://github.com/rossmacarthur/sheldon/releases).
 
 ### Homebrew
 
-**sheldon** can be installed using Homebrew.
+Sheldon can be installed using Homebrew.
 
 ```sh
 brew install sheldon
@@ -128,7 +128,7 @@ brew install sheldon
 
 ### Cargo
 
-**sheldon** can be installed from [Crates.io](https://crates.io/crates/sheldon)
+Sheldon can be installed from [Crates.io](https://crates.io/crates/sheldon)
 using [Cargo](https://doc.rust-lang.org/cargo/), the Rust package manager.
 
 ```sh
@@ -137,9 +137,9 @@ cargo install sheldon
 
 ### Building from source
 
-**sheldon** is written in Rust, so to install it from source you will first need
-to install Rust and Cargo using [rustup](https://rustup.rs/). Then you can run
-the following to build **sheldon**.
+Sheldon is written in Rust, so to install it from source you will first need to
+install Rust and Cargo using [rustup](https://rustup.rs/). Then you can run the
+following to build Sheldon.
 
 ```sh
 git clone https://github.com/rossmacarthur/sheldon.git
@@ -153,7 +153,7 @@ The binary will be found at `target/release/sheldon`.
 
 ### Initializing
 
-**sheldon** works by specifying plugin information in a [TOML](https://toml.io)
+Sheldon works by specifying plugin information in a [TOML](https://toml.io)
 configuration file. You can initialize this file by running `sheldon init`.
 
 ```sh
@@ -172,7 +172,7 @@ interface to add or remove plugins.
 
 ### Adding a plugin
 
-To add your first plugin add the following to the **sheldon** config file.
+To add your first plugin add the following to the Sheldon config file.
 
 ```toml
 # ~/.sheldon/plugins.toml
@@ -181,14 +181,14 @@ To add your first plugin add the following to the **sheldon** config file.
 github = "chriskempson/base16-shell"
 ```
 
-Or use `sheldon add` to automatically add it.
+Or use the `add` command to automatically add it.
 
 ```sh
 sheldon add base16 --github chriskempson/base16-shell
 ```
 
 The first argument given here `base16` is a unique name for the plugin. The
-`--github` option specifies that we want **sheldon** to manage a clone of the
+`--github` option specifies that we want Sheldon to manage a clone of the
 [https://github.com/chriskempson/base16-shell](https://github.com/chriskempson/base16-shell)
 repository.
 
@@ -206,11 +206,20 @@ source <(sheldon source)
 
 ## Command line interface
 
-### `lock` command
+Sheldon has three different types of commands.
 
-The `lock` command installs the plugins sources and generates the lock file.
-Rerunning this command will not reinstall plugin sources, just verify that they
-are correctly installed. It will always regenerate the lock file.
+* [`init`](#init) initializes a new config file.
+* [`lock`](#lock) and [`source`](#source) deal with plugin downloading,
+  installation, and generation of shell source code.
+* [`add`](#add), [`edit`](#edit), and [`remove`](#remove) automate editing of
+  the config file.
+
+### `lock`
+
+The `lock` command installs the plugins sources and generates the lock file
+(`~/.sheldon/plugins.lock`). Rerunning this command will not reinstall plugin
+sources, just verify that they are correctly installed. It will always
+regenerate the lock file.
 
 ```sh
 sheldon lock
@@ -228,7 +237,7 @@ To force a reinstall of all plugin sources you can use the `--reinstall` flag.
 sheldon lock --reinstall
 ```
 
-### `source` command
+### `source`
 
 This command generates the shell script. This command will first check if there
 is an up to date lock file, if not, then it will first do the equivalent of the
@@ -239,12 +248,11 @@ lock command above. This command is usually used with the built-in shell
 source <(sheldon source)
 ```
 
-If we now modify our config file and run this command again it will relock the
-configuration prior to generating the script. The output of this command is
-highly configurable. You can define your own [custom
-templates](#configuration-templates) to apply to your plugins.
+But you can also run it directly to inspect the output. The output of this
+command is highly configurable. You can define your own custom templates to
+apply to your plugins.
 
-### `init` command
+### `init`
 
 This command initializes a new config file. If a config file exists then this
 command does nothing.
@@ -261,7 +269,7 @@ Or you can specify the shell.
 sheldon init --shell bash
 ```
 
-### `add` command
+### `add`
 
 This command adds a new plugin to the config file. It does nothing else but edit
 the config file. In the following command we add a GitHub repository as a
@@ -274,7 +282,7 @@ sheldon add my-repo --git https://github.com/owner/repo.git
 An example usage of this command for each source type is shown in the
 [Configuration: plugin sources](#configuration-plugin-sources) section.
 
-### `edit` command
+### `edit`
 
 This command will open the config file in the default editor and only overwrite
 the contents if the updated config file is valid. To override the editor that is
@@ -292,7 +300,7 @@ Or with Visual Studio Code
 EDITOR="code --wait" sheldon edit
 ```
 
-### `remove` command
+### `remove`
 
 This command removes a plugin from the config file. It does nothing else but
 edit the config file. In the following command we remove the plugin with name
@@ -304,7 +312,7 @@ sheldon remove my-repo
 
 ### Flags
 
-**sheldon** accepts the following global command line flags.
+Sheldon accepts the following global command line flags.
 
 |Flag|Description|
 |----|-----------|
@@ -316,7 +324,7 @@ sheldon remove my-repo
 
 ### Options
 
-**sheldon** accepts the following global command line options.
+Sheldon accepts the following global command line options.
 
 |Option|Environment variable|Description|
 |------|--------------------|-----------|
@@ -337,7 +345,7 @@ The priority order for setting these values is the following
 
 A plugin is defined by adding a new unique name to the `plugins` table in the
 [TOML](https://toml.io) config file. This can be done by either editing the file
-directly or using the provided **sheldon** commands. A plugin must provide the
+directly or using the provided Sheldon commands. A plugin must provide the
 location of the source. There are three types of sources, each kind is described
 in this section. A plugin may only specify *one* source type.
 
@@ -355,21 +363,21 @@ github = "chriskempson/base16-shell"
 
 ### Git
 
-Git sources specify a remote Git repository that will be cloned to the
-**sheldon** root directory. There are three flavors of Git sources.
+Git sources specify a remote Git repository that will be cloned to the Sheldon
+root directory. There are three flavors of Git sources.
 
 #### `github`
 
 A GitHub source must set the `github` field and specify the repository. This
 should be the username or organization and the repository name separated by a
-forward slash. Add the following to the **sheldon** config file.
+forward slash. Add the following to the Sheldon config file.
 
 ```toml
 [plugins.example]
 github = "owner/repo"
 ```
 
-Or run **sheldon add** with the `--github` option.
+Or run `add` with the `--github` option.
 
 ```sh
 sheldon add example --github owner/repo
@@ -378,15 +386,15 @@ sheldon add example --github owner/repo
 #### `gist`
 
 A Gist source must set the `gist` field and specify the repository. This should
-be the hash or username and hash of the Gist. Add the following to the
-**sheldon** config file.
+be the hash or username and hash of the Gist. Add the following to the Sheldon
+config file.
 
 ```toml
 [plugins.example]
 gist = "579d02802b1cc17baed07753d09f5009"
 ```
 
-Or run **sheldon add** with the `--gist` option.
+Or run `add` with the `--gist` option.
 
 ```sh
 sheldon add example --gist 579d02802b1cc17baed07753d09f5009
@@ -395,14 +403,14 @@ sheldon add example --gist 579d02802b1cc17baed07753d09f5009
 #### `git`
 
 A Git source must set the `git` field and specify the URL to clone. Add the
-following to the **sheldon** config file.
+following to the Sheldon config file.
 
 ```toml
 [plugins.example]
 git = "https://github.com/owner/repo"
 ```
 
-Or run **sheldon add** with the `--git` option.
+Or run `add` with the `--git` option.
 
 ```sh
 sheldon add example --git https://github.com/owner/repo
@@ -411,7 +419,7 @@ sheldon add example --git https://github.com/owner/repo
 #### Specifying a branch, tag, or commit
 
 All Git sources also allow setting of one of the `branch`, `tag` or `rev`
-fields. **sheldon** will then checkout the repository at this reference.
+fields. Sheldon will then checkout the repository at this reference.
 
 ```toml
 [plugins.example]
@@ -419,8 +427,7 @@ github = "owner/repo"
 tag = "v0.1.0"
 ```
 
-Or run **sheldon add** with the `--tag`, `--branch`, or `--rev` option when
-adding the plugin.
+Or run `add` with the `--tag`, `--branch`, or `--rev` option.
 
 ```sh
 sheldon add example --github owner/repo --tag v0.1.0
@@ -448,23 +455,23 @@ git = "ssh://git@github.com/owner/repo"
 
 #### Private Git repositories
 
-Currently **sheldon** only supports authentication when cloning using SSH and
-only with authentication via the SSH agent. This means if you have a plugin
+Currently Sheldon only supports authentication when cloning using SSH and
+requires an SSH agent to provide credentials. This means if you have a plugin
 source that is a private repository you will have to use the SSH protocol for
 cloning.
 
 ### Remote
 
-Remote sources specify a remote file that will be downloaded by **sheldon**. A
-Remote source must set the  `remote` field and specify the URL. Add the
-following to the **sheldon** config file.
+Remote sources specify a remote file that will be downloaded by Sheldon. A
+remote source must set the `remote` field and specify the URL. Add the following
+to the Sheldon config file.
 
 ```toml
 [plugins.example]
 remote = "https://github.com/owner/repo/raw/master/plugin.zsh"
 ```
 
-Or run **sheldon add** with the `--remote` option.
+Or run `add` with the `--remote` option.
 
 ```sh
 sheldon add example --remote https://github.com/owner/repo/raw/master/plugin.zsh
@@ -472,16 +479,16 @@ sheldon add example --remote https://github.com/owner/repo/raw/master/plugin.zsh
 
 ### Local
 
-Local sources reference local directories. A Local source must set the `local`
+Local sources reference local directories. A local source must set the `local`
 field and specify a directory. Tildes may be used and will be expanded to the
-current user's home directory. Add the following to the **sheldon** config file.
+current user's home directory. Add the following to the Sheldon config file.
 
 ```toml
 [plugins.example]
 local = "~/Downloads/plugin"
 ```
 
-Or run **sheldon add** with the `--local` option.
+Or run `add` with the `--local` option.
 
 ```sh
 sheldon add example --local '~/Downloads/plugin'
@@ -495,8 +502,7 @@ These are options that are common to all the above plugins.
 
 A list of files / globs to use in the plugin's source directory. If this field
 is not given then the first pattern in the global [`match`](#match) field that
-matches any files will be used. Add the following to the **sheldon** config
-file.
+matches any files will be used. Add the following to the Sheldon config file.
 
 ```toml
 [plugins.example]
@@ -504,7 +510,7 @@ github = "owner/repo"
 use = ["*.zsh"]
 ```
 
-Or run **sheldon add** with the `--use` option when adding the plugin.
+Or run `add` with the `--use` option when adding the plugin.
 
 ```sh
 sheldon add example --github owner/repo --use '*.zsh'
@@ -521,7 +527,7 @@ github = "owner/repo"
 apply = ["source", "PATH"]
 ```
 
-Or run **sheldon add** with the `--apply` option when adding the plugin.
+Or run `add` with the `--apply` option when adding the plugin.
 
 ```sh
 sheldon add example --github owner/repo --apply source PATH
@@ -552,8 +558,8 @@ Available built in templates are
 * **source**: source each file in a plugin.
 * **PATH**: add the plugin directory to the `PATH` variable.
 * **path**: add the plugin directory to the `path` variable.
-* **fpath**: add the plugin directory to the `fpath` variable.
-  As template strings they could be represented like this
+* **fpath**: add the plugin directory to the `fpath` variable. As template
+  strings they could be represented like this
 
 ```toml
 [templates]
@@ -594,8 +600,8 @@ Plugins all have the following information that can be used in templates
 
 * **Zero or more files.** These are the matched files in the plugin directory
   either discovered using the the global `match` field or specified as a plugin
-  option with `use`. These can be used in templates using `{{ file }}`.
-  You can use the following global information in templates
+  option with `use`. These can be used in templates using `{{ file }}`. You can
+  use the following global information in templates
 
 * **The sheldon root.** This folder can be used as `{{ root }}`.
 
@@ -643,7 +649,7 @@ apply = ["source", "PATH"]
 
 ### `shell`
 
-Indicates the shell that you are using **sheldon** with. If this field is set to
+Indicates the shell that you are using Sheldon with. If this field is set to
 `bash` the global [`match`](#match) default configuration will use Bash relevant
 defaults. If you are using Zsh you don't need to set this value but you may set
 it to `zsh`. For example
@@ -704,7 +710,7 @@ plugins and themes.
 
 #### [ohmyzsh](https://github.com/ohmyzsh/ohmyzsh)
 
-Add the following to the **sheldon** config file.
+Add the following to the Sheldon config file.
 
 ```toml
 [plugins.oh-my-zsh]
@@ -733,7 +739,7 @@ source <(sheldon source)
 
 #### [autosuggestions](https://github.com/zsh-users/zsh-autosuggestions)
 
-Add the following to the **sheldon** config file.
+Add the following to the Sheldon config file.
 
 ```toml
 [plugins.zsh-autosuggestions]
@@ -749,7 +755,7 @@ sheldon add zsh-autosuggestions --github zsh-users/zsh-autosuggestions --use '{{
 
 #### [autojump](https://github.com/wting/autojump)
 
-Add the following to the **sheldon** config file.
+Add the following to the Sheldon config file.
 
 ```toml
 [plugins.autojump]
@@ -766,7 +772,7 @@ sheldon add autojump --github wting/autojump --dir bin --apply PATH source
 
 #### [syntax-highlighting](https://github.com/zsh-users/zsh-syntax-highlighting)
 
-Add the following to the **sheldon** config file.
+Add the following to the Sheldon config file.
 
 ```toml
 [plugins.zsh-syntax-highlighting]
@@ -781,7 +787,7 @@ sheldon add zsh-syntax-highlighting --github zsh-users/zsh-syntax-highlighting
 
 #### [blackbox](https://github.com/StackExchange/blackbox)
 
-Add the following to the **sheldon** config file.
+Add the following to the Sheldon config file.
 
 ```toml
 [plugins.blackbox]
@@ -796,7 +802,7 @@ sheldon add blackbox --github StackExchange/blackbox
 
 #### [z.lua](https://github.com/skywind3000/z.lua)
 
-Add the following to the **sheldon** config file.
+Add the following to the Sheldon config file.
 
 ```toml
 [plugins."z.lua"]
@@ -811,7 +817,7 @@ sheldon add z.lua --github skywind3000/z.lua
 
 #### [enhancd](https://github.com/b4b4r07/enhancd)
 
-Add the following to the **sheldon** config file.
+Add the following to the Sheldon config file.
 
 ```toml
 [plugins.enhancd]
@@ -826,7 +832,7 @@ sheldon add enhancd --github b4b4r07/enhancd
 
 #### [base16](https://github.com/chriskempson/base16-shell)
 
-Add the following to the **sheldon** config file.
+Add the following to the Sheldon config file.
 
 ```toml
 [plugins.base16]
@@ -843,7 +849,7 @@ sheldon add base16 --github chriskempson/base16-shell
 
 #### [powerlevel10k](https://github.com/romkatv/powerlevel10k)
 
-Add the following to the **sheldon** config file.
+Add the following to the Sheldon config file.
 
 ```toml
 [plugins.powerlevel10k]
@@ -858,7 +864,7 @@ sheldon add powerlevel10k --github romkatv/powerlevel10k
 
 #### [spaceship](https://github.com/denysdovhan/spaceship-prompt)
 
-Add the following to the **sheldon** config file.
+Add the following to the Sheldon config file.
 
 ```toml
 [plugins.spaceship]
@@ -873,7 +879,7 @@ sheldon add spaceship --github denysdovhan/spaceship-prompt
 
 #### [pure](https://github.com/sindresorhus/pure)
 
-Add the following to the **sheldon** config file.
+Add the following to the Sheldon config file.
 
 ```toml
 [plugins.pure]

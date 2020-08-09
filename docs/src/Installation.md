@@ -4,8 +4,8 @@
 
 Pre-built binaries for Linux (x86-64, aarch64, armv7) and macOS (x86-64) are
 provided. The following script can be used to automatically detect your host
-system, download the required artefact, and extract the **sheldon** binary to
-the given directory.
+system, download the required artefact, and extract the `sheldon` binary to the
+given directory.
 
 ```sh
 curl --proto '=https' -fLsS https://rossmacarthur.github.io/install/crate.sh \
@@ -17,7 +17,7 @@ page](https://github.com/rossmacarthur/sheldon/releases).
 
 ## Homebrew
 
-**sheldon** can be installed using Homebrew.
+Sheldon can be installed using Homebrew.
 
 ```sh
 brew install sheldon
@@ -25,7 +25,7 @@ brew install sheldon
 
 ## Cargo
 
-**sheldon** can be installed from [Crates.io](https://crates.io/crates/sheldon)
+Sheldon can be installed from [Crates.io](https://crates.io/crates/sheldon)
 using [Cargo](https://doc.rust-lang.org/cargo/), the Rust package manager.
 
 ```sh
@@ -34,9 +34,9 @@ cargo install sheldon
 
 ## Building from source
 
-**sheldon** is written in Rust, so to install it from source you will first need
-to install Rust and Cargo using [rustup](https://rustup.rs/). Then you can run
-the following to build **sheldon**.
+Sheldon is written in Rust, so to install it from source you will first need to
+install Rust and Cargo using [rustup](https://rustup.rs/). Then you can run the
+following to build Sheldon.
 
 ```sh
 git clone https://github.com/rossmacarthur/sheldon.git

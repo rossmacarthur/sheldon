@@ -2,7 +2,7 @@
 
 ## Initializing
 
-**sheldon** works by specifying plugin information in a [TOML](https://toml.io)
+Sheldon works by specifying plugin information in a [TOML](https://toml.io)
 configuration file. You can initialize this file by running `sheldon init`.
 
 ```sh
@@ -21,7 +21,7 @@ interface to add or remove plugins.
 
 ## Adding a plugin
 
-To add your first plugin add the following to the **sheldon** config file.
+To add your first plugin add the following to the Sheldon config file.
 
 ```toml
 # ~/.sheldon/plugins.toml
@@ -30,14 +30,14 @@ To add your first plugin add the following to the **sheldon** config file.
 github = "chriskempson/base16-shell"
 ```
 
-Or use `sheldon add` to automatically add it.
+Or use the `add` command to automatically add it.
 
 ```sh
 sheldon add base16 --github chriskempson/base16-shell
 ```
 
 The first argument given here `base16` is a unique name for the plugin. The
-`--github` option specifies that we want **sheldon** to manage a clone of the
+`--github` option specifies that we want Sheldon to manage a clone of the
 [https://github.com/chriskempson/base16-shell](https://github.com/chriskempson/base16-shell)
 repository.
 
