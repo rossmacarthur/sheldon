@@ -290,15 +290,14 @@ impl Source {
     fn lock_local(ctx: &Context, dir: PathBuf) -> Result<LockedSource> {
         let dir = ctx.expand_tilde(dir);
 
-        if let Ok(glob) = glob::glob(&dir.to_string_lossy()) {
-            let mut directories: Vec<_> = glob
-                .filter_map(|result| {
-                    if let Ok(dir) = result {
-                        if dir.is_dir() {
-                            return Some(dir);
-                        }
-                    }
-                    None
+        if dir.exists() && dir.is_dir() {
+            status!(ctx, "Checked", dir.as_path());
+            Ok(LockedSource { dir, file: None })
+        } else if let Ok(walker) = globwalk::glob(dir.to_string_lossy()) {
+            let mut directories: Vec<_> = walker
+                .filter_map(|result| match result {
+                    Ok(entry) if entry.path().is_dir() => Some(entry.into_path()),
+                    _ => None,
                 })
                 .collect();
 
@@ -313,12 +312,6 @@ impl Source {
                     directories.len()
                 ))
             }
-        } else if fs::metadata(&dir)
-            .with_context(s!("failed to find dir `{}`", dir.display()))?
-            .is_dir()
-        {
-            status!(ctx, "Checked", dir.as_path());
-            Ok(LockedSource { dir, file: None })
         } else {
             Err(anyhow!("`{}` is not a dir", dir.display()))
         }
@@ -360,19 +353,20 @@ impl Source {
 }
 
 impl ExternalPlugin {
-    fn match_globs(pattern: PathBuf, files: &mut Vec<PathBuf>) -> Result<bool> {
+    fn match_globs(dir: &Path, pattern: &str, files: &mut Vec<PathBuf>) -> Result<bool> {
         let mut matched = false;
-        let pattern = pattern.to_string_lossy();
-        let paths: glob::Paths =
-            glob::glob(&pattern).with_context(s!("failed to parse glob pattern `{}`", &pattern))?;
-
-        for path in paths {
+        for entry in globwalk::GlobWalkerBuilder::new(dir, &pattern)
+            .sort_by(|a, b| a.file_name().cmp(b.file_name()))
+            .build()
+            .with_context(s!("failed to parse glob pattern `{}`", pattern))?
+        {
             files.push(
-                path.with_context(s!("failed to read path matched by pattern `{}`", &pattern))?,
+                entry
+                    .with_context(s!("failed to read path matched by pattern `{}`", &pattern))?
+                    .into_path(),
             );
             matched = true;
         }
-
         Ok(matched)
     }
 
@@ -428,22 +422,20 @@ impl ExternalPlugin {
             // If the plugin defined what files to use, we do all of them.
             if let Some(uses) = &self.uses {
                 for u in uses {
-                    let rendered = templates
+                    let pattern = templates
                         .render_template(u, &data)
                         .with_context(s!("failed to render template `{}`", u))?;
-                    let pattern = dir.join(&rendered);
-                    if !Self::match_globs(pattern, &mut files)? {
-                        bail!("failed to find any files matching `{}`", &rendered);
+                    if !Self::match_globs(dir, &pattern, &mut files)? {
+                        bail!("failed to find any files matching `{}`", &pattern);
                     };
                 }
             // Otherwise we try to figure out which files to use...
             } else {
                 for g in matches {
-                    let rendered = templates
+                    let pattern = templates
                         .render_template(g, &data)
                         .with_context(s!("failed to render template `{}`", g))?;
-                    let pattern = dir.join(rendered);
-                    if Self::match_globs(pattern, &mut files)? {
+                    if Self::match_globs(dir, &pattern, &mut files)? {
                         break;
                     }
                 }
