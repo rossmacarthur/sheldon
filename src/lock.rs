@@ -3,7 +3,7 @@
 //! This module handles the downloading of `Source`s and figuring out which
 //! files to use for `Plugins`.
 
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use std::fmt;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -374,23 +374,34 @@ impl ExternalPlugin {
     fn lock(
         self,
         ctx: &Context,
-        source: LockedSource,
-        matches: &[String],
-        apply: &[String],
+        templates: &IndexMap<String, Template>,
+        locked_source: LockedSource,
+        global_matches: &[String],
+        global_apply: &[String],
     ) -> Result<LockedExternalPlugin> {
-        Ok(if let Source::Remote { .. } = self.source {
-            let LockedSource { dir, file } = source;
+        let Self {
+            name,
+            source,
+            dir,
+            uses,
+            apply,
+        } = self;
+
+        let apply = apply.unwrap_or_else(|| global_apply.to_vec());
+
+        Ok(if let Source::Remote { .. } = source {
+            let LockedSource { dir, file } = locked_source;
             LockedExternalPlugin {
-                name: self.name,
+                name,
                 source_dir: dir,
                 plugin_dir: None,
                 files: vec![file.unwrap()],
-                apply: self.apply.unwrap_or_else(|| apply.to_vec()),
+                apply,
             }
         } else {
             // Handlebars instance to do the rendering
-            let mut templates = handlebars::Handlebars::new();
-            templates.set_strict_mode(true);
+            let mut hbs = handlebars::Handlebars::new();
+            hbs.set_strict_mode(true);
 
             // Data to use in template rendering
             let mut data = hashmap! {
@@ -398,12 +409,12 @@ impl ExternalPlugin {
                     .root()
                     .to_str()
                     .context("root directory is not valid UTF-8")?,
-                "name" => &self.name
+                "name" => &name
             };
 
-            let source_dir = source.dir;
-            let plugin_dir = if let Some(dir) = self.dir {
-                let rendered = templates
+            let source_dir = locked_source.dir;
+            let plugin_dir = if let Some(dir) = dir {
+                let rendered = hbs
                     .render_template(&dir, &data)
                     .with_context(s!("failed to render template `{}`", dir))?;
                 Some(source_dir.join(rendered))
@@ -420,9 +431,9 @@ impl ExternalPlugin {
             let mut files = Vec::new();
 
             // If the plugin defined what files to use, we do all of them.
-            if let Some(uses) = &self.uses {
+            if let Some(uses) = &uses {
                 for u in uses {
-                    let pattern = templates
+                    let pattern = hbs
                         .render_template(u, &data)
                         .with_context(s!("failed to render template `{}`", u))?;
                     if !Self::match_globs(dir, &pattern, &mut files)? {
@@ -431,22 +442,29 @@ impl ExternalPlugin {
                 }
             // Otherwise we try to figure out which files to use...
             } else {
-                for g in matches {
-                    let pattern = templates
+                for g in global_matches {
+                    let pattern = hbs
                         .render_template(g, &data)
                         .with_context(s!("failed to render template `{}`", g))?;
                     if Self::match_globs(dir, &pattern, &mut files)? {
                         break;
                     }
                 }
+                if files.is_empty()
+                    && templates
+                        .iter()
+                        .any(|(key, value)| apply.contains(key) && value.each)
+                {
+                    bail!("no files matched for `{}`", &name);
+                }
             }
 
             LockedExternalPlugin {
-                name: self.name,
+                name,
                 source_dir,
                 plugin_dir,
                 files,
-                apply: self.apply.unwrap_or_else(|| apply.to_vec()),
+                apply,
             }
         })
     }
@@ -459,17 +477,31 @@ impl Config {
     /// validates that local plugins are present, and checks that templates
     /// can compile.
     pub fn lock(self, ctx: &Context) -> Result<LockedConfig> {
-        let shell = self.shell;
+        let Self {
+            shell,
+            matches,
+            apply,
+            templates,
+            plugins,
+        } = self;
+
+        let templates = {
+            let mut map = DEFAULT_TEMPLATES.clone();
+            for (name, template) in templates {
+                map.insert(name, template);
+            }
+            map
+        };
 
         // Partition the plugins into external and inline plugins.
-        let (externals, inlines): (Vec<_>, Vec<_>) = self
-            .plugins
-            .into_iter()
-            .enumerate()
-            .partition_map(|(index, plugin)| match plugin {
-                Plugin::External(plugin) => Either::Left((index, plugin)),
-                Plugin::Inline(plugin) => Either::Right((index, LockedPlugin::Inline(plugin))),
-            });
+        let (externals, inlines): (Vec<_>, Vec<_>) =
+            plugins
+                .into_iter()
+                .enumerate()
+                .partition_map(|(index, plugin)| match plugin {
+                    Plugin::External(plugin) => Either::Left((index, plugin)),
+                    Plugin::Inline(plugin) => Either::Right((index, LockedPlugin::Inline(plugin))),
+                });
 
         // Create a map of unique `Source` to `Vec<Plugin>`
         let mut map = IndexMap::new();
@@ -479,11 +511,11 @@ impl Config {
                 .push((index, plugin));
         }
 
-        let matches = &self.matches.as_ref().unwrap_or_else(|| match shell {
+        let matches = &matches.as_ref().unwrap_or_else(|| match shell {
             Some(Shell::Bash) => &*DEFAULT_MATCHES_BASH,
             Some(Shell::Zsh) | None => &*DEFAULT_MATCHES_ZSH,
         });
-        let apply = &self.apply.as_ref().unwrap_or(&*DEFAULT_APPLY);
+        let apply = &apply.as_ref().unwrap_or(&*DEFAULT_APPLY);
         let count = map.len();
         let mut errors = Vec::new();
 
@@ -507,7 +539,7 @@ impl Config {
                         locked.push((
                             index,
                             plugin
-                                .lock(ctx, source.clone(), matches, apply)
+                                .lock(ctx, &templates, source.clone(), matches, apply)
                                 .with_context(s!("failed to install plugin `{}`", name)),
                         ));
                     }
@@ -551,7 +583,7 @@ impl Config {
 
         Ok(LockedConfig {
             settings: ctx.settings().clone(),
-            templates: self.templates,
+            templates,
             errors,
             plugins,
         })
@@ -685,20 +717,10 @@ impl LockedConfig {
 
     /// Generate the script.
     pub fn source(&self, ctx: &Context) -> Result<String> {
-        // Collaborate the default templates and the configured ones.
-        let mut templates_map: HashMap<&str, &Template> =
-            HashMap::with_capacity(DEFAULT_TEMPLATES.len() + self.templates.len());
-        for (name, template) in DEFAULT_TEMPLATES.iter() {
-            templates_map.insert(name, template);
-        }
-        for (name, template) in &self.templates {
-            templates_map.insert(name, template);
-        }
-
         // Compile the templates
         let mut templates = handlebars::Handlebars::new();
         templates.set_strict_mode(true);
-        for (name, template) in &templates_map {
+        for (name, template) in &self.templates {
             templates
                 .register_template_string(&name, &template.value)
                 .with_context(s!("failed to compile template `{}`", name))?;
@@ -727,7 +749,7 @@ impl LockedConfig {
                             "directory" => dir_as_str,
                         };
 
-                        if templates_map.get(name.as_str()).unwrap().each {
+                        if self.templates.get(name.as_str()).unwrap().each {
                             for file in &plugin.files {
                                 let as_str =
                                     file.to_str().context("plugin file is not valid UTF-8")?;
@@ -1126,7 +1148,13 @@ mod tests {
         let clone_dir = dir.join("repos/github.com/rossmacarthur/sheldon-test");
 
         let locked = plugin
-            .lock(&ctx, locked_source, &[], &["hello".into()])
+            .lock(
+                &ctx,
+                &DEFAULT_TEMPLATES.clone(),
+                locked_source,
+                &[],
+                &["hello".into()],
+            )
             .unwrap();
 
         assert_eq!(locked.name, String::from("test"));
@@ -1162,6 +1190,7 @@ mod tests {
         let locked = plugin
             .lock(
                 &ctx,
+                &DEFAULT_TEMPLATES.clone(),
                 locked_source,
                 &["*.plugin.zsh".to_string()],
                 &["hello".to_string()],
@@ -1172,6 +1201,68 @@ mod tests {
         assert_eq!(locked.dir(), clone_dir);
         assert_eq!(locked.files, vec![clone_dir.join("test.plugin.zsh")]);
         assert_eq!(locked.apply, vec![String::from("hello")]);
+    }
+
+    #[test]
+    fn external_plugin_lock_git_with_matches_error() {
+        let temp = tempfile::tempdir().expect("create temporary directory");
+        let dir = temp.path();
+        let ctx = create_test_context(dir);
+        let plugin = ExternalPlugin {
+            name: "test".to_string(),
+            source: Source::Git {
+                url: Url::parse("https://github.com/rossmacarthur/sheldon-test").unwrap(),
+                reference: Some(GitReference::Tag("v0.1.0".to_string())),
+            },
+            dir: None,
+            uses: None,
+            apply: None,
+        };
+        let locked_source = plugin.source.clone().lock(&ctx).unwrap();
+
+        plugin
+            .lock(
+                &ctx,
+                &DEFAULT_TEMPLATES.clone(),
+                locked_source,
+                &["*doesnotexist*".to_string()],
+                &["source".to_string()],
+            )
+            .unwrap_err();
+    }
+
+    #[test]
+    fn external_plugin_lock_git_with_matches_not_each() {
+        let temp = tempfile::tempdir().expect("create temporary directory");
+        let dir = temp.path();
+        let ctx = create_test_context(dir);
+        let plugin = ExternalPlugin {
+            name: "test".to_string(),
+            source: Source::Git {
+                url: Url::parse("https://github.com/rossmacarthur/sheldon-test").unwrap(),
+                reference: Some(GitReference::Tag("v0.1.0".to_string())),
+            },
+            dir: None,
+            uses: None,
+            apply: None,
+        };
+        let locked_source = plugin.source.clone().lock(&ctx).unwrap();
+        let clone_dir = dir.join("repos/github.com/rossmacarthur/sheldon-test");
+
+        let locked = plugin
+            .lock(
+                &ctx,
+                &DEFAULT_TEMPLATES.clone(),
+                locked_source,
+                &["*doesnotexist*".to_string()],
+                &["PATH".to_string()],
+            )
+            .unwrap();
+
+        assert_eq!(locked.name, String::from("test"));
+        assert_eq!(locked.dir(), clone_dir);
+        assert!(locked.files.is_empty());
+        assert_eq!(locked.apply, vec![String::from("PATH")]);
     }
 
     #[test]
@@ -1195,7 +1286,13 @@ mod tests {
         let download_dir = dir.join("downloads/github.com/rossmacarthur/sheldon-test/raw/master");
 
         let locked = plugin
-            .lock(&ctx, locked_source, &[], &["hello".to_string()])
+            .lock(
+                &ctx,
+                &DEFAULT_TEMPLATES.clone(),
+                locked_source,
+                &[],
+                &["hello".to_string()],
+            )
             .unwrap();
 
         assert_eq!(locked.name, String::from("test"));
@@ -1221,7 +1318,7 @@ mod tests {
 
         assert_eq!(&locked.settings, ctx.settings());
         assert_eq!(locked.plugins, Vec::new());
-        assert_eq!(locked.templates, IndexMap::new());
+        assert_eq!(locked.templates, DEFAULT_TEMPLATES.clone());
         assert_eq!(locked.errors.len(), 0);
     }
 
