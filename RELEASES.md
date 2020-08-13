@@ -1,5 +1,30 @@
 # Releases
 
+## 0.5.4
+
+*Unreleased*
+
+### Features
+
+- [Support extended glob syntax.][a972c35] This means that `{a,b}` and `!`
+  glob patterns can now be used. For example, the following is now valid.
+
+  ```toml
+  [plugins.ohmyzsh]
+  github = "ohmyzsh/ohmyzsh"
+  dir = "lib"
+  use = ["{!git,!nvm,*}.zsh]
+  ```
+
+### Fixes
+
+- [Fix not erroring out when no files matched for plugin.][aa69e0c] This fixes
+  cases where no files would be matched for a plugin and Sheldon would silently
+  continue, resulting in no source rendered by `sheldon source`.
+
+[a972c35]: https://github.com/rossmacarthur/sheldon/commit/a972c3543d3c5ed339028ab316b1c48f733aed7
+[aa69e0c]: https://github.com/rossmacarthur/sheldon/commit/aa69e0c6c6ae56e98c9d19de3be191e9ce9a974b
+
 ## 0.5.3
 
 *July 28th, 2020*
