@@ -16,8 +16,6 @@ use regex::Regex;
 use serde::{self, de, Deserialize, Deserializer, Serialize, Serializer};
 use url::Url;
 
-use crate::lock::DEFAULT_TEMPLATES;
-
 /// The Gist domain host.
 const GIST_HOST: &str = "gist.github.com";
 
@@ -190,7 +188,7 @@ pub struct RawConfig {
 #[derive(Debug)]
 pub struct Config {
     /// What type of shell is being used.
-    pub shell: Option<Shell>,
+    pub shell: Shell,
     /// Which files to match and use in a plugin's directory.
     pub matches: Option<Vec<String>>,
     /// The default list of template names to apply to each matched file.
@@ -576,12 +574,13 @@ where
 
 /// Check whether the specifed templates actually exist.
 fn validate_template_names(
+    shell: &Shell,
     apply: &Option<Vec<String>>,
     templates: &IndexMap<String, Template>,
 ) -> Result<()> {
     if let Some(apply) = apply {
         for name in apply {
-            if !DEFAULT_TEMPLATES.contains_key(name) && !templates.contains_key(name) {
+            if !shell.default_templates().contains_key(name) && !templates.contains_key(name) {
                 bail!("unknown template `{}`", name);
             }
         }
@@ -628,6 +627,7 @@ impl RawPlugin {
     pub fn normalize(
         self,
         name: String,
+        shell: &Shell,
         templates: &IndexMap<String, Template>,
         warnings: &mut Vec<Error>,
     ) -> Result<Plugin> {
@@ -733,7 +733,7 @@ impl RawPlugin {
                     bail!("the `proto` field is not supported by this plugin type");
                 }
 
-                validate_template_names(&apply, templates)?;
+                validate_template_names(shell, &apply, templates)?;
 
                 Ok(Plugin::External(ExternalPlugin {
                     name,
@@ -815,7 +815,9 @@ impl RawConfig {
             }
         }
 
-        validate_template_names(&apply, &templates)?;
+        let shell = shell.unwrap_or_default();
+
+        validate_template_names(&shell, &apply, &templates)?;
 
         // Normalize the plugins.
         let mut normalized_plugins = Vec::with_capacity(plugins.len());
@@ -823,7 +825,7 @@ impl RawConfig {
         for (name, plugin) in plugins {
             normalized_plugins.push(
                 plugin
-                    .normalize(name.clone(), &templates, &mut warnings)
+                    .normalize(name.clone(), &shell, &templates, &mut warnings)
                     .with_context(s!("failed to normalize plugin `{}`", name))?,
             );
         }
@@ -1099,7 +1101,12 @@ mod tests {
                 let text = format!("{} = '{}'\n{} = '{}'", a, example_a, b, example_b);
                 let e = toml::from_str::<RawPlugin>(&text)
                     .unwrap()
-                    .normalize("test".to_string(), &IndexMap::new(), &mut Vec::new())
+                    .normalize(
+                        "test".to_string(),
+                        &Shell::default(),
+                        &IndexMap::new(),
+                        &mut Vec::new(),
+                    )
                     .unwrap_err();
                 assert_eq!(e.to_string(), "plugin `test` has multiple source fields")
             }
@@ -1126,7 +1133,7 @@ mod tests {
         };
         assert_eq!(
             raw_plugin
-                .normalize(name, &IndexMap::new(), &mut Vec::new())
+                .normalize(name, &Shell::default(), &IndexMap::new(), &mut Vec::new())
                 .unwrap(),
             expected
         );
@@ -1156,7 +1163,7 @@ mod tests {
         };
         assert_eq!(
             raw_plugin
-                .normalize(name, &IndexMap::new(), &mut Vec::new())
+                .normalize(name, &Shell::default(), &IndexMap::new(), &mut Vec::new())
                 .unwrap(),
             expected
         );
@@ -1182,7 +1189,7 @@ mod tests {
         };
         assert_eq!(
             raw_plugin
-                .normalize(name, &IndexMap::new(), &mut Vec::new())
+                .normalize(name, &Shell::default(), &IndexMap::new(), &mut Vec::new())
                 .unwrap(),
             expected
         );
@@ -1213,7 +1220,7 @@ mod tests {
         };
         assert_eq!(
             raw_plugin
-                .normalize(name, &IndexMap::new(), &mut Vec::new())
+                .normalize(name, &Shell::default(), &IndexMap::new(), &mut Vec::new())
                 .unwrap(),
             expected
         );
@@ -1242,7 +1249,7 @@ mod tests {
         };
         assert_eq!(
             raw_plugin
-                .normalize(name, &IndexMap::new(), &mut Vec::new())
+                .normalize(name, &Shell::default(), &IndexMap::new(), &mut Vec::new())
                 .unwrap(),
             expected
         );
@@ -1270,7 +1277,7 @@ mod tests {
         };
         assert_eq!(
             raw_plugin
-                .normalize(name, &IndexMap::new(), &mut Vec::new())
+                .normalize(name, &Shell::default(), &IndexMap::new(), &mut Vec::new())
                 .unwrap(),
             expected
         );
@@ -1299,7 +1306,7 @@ mod tests {
         };
         assert_eq!(
             raw_plugin
-                .normalize(name, &IndexMap::new(), &mut Vec::new())
+                .normalize(name, &Shell::default(), &IndexMap::new(), &mut Vec::new())
                 .unwrap(),
             expected
         );
@@ -1324,7 +1331,7 @@ mod tests {
         };
         assert_eq!(
             raw_plugin
-                .normalize(name, &IndexMap::new(), &mut Vec::new())
+                .normalize(name, &Shell::default(), &IndexMap::new(), &mut Vec::new())
                 .unwrap(),
             expected
         );
@@ -1343,7 +1350,12 @@ mod tests {
             ..Default::default()
         };
         let error = raw_plugin
-            .normalize("test".to_string(), &IndexMap::new(), &mut Vec::new())
+            .normalize(
+                "test".to_string(),
+                &Shell::default(),
+                &IndexMap::new(),
+                &mut Vec::new(),
+            )
             .unwrap_err();
         assert_eq!(
             error.to_string(),
@@ -1364,7 +1376,12 @@ mod tests {
             ..Default::default()
         };
         let error = raw_plugin
-            .normalize("test".to_string(), &IndexMap::new(), &mut Vec::new())
+            .normalize(
+                "test".to_string(),
+                &Shell::default(),
+                &IndexMap::new(),
+                &mut Vec::new(),
+            )
             .unwrap_err();
         assert_eq!(
             error.to_string(),
@@ -1390,7 +1407,7 @@ mod tests {
         };
         assert_eq!(
             raw_plugin
-                .normalize(name, &IndexMap::new(), &mut Vec::new())
+                .normalize(name, &Shell::default(), &IndexMap::new(), &mut Vec::new())
                 .unwrap(),
             expected
         );
@@ -1409,7 +1426,7 @@ mod tests {
         };
         assert_eq!(
             raw_plugin
-                .normalize(name, &IndexMap::new(), &mut Vec::new())
+                .normalize(name, &Shell::default(), &IndexMap::new(), &mut Vec::new())
                 .unwrap(),
             expected
         );
@@ -1423,7 +1440,12 @@ mod tests {
             ..Default::default()
         };
         let error = raw_plugin
-            .normalize("test".to_string(), &IndexMap::new(), &mut Vec::new())
+            .normalize(
+                "test".to_string(),
+                &Shell::default(),
+                &IndexMap::new(),
+                &mut Vec::new(),
+            )
             .unwrap_err();
         assert_eq!(
             error.to_string(),
@@ -1442,7 +1464,12 @@ mod tests {
             ..Default::default()
         };
         let error = raw_plugin
-            .normalize("test".to_string(), &IndexMap::new(), &mut Vec::new())
+            .normalize(
+                "test".to_string(),
+                &Shell::default(),
+                &IndexMap::new(),
+                &mut Vec::new(),
+            )
             .unwrap_err();
         assert_eq!(error.to_string(), "unknown template `test`");
     }

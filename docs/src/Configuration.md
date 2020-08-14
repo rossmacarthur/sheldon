@@ -212,13 +212,19 @@ For example the **PATH** template adds the plugin directory to the shell `PATH`
 variable. A template will be applied to a plugin if you add the template name to
 the [`apply`](#apply) field on a plugin.
 
-Available built in templates are
+Available built-in templates are different depending on what shell you are
+using. The following are available for both Bash and Zsh.
 
 * **source**: source each file in a plugin.
 * **PATH**: add the plugin directory to the `PATH` variable.
+
+If you are using Zsh then the following are also available.
+
 * **path**: add the plugin directory to the `path` variable.
-* **fpath**: add the plugin directory to the `fpath` variable. As template
-  strings they could be represented like this
+* **fpath**: add the plugin directory to the `fpath` variable.
+
+As template strings in the config file they could be represented like the
+following.
 
 ```toml
 [templates]
@@ -245,7 +251,7 @@ template should be applied to each matched file for the plugin. This defaults to
 ### Custom templates
 
 It is possible to create your own custom templates, and you can even override
-the built in ones.
+the built-in ones.
 
 Plugins all have the following information that can be used in templates
 
@@ -285,7 +291,7 @@ apply = ["function"]
 
 ### Example: overriding the PATH template
 
-The built in **PATH** template adds the directory path to the beginning of the
+The built-in **PATH** template adds the directory path to the beginning of the
 `PATH` variable, we might want to change it to the be added at the end. We could
 do this like this
 
@@ -308,13 +314,18 @@ apply = ["source", "PATH"]
 
 ### `shell`
 
-Indicates the shell that you are using Sheldon with. If this field is set to
-`bash` the global [`match`](#match) default configuration will use Bash relevant
-defaults. If you are using Zsh you don't need to set this value but you may set
-it to `zsh`. For example
+Indicates the shell that you are using. This setting will affect the default
+values for several global config settings. This includes the global
+[`match`](#match) setting and the available templates. This defaults to `zsh`.
 
 ```toml
 shell = "bash"
+```
+
+or
+
+```toml
+shell = "zsh"
 ```
 
 ### `match`
@@ -336,7 +347,7 @@ match = [
 ]
 ```
 
-If `shell = "bash"` then this defaults to
+If the shell is Bash then this defaults to
 
 ```toml
 match = [

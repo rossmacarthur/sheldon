@@ -26,43 +26,6 @@ use crate::context::{LockContext as Context, LockMode as Mode, Settings, Setting
 use crate::util::git;
 use crate::util::{self, TempPath};
 
-lazy_static! {
-    /// The default files to match on (for Bash).
-    pub static ref DEFAULT_MATCHES_BASH: Vec<String> = vec_into![
-        "{{ name }}.plugin.bash",
-        "{{ name }}.plugin.sh",
-        "{{ name }}.bash",
-        "{{ name }}.sh",
-        "*.plugin.bash",
-        "*.plugin.sh",
-        "*.bash",
-        "*.sh"
-    ];
-
-    /// The default files to match on (for Zsh).
-    pub static ref DEFAULT_MATCHES_ZSH: Vec<String> = vec_into![
-        "{{ name }}.plugin.zsh",
-        "{{ name }}.zsh",
-        "{{ name }}.sh",
-        "{{ name }}.zsh-theme",
-        "*.plugin.zsh",
-        "*.zsh",
-        "*.sh",
-        "*.zsh-theme"
-    ];
-
-    /// The default template names to apply.
-    pub static ref DEFAULT_APPLY: Vec<String> = vec_into!["source"];
-
-    /// The default templates.
-    pub static ref DEFAULT_TEMPLATES: IndexMap<String, Template> = indexmap_into! {
-        "PATH" => "export PATH=\"{{ dir }}:$PATH\"",
-        "path" => "path=( \"{{ dir }}\" $path )",
-        "fpath" => "fpath=( \"{{ dir }}\" $fpath )",
-        "source" => Template::from("source \"{{ file }}\"").each(true)
-    };
-}
-
 /////////////////////////////////////////////////////////////////////////
 // Locked configuration definitions
 /////////////////////////////////////////////////////////////////////////
@@ -132,6 +95,66 @@ pub struct LockedConfig {
 /////////////////////////////////////////////////////////////////////////
 // Lock implementations.
 /////////////////////////////////////////////////////////////////////////
+
+impl Shell {
+    /// The default files to match on for this shell.
+    pub fn default_matches(&self) -> &Vec<String> {
+        lazy_static! {
+            static ref DEFAULT_MATCHES_BASH: Vec<String> = vec_into![
+                "{{ name }}.plugin.bash",
+                "{{ name }}.plugin.sh",
+                "{{ name }}.bash",
+                "{{ name }}.sh",
+                "*.plugin.bash",
+                "*.plugin.sh",
+                "*.bash",
+                "*.sh"
+            ];
+            static ref DEFAULT_MATCHES_ZSH: Vec<String> = vec_into![
+                "{{ name }}.plugin.zsh",
+                "{{ name }}.zsh",
+                "{{ name }}.sh",
+                "{{ name }}.zsh-theme",
+                "*.plugin.zsh",
+                "*.zsh",
+                "*.sh",
+                "*.zsh-theme"
+            ];
+        }
+        match self {
+            Self::Bash => &DEFAULT_MATCHES_BASH,
+            Self::Zsh => &DEFAULT_MATCHES_ZSH,
+        }
+    }
+
+    /// The default templates for this shell.
+    pub fn default_templates(&self) -> &IndexMap<String, Template> {
+        lazy_static! {
+            static ref DEFAULT_TEMPLATES_BASH: IndexMap<String, Template> = indexmap_into! {
+                "PATH" => "export PATH=\"{{ dir }}:$PATH\"",
+                "source" => Template::from("source \"{{ file }}\"").each(true)
+            };
+            static ref DEFAULT_TEMPLATES_ZSH: IndexMap<String, Template> = indexmap_into! {
+                "PATH" => "export PATH=\"{{ dir }}:$PATH\"",
+                "path" => "path=( \"{{ dir }}\" $path )",
+                "fpath" => "fpath=( \"{{ dir }}\" $fpath )",
+                "source" => Template::from("source \"{{ file }}\"").each(true)
+            };
+        }
+        match self {
+            Self::Bash => &DEFAULT_TEMPLATES_BASH,
+            Self::Zsh => &DEFAULT_TEMPLATES_ZSH,
+        }
+    }
+
+    /// The default template names to apply.
+    pub fn default_apply(&self) -> &Vec<String> {
+        lazy_static! {
+            static ref DEFAULT_APPLY: Vec<String> = vec_into!["source"];
+        }
+        &DEFAULT_APPLY
+    }
+}
 
 impl From<Option<GitReference>> for GitCheckout {
     fn from(reference: Option<GitReference>) -> Self {
@@ -486,7 +509,7 @@ impl Config {
         } = self;
 
         let templates = {
-            let mut map = DEFAULT_TEMPLATES.clone();
+            let mut map = shell.default_templates().clone();
             for (name, template) in templates {
                 map.insert(name, template);
             }
@@ -511,11 +534,8 @@ impl Config {
                 .push((index, plugin));
         }
 
-        let matches = &matches.as_ref().unwrap_or_else(|| match shell {
-            Some(Shell::Bash) => &*DEFAULT_MATCHES_BASH,
-            Some(Shell::Zsh) | None => &*DEFAULT_MATCHES_ZSH,
-        });
-        let apply = &apply.as_ref().unwrap_or(&*DEFAULT_APPLY);
+        let matches = &matches.as_ref().unwrap_or_else(|| shell.default_matches());
+        let apply = &apply.as_ref().unwrap_or_else(|| shell.default_apply());
         let count = map.len();
         let mut errors = Vec::new();
 
@@ -1150,7 +1170,7 @@ mod tests {
         let locked = plugin
             .lock(
                 &ctx,
-                &DEFAULT_TEMPLATES.clone(),
+                &Shell::default().default_templates().clone(),
                 locked_source,
                 &[],
                 &["hello".into()],
@@ -1190,7 +1210,7 @@ mod tests {
         let locked = plugin
             .lock(
                 &ctx,
-                &DEFAULT_TEMPLATES.clone(),
+                &Shell::default().default_templates().clone(),
                 locked_source,
                 &["*.plugin.zsh".to_string()],
                 &["hello".to_string()],
@@ -1223,7 +1243,7 @@ mod tests {
         plugin
             .lock(
                 &ctx,
-                &DEFAULT_TEMPLATES.clone(),
+                &Shell::default().default_templates().clone(),
                 locked_source,
                 &["*doesnotexist*".to_string()],
                 &["source".to_string()],
@@ -1252,7 +1272,7 @@ mod tests {
         let locked = plugin
             .lock(
                 &ctx,
-                &DEFAULT_TEMPLATES.clone(),
+                &Shell::default().default_templates().clone(),
                 locked_source,
                 &["*doesnotexist*".to_string()],
                 &["PATH".to_string()],
@@ -1288,7 +1308,7 @@ mod tests {
         let locked = plugin
             .lock(
                 &ctx,
-                &DEFAULT_TEMPLATES.clone(),
+                &Shell::default().default_templates().clone(),
                 locked_source,
                 &[],
                 &["hello".to_string()],
@@ -1307,7 +1327,7 @@ mod tests {
         let dir = temp.path();
         let ctx = create_test_context(dir);
         let config = Config {
-            shell: None,
+            shell: Shell::Zsh,
             matches: None,
             apply: None,
             templates: IndexMap::new(),
@@ -1318,7 +1338,10 @@ mod tests {
 
         assert_eq!(&locked.settings, ctx.settings());
         assert_eq!(locked.plugins, Vec::new());
-        assert_eq!(locked.templates, DEFAULT_TEMPLATES.clone());
+        assert_eq!(
+            locked.templates,
+            Shell::default().default_templates().clone(),
+        );
         assert_eq!(locked.errors.len(), 0);
     }
 
@@ -1327,13 +1350,10 @@ mod tests {
         let temp = tempfile::tempdir().expect("create temporary directory");
         let ctx = create_test_context(temp.path());
         let config = Config {
-            shell: None,
+            shell: Shell::Zsh,
             matches: None,
             apply: None,
-            templates: DEFAULT_TEMPLATES
-                .iter()
-                .map(|(k, v)| (k.clone(), v.clone()))
-                .collect(),
+            templates: IndexMap::new(),
             plugins: vec![Plugin::External(ExternalPlugin {
                 name: "test".to_string(),
                 source: Source::Git {
