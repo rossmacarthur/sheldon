@@ -292,14 +292,19 @@ inline = 'example() { echo &quot;Just an example of inline shell code&quot; }'
 For example the <strong>PATH</strong> template adds the plugin directory to the shell <code>PATH</code>
 variable. A template will be applied to a plugin if you add the template name to
 the <a href="#apply"><code>apply</code></a> field on a plugin.</p>
-<p>Available built in templates are</p>
+<p>Available built-in templates are different depending on what shell you are
+using. The following are available for both Bash and Zsh.</p>
 <ul>
 <li><strong>source</strong>: source each file in a plugin.</li>
 <li><strong>PATH</strong>: add the plugin directory to the <code>PATH</code> variable.</li>
-<li><strong>path</strong>: add the plugin directory to the <code>path</code> variable.</li>
-<li><strong>fpath</strong>: add the plugin directory to the <code>fpath</code> variable. As template
-strings they could be represented like this</li>
 </ul>
+<p>If you are using Zsh then the following are also available.</p>
+<ul>
+<li><strong>path</strong>: add the plugin directory to the <code>path</code> variable.</li>
+<li><strong>fpath</strong>: add the plugin directory to the <code>fpath</code> variable.</li>
+</ul>
+<p>As template strings in the config file they could be represented like the
+following.</p>
 <pre><code class="language-toml">[templates]
 source = { value = 'source &quot;{{ file }}&quot;', each = true }
 PATH = 'export PATH=&quot;{{ dir }}:$PATH&quot;'
@@ -318,7 +323,7 @@ template should be applied to each matched file for the plugin. This defaults to
 <code>false</code>.</p>
 <h3><a class="header" href="#custom-templates" id="custom-templates">Custom templates</a></h3>
 <p>It is possible to create your own custom templates, and you can even override
-the built in ones.</p>
+the built-in ones.</p>
 <p>Plugins all have the following information that can be used in templates</p>
 <ul>
 <li>
@@ -354,7 +359,7 @@ github = &quot;owner/repo&quot;
 apply = [&quot;function&quot;]
 </code></pre>
 <h3><a class="header" href="#example-overriding-the-path-template" id="example-overriding-the-path-template">Example: overriding the PATH template</a></h3>
-<p>The built in <strong>PATH</strong> template adds the directory path to the beginning of the
+<p>The built-in <strong>PATH</strong> template adds the directory path to the beginning of the
 <code>PATH</code> variable, we might want to change it to the be added at the end. We could
 do this like this</p>
 <pre><code class="language-toml">[templates]
@@ -368,11 +373,13 @@ apply = [&quot;source&quot;, &quot;PATH&quot;]
 <p><strong>Note:</strong> this would change the behavior of <strong>PATH</strong> for <em>all</em> plugins using it.</p>
 <h2><a class="header" href="#global-options" id="global-options">Global options</a></h2>
 <h3><a class="header" href="#shell" id="shell"><code>shell</code></a></h3>
-<p>Indicates the shell that you are using Sheldon with. If this field is set to
-<code>bash</code> the global <a href="#match"><code>match</code></a> default configuration will use Bash relevant
-defaults. If you are using Zsh you don't need to set this value but you may set
-it to <code>zsh</code>. For example</p>
+<p>Indicates the shell that you are using. This setting will affect the default
+values for several global config settings. This includes the global
+<a href="#match"><code>match</code></a> setting and the available templates. This defaults to <code>zsh</code>.</p>
 <pre><code class="language-toml">shell = &quot;bash&quot;
+</code></pre>
+<p>or</p>
+<pre><code class="language-toml">shell = &quot;zsh&quot;
 </code></pre>
 <h3><a class="header" href="#match" id="match"><code>match</code></a></h3>
 <p>A list of glob patterns to match against a plugin's contents. The first pattern
@@ -389,7 +396,7 @@ defaults to</p>
     &quot;*.zsh-theme&quot;
 ]
 </code></pre>
-<p>If <code>shell = &quot;bash&quot;</code> then this defaults to</p>
+<p>If the shell is Bash then this defaults to</p>
 <pre><code class="language-toml">match = [
     &quot;{{ name }}.plugin.bash&quot;,
     &quot;{{ name }}.plugin.sh&quot;,

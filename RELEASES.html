@@ -160,9 +160,29 @@
                 <div id="content" class="content">
                     <main>
                         <h1><a class="header" href="#releases" id="releases">Releases</a></h1>
+<h2><a class="header" href="#054" id="054">0.5.4</a></h2>
+<p><em>Unreleased</em></p>
+<h3><a class="header" href="#features" id="features">Features</a></h3>
+<ul>
+<li>
+<p><a href="https://github.com/rossmacarthur/sheldon/commit/a972c3543d3c5ed339028ab316b1c48f733aed7">Support extended glob syntax.</a> This means that <code>{a,b}</code> and <code>!</code>
+glob patterns can now be used. For example, the following is now valid.</p>
+<pre><code class="language-toml">[plugins.ohmyzsh]
+github = &quot;ohmyzsh/ohmyzsh&quot;
+dir = &quot;lib&quot;
+use = [&quot;{!git,!nvm,*}.zsh]
+</code></pre>
+</li>
+</ul>
+<h3><a class="header" href="#fixes" id="fixes">Fixes</a></h3>
+<ul>
+<li><a href="https://github.com/rossmacarthur/sheldon/commit/aa69e0c6c6ae56e98c9d19de3be191e9ce9a974b">Fix not erroring out when no files matched for plugin.</a> This fixes
+cases where no files would be matched for a plugin and Sheldon would silently
+continue, resulting in no source rendered by <code>sheldon source</code>.</li>
+</ul>
 <h2><a class="header" href="#053" id="053">0.5.3</a></h2>
 <p><em>July 28th, 2020</em></p>
-<h3><a class="header" href="#features" id="features">Features</a></h3>
+<h3><a class="header" href="#features-1" id="features-1">Features</a></h3>
 <ul>
 <li><a href="https://github.com/rossmacarthur/sheldon/commit/131576dfddc53ec76e87ce6ee64326ae119a383c">Add <code>init</code> command.</a> Adds a new command to Sheldon which initializes
 a config file. Simply run <code>sheldon init</code>.</li>
@@ -174,7 +194,7 @@ value is set.</li>
 </ul>
 <h2><a class="header" href="#052" id="052">0.5.2</a></h2>
 <p><em>June 4th, 2020</em></p>
-<h3><a class="header" href="#fixes" id="fixes">Fixes</a></h3>
+<h3><a class="header" href="#fixes-1" id="fixes-1">Fixes</a></h3>
 <ul>
 <li><a href="https://github.com/rossmacarthur/sheldon/commit/4ae64325fd8239dfb6e35f9efc05067c9c4a24d4">Fix not erroring out on a bad HTTP status code.</a> This fixes remote
 sources from silently not being downloaded correctly.</li>
@@ -197,7 +217,7 @@ shipped musl binaries which statically bundle OpenSSL.</li>
 </ul>
 <h2><a class="header" href="#050" id="050">0.5.0</a></h2>
 <p><em>May 2nd, 2020</em></p>
-<h3><a class="header" href="#features-1" id="features-1">Features</a></h3>
+<h3><a class="header" href="#features-2" id="features-2">Features</a></h3>
 <ul>
 <li>
 <p><a href="https://github.com/rossmacarthur/sheldon/commit/140d17142d5be2b0653f559612aebffbd3c39ce1">Add <code>add</code> and <code>remove</code> commands to edit config.</a> These commands will
@@ -244,7 +264,7 @@ export SHELDON_CLONE_DIR=&quot;$SHELDON_ROOT/repositories&quot;
 </code></pre>
 </li>
 </ul>
-<h3><a class="header" href="#fixes-1" id="fixes-1">Fixes</a></h3>
+<h3><a class="header" href="#fixes-2" id="fixes-2">Fixes</a></h3>
 <ul>
 <li>
 <p><a href="https://github.com/rossmacarthur/sheldon/commit/7293cbf61240a40333ef139b6ac6e7ab173f0f97">Download/clone sources to a temporary path first.</a></p>
