@@ -1,10 +1,10 @@
 [package]
 name = "sheldon"
-version = "0.5.3"
+version = "0.5.4"
 authors = ["Ross MacArthur <ross@macarthur.io>"]
 edition = "2018"
 description = "Fast, configurable, shell plugin manager."
-documentation = "https://github.com/rossmacarthur/sheldon"
+documentation = "https://rossmacarthur.github.io/sheldon"
 readme = "README.md"
 homepage = "https://github.com/rossmacarthur/sheldon"
 repository = "https://github.com/rossmacarthur/sheldon"

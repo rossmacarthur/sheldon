@@ -2,7 +2,7 @@
 
 ## 0.5.4
 
-*Unreleased*
+*August 14th, 2020*
 
 ### Features
 
@@ -21,9 +21,12 @@
 - [Fix not erroring out when no files matched for plugin.][aa69e0c] This fixes
   cases where no files would be matched for a plugin and Sheldon would silently
   continue, resulting in no source rendered by `sheldon source`.
+- [Update default templates for Bash, `path` and `fpath` are now
+  removed.][2a60788] These templates were meaningless in a Bash context.
 
 [a972c35]: https://github.com/rossmacarthur/sheldon/commit/a972c3543d3c5ed339028ab316b1c48f733aed7
 [aa69e0c]: https://github.com/rossmacarthur/sheldon/commit/aa69e0c6c6ae56e98c9d19de3be191e9ce9a974b
+[2a60788]: https://github.com/rossmacarthur/sheldon/commit/2a607885ead211ec78e3494f32cad91476bd4184
 
 ## 0.5.3
 
