@@ -21,7 +21,6 @@ const SOURCES: &[&str] = &[
     "Getting started",
     "Command line interface",
     "Configuration",
-    "Examples",
 ];
 
 /// Render Markdown events as Markdown.
@@ -155,7 +154,7 @@ fn main() -> Result<()> {
         bail!("README is not up to date!");
     } else {
         fs::write("README.md", result)?;
-        println!("updated README");
+        println!("README was updated!");
     }
 
     Ok(())

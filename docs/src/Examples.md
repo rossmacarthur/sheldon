@@ -3,6 +3,42 @@
 This section demonstrates the configuration file contents for some popular
 plugins and themes.
 
+## Deferred loading of plugins in Zsh
+
+A commonly desired feature of shell plugin managers is deferred loading of
+plugins because of the massive increase in speed that it provides. Because
+Sheldon is not written in a shell language it cannot provide the level of
+integration that other plugin managers can. However, it is pretty easy to get
+deferred loading working with Sheldon using
+[romkatv/zsh-defer](https://github.com/romkatv/zsh-defer).
+
+Firstly, you should add `zsh-defer` as a plugin.
+
+```toml
+[plugins.zsh-defer]
+github = "romkatv/zsh-defer"
+```
+
+Then add a template that calls `zsh-defer source` instead of just `source`.
+
+```toml
+[templates]
+defer = { value = 'zsh-defer source "{{ file }}"', each = true }
+```
+
+Important: the `zsh-defer` plugin definition should be placed before any plugins
+that use the `defer` template. Sheldon always processes plugins in the order
+they are defined in the config file.
+
+Now any plugin that you want to defer you can apply the `defer` template. For
+example if you wanted to defer loading of `zsh-syntax-highlighting`.
+
+```toml
+[plugins.zsh-syntax-highlighting]
+github = "zsh-users/zsh-syntax-highlighting"
+apply = ["defer"]
+```
+
 ## Zsh frameworks
 
 ### [ohmyzsh](https://github.com/ohmyzsh/ohmyzsh)
