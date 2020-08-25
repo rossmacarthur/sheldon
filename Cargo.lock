@@ -1411,6 +1411,7 @@ dependencies = [
  "serde",
  "structopt",
  "tempfile",
+ "thiserror",
  "toml",
  "toml_edit",
  "url",

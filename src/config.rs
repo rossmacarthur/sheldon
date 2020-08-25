@@ -2,7 +2,6 @@
 //!
 //! This module handles the defining and deserialization of the config file.
 
-use std::error;
 use std::fmt;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -14,6 +13,7 @@ use indexmap::IndexMap;
 use lazy_static::lazy_static;
 use regex::Regex;
 use serde::{self, de, Deserialize, Deserializer, Serialize, Serializer};
+use thiserror::Error;
 use url::Url;
 
 /// The Gist domain host.
@@ -275,14 +275,9 @@ impl Default for Shell {
     }
 }
 
-#[derive(Debug)]
-pub struct ParseShellError;
-
-impl fmt::Display for ParseShellError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str("expected one of `bash` or `zsh`")
-    }
-}
+#[derive(Debug, Error)]
+#[error("expected one of `bash` or `zsh`, got `{}`", self.0)]
+pub struct ParseShellError(String);
 
 impl str::FromStr for Shell {
     type Err = ParseShellError;
@@ -291,7 +286,7 @@ impl str::FromStr for Shell {
         match &*s.to_lowercase() {
             "bash" => Ok(Self::Bash),
             "zsh" => Ok(Self::Zsh),
-            _ => Err(ParseShellError),
+            s => Err(ParseShellError(s.to_string())),
         }
     }
 }
@@ -362,16 +357,9 @@ impl<'de> Deserialize<'de> for Template {
     }
 }
 
-#[derive(Debug)]
-pub struct ParseGitProtocolError;
-
-impl fmt::Display for ParseGitProtocolError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str("expected one of `git`, `https`, or `ssh`")
-    }
-}
-
-impl error::Error for ParseGitProtocolError {}
+#[derive(Debug, Error)]
+#[error("expected one of `git`, `https`, or `ssh`, got `{}`", self.0)]
+pub struct ParseGitProtocolError(String);
 
 impl FromStr for GitProtocol {
     type Err = ParseGitProtocolError;
@@ -381,93 +369,49 @@ impl FromStr for GitProtocol {
             "git" => Ok(Self::Git),
             "https" => Ok(Self::Https),
             "ssh" => Ok(Self::Ssh),
-            _ => Err(ParseGitProtocolError),
+            s => Err(ParseGitProtocolError(s.to_string())),
         }
     }
 }
 
-macro_rules! make_regex_matcher {
-    ($name:ident, $regex:literal) => {
-        fn $name(s: &str) -> bool {
-            lazy_static! {
-                static ref RE: Regex = Regex::new($regex).expect("invalid regex");
-            }
-            RE.is_match(s)
-        }
-    };
-}
-
-make_regex_matcher!(is_valid_gist_identifier, "^[a-fA-F0-9]+$");
-make_regex_matcher!(is_valid_github_owner, "^[a-zA-Z0-9_-]+$");
-make_regex_matcher!(is_valid_github_repository, "^[a-zA-Z0-9\\._-]+$");
-
-#[derive(Debug)]
-pub struct ParseGistRepositoryError;
-
-impl fmt::Display for ParseGistRepositoryError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str("not a valid Gist identifier, the hash or username/hash should be provided")
-    }
-}
-
-impl error::Error for ParseGistRepositoryError {}
+#[derive(Debug, Error)]
+#[error("`{}` is not a valid Gist identifier, the hash or username/hash should be provided", self.0)]
+pub struct ParseGistRepositoryError(String);
 
 impl FromStr for GistRepository {
     type Err = ParseGistRepositoryError;
 
     fn from_str(s: &str) -> result::Result<Self, Self::Err> {
-        let mut s_split = s.rsplit('/');
-        let identifier = s_split.next().ok_or(ParseGistRepositoryError)?.to_string();
-        let owner = s_split.next().map(ToString::to_string);
-
-        if s_split.next().is_some() {
-            return Err(ParseGistRepositoryError);
+        lazy_static! {
+            static ref RE: Regex =
+                Regex::new("^((?P<owner>[a-zA-Z0-9_-]+)/)?(?P<identifier>[a-fA-F0-9]+)$").unwrap();
         }
-        if let Some(owner) = &owner {
-            if !is_valid_github_owner(owner) {
-                return Err(ParseGistRepositoryError);
-            }
-        }
-        if !is_valid_gist_identifier(&identifier) {
-            return Err(ParseGistRepositoryError);
-        }
-
+        let captures = RE
+            .captures(s)
+            .ok_or_else(|| ParseGistRepositoryError(s.to_string()))?;
+        let owner = captures.name("owner").map(|m| m.as_str().to_string());
+        let identifier = captures.name("identifier").unwrap().as_str().to_string();
         Ok(Self { owner, identifier })
     }
 }
 
-#[derive(Debug)]
-pub struct ParseGitHubRepositoryError;
-
-impl fmt::Display for ParseGitHubRepositoryError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str("not a valid GitHub repository, the username/repository should be provided")
-    }
-}
-
-impl error::Error for ParseGitHubRepositoryError {}
+#[derive(Debug, Error)]
+#[error("`{}` is not a valid GitHub repository, the username/repository should be provided", self.0)]
+pub struct ParseGitHubRepositoryError(String);
 
 impl FromStr for GitHubRepository {
     type Err = ParseGitHubRepositoryError;
 
     fn from_str(s: &str) -> result::Result<Self, Self::Err> {
-        let mut s_split = s.split('/');
-        let owner = s_split
-            .next()
-            .ok_or(ParseGitHubRepositoryError)?
-            .to_string();
-        let name = s_split
-            .next()
-            .ok_or(ParseGitHubRepositoryError)?
-            .to_string();
-
-        if s_split.next().is_some() {
-            return Err(ParseGitHubRepositoryError);
+        lazy_static! {
+            static ref RE: Regex =
+                Regex::new("^(?P<owner>[a-zA-Z0-9_-]+)/(?P<name>[a-zA-Z0-9\\._-]+)$").unwrap();
         }
-        if !is_valid_github_owner(&owner) || !is_valid_github_repository(&name) {
-            return Err(ParseGitHubRepositoryError);
-        }
-
+        let captures = RE
+            .captures(s)
+            .ok_or_else(|| ParseGitHubRepositoryError(s.to_string()))?;
+        let owner = captures.name("owner").unwrap().as_str().to_string();
+        let name = captures.name("name").unwrap().as_str().to_string();
         Ok(Self { owner, name })
     }
 }
@@ -912,7 +856,7 @@ mod tests {
         let error = toml::from_str::<ShellTest>("s = 'ksh'").unwrap_err();
         assert_eq!(
             error.to_string(),
-            "expected one of `bash` or `zsh` for key `s` at line 1 column 5"
+            "expected one of `bash` or `zsh`, got `ksh` for key `s` at line 1 column 5"
         )
     }
 
@@ -1004,8 +948,9 @@ mod tests {
         .unwrap_err();
         assert_eq!(
             error.to_string(),
-            "not a valid Gist identifier, the hash or username/hash should be provided for key \
-             `g` at line 1 column 5"
+            "`rossmacarthur/579d02802b1cc17baed07753d09f5009/test` is not a valid Gist \
+             identifier, the hash or username/hash should be provided for key `g` at line 1 \
+             column 5"
         );
     }
 
@@ -1014,8 +959,8 @@ mod tests {
         let error = toml::from_str::<TestGistRepository>("g = 'nothex'").unwrap_err();
         assert_eq!(
             error.to_string(),
-            "not a valid Gist identifier, the hash or username/hash should be provided for key \
-             `g` at line 1 column 5"
+            "`nothex` is not a valid Gist identifier, the hash or username/hash should be \
+             provided for key `g` at line 1 column 5"
         );
     }
 
@@ -1043,8 +988,8 @@ mod tests {
             toml::from_str::<TestGitHubRepository>("g = 'rossmacarthur/sheldon/test'").unwrap_err();
         assert_eq!(
             error.to_string(),
-            "not a valid GitHub repository, the username/repository should be provided for key \
-             `g` at line 1 column 5"
+            "`rossmacarthur/sheldon/test` is not a valid GitHub repository, the \
+             username/repository should be provided for key `g` at line 1 column 5"
         );
     }
 
@@ -1053,8 +998,8 @@ mod tests {
         let error = toml::from_str::<TestGitHubRepository>("g = 'noslash'").unwrap_err();
         assert_eq!(
             error.to_string(),
-            "not a valid GitHub repository, the username/repository should be provided for key \
-             `g` at line 1 column 5"
+            "`noslash` is not a valid GitHub repository, the username/repository should be \
+             provided for key `g` at line 1 column 5"
         );
     }
 
