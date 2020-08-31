@@ -219,7 +219,7 @@ pub mod git {
         BranchType, Cred, CredentialType, Error, FetchOptions, Oid, RemoteCallbacks, Repository,
         ResetType,
     };
-    use lazy_static::lazy_static;
+    use once_cell::sync::Lazy;
     use url::Url;
 
     use anyhow::Context as ResultExt;
@@ -255,12 +255,12 @@ pub mod git {
         Ok(repo)
     }
 
-    lazy_static! {
-        static ref DEFAULT_REFSPECS: Vec<String> = vec_into![
+    static DEFAULT_REFSPECS: Lazy<Vec<String>> = Lazy::new(|| {
+        vec_into![
             "refs/heads/*:refs/remotes/origin/*",
             "HEAD:refs/remotes/origin/HEAD"
-        ];
-    }
+        ]
+    });
 
     /// Clone a Git repository.
     pub fn clone(url: &Url, dir: &Path) -> anyhow::Result<Repository> {

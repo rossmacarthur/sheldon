@@ -906,9 +906,9 @@ dependencies = [
 
 [[package]]
 name = "once_cell"
-version = "1.4.0"
+version = "1.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0b631f7e854af39a1739f401cf34a8a013dfe09eac4fa4dba91e9768bd28168d"
+checksum = "260e51e7efe62b592207e9e13a68e43692a7a279171d6ba57abd208bf23645ad"
 
 [[package]]
 name = "opaque-debug"
@@ -1228,6 +1228,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "regex-macro"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e443b9cde2a94bbd3080e5f742bcba9a3f173ea070ed84b53e7ad27665e8c5f9"
+dependencies = [
+ "once_cell",
+ "regex",
+]
+
+[[package]]
 name = "regex-syntax"
 version = "0.6.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1400,13 +1410,14 @@ dependencies = [
  "home",
  "indexmap",
  "itertools",
- "lazy_static",
  "maplit",
+ "once_cell",
  "pest",
  "pest_derive",
  "pretty_assertions",
  "rayon",
  "regex",
+ "regex-macro",
  "reqwest",
  "serde",
  "structopt",

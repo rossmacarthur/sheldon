@@ -10,8 +10,7 @@ use std::str::{self, FromStr};
 
 use anyhow::{anyhow, bail, Context as ResultExt, Error, Result};
 use indexmap::IndexMap;
-use lazy_static::lazy_static;
-use regex::Regex;
+use regex_macro::regex;
 use serde::{self, de, Deserialize, Deserializer, Serialize, Serializer};
 use thiserror::Error;
 use url::Url;
@@ -382,11 +381,8 @@ impl FromStr for GistRepository {
     type Err = ParseGistRepositoryError;
 
     fn from_str(s: &str) -> result::Result<Self, Self::Err> {
-        lazy_static! {
-            static ref RE: Regex =
-                Regex::new("^((?P<owner>[a-zA-Z0-9_-]+)/)?(?P<identifier>[a-fA-F0-9]+)$").unwrap();
-        }
-        let captures = RE
+        let re = regex!("^((?P<owner>[a-zA-Z0-9_-]+)/)?(?P<identifier>[a-fA-F0-9]+)$");
+        let captures = re
             .captures(s)
             .ok_or_else(|| ParseGistRepositoryError(s.to_string()))?;
         let owner = captures.name("owner").map(|m| m.as_str().to_string());
@@ -403,11 +399,8 @@ impl FromStr for GitHubRepository {
     type Err = ParseGitHubRepositoryError;
 
     fn from_str(s: &str) -> result::Result<Self, Self::Err> {
-        lazy_static! {
-            static ref RE: Regex =
-                Regex::new("^(?P<owner>[a-zA-Z0-9_-]+)/(?P<name>[a-zA-Z0-9\\._-]+)$").unwrap();
-        }
-        let captures = RE
+        let re = regex!("^(?P<owner>[a-zA-Z0-9_-]+)/(?P<name>[a-zA-Z0-9\\._-]+)$");
+        let captures = re
             .captures(s)
             .ok_or_else(|| ParseGitHubRepositoryError(s.to_string()))?;
         let owner = captures.name("owner").unwrap().as_str().to_string();

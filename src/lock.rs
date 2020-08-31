@@ -12,8 +12,8 @@ use std::result;
 use anyhow::{anyhow, bail, Context as ResultExt, Error, Result};
 use indexmap::{indexmap, IndexMap};
 use itertools::{Either, Itertools};
-use lazy_static::lazy_static;
 use maplit::hashmap;
+use once_cell::sync::Lazy;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use url::Url;
@@ -99,8 +99,8 @@ pub struct LockedConfig {
 impl Shell {
     /// The default files to match on for this shell.
     pub fn default_matches(&self) -> &Vec<String> {
-        lazy_static! {
-            static ref DEFAULT_MATCHES_BASH: Vec<String> = vec_into![
+        static DEFAULT_MATCHES_BASH: Lazy<Vec<String>> = Lazy::new(|| {
+            vec_into![
                 "{{ name }}.plugin.bash",
                 "{{ name }}.plugin.sh",
                 "{{ name }}.bash",
@@ -109,8 +109,10 @@ impl Shell {
                 "*.plugin.sh",
                 "*.bash",
                 "*.sh"
-            ];
-            static ref DEFAULT_MATCHES_ZSH: Vec<String> = vec_into![
+            ]
+        });
+        static DEFAULT_MATCHES_ZSH: Lazy<Vec<String>> = Lazy::new(|| {
+            vec_into![
                 "{{ name }}.plugin.zsh",
                 "{{ name }}.zsh",
                 "{{ name }}.sh",
@@ -119,8 +121,8 @@ impl Shell {
                 "*.zsh",
                 "*.sh",
                 "*.zsh-theme"
-            ];
-        }
+            ]
+        });
         match self {
             Self::Bash => &DEFAULT_MATCHES_BASH,
             Self::Zsh => &DEFAULT_MATCHES_ZSH,
@@ -129,18 +131,20 @@ impl Shell {
 
     /// The default templates for this shell.
     pub fn default_templates(&self) -> &IndexMap<String, Template> {
-        lazy_static! {
-            static ref DEFAULT_TEMPLATES_BASH: IndexMap<String, Template> = indexmap_into! {
+        static DEFAULT_TEMPLATES_BASH: Lazy<IndexMap<String, Template>> = Lazy::new(|| {
+            indexmap_into! {
                 "PATH" => "export PATH=\"{{ dir }}:$PATH\"",
                 "source" => Template::from("source \"{{ file }}\"").each(true)
-            };
-            static ref DEFAULT_TEMPLATES_ZSH: IndexMap<String, Template> = indexmap_into! {
+            }
+        });
+        static DEFAULT_TEMPLATES_ZSH: Lazy<IndexMap<String, Template>> = Lazy::new(|| {
+            indexmap_into! {
                 "PATH" => "export PATH=\"{{ dir }}:$PATH\"",
                 "path" => "path=( \"{{ dir }}\" $path )",
                 "fpath" => "fpath=( \"{{ dir }}\" $fpath )",
                 "source" => Template::from("source \"{{ file }}\"").each(true)
-            };
-        }
+            }
+        });
         match self {
             Self::Bash => &DEFAULT_TEMPLATES_BASH,
             Self::Zsh => &DEFAULT_TEMPLATES_ZSH,
@@ -149,9 +153,7 @@ impl Shell {
 
     /// The default template names to apply.
     pub fn default_apply(&self) -> &Vec<String> {
-        lazy_static! {
-            static ref DEFAULT_APPLY: Vec<String> = vec_into!["source"];
-        }
+        static DEFAULT_APPLY: Lazy<Vec<String>> = Lazy::new(|| vec_into!["source"]);
         &DEFAULT_APPLY
     }
 }

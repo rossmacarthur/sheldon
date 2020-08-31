@@ -25,10 +25,11 @@ handlebars = "3.4.0"
 home = "0.5.3"
 indexmap = { version = "1.5.1", features = ["serde-1", "rayon"] }
 itertools = "0.9.0"
-lazy_static = "1.4.0"
 maplit = "1.0.2"
+once_cell = "1.4.1"
 rayon = "1.3.1"
 regex = "1.3.9"
+regex-macro = "0.1.0"
 reqwest = { version = "0.10.7", features = ["blocking"] }
 serde = { version = "1.0.115", features = ["derive"] }
 structopt = "0.3.16"
