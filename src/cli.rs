@@ -224,12 +224,21 @@ pub struct Opt {
 }
 
 impl LockMode {
-    fn from_lock_opts(update: bool, reinstall: bool) -> Self {
+    fn from_lock_flags(update: bool, reinstall: bool) -> Self {
         match (update, reinstall) {
+            (false, false) => Self::Normal,
             (true, false) => Self::Update,
             (false, true) => Self::Reinstall,
-            (false, false) => Self::Normal,
             (true, true) => unreachable!(),
+        }
+    }
+
+    fn from_source_flags(relock: bool, update: bool, reinstall: bool) -> (bool, Self) {
+        match (relock, update, reinstall) {
+            (relock, false, false) => (relock, Self::Normal),
+            (_, true, false) => (true, Self::Update),
+            (_, false, true) => (true, Self::Reinstall),
+            (_, true, true) => unreachable!(),
         }
     }
 }
@@ -350,7 +359,7 @@ impl Opt {
             RawCommand::Edit => Command::Edit,
             RawCommand::Remove { name } => Command::Remove { name },
             RawCommand::Lock { update, reinstall } => {
-                let mode = LockMode::from_lock_opts(update, reinstall);
+                let mode = LockMode::from_lock_flags(update, reinstall);
                 Command::Lock { mode }
             }
             RawCommand::Source {
@@ -358,7 +367,7 @@ impl Opt {
                 update,
                 reinstall,
             } => {
-                let mode = LockMode::from_lock_opts(update, reinstall);
+                let (relock, mode) = LockMode::from_source_flags(relock, update, reinstall);
                 Command::Source { relock, mode }
             }
         };
