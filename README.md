@@ -61,9 +61,9 @@
   - [Adding a plugin](#adding-a-plugin)
   - [Loading plugins](#loading-plugins)
 - [Command line interface](#command-line-interface)
+  - [`init`](#init)
   - [`lock`](#lock)
   - [`source`](#source)
-  - [`init`](#init)
   - [`add`](#add)
   - [`edit`](#edit)
   - [`remove`](#remove)
@@ -85,8 +85,6 @@
 - [Configuration: Inline plugins](#configuration-inline-plugins)
 - [Configuration: Templates](#configuration-templates)
   - [Custom templates](#custom-templates)
-  - [Example: symlinking files](#example-symlinking-files)
-  - [Example: overriding the PATH template](#example-overriding-the-path-template)
 - [Configuration: Global options](#configuration-global-options)
   - [`shell`](#shell)
   - [`match`](#match)
@@ -150,13 +148,13 @@ Sheldon works by specifying plugin information in a [TOML](https://toml.io)
 configuration file. You can initialize this file by running `sheldon init`.
 
 ```sh
-sheldon init --shell zsh
+sheldon init --shell bash
 ```
 
 or
 
 ```sh
-sheldon init --shell bash
+sheldon init --shell zsh
 ```
 
 This will create the `~/.sheldon` directory with an empty `plugins.toml` file.
@@ -165,7 +163,7 @@ interface to add or remove plugins.
 
 ### Adding a plugin
 
-To add your first plugin add the following to the Sheldon config file.
+To add your first plugin append the following to the Sheldon config file.
 
 ```toml
 # ~/.sheldon/plugins.toml
@@ -207,12 +205,35 @@ Sheldon has three different types of commands.
 * [`add`](#add), [`edit`](#edit), and [`remove`](#remove) automate editing of
   the config file.
 
+### `init`
+
+This command initializes a new config file. If a config file exists then this
+command does nothing.
+
+For example
+
+```sh
+sheldon init
+```
+
+Or you can specify the shell.
+
+```sh
+sheldon init --shell bash
+```
+
+or
+
+```sh
+sheldon init --shell zsh
+```
+
 ### `lock`
 
 The `lock` command installs the plugins sources and generates the lock file
-(`~/.sheldon/plugins.lock`). Rerunning this command will not reinstall plugin
-sources, just verify that they are correctly installed. It will always
-regenerate the lock file.
+(`~/.sheldon/plugins.lock`). Rerunning this command without any extra options
+will not reinstall plugin sources, just verify that they are correctly
+installed. It will always regenerate the lock file.
 
 ```sh
 sheldon lock
@@ -245,23 +266,6 @@ But you can also run it directly to inspect the output. The output of this
 command is highly configurable. You can define your own custom templates to
 apply to your plugins.
 
-### `init`
-
-This command initializes a new config file. If a config file exists then this
-command does nothing.
-
-For example
-
-```sh
-sheldon init
-```
-
-Or you can specify the shell.
-
-```sh
-sheldon init --shell bash
-```
-
 ### `add`
 
 This command adds a new plugin to the config file. It does nothing else but edit
@@ -273,7 +277,7 @@ sheldon add my-repo --git https://github.com/owner/repo.git
 ```
 
 An example usage of this command for each source type is shown in the
-[Configuration: plugin sources](#configuration-plugin-sources) section.
+[Configuration](https://rossmacarthur.github.io/sheldon/Configuration.html) section.
 
 ### `edit`
 
@@ -587,62 +591,26 @@ template should be applied to each matched file for the plugin. This defaults to
 It is possible to create your own custom templates, and you can even override
 the built-in ones.
 
-Plugins all have the following information that can be used in templates
+Plugins all have the following information that can be used in templates.
 
 * **A unique name.** This is completely arbitrary, and it is the value specified
   for the plugin in the plugins table. However, it is often the name of the
   plugin, so it can be useful to use this name in templates with `{{ name }}`.
 
-* **A directory.** In git sources this is the location of the cloned repository,
-  for local sources, it is the directory specified. This directory can be used
-  in templates with `{{ dir }}`.
+* **A directory.** For Git sources this is the location of the cloned
+  repository, for local sources, it is the directory specified. This directory
+  can be used in templates with `{{ dir }}`.
 
-* **Zero or more files.** These are the matched files in the plugin directory
+* **One or more files.** These are the matched files in the plugin directory
   either discovered using the the global `match` field or specified as a plugin
-  option with `use`. These can be used in templates using `{{ file }}`. You can
-  use the following global information in templates
+  option with `use`. These can be used in templates using `{{ file }}`. This
+  information only makes sense in templates with `each` set to `true`.
 
-* **The sheldon root.** This folder can be used as `{{ root }}`.
+* **The Sheldon root directory.** This directory can be used as `{{ root }}`.
 
-### Example: symlinking files
-
-Lets say we would like a template to symlink files into the
-`~/.sheldon/functions` directory. We could create a new template with name
-**function**, like this
-
-```toml
-[templates]
-function = { value = 'ln -sf "{{ file }}" "~/.zsh/functions/{{ name }}"', each = true }
-```
-
-It can then be applied to the plugin like this
-
-```toml
-[plugins.example]
-github = "owner/repo"
-apply = ["function"]
-```
-
-### Example: overriding the PATH template
-
-The built-in **PATH** template adds the directory path to the beginning of the
-`PATH` variable, we might want to change it to the be added at the end. We could
-do this like this
-
-```toml
-[templates]
-PATH = 'export PATH="$PATH:{{ dir }}"'
-```
-
-You can then apply it to the plugin like this
-
-```toml
-[plugins.example]
-github = "owner/repo"
-apply = ["source", "PATH"]
-```
-
-**Note:** this would change the behavior of **PATH** for *all* plugins using it.
+To add or update a template add a new key to the `[templates]` table in the
+config file. Take a look at the [examples](https://rossmacarthur.github.io/sheldon/Examples.html) for some interesting
+applications of this.
 
 ## Configuration: Global options
 

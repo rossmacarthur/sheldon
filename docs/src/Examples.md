@@ -1,7 +1,7 @@
 # Examples
 
-This section demonstrates the configuration file contents for some popular
-plugins and themes.
+This section demonstrates the configuration file contents for some common
+installation practices as well how to configure popular plugins and themes.
 
 ## Deferred loading of plugins in Zsh
 
@@ -19,16 +19,16 @@ Firstly, you should add `zsh-defer` as a plugin.
 github = "romkatv/zsh-defer"
 ```
 
+Important: the `zsh-defer` plugin definition should be placed before any plugins
+that will use the `defer` template. Sheldon always processes plugins in the
+order they are defined in the config file.
+
 Then add a template that calls `zsh-defer source` instead of just `source`.
 
 ```toml
 [templates]
 defer = { value = 'zsh-defer source "{{ file }}"', each = true }
 ```
-
-Important: the `zsh-defer` plugin definition should be placed before any plugins
-that use the `defer` template. Sheldon always processes plugins in the order
-they are defined in the config file.
 
 Now any plugin that you want to defer you can apply the `defer` template. For
 example if you wanted to defer loading of `zsh-syntax-highlighting`.
@@ -38,6 +38,27 @@ example if you wanted to defer loading of `zsh-syntax-highlighting`.
 github = "zsh-users/zsh-syntax-highlighting"
 apply = ["defer"]
 ```
+
+## Overriding the PATH template
+
+The built-in **PATH** template adds the directory path to the beginning of the
+`PATH` variable, we might want to change it to the be added at the end. We could
+do this like this
+
+```toml
+[templates]
+PATH = 'export PATH="$PATH:{{ dir }}"'
+```
+
+You can then apply it to the plugin like this
+
+```toml
+[plugins.example]
+github = "owner/repo"
+apply = ["source", "PATH"]
+```
+
+**Note:** this would change the behavior of **PATH** for *all* plugins using it.
 
 ## Zsh frameworks
 

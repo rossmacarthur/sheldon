@@ -253,62 +253,26 @@ template should be applied to each matched file for the plugin. This defaults to
 It is possible to create your own custom templates, and you can even override
 the built-in ones.
 
-Plugins all have the following information that can be used in templates
+Plugins all have the following information that can be used in templates.
 
 * **A unique name.** This is completely arbitrary, and it is the value specified
   for the plugin in the plugins table. However, it is often the name of the
   plugin, so it can be useful to use this name in templates with `{{ name }}`.
 
-* **A directory.** In git sources this is the location of the cloned repository,
-  for local sources, it is the directory specified. This directory can be used
-  in templates with `{{ dir }}`.
+* **A directory.** For Git sources this is the location of the cloned
+  repository, for local sources, it is the directory specified. This directory
+  can be used in templates with `{{ dir }}`.
 
-* **Zero or more files.** These are the matched files in the plugin directory
+* **One or more files.** These are the matched files in the plugin directory
   either discovered using the the global `match` field or specified as a plugin
-  option with `use`. These can be used in templates using `{{ file }}`. You can
-  use the following global information in templates
+  option with `use`. These can be used in templates using `{{ file }}`. This
+  information only makes sense in templates with `each` set to `true`.
 
-* **The sheldon root.** This folder can be used as `{{ root }}`.
+* **The Sheldon root directory.** This directory can be used as `{{ root }}`.
 
-### Example: symlinking files
-
-Lets say we would like a template to symlink files into the
-`~/.sheldon/functions` directory. We could create a new template with name
-**function**, like this
-
-```toml
-[templates]
-function = { value = 'ln -sf "{{ file }}" "~/.zsh/functions/{{ name }}"', each = true }
-```
-
-It can then be applied to the plugin like this
-
-```toml
-[plugins.example]
-github = "owner/repo"
-apply = ["function"]
-```
-
-### Example: overriding the PATH template
-
-The built-in **PATH** template adds the directory path to the beginning of the
-`PATH` variable, we might want to change it to the be added at the end. We could
-do this like this
-
-```toml
-[templates]
-PATH = 'export PATH="$PATH:{{ dir }}"'
-```
-
-You can then apply it to the plugin like this
-
-```toml
-[plugins.example]
-github = "owner/repo"
-apply = ["source", "PATH"]
-```
-
-**Note:** this would change the behavior of **PATH** for *all* plugins using it.
+To add or update a template add a new key to the `[templates]` table in the
+config file. Take a look at the [examples](Examples.md) for some interesting
+applications of this.
 
 ## Global options
 

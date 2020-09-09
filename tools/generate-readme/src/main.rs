@@ -5,11 +5,12 @@ use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use anyhow::{bail, Result};
+use anyhow::{bail, Context, Result};
 use maplit::hashmap;
 use pulldown_cmark::{CowStr, Event, LinkType, Options, Parser, Tag};
 use pulldown_cmark_to_cmark::cmark_with_options;
 use pulldown_cmark_toc as toc;
+use regex_macro::regex;
 
 /// The directory containing the mdBook.
 const DOCS_DIR: &str = "docs/";
@@ -22,6 +23,12 @@ const SOURCES: &[&str] = &[
     "Command line interface",
     "Configuration",
 ];
+
+fn read_to_string<P: AsRef<Path>>(path: P) -> Result<String> {
+    let path = path.as_ref();
+    Ok(fs::read_to_string(path)
+        .with_context(|| format!("failed to read from `{}`", path.display()))?)
+}
 
 /// Render Markdown events as Markdown.
 fn to_cmark<'a, I, E>(events: I) -> String
@@ -39,7 +46,7 @@ where
 /// Returns a list of title and path links contained in the SUMMARY file.
 fn summary() -> Result<Vec<(String, PathBuf)>> {
     let docs_src = Path::new(DOCS_SRC_DIR);
-    let text = fs::read_to_string(docs_src.join("SUMMARY.md"))?;
+    let text = read_to_string(docs_src.join("SUMMARY.md"))?;
     let mut parser = Parser::new_ext(&text, Options::all());
     let mut vec = Vec::new();
     loop {
@@ -56,6 +63,22 @@ fn summary() -> Result<Vec<(String, PathBuf)>> {
         }
     }
     Ok(vec)
+}
+
+fn fix_broken_link(dest: CowStr) -> CowStr {
+    let link = dest.as_ref();
+    if !regex!(r"^(#|[a-z][a-z0-9+.-]*:)").is_match(link) {
+        if let Some(captures) = regex!(r"^(?P<link>.*)\.md(?P<anchor>#.*)?$").captures(link) {
+            let mut new_link = String::from("https://rossmacarthur.github.io/sheldon/");
+            new_link.push_str(&captures["link"]);
+            new_link.push_str(".html");
+            if let Some(capture) = captures.name("anchor") {
+                new_link.push_str(capture.as_str());
+            }
+            return CowStr::Boxed(new_link.into());
+        }
+    }
+    dest
 }
 
 /// Reformat a Markdown file and prefix headings with the given value.
@@ -78,6 +101,12 @@ fn fmt_with_renamed_headings(text: &str, prefix: &str) -> String {
                     event => panic!("expected heading to contain text, got {:?}", event),
                 }
             }
+            Some(Event::Start(Tag::Link(link_type, dest, title))) => events.push(Event::Start(
+                Tag::Link(link_type, fix_broken_link(dest), title),
+            )),
+            Some(Event::End(Tag::Link(link_type, dest, title))) => events.push(Event::End(
+                Tag::Link(link_type, fix_broken_link(dest), title),
+            )),
             Some(event) => {
                 events.push(event);
             }
@@ -92,6 +121,12 @@ fn fmt_with_increased_heading_level(text: &str) -> String {
     to_cmark(
         Parser::new_ext(&text, Options::all()).map(|event| match event {
             Event::Start(Tag::Heading(level)) => Event::Start(Tag::Heading(level + 1)),
+            Event::Start(Tag::Link(link_type, dest, title)) => {
+                Event::Start(Tag::Link(link_type, fix_broken_link(dest), title))
+            }
+            Event::End(Tag::Link(link_type, dest, title)) => {
+                Event::End(Tag::Link(link_type, fix_broken_link(dest), title))
+            }
             event => event,
         }),
     )
@@ -108,7 +143,7 @@ fn generate_readme_contents(summary: &[(String, PathBuf)]) -> Result<String> {
         if i != 0 {
             contents.push_str("\n\n");
         }
-        let text = fs::read_to_string(&path)?;
+        let text = read_to_string(&path)?;
         if name == "Configuration" {
             contents.push_str(&fmt_with_renamed_headings(&text, "Configuration:"));
         } else {
@@ -137,7 +172,7 @@ fn main() -> Result<()> {
     // Render the updated README
     let mut templates = handlebars::Handlebars::new();
     templates.set_strict_mode(true);
-    let readme = fs::read_to_string(Path::new(DOCS_DIR).join("README.hbs"))?;
+    let readme = read_to_string(Path::new(DOCS_DIR).join("README.hbs"))?;
     let data = hashmap! {
         "toc" => toc,
         "contents" => contents,
@@ -146,7 +181,7 @@ fn main() -> Result<()> {
         + &templates.render_template(&readme, &data)?;
 
     // Finally compare the current README contents and take appropriate action.
-    let current = fs::read_to_string("README.md")?;
+    let current = read_to_string("README.md")?;
 
     if current == result {
         println!("README is up to date!");

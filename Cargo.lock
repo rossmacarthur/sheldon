@@ -397,6 +397,7 @@ dependencies = [
  "pulldown-cmark",
  "pulldown-cmark-to-cmark",
  "pulldown-cmark-toc",
+ "regex-macro",
 ]
 
 [[package]]
@@ -1229,9 +1230,9 @@ dependencies = [
 
 [[package]]
 name = "regex-macro"
-version = "0.1.0"
+version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e443b9cde2a94bbd3080e5f742bcba9a3f173ea070ed84b53e7ad27665e8c5f9"
+checksum = "34afee392f63f278b9b655a57837c1cca48344de310c6b03f62cd73e219cb1c9"
 dependencies = [
  "once_cell",
  "regex",

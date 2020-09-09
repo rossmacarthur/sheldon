@@ -6,13 +6,13 @@ Sheldon works by specifying plugin information in a [TOML](https://toml.io)
 configuration file. You can initialize this file by running `sheldon init`.
 
 ```sh
-sheldon init --shell zsh
+sheldon init --shell bash
 ```
 
 or
 
 ```sh
-sheldon init --shell bash
+sheldon init --shell zsh
 ```
 
 This will create the `~/.sheldon` directory with an empty `plugins.toml` file.
@@ -21,7 +21,7 @@ interface to add or remove plugins.
 
 ## Adding a plugin
 
-To add your first plugin add the following to the Sheldon config file.
+To add your first plugin append the following to the Sheldon config file.
 
 ```toml
 # ~/.sheldon/plugins.toml

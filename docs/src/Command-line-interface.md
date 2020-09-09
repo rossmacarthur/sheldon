@@ -8,12 +8,35 @@ Sheldon has three different types of commands.
 - [`add`](#add), [`edit`](#edit), and [`remove`](#remove) automate editing of
   the config file.
 
+## `init`
+
+This command initializes a new config file. If a config file exists then this
+command does nothing.
+
+For example
+
+```sh
+sheldon init
+```
+
+Or you can specify the shell.
+
+```sh
+sheldon init --shell bash
+```
+
+or
+
+```sh
+sheldon init --shell zsh
+```
+
 ## `lock`
 
 The `lock` command installs the plugins sources and generates the lock file
-(`~/.sheldon/plugins.lock`). Rerunning this command will not reinstall plugin
-sources, just verify that they are correctly installed. It will always
-regenerate the lock file.
+(`~/.sheldon/plugins.lock`). Rerunning this command without any extra options
+will not reinstall plugin sources, just verify that they are correctly
+installed. It will always regenerate the lock file.
 
 ```sh
 sheldon lock
@@ -46,23 +69,6 @@ But you can also run it directly to inspect the output. The output of this
 command is highly configurable. You can define your own custom templates to
 apply to your plugins.
 
-## `init`
-
-This command initializes a new config file. If a config file exists then this
-command does nothing.
-
-For example
-
-```sh
-sheldon init
-```
-
-Or you can specify the shell.
-
-```sh
-sheldon init --shell bash
-```
-
 ## `add`
 
 This command adds a new plugin to the config file. It does nothing else but edit
@@ -74,7 +80,7 @@ sheldon add my-repo --git https://github.com/owner/repo.git
 ```
 
 An example usage of this command for each source type is shown in the
-[Configuration: plugin sources](#configuration-plugin-sources) section.
+[Configuration](Configuration.md) section.
 
 ## `edit`
 
