@@ -216,16 +216,16 @@ cargo build --release
 <h2><a class="header" href="#initializing" id="initializing">Initializing</a></h2>
 <p>Sheldon works by specifying plugin information in a <a href="https://toml.io">TOML</a>
 configuration file. You can initialize this file by running <code>sheldon init</code>.</p>
-<pre><code class="language-sh">sheldon init --shell zsh
+<pre><code class="language-sh">sheldon init --shell bash
 </code></pre>
 <p>or</p>
-<pre><code class="language-sh">sheldon init --shell bash
+<pre><code class="language-sh">sheldon init --shell zsh
 </code></pre>
 <p>This will create the <code>~/.sheldon</code> directory with an empty <code>plugins.toml</code> file.
 You can either edit this file directly or use the provided command line
 interface to add or remove plugins.</p>
 <h2><a class="header" href="#adding-a-plugin" id="adding-a-plugin">Adding a plugin</a></h2>
-<p>To add your first plugin add the following to the Sheldon config file.</p>
+<p>To add your first plugin append the following to the Sheldon config file.</p>
 <pre><code class="language-toml"># ~/.sheldon/plugins.toml
 
 [plugins.base16]
@@ -255,11 +255,23 @@ installation, and generation of shell source code.</li>
 <li><a href="Command-line-interface.html#add"><code>add</code></a>, <a href="Command-line-interface.html#edit"><code>edit</code></a>, and <a href="Command-line-interface.html#remove"><code>remove</code></a> automate editing of
 the config file.</li>
 </ul>
+<h2><a class="header" href="#init" id="init"><code>init</code></a></h2>
+<p>This command initializes a new config file. If a config file exists then this
+command does nothing.</p>
+<p>For example</p>
+<pre><code class="language-sh">sheldon init
+</code></pre>
+<p>Or you can specify the shell.</p>
+<pre><code class="language-sh">sheldon init --shell bash
+</code></pre>
+<p>or</p>
+<pre><code class="language-sh">sheldon init --shell zsh
+</code></pre>
 <h2><a class="header" href="#lock" id="lock"><code>lock</code></a></h2>
 <p>The <code>lock</code> command installs the plugins sources and generates the lock file
-(<code>~/.sheldon/plugins.lock</code>). Rerunning this command will not reinstall plugin
-sources, just verify that they are correctly installed. It will always
-regenerate the lock file.</p>
+(<code>~/.sheldon/plugins.lock</code>). Rerunning this command without any extra options
+will not reinstall plugin sources, just verify that they are correctly
+installed. It will always regenerate the lock file.</p>
 <pre><code class="language-sh">sheldon lock
 </code></pre>
 <p>To update all plugin sources you can use the <code>--update</code> flag.</p>
@@ -278,15 +290,6 @@ lock command above. This command is usually used with the built-in shell
 <p>But you can also run it directly to inspect the output. The output of this
 command is highly configurable. You can define your own custom templates to
 apply to your plugins.</p>
-<h2><a class="header" href="#init" id="init"><code>init</code></a></h2>
-<p>This command initializes a new config file. If a config file exists then this
-command does nothing.</p>
-<p>For example</p>
-<pre><code class="language-sh">sheldon init
-</code></pre>
-<p>Or you can specify the shell.</p>
-<pre><code class="language-sh">sheldon init --shell bash
-</code></pre>
 <h2><a class="header" href="#add" id="add"><code>add</code></a></h2>
 <p>This command adds a new plugin to the config file. It does nothing else but edit
 the config file. In the following command we add a GitHub repository as a
@@ -294,7 +297,7 @@ source.</p>
 <pre><code class="language-sh">sheldon add my-repo --git https://github.com/owner/repo.git
 </code></pre>
 <p>An example usage of this command for each source type is shown in the
-<a href="Command-line-interface.html#configuration-plugin-sources">Configuration: plugin sources</a> section.</p>
+<a href="Configuration.html">Configuration</a> section.</p>
 <h2><a class="header" href="#edit" id="edit"><code>edit</code></a></h2>
 <p>This command will open the config file in the default editor and only overwrite
 the contents if the updated config file is valid. To override the editor that is
@@ -501,7 +504,7 @@ template should be applied to each matched file for the plugin. This defaults to
 <h3><a class="header" href="#custom-templates" id="custom-templates">Custom templates</a></h3>
 <p>It is possible to create your own custom templates, and you can even override
 the built-in ones.</p>
-<p>Plugins all have the following information that can be used in templates</p>
+<p>Plugins all have the following information that can be used in templates.</p>
 <ul>
 <li>
 <p><strong>A unique name.</strong> This is completely arbitrary, and it is the value specified
@@ -509,45 +512,23 @@ for the plugin in the plugins table. However, it is often the name of the
 plugin, so it can be useful to use this name in templates with <code>{{ name }}</code>.</p>
 </li>
 <li>
-<p><strong>A directory.</strong> In git sources this is the location of the cloned repository,
-for local sources, it is the directory specified. This directory can be used
-in templates with <code>{{ dir }}</code>.</p>
+<p><strong>A directory.</strong> For Git sources this is the location of the cloned
+repository, for local sources, it is the directory specified. This directory
+can be used in templates with <code>{{ dir }}</code>.</p>
 </li>
 <li>
-<p><strong>Zero or more files.</strong> These are the matched files in the plugin directory
+<p><strong>One or more files.</strong> These are the matched files in the plugin directory
 either discovered using the the global <code>match</code> field or specified as a plugin
-option with <code>use</code>. These can be used in templates using <code>{{ file }}</code>. You can
-use the following global information in templates</p>
+option with <code>use</code>. These can be used in templates using <code>{{ file }}</code>. This
+information only makes sense in templates with <code>each</code> set to <code>true</code>.</p>
 </li>
 <li>
-<p><strong>The sheldon root.</strong> This folder can be used as <code>{{ root }}</code>.</p>
+<p><strong>The Sheldon root directory.</strong> This directory can be used as <code>{{ root }}</code>.</p>
 </li>
 </ul>
-<h3><a class="header" href="#example-symlinking-files" id="example-symlinking-files">Example: symlinking files</a></h3>
-<p>Lets say we would like a template to symlink files into the
-<code>~/.sheldon/functions</code> directory. We could create a new template with name
-<strong>function</strong>, like this</p>
-<pre><code class="language-toml">[templates]
-function = { value = 'ln -sf &quot;{{ file }}&quot; &quot;~/.zsh/functions/{{ name }}&quot;', each = true }
-</code></pre>
-<p>It can then be applied to the plugin like this</p>
-<pre><code class="language-toml">[plugins.example]
-github = &quot;owner/repo&quot;
-apply = [&quot;function&quot;]
-</code></pre>
-<h3><a class="header" href="#example-overriding-the-path-template" id="example-overriding-the-path-template">Example: overriding the PATH template</a></h3>
-<p>The built-in <strong>PATH</strong> template adds the directory path to the beginning of the
-<code>PATH</code> variable, we might want to change it to the be added at the end. We could
-do this like this</p>
-<pre><code class="language-toml">[templates]
-PATH = 'export PATH=&quot;$PATH:{{ dir }}&quot;'
-</code></pre>
-<p>You can then apply it to the plugin like this</p>
-<pre><code class="language-toml">[plugins.example]
-github = &quot;owner/repo&quot;
-apply = [&quot;source&quot;, &quot;PATH&quot;]
-</code></pre>
-<p><strong>Note:</strong> this would change the behavior of <strong>PATH</strong> for <em>all</em> plugins using it.</p>
+<p>To add or update a template add a new key to the <code>[templates]</code> table in the
+config file. Take a look at the <a href="Examples.html">examples</a> for some interesting
+applications of this.</p>
 <h2><a class="header" href="#global-options" id="global-options">Global options</a></h2>
 <h3><a class="header" href="#shell" id="shell"><code>shell</code></a></h3>
 <p>Indicates the shell that you are using. This setting will affect the default
@@ -591,8 +572,8 @@ defaults to</p>
 <pre><code class="language-toml">apply = [&quot;source&quot;]
 </code></pre>
 <h1><a class="header" href="#examples" id="examples">Examples</a></h1>
-<p>This section demonstrates the configuration file contents for some popular
-plugins and themes.</p>
+<p>This section demonstrates the configuration file contents for some common
+installation practices as well how to configure popular plugins and themes.</p>
 <h2><a class="header" href="#deferred-loading-of-plugins-in-zsh" id="deferred-loading-of-plugins-in-zsh">Deferred loading of plugins in Zsh</a></h2>
 <p>A commonly desired feature of shell plugin managers is deferred loading of
 plugins because of the massive increase in speed that it provides. Because
@@ -604,19 +585,32 @@ deferred loading working with Sheldon using
 <pre><code class="language-toml">[plugins.zsh-defer]
 github = &quot;romkatv/zsh-defer&quot;
 </code></pre>
+<p>Important: the <code>zsh-defer</code> plugin definition should be placed before any plugins
+that will use the <code>defer</code> template. Sheldon always processes plugins in the
+order they are defined in the config file.</p>
 <p>Then add a template that calls <code>zsh-defer source</code> instead of just <code>source</code>.</p>
 <pre><code class="language-toml">[templates]
 defer = { value = 'zsh-defer source &quot;{{ file }}&quot;', each = true }
 </code></pre>
-<p>Important: the <code>zsh-defer</code> plugin definition should be placed before any plugins
-that use the <code>defer</code> template. Sheldon always processes plugins in the order
-they are defined in the config file.</p>
 <p>Now any plugin that you want to defer you can apply the <code>defer</code> template. For
 example if you wanted to defer loading of <code>zsh-syntax-highlighting</code>.</p>
 <pre><code class="language-toml">[plugins.zsh-syntax-highlighting]
 github = &quot;zsh-users/zsh-syntax-highlighting&quot;
 apply = [&quot;defer&quot;]
 </code></pre>
+<h2><a class="header" href="#overriding-the-path-template" id="overriding-the-path-template">Overriding the PATH template</a></h2>
+<p>The built-in <strong>PATH</strong> template adds the directory path to the beginning of the
+<code>PATH</code> variable, we might want to change it to the be added at the end. We could
+do this like this</p>
+<pre><code class="language-toml">[templates]
+PATH = 'export PATH=&quot;$PATH:{{ dir }}&quot;'
+</code></pre>
+<p>You can then apply it to the plugin like this</p>
+<pre><code class="language-toml">[plugins.example]
+github = &quot;owner/repo&quot;
+apply = [&quot;source&quot;, &quot;PATH&quot;]
+</code></pre>
+<p><strong>Note:</strong> this would change the behavior of <strong>PATH</strong> for <em>all</em> plugins using it.</p>
 <h2><a class="header" href="#zsh-frameworks" id="zsh-frameworks">Zsh frameworks</a></h2>
 <h3><a class="header" href="#a-hrefhttpsgithubcomohmyzshohmyzshohmyzsha" id="a-hrefhttpsgithubcomohmyzshohmyzshohmyzsha"><a href="https://github.com/ohmyzsh/ohmyzsh">ohmyzsh</a></a></h3>
 <p>Add the following to the Sheldon config file.</p>

@@ -168,11 +168,23 @@ installation, and generation of shell source code.</li>
 <li><a href="#add"><code>add</code></a>, <a href="#edit"><code>edit</code></a>, and <a href="#remove"><code>remove</code></a> automate editing of
 the config file.</li>
 </ul>
+<h2><a class="header" href="#init" id="init"><code>init</code></a></h2>
+<p>This command initializes a new config file. If a config file exists then this
+command does nothing.</p>
+<p>For example</p>
+<pre><code class="language-sh">sheldon init
+</code></pre>
+<p>Or you can specify the shell.</p>
+<pre><code class="language-sh">sheldon init --shell bash
+</code></pre>
+<p>or</p>
+<pre><code class="language-sh">sheldon init --shell zsh
+</code></pre>
 <h2><a class="header" href="#lock" id="lock"><code>lock</code></a></h2>
 <p>The <code>lock</code> command installs the plugins sources and generates the lock file
-(<code>~/.sheldon/plugins.lock</code>). Rerunning this command will not reinstall plugin
-sources, just verify that they are correctly installed. It will always
-regenerate the lock file.</p>
+(<code>~/.sheldon/plugins.lock</code>). Rerunning this command without any extra options
+will not reinstall plugin sources, just verify that they are correctly
+installed. It will always regenerate the lock file.</p>
 <pre><code class="language-sh">sheldon lock
 </code></pre>
 <p>To update all plugin sources you can use the <code>--update</code> flag.</p>
@@ -191,15 +203,6 @@ lock command above. This command is usually used with the built-in shell
 <p>But you can also run it directly to inspect the output. The output of this
 command is highly configurable. You can define your own custom templates to
 apply to your plugins.</p>
-<h2><a class="header" href="#init" id="init"><code>init</code></a></h2>
-<p>This command initializes a new config file. If a config file exists then this
-command does nothing.</p>
-<p>For example</p>
-<pre><code class="language-sh">sheldon init
-</code></pre>
-<p>Or you can specify the shell.</p>
-<pre><code class="language-sh">sheldon init --shell bash
-</code></pre>
 <h2><a class="header" href="#add" id="add"><code>add</code></a></h2>
 <p>This command adds a new plugin to the config file. It does nothing else but edit
 the config file. In the following command we add a GitHub repository as a
@@ -207,7 +210,7 @@ source.</p>
 <pre><code class="language-sh">sheldon add my-repo --git https://github.com/owner/repo.git
 </code></pre>
 <p>An example usage of this command for each source type is shown in the
-<a href="#configuration-plugin-sources">Configuration: plugin sources</a> section.</p>
+<a href="Configuration.html">Configuration</a> section.</p>
 <h2><a class="header" href="#edit" id="edit"><code>edit</code></a></h2>
 <p>This command will open the config file in the default editor and only overwrite
 the contents if the updated config file is valid. To override the editor that is

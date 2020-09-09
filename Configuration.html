@@ -324,7 +324,7 @@ template should be applied to each matched file for the plugin. This defaults to
 <h3><a class="header" href="#custom-templates" id="custom-templates">Custom templates</a></h3>
 <p>It is possible to create your own custom templates, and you can even override
 the built-in ones.</p>
-<p>Plugins all have the following information that can be used in templates</p>
+<p>Plugins all have the following information that can be used in templates.</p>
 <ul>
 <li>
 <p><strong>A unique name.</strong> This is completely arbitrary, and it is the value specified
@@ -332,45 +332,23 @@ for the plugin in the plugins table. However, it is often the name of the
 plugin, so it can be useful to use this name in templates with <code>{{ name }}</code>.</p>
 </li>
 <li>
-<p><strong>A directory.</strong> In git sources this is the location of the cloned repository,
-for local sources, it is the directory specified. This directory can be used
-in templates with <code>{{ dir }}</code>.</p>
+<p><strong>A directory.</strong> For Git sources this is the location of the cloned
+repository, for local sources, it is the directory specified. This directory
+can be used in templates with <code>{{ dir }}</code>.</p>
 </li>
 <li>
-<p><strong>Zero or more files.</strong> These are the matched files in the plugin directory
+<p><strong>One or more files.</strong> These are the matched files in the plugin directory
 either discovered using the the global <code>match</code> field or specified as a plugin
-option with <code>use</code>. These can be used in templates using <code>{{ file }}</code>. You can
-use the following global information in templates</p>
+option with <code>use</code>. These can be used in templates using <code>{{ file }}</code>. This
+information only makes sense in templates with <code>each</code> set to <code>true</code>.</p>
 </li>
 <li>
-<p><strong>The sheldon root.</strong> This folder can be used as <code>{{ root }}</code>.</p>
+<p><strong>The Sheldon root directory.</strong> This directory can be used as <code>{{ root }}</code>.</p>
 </li>
 </ul>
-<h3><a class="header" href="#example-symlinking-files" id="example-symlinking-files">Example: symlinking files</a></h3>
-<p>Lets say we would like a template to symlink files into the
-<code>~/.sheldon/functions</code> directory. We could create a new template with name
-<strong>function</strong>, like this</p>
-<pre><code class="language-toml">[templates]
-function = { value = 'ln -sf &quot;{{ file }}&quot; &quot;~/.zsh/functions/{{ name }}&quot;', each = true }
-</code></pre>
-<p>It can then be applied to the plugin like this</p>
-<pre><code class="language-toml">[plugins.example]
-github = &quot;owner/repo&quot;
-apply = [&quot;function&quot;]
-</code></pre>
-<h3><a class="header" href="#example-overriding-the-path-template" id="example-overriding-the-path-template">Example: overriding the PATH template</a></h3>
-<p>The built-in <strong>PATH</strong> template adds the directory path to the beginning of the
-<code>PATH</code> variable, we might want to change it to the be added at the end. We could
-do this like this</p>
-<pre><code class="language-toml">[templates]
-PATH = 'export PATH=&quot;$PATH:{{ dir }}&quot;'
-</code></pre>
-<p>You can then apply it to the plugin like this</p>
-<pre><code class="language-toml">[plugins.example]
-github = &quot;owner/repo&quot;
-apply = [&quot;source&quot;, &quot;PATH&quot;]
-</code></pre>
-<p><strong>Note:</strong> this would change the behavior of <strong>PATH</strong> for <em>all</em> plugins using it.</p>
+<p>To add or update a template add a new key to the <code>[templates]</code> table in the
+config file. Take a look at the <a href="Examples.html">examples</a> for some interesting
+applications of this.</p>
 <h2><a class="header" href="#global-options" id="global-options">Global options</a></h2>
 <h3><a class="header" href="#shell" id="shell"><code>shell</code></a></h3>
 <p>Indicates the shell that you are using. This setting will affect the default
