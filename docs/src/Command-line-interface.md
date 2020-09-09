@@ -131,7 +131,7 @@ Sheldon accepts the following global command line options.
 | `--home <path>`         | `HOME`                 | Set the home directory. (*default:* auto)                   |
 | `--root <path>`         | `SHELDON_ROOT`         | Set the root directory. (*default:* `<home>/.sheldon`)      |
 | `--config-file <path>`  | `SHELDON_CONFIG_FILE`  | Set the config file. (*default:*  `<root>/plugins.toml`)    |
-| `--lock-file <path>`    | `SHELDON_LOCK_FILE`    | Set the lock file. (*default:* `<config-file>.lock`)        |
+| `--lock-file <path>`    | `SHELDON_LOCK_FILE`    | Set the lock file. (*default:* `<root>/plugins.lock`)       |
 | `--clone-dir <path>`    | `SHELDON_CLONE_DIR`    | Set the clone directory. (*default:* `<root>/repos`)        |
 | `--download-dir <path>` | `SHELDON_DOWNLOAD_DIR` | Set the download directory. (*default:* `<root>/downloads`) |
 

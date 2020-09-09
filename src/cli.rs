@@ -333,7 +333,7 @@ impl Opt {
         };
         let root = root.unwrap_or_else(|| home.join(".sheldon"));
         let config_file = config_file.unwrap_or_else(|| root.join("plugins.toml"));
-        let lock_file = lock_file.unwrap_or_else(|| config_file.with_extension("lock"));
+        let lock_file = lock_file.unwrap_or_else(|| root.join("plugins.lock"));
         let clone_dir = clone_dir.unwrap_or_else(|| root.join("repos"));
         let download_dir = download_dir.unwrap_or_else(|| root.join("downloads"));
 

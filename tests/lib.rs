@@ -473,7 +473,7 @@ fn lock_and_source_override_config_file() -> io::Result<()> {
         .arg("source")
         .run()?;
 
-    case.assert_contents("test.lock")
+    case.assert_contents("plugins.lock")
 }
 
 #[test]
