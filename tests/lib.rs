@@ -71,6 +71,9 @@ impl TestCommand {
         command
             .env("HOME", root.as_ref())
             .env("SHELDON_ROOT", root.as_ref())
+            .env_remove("XDG_CONFIG_HOME")
+            .env_remove("XDG_DATA_HOME")
+            .env_remove("XDG_CACHE_HOME")
             .env_remove("SHELDON_CONFIG_FILE")
             .env_remove("SHELDON_LOCK_FILE")
             .env_remove("SHELDON_CLONE_DIR")

@@ -60,6 +60,7 @@ jobs:
       run: |
         cargo install cross
         cross test --locked --target ${{ matrix.target }}
+        cross test --locked --target ${{ matrix.target }} -- --ignored --test-threads=1
 
   readme:
     runs-on: ubuntu-latest

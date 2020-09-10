@@ -331,11 +331,38 @@ impl Opt {
                 process::exit(1);
             }
         };
-        let root = root.unwrap_or_else(|| home.join(".sheldon"));
-        let config_file = config_file.unwrap_or_else(|| root.join("plugins.toml"));
-        let lock_file = lock_file.unwrap_or_else(|| root.join("plugins.lock"));
-        let clone_dir = clone_dir.unwrap_or_else(|| root.join("repos"));
-        let download_dir = download_dir.unwrap_or_else(|| root.join("downloads"));
+
+        let xdg_config_user = std::env::var_os("XDG_CONFIG_HOME").map(PathBuf::from);
+        let xdg_data_user = std::env::var_os("XDG_DATA_HOME").map(PathBuf::from);
+
+        // Note: "XDG_RUNTIME_DIR is not checked as it can be set by the
+        // system rather than the user, and cannot be relied upon to
+        // indicate a preference for XDG directory layout.
+        let using_xdg = xdg_data_user.is_some()
+            || xdg_config_user.is_some()
+            || std::env::var_os("XDG_CACHE_HOME").is_some()
+            || std::env::var_os("XDG_DATA_DIRS").is_some()
+            || std::env::var_os("XDG_CONFIG_DIRS").is_some();
+
+        let (config_dir, data_dir) = if using_xdg {
+            (
+                xdg_config_user
+                    .unwrap_or_else(|| home.join(".config"))
+                    .join("sheldon"),
+                xdg_data_user
+                    .unwrap_or_else(|| home.join(".local/share"))
+                    .join("sheldon"),
+            )
+        } else {
+            let dir = root.clone().unwrap_or_else(|| home.join(".sheldon"));
+            (dir.clone(), dir)
+        };
+
+        let root = root.unwrap_or_else(|| data_dir.clone());
+        let config_file = config_file.unwrap_or_else(|| config_dir.join("plugins.toml"));
+        let lock_file = lock_file.unwrap_or_else(|| data_dir.join("plugins.lock"));
+        let clone_dir = clone_dir.unwrap_or_else(|| data_dir.join("repos"));
+        let download_dir = download_dir.unwrap_or_else(|| data_dir.join("downloads"));
 
         let settings = Settings {
             version: String::from(crate_version!()),
@@ -396,13 +423,15 @@ mod tests {
 
     use std::env;
     use std::iter;
+    use std::path::Path;
 
     use pretty_assertions::assert_eq;
     use structopt::clap::{crate_authors, crate_description, crate_name};
 
     fn setup() {
         for (k, _) in env::vars() {
-            if k.starts_with(&format!("{}_", crate_name!().to_uppercase())) {
+            if k.starts_with(&format!("{}_", crate_name!().to_uppercase())) || k.starts_with("XDG_")
+            {
                 env::remove_var(k);
             }
         }
@@ -1016,5 +1045,103 @@ FLAGS:
             raw_opt_err(&["source", "--update", "--reinstall"]).kind,
             structopt::clap::ErrorKind::ArgumentConflict
         );
+    }
+
+    //////////////////////////////////////////////////////////////////////////
+    // Directory structure tests, to be run with `--test-threads=1` to prevent
+    // ENV clobbering.
+    //////////////////////////////////////////////////////////////////////////
+
+    fn dir_test_settings() -> Settings {
+        Opt::from_raw_opt(raw_opt(&["--home", "/", "lock"])).settings
+    }
+
+    fn settings_from(config: &Path, data: &Path) -> Settings {
+        let home = PathBuf::from("/");
+
+        Settings {
+            version: String::from(crate_version!()),
+            home,
+            root: config.into(),
+            config_file: config.join("plugins.toml"),
+            lock_file: data.join("plugins.lock"),
+            clone_dir: data.join("repos"),
+            download_dir: data.join("downloads"),
+        }
+    }
+
+    fn xdg_settings_from(xdg_config: &Path, xdg_data: &Path) -> Settings {
+        let config = &xdg_config.join("sheldon");
+        let data = &xdg_data.join("sheldon");
+        settings_from(config, data)
+    }
+
+    #[test]
+    #[ignore]
+    fn opt_sheldon_default_dirs() {
+        setup();
+        let home = &PathBuf::from("/");
+        let config_and_data = &home.join(".sheldon");
+
+        assert_eq!(
+            dir_test_settings(),
+            settings_from(config_and_data, config_and_data)
+        );
+    }
+
+    #[test]
+    #[ignore]
+    fn opt_xdg_defaults() {
+        setup();
+        let home = &PathBuf::from("/");
+        let config_default = &home.join(".config");
+        let data_default = &home.join(".local/share");
+        let config_custom = &home.join(".config_custom");
+        let data_custom = &home.join(".local/custom");
+        let cache_custom = &home.join(".cache_custom");
+
+        env::set_var("XDG_CACHE_HOME", cache_custom);
+        assert_eq!(
+            dir_test_settings(),
+            xdg_settings_from(config_default, data_default)
+        );
+
+        env::remove_var("XDG_CACHE_HOME");
+        env::set_var("XDG_CONFIG_HOME", config_custom);
+        assert_eq!(
+            dir_test_settings(),
+            xdg_settings_from(config_custom, data_default)
+        );
+
+        env::set_var("XDG_DATA_HOME", data_custom);
+        assert_eq!(
+            dir_test_settings(),
+            xdg_settings_from(config_custom, data_custom)
+        );
+
+        env::remove_var("XDG_CONFIG_HOME");
+        assert_eq!(
+            dir_test_settings(),
+            xdg_settings_from(config_default, data_custom)
+        );
+
+        env::remove_var("XDG_DATA_HOME");
+    }
+
+    #[test]
+    #[ignore]
+    fn opt_xdg_from_env() {
+        setup();
+        let home = &PathBuf::from("/");
+        let xdg_config = &home.join(".config_custom");
+        let xdg_data = &home.join(".local/custom");
+
+        env::set_var("XDG_CONFIG_HOME", xdg_config);
+        env::set_var("XDG_DATA_HOME", xdg_data);
+
+        assert_eq!(dir_test_settings(), xdg_settings_from(xdg_config, xdg_data));
+
+        env::remove_var("XDG_CONFIG_HOME");
+        env::remove_var("XDG_DATA_HOME");
     }
 }
