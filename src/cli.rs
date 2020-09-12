@@ -4,6 +4,7 @@ use std::path::PathBuf;
 use std::process;
 
 use anyhow::anyhow;
+use once_cell::sync::OnceCell;
 use structopt::clap::{crate_version, AppSettings, ArgGroup};
 use structopt::StructOpt;
 use url::Url;
@@ -23,6 +24,26 @@ const SETTINGS: &[AppSettings] = &[
 ];
 const HELP_MESSAGE: &str = "Show this message and exit";
 const VERSION_MESSAGE: &str = "Show the version and exit";
+
+fn long_version() -> &'static str {
+    static REF: OnceCell<String> = OnceCell::new();
+    REF.get_or_init(|| {
+        let mut v = String::from(option_env!("GIT_DESCRIBE").unwrap_or(env!("CARGO_PKG_VERSION")));
+        macro_rules! push {
+            ($($arg:tt)*) => {v.push('\n'); v.push_str(&format!($($arg)+))};
+        }
+        if let (Some(commit_hash), Some(commit_date)) = (
+            option_env!("GIT_COMMIT_HASH"),
+            option_env!("GIT_COMMIT_DATE"),
+        ) {
+            push!("binary: {}", env!("CARGO_PKG_NAME"));
+            push!("release: {}", env!("CARGO_PKG_VERSION"));
+            push!("commit-hash: {}", commit_hash);
+            push!("commit-date: {}", commit_date);
+        }
+        v
+    })
+}
 
 #[derive(Debug, PartialEq, StructOpt)]
 #[structopt(
@@ -148,6 +169,7 @@ enum RawCommand {
 #[structopt(
     author,
     about,
+    long_version = long_version(),
     setting = AppSettings::SubcommandRequired,
     global_settings = &SETTINGS,
     help_message = HELP_MESSAGE,

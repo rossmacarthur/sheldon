@@ -246,6 +246,29 @@ fn check_sheldon_test(root: &Path) -> Result<(), git2::Error> {
 /////////////////////////////////////////////////////////////////////////
 
 #[test]
+fn long_version() -> io::Result<()> {
+    let root = tempfile::tempdir()?;
+    TestCommand::new(root)
+        .arg("--version")
+        .expect_exit_code(0)
+        .expect_stdout(format!(
+            "\
+sheldon {}
+binary: sheldon
+release: {}
+commit-hash: {}
+commit-date: {}
+",
+            env!("GIT_DESCRIBE"),
+            env!("CARGO_PKG_VERSION"),
+            env!("GIT_COMMIT_HASH"),
+            env!("GIT_COMMIT_DATE")
+        ))
+        .run()?;
+    Ok(())
+}
+
+#[test]
 fn lock_and_source_clean() -> io::Result<()> {
     let case = TestCase::load("clean")?;
     let root = case.root.path();
