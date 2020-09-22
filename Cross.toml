@@ -1,8 +1,8 @@
 [target.aarch64-unknown-linux-musl]
-image = "rossmacarthur/sheldon-cross:aarch64-unknown-linux-musl-0.2.1"
+image = "rossmacarthur/sheldon-cross:aarch64-unknown-linux-musl-0.2.2"
 
 [target.armv7-unknown-linux-musleabihf]
-image = "rossmacarthur/sheldon-cross:armv7-unknown-linux-musleabihf-0.2.1"
+image = "rossmacarthur/sheldon-cross:armv7-unknown-linux-musleabihf-0.2.2"
 
 [target.x86_64-unknown-linux-musl]
-image = "rossmacarthur/sheldon-cross:x86_64-unknown-linux-musl-0.2.1"
+image = "rossmacarthur/sheldon-cross:x86_64-unknown-linux-musl-0.2.2"
