@@ -5,17 +5,17 @@ tag = "bad-tag"
 
 # plugins.lock
 version = "<version>"
-home = "<root>"
+home = "<home>"
 root = "<root>"
-config_file = "<root>/plugins.toml"
-lock_file = "<root>/plugins.lock"
-clone_dir = "<root>/repos"
-download_dir = "<root>/downloads"
+config_file = "<config>/plugins.toml"
+lock_file = "<data>/plugins.lock"
+clone_dir = "<data>/repos"
+download_dir = "<data>/downloads"
 
 [[plugins]]
 name = "test"
-source_dir = "<root>/repos/github.com/rossmacarthur/sheldon-test"
-files = ["<root>/repos/github.com/rossmacarthur/sheldon-test/test.plugin.zsh"]
+source_dir = "<data>/repos/github.com/rossmacarthur/sheldon-test"
+files = ["<data>/repos/github.com/rossmacarthur/sheldon-test/test.plugin.zsh"]
 apply = ["source"]
 [templates.PATH]
 value = "export PATH=\"{{ dir }}:$PATH\""
@@ -36,7 +36,7 @@ each = true
 # lock.stdout
 
 # lock.stderr
-[LOADED] ~/plugins.toml
+[LOADED] ~/<config_sub>/plugins.toml
 
 [ERROR] failed to install source `https://github.com/rossmacarthur/sheldon-test@bad-tag`
   due to: failed to find tag `bad-tag`

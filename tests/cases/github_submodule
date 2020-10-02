@@ -6,18 +6,18 @@ dir = "self/self"
 
 # plugins.lock
 version = "<version>"
-home = "<root>"
+home = "<home>"
 root = "<root>"
-config_file = "<root>/plugins.toml"
-lock_file = "<root>/plugins.lock"
-clone_dir = "<root>/repos"
-download_dir = "<root>/downloads"
+config_file = "<config>/plugins.toml"
+lock_file = "<data>/plugins.lock"
+clone_dir = "<data>/repos"
+download_dir = "<data>/downloads"
 
 [[plugins]]
 name = "test"
-source_dir = "<root>/repos/github.com/rossmacarthur/sheldon-test"
-plugin_dir = "<root>/repos/github.com/rossmacarthur/sheldon-test/self/self"
-files = ["<root>/repos/github.com/rossmacarthur/sheldon-test/self/self/test.plugin.zsh"]
+source_dir = "<data>/repos/github.com/rossmacarthur/sheldon-test"
+plugin_dir = "<data>/repos/github.com/rossmacarthur/sheldon-test/self/self"
+files = ["<data>/repos/github.com/rossmacarthur/sheldon-test/self/self/test.plugin.zsh"]
 apply = ["source"]
 [templates.PATH]
 value = "export PATH=\"{{ dir }}:$PATH\""
@@ -38,15 +38,15 @@ each = true
 # lock.stdout
 
 # lock.stderr
-[LOADED] ~/plugins.toml
+[LOADED] ~/<config_sub>/plugins.toml
     [CLONED] https://github.com/rossmacarthur/sheldon-test@recursive-recursive
-[LOCKED] ~/plugins.lock
+[LOCKED] ~/<data_sub>/plugins.lock
 
 # source.stdout
-source "<root>/repos/github.com/rossmacarthur/sheldon-test/self/self/test.plugin.zsh"
+source "<data>/repos/github.com/rossmacarthur/sheldon-test/self/self/test.plugin.zsh"
 
 # source.stderr
-[UNLOCKED] ~/plugins.lock
+[UNLOCKED] ~/<data_sub>/plugins.lock
   [RENDERED] test
 
 # end

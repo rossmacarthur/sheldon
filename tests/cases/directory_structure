@@ -1,6 +1,9 @@
 # plugins.toml
-[plugins.test]
+[plugins.test_repos]
 github = "rossmacarthur/sheldon-test"
+
+[plugins.test_downloads]
+remote = "https://raw.githubusercontent.com/rossmacarthur/sheldon-test/master/test.plugin.zsh"
 
 # plugins.lock
 version = "<version>"
@@ -12,9 +15,15 @@ clone_dir = "<data>/repos"
 download_dir = "<data>/downloads"
 
 [[plugins]]
-name = "test"
+name = "test_repos"
 source_dir = "<data>/repos/github.com/rossmacarthur/sheldon-test"
 files = ["<data>/repos/github.com/rossmacarthur/sheldon-test/test.plugin.zsh"]
+apply = ["source"]
+
+[[plugins]]
+name = "test_downloads"
+source_dir = "<data>/downloads/raw.githubusercontent.com/rossmacarthur/sheldon-test/master"
+files = ["<data>/downloads/raw.githubusercontent.com/rossmacarthur/sheldon-test/master/test.plugin.zsh"]
 apply = ["source"]
 [templates.PATH]
 value = "export PATH=\"{{ dir }}:$PATH\""
@@ -36,14 +45,17 @@ each = true
 
 # lock.stderr
 [LOADED] ~/<config_sub>/plugins.toml
+   [FETCHED] https://raw.githubusercontent.com/rossmacarthur/sheldon-test/master/test.plugin.zsh
     [CLONED] https://github.com/rossmacarthur/sheldon-test
 [LOCKED] ~/<data_sub>/plugins.lock
 
 # source.stdout
 source "<data>/repos/github.com/rossmacarthur/sheldon-test/test.plugin.zsh"
+source "<data>/downloads/raw.githubusercontent.com/rossmacarthur/sheldon-test/master/test.plugin.zsh"
 
 # source.stderr
 [UNLOCKED] ~/<data_sub>/plugins.lock
-  [RENDERED] test
+  [RENDERED] test_repos
+  [RENDERED] test_downloads
 
 # end
