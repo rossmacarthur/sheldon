@@ -9,19 +9,22 @@
       Fast, configurable, shell plugin manager
     </strong>
 </div>
-<br />
+<br>
 <div align="center">
+  <a href="https://gitter.im/rossmacarthur/sheldon">
+    <img src="https://img.shields.io/gitter/room/rossmacarthur/sheldon?color=orange" alt="Gitter chat">
+  </a>
   <a href="https://crates.io/crates/sheldon">
-    <img src="https://img.shields.io/crates/v/sheldon.svg" alt="Crates.io version" />
+    <img src="https://img.shields.io/crates/v/sheldon.svg?color=blue" alt="Crates.io version">
   </a>
   <a href="https://github.com/rossmacarthur/sheldon/releases/latest">
-    <img src="https://img.shields.io/github/v/release/rossmacarthur/sheldon?label=download&scolor=yellow" alt="Download" />
+    <img src="https://img.shields.io/github/v/release/rossmacarthur/sheldon?label=download&color=blue" alt="Download">
   </a>
   <a href="https://github.com/rossmacarthur/sheldon/actions?query=workflow%3Abuild">
-    <img src="https://img.shields.io/github/workflow/status/rossmacarthur/sheldon/build/master" alt="Build status" />
+    <img src="https://img.shields.io/github/workflow/status/rossmacarthur/sheldon/build/master" alt="Build status">
   </a>
   <a href="https://github.com/rossmacarthur/sheldon/actions?query=workflow%3Arelease">
-    <img src="https://img.shields.io/github/workflow/status/rossmacarthur/sheldon/release?label=release" alt="Release status" />
+    <img src="https://img.shields.io/github/workflow/status/rossmacarthur/sheldon/release?label=release" alt="Release status">
   </a>
   <a href="https://rossmacarthur.github.io/sheldon">
     <img src="https://img.shields.io/badge/docs-latest-blue" alt="Documentation">
