@@ -610,28 +610,35 @@ fn lock_and_source_override_lock_file() -> io::Result<()> {
 #[test]
 fn dirs_default() -> io::Result<()> {
     let dirs = Directories::default()?;
-    let case = TestCase::load_with_dirs("directory_structure", dirs.clone())?.run();
+    let case = TestCase::load_with_dirs("directories", dirs.clone())?.run();
+    let case_incremental = TestCase::load_with_dirs("directories_incremental", dirs.clone())?.run();
 
     assert!(dirs.conforms());
     assert_eq!(&dirs.data, &dirs.config);
-    case
+    case.unwrap();
+    case_incremental
 }
 
 #[test]
 fn dirs_xdg_default() -> io::Result<()> {
     let dirs = Directories::default_xdg()?;
-    let case = TestCase::load_with_dirs("directory_structure", dirs.clone())?;
-    case.write_config_file("plugins.toml")?;
+    let case = TestCase::load_with_dirs("directories", dirs.clone())?;
+    let case_incremental = TestCase::load_with_dirs("directories_incremental", dirs.clone())?;
 
     let env_vars = &[("XDG_CACHE_HOME", dirs.home.path().join(".cache"))];
-    TestCommand::new(&case.dirs)
-        .expect_success(&case, "lock")
-        .envs(env_vars.iter().cloned())
-        .run()?;
-    TestCommand::new(&case.dirs)
-        .expect_success(&case, "source")
-        .envs(env_vars.iter().cloned())
-        .run()?;
+    let cmd = |case: &TestCase, cmd: &str| {
+        TestCommand::new(&case.dirs)
+            .expect_success(&case, cmd)
+            .envs(env_vars.iter().cloned())
+    };
+
+    case.write_config_file("plugins.toml")?;
+    cmd(&case, "lock").run()?;
+    cmd(&case, "source").run()?;
+
+    case_incremental.write_config_file("plugins.toml")?;
+    cmd(&case_incremental, "lock").run()?;
+    cmd(&case_incremental, "source").run()?;
 
     assert!(dirs.conforms());
     Ok(())
@@ -650,18 +657,22 @@ fn dirs_xdg_from_env() -> io::Result<()> {
     }
     .init()?;
 
-    let case = TestCase::load_with_dirs("directory_structure", dirs.clone())?;
-    case.write_config_file("plugins.toml")?;
+    let case = TestCase::load_with_dirs("directories", dirs.clone())?;
+    let case_incremental = TestCase::load_with_dirs("directories_incremental", dirs.clone())?;
 
     let env_vars = &[("XDG_CONFIG_HOME", xdg_config), ("XDG_DATA_HOME", xdg_data)];
-    TestCommand::new(&case.dirs)
-        .expect_success(&case, "lock")
-        .envs(env_vars.iter().cloned())
-        .run()?;
-    TestCommand::new(&case.dirs)
-        .expect_success(&case, "source")
-        .envs(env_vars.iter().cloned())
-        .run()?;
+    let cmd = |case: &TestCase, cmd: &str| {
+        TestCommand::new(&case.dirs)
+            .expect_success(&case, cmd)
+            .envs(env_vars.iter().cloned())
+    };
+
+    case.write_config_file("plugins.toml")?;
+    cmd(&case, "lock").run()?;
+    cmd(&case, "source").run()?;
+    case_incremental.write_config_file("plugins.toml")?;
+    cmd(&case_incremental, "lock").run()?;
+    cmd(&case_incremental, "source").run()?;
 
     assert!(dirs.conforms());
     Ok(())
