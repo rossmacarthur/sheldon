@@ -197,7 +197,7 @@ impl Sheldon {
                 settings: &settings,
                 output: &output,
             };
-            Mutex::acquire(&ctx, settings.root())
+            Mutex::acquire(&ctx, settings.config_dir())
         };
 
         let mut warnings = Vec::new();

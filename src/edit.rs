@@ -230,7 +230,7 @@ tag = '0.1.0'
 apply = ["PATH", "source"]
 
 [templates]
-prompt = { value = 'ln -sf "{{ file }}" "{{ root }}/functions/prompt_{{ name }}_setup"', each = true }
+prompt = { value = 'ln -sf "{{ file }}" "{{ data_dir }}/functions/prompt_{{ name }}_setup"', each = true }
 
 # yes this is the pure plugin
 [plugins.pure]
@@ -257,7 +257,7 @@ use = ["{{ name }}.zsh"]
 apply = ["PATH", "source"]
 
 [templates]
-prompt = { value = 'ln -sf "{{ file }}" "{{ root }}/functions/prompt_{{ name }}_setup"', each = true }
+prompt = { value = 'ln -sf "{{ file }}" "{{ data_dir }}/functions/prompt_{{ name }}_setup"', each = true }
 
 # yes this is the pure plugin
 [plugins.pure]

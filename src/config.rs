@@ -700,6 +700,12 @@ impl RawPlugin {
 }
 
 impl RawConfig {
+    const DEPRECATED: &'static [(&'static str, &'static str)] = &[
+        ("root", "data_dir"),
+        ("directory", "dir"),
+        ("filename", "file"),
+    ];
+
     /// Read a `RawConfig` from the given path.
     pub fn from_path<P>(path: P) -> Result<Self>
     where
@@ -736,11 +742,9 @@ impl RawConfig {
                 .with_context(s!("failed to compile template `{}`", name))?;
             // Simplistic check for deprecated template variables.
             let replaced = template.value.replace(" ", "");
-            for (old, to_check, new) in &[
-                ("directory", "{{directory}}", "dir"),
-                ("filename", "{{filename}}", "file"),
-            ] {
-                if replaced.contains(to_check) {
+            for (old, new) in Self::DEPRECATED {
+                let to_check = ["{{", old, "}}"].concat();
+                if replaced.contains(&to_check) {
                     warnings.push(anyhow!(
                         "deprecated template variable used in `templates.{}`: `{}`, please use \
                          `{}` instead",

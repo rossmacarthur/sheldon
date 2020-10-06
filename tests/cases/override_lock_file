@@ -3,7 +3,8 @@
 # test.lock
 version = "<version>"
 home = "<home>"
-root = "<root>"
+config_dir = "<config>"
+data_dir = "<data>"
 config_file = "<config>/plugins.toml"
 lock_file = "<data>/test.lock"
 clone_dir = "<data>/repos"

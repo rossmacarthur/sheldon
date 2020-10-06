@@ -432,10 +432,10 @@ impl ExternalPlugin {
 
             // Data to use in template rendering
             let mut data = hashmap! {
-                "root" => ctx
-                    .root()
+                "data_dir" => ctx
+                    .data_dir()
                     .to_str()
-                    .context("root directory is not valid UTF-8")?,
+                    .context("data directory is not valid UTF-8")?,
                 "name" => &name
             };
 
@@ -698,11 +698,14 @@ impl LockedConfig {
 
     /// Clean the clone and download directories.
     pub fn clean(&self, ctx: &Context, warnings: &mut Vec<Error>) {
-        let clean_clone_dir = self.settings.clone_dir().starts_with(self.settings.root());
+        let clean_clone_dir = self
+            .settings
+            .clone_dir()
+            .starts_with(self.settings.data_dir());
         let clean_download_dir = self
             .settings
             .download_dir()
-            .starts_with(self.settings.root());
+            .starts_with(self.settings.data_dir());
 
         if !clean_clone_dir && !clean_download_dir {
             return;
@@ -783,11 +786,11 @@ impl LockedConfig {
 
                         // Data to use in template rendering
                         let mut data = hashmap! {
-                            "root" => self
+                            "data_dir" => self
                                 .settings
-                                .root()
+                                .data_dir()
                                 .to_str()
-                                .context("root directory is not valid UTF-8")?,
+                                .context("data directory is not valid UTF-8")?,
                             "name" => &plugin.name,
                             "dir" => dir_as_str,
                             "directory" => dir_as_str,
@@ -819,11 +822,11 @@ impl LockedConfig {
                 }
                 LockedPlugin::Inline(plugin) => {
                     let data = hashmap! {
-                        "root" => self
+                        "data_dir" => self
                             .settings
-                            .root()
+                            .data_dir()
                             .to_str()
-                            .context("root directory is not valid UTF-8")?,
+                            .context("data directory is not valid UTF-8")?,
                         "name" => &plugin.name,
                     };
                     script.push_str(
@@ -895,7 +898,8 @@ mod tests {
                 lock_file: root.join("config.lock"),
                 clone_dir: root.join("repos"),
                 download_dir: root.join("downloads"),
-                root: root.to_path_buf(), // must come after the joins above
+                data_dir: root.to_path_buf(),
+                config_dir: root.to_path_buf(), // must come after the joins above
             },
             output: crate::log::Output {
                 verbosity: crate::log::Verbosity::Quiet,
@@ -1420,12 +1424,13 @@ mod tests {
     fn locked_config_to_and_from_path() {
         let mut temp = tempfile::NamedTempFile::new().unwrap();
         let content = r#"version = "<version>"
-home = "<root>"
-root = "<root>"
-config_file = "<root>/plugins.toml"
-lock_file = "<root>/plugins.lock"
-clone_dir = "<root>/repos"
-download_dir = "<root>/downloads"
+home = "<home>"
+config_dir = "<config>"
+data_dir = "<data>"
+config_file = "<config>/plugins.toml"
+lock_file = "<data>/plugins.lock"
+clone_dir = "<data>/repos"
+download_dir = "<data>/downloads"
 plugins = []
 
 [templates]

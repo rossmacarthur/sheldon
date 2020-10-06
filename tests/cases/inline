@@ -10,7 +10,8 @@ echo 'testing...'
 # plugins.lock
 version = "<version>"
 home = "<home>"
-root = "<root>"
+config_dir = "<config>"
+data_dir = "<data>"
 config_file = "<config>/plugins.toml"
 lock_file = "<data>/plugins.lock"
 clone_dir = "<data>/repos"
@@ -18,8 +19,8 @@ download_dir = "<data>/downloads"
 
 [[plugins]]
 name = "test"
-source_dir = "<root>/repos/github.com/rossmacarthur/sheldon-test"
-files = ["<root>/repos/github.com/rossmacarthur/sheldon-test/test.plugin.zsh"]
+source_dir = "<data>/repos/github.com/rossmacarthur/sheldon-test"
+files = ["<data>/repos/github.com/rossmacarthur/sheldon-test/test.plugin.zsh"]
 apply = ["source"]
 
 [[plugins]]

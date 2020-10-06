@@ -170,9 +170,13 @@ struct RawOpt {
     #[structopt(long, value_name = "PATH", hidden(true))]
     home: Option<PathBuf>,
 
-    /// The root directory.
-    #[structopt(long, value_name = "PATH", env = "SHELDON_ROOT")]
-    root: Option<PathBuf>,
+    /// The configuration directory.
+    #[structopt(long, value_name = "PATH", env = "SHELDON_CONFIG_DIR")]
+    config_dir: Option<PathBuf>,
+
+    /// The data directory
+    #[structopt(long, value_name = "PATH", env = "SHELDON_DATA_DIR")]
+    data_dir: Option<PathBuf>,
 
     /// The config file.
     #[structopt(long, value_name = "PATH", env = "SHELDON_CONFIG_FILE")]
@@ -298,7 +302,8 @@ impl Opt {
             verbose,
             no_color,
             home,
-            root,
+            data_dir,
+            config_dir,
             config_file,
             lock_file,
             clone_dir,
@@ -344,7 +349,7 @@ impl Opt {
             || std::env::var_os("XDG_DATA_DIRS").is_some()
             || std::env::var_os("XDG_CONFIG_DIRS").is_some();
 
-        let (config_dir, data_dir) = if using_xdg {
+        let (config_pre, data_pre) = if using_xdg {
             (
                 xdg_config_user
                     .unwrap_or_else(|| home.join(".config"))
@@ -354,11 +359,11 @@ impl Opt {
                     .join("sheldon"),
             )
         } else {
-            let dir = root.clone().unwrap_or_else(|| home.join(".sheldon"));
-            (dir.clone(), dir)
+            (home.join(".sheldon"), home.join(".sheldon"))
         };
 
-        let root = root.unwrap_or_else(|| data_dir.clone());
+        let config_dir = config_dir.unwrap_or(config_pre);
+        let data_dir = data_dir.unwrap_or(data_pre);
         let config_file = config_file.unwrap_or_else(|| config_dir.join("plugins.toml"));
         let lock_file = lock_file.unwrap_or_else(|| data_dir.join("plugins.lock"));
         let clone_dir = clone_dir.unwrap_or_else(|| data_dir.join("repos"));
@@ -367,7 +372,8 @@ impl Opt {
         let settings = Settings {
             version: String::from(crate_version!()),
             home,
-            root,
+            config_dir,
+            data_dir,
             config_file,
             lock_file,
             clone_dir,
@@ -481,7 +487,8 @@ FLAGS:
     -V, --version     Show the version and exit
 
 OPTIONS:
-        --root <PATH>            The root directory [env: SHELDON_ROOT=]
+        --config-dir <PATH>      The configuration directory [env: SHELDON_CONFIG_DIR=]
+        --data-dir <PATH>        The data directory [env: SHELDON_DATA_DIR=]
         --config-file <PATH>     The config file [env: SHELDON_CONFIG_FILE=]
         --lock-file <PATH>       The lock file [env: SHELDON_LOCK_FILE=]
         --clone-dir <PATH>       The directory where git sources are cloned to [env: \
@@ -517,7 +524,8 @@ SUBCOMMANDS:
                 verbose: false,
                 no_color: false,
                 home: None,
-                root: None,
+                config_dir: None,
+                data_dir: None,
                 config_file: None,
                 lock_file: None,
                 clone_dir: None,
@@ -540,7 +548,9 @@ SUBCOMMANDS:
                 "--no-color",
                 "--home",
                 "/",
-                "--root",
+                "--config-dir",
+                "/test",
+                "--data-dir",
                 "/test",
                 "--config-file",
                 "/plugins.toml",
@@ -557,7 +567,8 @@ SUBCOMMANDS:
                 verbose: true,
                 no_color: true,
                 home: Some("/".into()),
-                root: Some("/test".into()),
+                config_dir: Some("/test".into()),
+                data_dir: Some("/test".into()),
                 config_file: Some("/plugins.toml".into()),
                 lock_file: Some("/test/plugins.lock".into()),
                 clone_dir: Some("/repos".into()),

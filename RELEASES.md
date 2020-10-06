@@ -12,11 +12,31 @@
   downloaded data will be located in `$XDG_CONFIG_DATA/sheldon`.
   (Contributed by Andrew @tapeinosyne)
 - [Change the default lock file location.][10c64a3] For non-XDG directory
-  structures the lock file now always defaults to `$SHELDON_ROOT/plugins.lock`.
-  It previously was the config file path with a `.lock` extension.
+  structures the lock file now always defaults to
+  `$SHELDON_DATA_DIR/plugins.lock`. It previously was the config file path with
+  a `.lock` extension.
+- [Remove the Sheldon root.][#112] The `root` directory has been replaced by
+  individual directories for configuration and data: `config_dir` and
+  `data_dir`. Both default to `$HOME/.sheldon`, the old default `root`.
+
+  If you used Sheldon's defaults, everything will just keep working as it did;
+  no action needs to be taken. Otherwise, you may refer to this migration table:
+
+  |                    | Old                   | New                         |
+  | -----------------: | --------------------- | --------------------------- |
+  |       Config paths | `<root>/plugins.toml` | `<config_dir>/plugins.toml` |
+  |         Data paths | `<root>/plugins.lock` | `<data_dir>/plugins.lock`   |
+  |                    | `<root>/repos`        | `<data_dir>/repos`          |
+  |                    | `<root>/downloads`    | `<data_dir>/downloads`      |
+  |      Env variables | `SHELDON_ROOT`        | `SHELDON_CONFIG_DIR`        |
+  |                    |                       | `SHELDON_DATA_DIR`          |
+  |        CLI options | `--root`              | `--config-dir`              |
+  |                    |                       | `--data-dir`                |
+  | Template variables | `{{ root }}`          | `{{ data_dir }}`            |
 
 [XDG directory structure]: https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
 [#110]: https://github.com/rossmacarthur/sheldon/pull/110
+[#112]: https://github.com/rossmacarthur/sheldon/pull/112
 [10c64a3]: https://github.com/rossmacarthur/sheldon/commit/10c64a3cd0e1f95536a821016a165728dde59779
 
 ### Fixes
