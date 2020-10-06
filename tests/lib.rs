@@ -6,6 +6,7 @@ use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::rc::Rc;
 
 use itertools::Itertools;
 use pest::Parser;
@@ -28,15 +29,21 @@ struct TestCommand {
 }
 
 struct TestCase {
-    root: tempfile::TempDir,
+    dirs: Directories,
     data: HashMap<String, String>,
 }
 
+#[derive(Clone)]
+/// Temporary test directories and their layout.
+struct Directories {
+    home: Rc<tempfile::TempDir>,
+    root: PathBuf,
+    config: PathBuf,
+    data: PathBuf,
+}
+
 impl TestCommand {
-    fn new<R>(root: R) -> Self
-    where
-        R: AsRef<Path>,
-    {
+    fn new(dirs: &Directories) -> Self {
         // From: https://github.com/rust-lang/cargo/blob/master/crates/cargo-test-support/src/lib.rs#L545-L558
         let bin = env::var_os("CARGO_BIN_PATH")
             .map(PathBuf::from)
@@ -69,8 +76,11 @@ impl TestCommand {
         }
 
         command
-            .env("HOME", root.as_ref())
-            .env("SHELDON_ROOT", root.as_ref())
+            .env("HOME", &dirs.home.path())
+            .env("SHELDON_ROOT", &dirs.root)
+            .env_remove("XDG_CONFIG_HOME")
+            .env_remove("XDG_DATA_HOME")
+            .env_remove("XDG_CACHE_HOME")
             .env_remove("SHELDON_CONFIG_FILE")
             .env_remove("SHELDON_LOCK_FILE")
             .env_remove("SHELDON_CLONE_DIR")
@@ -99,6 +109,21 @@ impl TestCommand {
 
     fn expect_stderr(mut self, stderr: String) -> Self {
         self.expect_stderr = Some(stderr);
+        self
+    }
+
+    fn expect_success(self, case: &TestCase, arg: &str) -> Self {
+        self.expect_exit_code(0)
+            .expect_stdout(case.get(format!("{}.stdout", arg)))
+            .expect_stderr(case.get(format!("{}.stderr", arg)))
+            .arg(arg)
+    }
+
+    fn envs<'v, I>(mut self, vars: I) -> Self
+    where
+        I: IntoIterator<Item = (&'v str, PathBuf)>,
+    {
+        self.command.envs(vars);
         self
     }
 
@@ -137,36 +162,49 @@ impl TestCommand {
 impl TestCase {
     /// Load the test case with the given name.
     fn load(name: &str) -> io::Result<Self> {
-        let root = tempfile::tempdir()?;
-        Self::load_with_root(name, root)
+        let dirs = Directories::default()?;
+        Self::load_with_dirs(name, dirs)
     }
 
-    /// Load the test case in the given root directory.
-    fn load_with_root(name: &str, root: tempfile::TempDir) -> io::Result<Self> {
+    /// Load the test case in the given directories.
+    fn load_with_dirs(name: &str, dirs: Directories) -> io::Result<Self> {
         let path = Path::new(env!("CARGO_MANIFEST_DIR"))
             .join("tests/cases")
             .join(name);
         let case = &fs::read_to_string(path)?;
         let parsed = TestCaseParser::parse(Rule::case, &case).expect("failed to parse case");
+
+        let config_sub = dirs.config.strip_prefix(dirs.home.path()).unwrap();
+        let data_sub = dirs.data.strip_prefix(dirs.home.path()).unwrap();
+        let substitute = |v: String| {
+            [
+                ("<home>", dirs.home.path()),
+                ("<root>", &dirs.root),
+                ("<config>", &dirs.config),
+                ("<data>", &dirs.data),
+                ("<config_sub>", config_sub),
+                ("<data>", &dirs.data),
+                ("<data_sub>", data_sub),
+            ]
+            .iter()
+            .map(|(el, dir)| (el, dir.to_str().unwrap()))
+            .fold(v, |acc, (el, dir)| acc.replace(el, dir))
+            .replace("<version>", env!("CARGO_PKG_VERSION"))
+        };
+
         let data: HashMap<String, String> = parsed
             .filter_map(|pair| {
                 if pair.as_rule() == Rule::element {
                     pair.into_inner()
                         .map(|p| p.as_str().to_string())
                         .collect_tuple()
-                        .map(|(k, v)| {
-                            (
-                                k,
-                                v.replace("<root>", root.path().to_str().unwrap())
-                                    .replace("<version>", env!("CARGO_PKG_VERSION")),
-                            )
-                        })
+                        .map(|(k, v)| (k, substitute(v)))
                 } else {
                     None
                 }
             })
             .collect();
-        Ok(Self { root, data })
+        Ok(Self { dirs, data })
     }
 
     /// Get the value of the given key in this test case.
@@ -181,7 +219,7 @@ impl TestCase {
     }
 
     fn run_command(&self, command: &str) -> io::Result<()> {
-        TestCommand::new(self.root.path())
+        TestCommand::new(&self.dirs)
             .expect_exit_code(0)
             .expect_stdout(self.get(format!("{}.stdout", command)))
             .expect_stderr(self.get(format!("{}.stderr", command)))
@@ -189,23 +227,66 @@ impl TestCase {
             .run()
     }
 
-    fn write_file(&self, name: &str) -> io::Result<()> {
-        fs::write(&self.root.path().join(name), self.get(name))
+    fn write_config_file(&self, name: &str) -> io::Result<()> {
+        fs::write(self.dirs.config.join(name), self.get(name))
     }
 
     fn assert_contents(&self, name: &str) -> io::Result<()> {
         assert_eq!(
-            &fs::read_to_string(&self.root.path().join(name))?,
+            &fs::read_to_string(self.dirs.root.join(name))?,
             &self.get(name)
         );
         Ok(())
     }
 
     fn run(&self) -> io::Result<()> {
-        self.write_file("plugins.toml")?;
+        self.write_config_file("plugins.toml")?;
         self.run_command("lock")?;
         self.assert_contents("plugins.lock")?;
         self.run_command("source")
+    }
+}
+
+impl Directories {
+    fn conforms(&self) -> bool {
+        self.root.exists()
+            && self.config.join("plugins.toml").exists()
+            && self.data.join("plugins.lock").exists()
+            && self.data.join("repos").exists()
+            && self.data.join("downloads").exists()
+    }
+
+    fn init(self) -> io::Result<Self> {
+        fs::create_dir_all(&self.data)?;
+        fs::create_dir_all(&self.config)?;
+        Ok(self)
+    }
+
+    fn default_xdg() -> io::Result<Self> {
+        let home = Rc::new(tempfile::tempdir()?);
+        let config = home.path().join(".config").join("sheldon");
+        let data = home.path().join(".local/share").join("sheldon");
+
+        Directories {
+            home,
+            root: data.clone(),
+            config,
+            data,
+        }
+        .init()
+    }
+
+    fn default() -> io::Result<Self> {
+        let home = Rc::new(tempfile::tempdir()?);
+        let root = home.path().join(".sheldon");
+        fs::create_dir(&root)?;
+
+        Ok(Directories {
+            home,
+            config: root.clone(),
+            data: root.clone(),
+            root,
+        })
     }
 }
 
@@ -248,8 +329,8 @@ fn check_sheldon_test(root: &Path) -> Result<(), git2::Error> {
 #[test]
 fn lock_and_source_clean() -> io::Result<()> {
     let case = TestCase::load("clean")?;
-    let root = case.root.path();
-    fs::create_dir_all(&root.join("repos/test.com"))?;
+    let root = &case.dirs.root;
+    fs::create_dir_all(root.join("repos/test.com"))?;
     {
         fs::OpenOptions::new()
             .create(true)
@@ -267,13 +348,13 @@ fn lock_and_source_clean_permission_denied() -> io::Result<()> {
     use std::os::unix::fs::PermissionsExt;
 
     let case = TestCase::load("clean_permission_denied")?;
-    let root = case.root.path();
-    fs::create_dir_all(&root.join("repos/test.com"))?;
+    let root = &case.dirs.root;
+    fs::create_dir_all(root.join("repos/test.com"))?;
     {
         fs::OpenOptions::new()
             .create(true)
             .write(true)
-            .open(&root.join("repos/test.com/test.txt"))?;
+            .open(root.join("repos/test.com/test.txt"))?;
     }
     fs::set_permissions(
         &root.join("repos/test.com"),
@@ -299,7 +380,7 @@ fn lock_and_source_empty() -> io::Result<()> {
 fn lock_and_source_github_git() -> io::Result<()> {
     let case = TestCase::load("github_git")?;
     case.run()?;
-    check_sheldon_test(case.root.path()).unwrap();
+    check_sheldon_test(&case.dirs.root).unwrap();
     Ok(())
 }
 
@@ -307,7 +388,7 @@ fn lock_and_source_github_git() -> io::Result<()> {
 fn lock_and_source_github_https() -> io::Result<()> {
     let case = TestCase::load("github_https")?;
     case.run()?;
-    check_sheldon_test(case.root.path()).unwrap();
+    check_sheldon_test(&case.dirs.root).unwrap();
     Ok(())
 }
 
@@ -318,8 +399,8 @@ fn lock_and_source_github_branch() -> io::Result<()> {
 
     // Check that sheldon-test@feature was in fact cloned.
     let dir = case
+        .dirs
         .root
-        .path()
         .join("repos/github.com/rossmacarthur/sheldon-test");
     let file = dir.join("test.plugin.zsh");
     assert!(dir.is_dir());
@@ -344,8 +425,8 @@ fn lock_and_source_github_submodule() -> io::Result<()> {
 
     // Check that sheldon-test@recursive-recursive was in fact cloned.
     let dir = case
+        .dirs
         .root
-        .path()
         .join("repos/github.com/rossmacarthur/sheldon-test");
     let file = dir.join("test.plugin.zsh");
     assert!(dir.is_dir());
@@ -394,27 +475,27 @@ fn lock_and_source_github_submodule() -> io::Result<()> {
 fn lock_and_source_github_tag() -> io::Result<()> {
     let case = TestCase::load("github_tag")?;
     case.run()?;
-    check_sheldon_test(case.root.path()).unwrap();
+    check_sheldon_test(&case.dirs.root).unwrap();
     Ok(())
 }
 
 #[test]
 fn lock_and_source_github_bad_url() -> io::Result<()> {
     let case = TestCase::load("github_bad_url")?;
-    case.write_file("plugins.toml")?;
+    case.write_config_file("plugins.toml")?;
 
-    TestCommand::new(case.root.path())
+    TestCommand::new(&case.dirs)
         .expect_exit_code(2)
         .expect_stdout(case.get("lock.stdout"))
         .expect_stderr(case.get("lock.stderr"))
         .arg("lock")
         .run()?;
 
-    assert!(!case.root.path().join("plugins.lock").exists());
+    assert!(!case.dirs.root.join("plugins.lock").exists());
 
     case.run_command("source")?;
 
-    assert!(!case.root.path().join("plugins.lock").exists());
+    assert!(!case.dirs.root.join("plugins.lock").exists());
 
     Ok(())
 }
@@ -424,12 +505,12 @@ fn lock_and_source_github_bad_reinstall() -> io::Result<()> {
     // first setup up a correct situation
     let case = TestCase::load("github_tag")?;
     case.run()?;
-    check_sheldon_test(case.root.path()).unwrap();
+    check_sheldon_test(&case.dirs.root).unwrap();
 
     // Now use a bad URL and try reinstall
-    let case = TestCase::load_with_root("github_bad_reinstall", case.root)?;
-    case.write_file("plugins.toml")?;
-    TestCommand::new(case.root.path())
+    let case = TestCase::load_with_dirs("github_bad_reinstall", case.dirs)?;
+    case.write_config_file("plugins.toml")?;
+    TestCommand::new(&case.dirs)
         .expect_exit_code(2)
         .expect_stdout(case.get("lock.stdout"))
         .expect_stderr(case.get("lock.stderr"))
@@ -438,7 +519,7 @@ fn lock_and_source_github_bad_reinstall() -> io::Result<()> {
         .run()?;
 
     // check that the previously installed plugin and lock file is okay
-    check_sheldon_test(case.root.path()).unwrap();
+    check_sheldon_test(&case.dirs.root).unwrap();
     case.assert_contents("plugins.lock")?;
 
     Ok(())
@@ -452,12 +533,12 @@ fn lock_and_source_inline() -> io::Result<()> {
 #[test]
 fn lock_and_source_override_config_file() -> io::Result<()> {
     let case = TestCase::load("override_config_file")?;
-    let config_file = case.root.path().join("test.toml");
+    let config_file = case.dirs.root.join("test.toml");
     let args = ["--config-file", config_file.to_str().unwrap()];
 
-    case.write_file("test.toml")?;
+    case.write_config_file("test.toml")?;
 
-    TestCommand::new(case.root.path())
+    TestCommand::new(&case.dirs)
         .expect_exit_code(0)
         .expect_stdout(case.get("lock.stdout"))
         .expect_stderr(case.get("lock.stderr"))
@@ -465,7 +546,7 @@ fn lock_and_source_override_config_file() -> io::Result<()> {
         .arg("lock")
         .run()?;
 
-    TestCommand::new(case.root.path())
+    TestCommand::new(&case.dirs)
         .expect_exit_code(0)
         .expect_stdout(case.get("source.stdout"))
         .expect_stderr(case.get("source.stderr"))
@@ -479,10 +560,10 @@ fn lock_and_source_override_config_file() -> io::Result<()> {
 #[test]
 fn lock_and_source_override_config_file_missing() -> io::Result<()> {
     let case = TestCase::load("override_config_file_missing")?;
-    let config_file = case.root.path().join("test.toml");
+    let config_file = case.dirs.root.join("test.toml");
     let args = ["--config-file", config_file.to_str().unwrap()];
 
-    TestCommand::new(case.root.path())
+    TestCommand::new(&case.dirs)
         .expect_exit_code(2)
         .expect_stdout(case.get("stdout"))
         .expect_stderr(case.get("stderr"))
@@ -490,7 +571,7 @@ fn lock_and_source_override_config_file_missing() -> io::Result<()> {
         .arg("lock")
         .run()?;
 
-    TestCommand::new(case.root.path())
+    TestCommand::new(&case.dirs)
         .expect_exit_code(2)
         .expect_stdout(case.get("stdout"))
         .expect_stderr(case.get("stderr"))
@@ -502,12 +583,12 @@ fn lock_and_source_override_config_file_missing() -> io::Result<()> {
 #[test]
 fn lock_and_source_override_lock_file() -> io::Result<()> {
     let case = TestCase::load("override_lock_file")?;
-    let lock_file = case.root.path().join("test.lock");
+    let lock_file = case.dirs.root.join("test.lock");
     let args = ["--lock-file", lock_file.to_str().unwrap()];
 
-    case.write_file("plugins.toml")?;
+    case.write_config_file("plugins.toml")?;
 
-    TestCommand::new(case.root.path())
+    TestCommand::new(&case.dirs)
         .expect_exit_code(0)
         .expect_stdout(case.get("lock.stdout"))
         .expect_stderr(case.get("lock.stderr"))
@@ -517,11 +598,82 @@ fn lock_and_source_override_lock_file() -> io::Result<()> {
 
     case.assert_contents("test.lock")?;
 
-    TestCommand::new(case.root.path())
+    TestCommand::new(&case.dirs)
         .expect_exit_code(0)
         .expect_stdout(case.get("source.stdout"))
         .expect_stderr(case.get("source.stderr"))
         .args(&args)
         .arg("source")
         .run()
+}
+
+#[test]
+fn dirs_default() -> io::Result<()> {
+    let dirs = Directories::default()?;
+    let case = TestCase::load_with_dirs("directories", dirs.clone())?.run();
+    let case_incremental = TestCase::load_with_dirs("directories_incremental", dirs.clone())?.run();
+
+    assert!(dirs.conforms());
+    assert_eq!(&dirs.data, &dirs.config);
+    case.unwrap();
+    case_incremental
+}
+
+#[test]
+fn dirs_xdg_default() -> io::Result<()> {
+    let dirs = Directories::default_xdg()?;
+    let case = TestCase::load_with_dirs("directories", dirs.clone())?;
+    let case_incremental = TestCase::load_with_dirs("directories_incremental", dirs.clone())?;
+
+    let env_vars = &[("XDG_CACHE_HOME", dirs.home.path().join(".cache"))];
+    let cmd = |case: &TestCase, cmd: &str| {
+        TestCommand::new(&case.dirs)
+            .expect_success(&case, cmd)
+            .envs(env_vars.iter().cloned())
+    };
+
+    case.write_config_file("plugins.toml")?;
+    cmd(&case, "lock").run()?;
+    cmd(&case, "source").run()?;
+
+    case_incremental.write_config_file("plugins.toml")?;
+    cmd(&case_incremental, "lock").run()?;
+    cmd(&case_incremental, "source").run()?;
+
+    assert!(dirs.conforms());
+    Ok(())
+}
+
+#[test]
+fn dirs_xdg_from_env() -> io::Result<()> {
+    let home = Rc::new(tempfile::tempdir()?);
+    let xdg_config = home.path().join("config_custom");
+    let xdg_data = home.path().join(".local/custom");
+    let dirs = Directories {
+        home,
+        config: xdg_config.join("sheldon"),
+        data: xdg_data.join("sheldon"),
+        root: xdg_data.join("sheldon"),
+    }
+    .init()?;
+
+    let case = TestCase::load_with_dirs("directories", dirs.clone())?;
+    let case_incremental = TestCase::load_with_dirs("directories_incremental", dirs.clone())?;
+
+    let env_vars = &[("XDG_CONFIG_HOME", xdg_config), ("XDG_DATA_HOME", xdg_data)];
+    let cmd = |case: &TestCase, cmd: &str| {
+        TestCommand::new(&case.dirs)
+            .expect_success(&case, cmd)
+            .envs(env_vars.iter().cloned())
+    };
+
+    case.write_config_file("plugins.toml")?;
+    cmd(&case, "lock").run()?;
+    cmd(&case, "source").run()?;
+    case_incremental.write_config_file("plugins.toml")?;
+    cmd(&case_incremental, "lock").run()?;
+    cmd(&case_incremental, "source").run()?;
+
+    assert!(dirs.conforms());
+    Ok(())
 }

@@ -1,4 +1,6 @@
 # plugins.toml
+[plugins.test_downloads]
+remote = "https://raw.githubusercontent.com/rossmacarthur/sheldon-test/master/test.plugin.zsh"
 
 # plugins.lock
 version = "<version>"
@@ -8,7 +10,12 @@ config_file = "<config>/plugins.toml"
 lock_file = "<data>/plugins.lock"
 clone_dir = "<data>/repos"
 download_dir = "<data>/downloads"
-plugins = []
+
+[[plugins]]
+name = "test_downloads"
+source_dir = "<data>/downloads/raw.githubusercontent.com/rossmacarthur/sheldon-test/master"
+files = ["<data>/downloads/raw.githubusercontent.com/rossmacarthur/sheldon-test/master/test.plugin.zsh"]
+apply = ["source"]
 [templates.PATH]
 value = "export PATH=\"{{ dir }}:$PATH\""
 each = false
@@ -29,14 +36,14 @@ each = true
 
 # lock.stderr
 [LOADED] ~/<config_sub>/plugins.toml
+   [FETCHED] https://raw.githubusercontent.com/rossmacarthur/sheldon-test/master/test.plugin.zsh
 [LOCKED] ~/<data_sub>/plugins.lock
 
-[WARNING] failed to remove directory `~/.sheldon/repos/test.com`
-  due to: Permission denied (os error 13)
-
 # source.stdout
+source "<data>/downloads/raw.githubusercontent.com/rossmacarthur/sheldon-test/master/test.plugin.zsh"
 
 # source.stderr
 [UNLOCKED] ~/<data_sub>/plugins.lock
+  [RENDERED] test_downloads
 
 # end

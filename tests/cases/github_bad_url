@@ -8,7 +8,7 @@ github = "rossmacarthur/sheldon-bad-url"
 # lock.stdout
 
 # lock.stderr
-[LOADED] ~/plugins.toml
+[LOADED] ~/<config_sub>/plugins.toml
     [CLONED] https://github.com/rossmacarthur/sheldon-test
 
 [ERROR] failed to install source `https://github.com/rossmacarthur/sheldon-bad-url`
@@ -16,10 +16,10 @@ github = "rossmacarthur/sheldon-bad-url"
   due to: remote authentication required but none available
 
 # source.stdout
-source "<root>/repos/github.com/rossmacarthur/sheldon-test/test.plugin.zsh"
+source "<data>/repos/github.com/rossmacarthur/sheldon-test/test.plugin.zsh"
 
 # source.stderr
-[LOADED] ~/plugins.toml
+[LOADED] ~/<config_sub>/plugins.toml
    [CHECKED] https://github.com/rossmacarthur/sheldon-test
   [RENDERED] test
 

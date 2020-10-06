@@ -2,12 +2,12 @@
 
 # plugins.lock
 version = "<version>"
-home = "<root>"
+home = "<home>"
 root = "<root>"
-config_file = "<root>/plugins.toml"
-lock_file = "<root>/plugins.lock"
-clone_dir = "<root>/repos"
-download_dir = "<root>/downloads"
+config_file = "<config>/plugins.toml"
+lock_file = "<data>/plugins.lock"
+clone_dir = "<data>/repos"
+download_dir = "<data>/downloads"
 plugins = []
 [templates.PATH]
 value = "export PATH=\"{{ dir }}:$PATH\""
@@ -28,13 +28,13 @@ each = true
 # lock.stdout
 
 # lock.stderr
-[LOADED] ~/plugins.toml
-   [REMOVED] ~/repos/test.com
-[LOCKED] ~/plugins.lock
+[LOADED] ~/<config_sub>/plugins.toml
+   [REMOVED] ~/.sheldon/repos/test.com
+[LOCKED] ~/<data_sub>/plugins.lock
 
 # source.stdout
 
 # source.stderr
-[UNLOCKED] ~/plugins.lock
+[UNLOCKED] ~/<data_sub>/plugins.lock
 
 # end

@@ -331,11 +331,38 @@ impl Opt {
                 process::exit(1);
             }
         };
-        let root = root.unwrap_or_else(|| home.join(".sheldon"));
-        let config_file = config_file.unwrap_or_else(|| root.join("plugins.toml"));
-        let lock_file = lock_file.unwrap_or_else(|| root.join("plugins.lock"));
-        let clone_dir = clone_dir.unwrap_or_else(|| root.join("repos"));
-        let download_dir = download_dir.unwrap_or_else(|| root.join("downloads"));
+
+        let xdg_config_user = std::env::var_os("XDG_CONFIG_HOME").map(PathBuf::from);
+        let xdg_data_user = std::env::var_os("XDG_DATA_HOME").map(PathBuf::from);
+
+        // Note: "XDG_RUNTIME_DIR is not checked as it can be set by the
+        // system rather than the user, and cannot be relied upon to
+        // indicate a preference for XDG directory layout.
+        let using_xdg = xdg_data_user.is_some()
+            || xdg_config_user.is_some()
+            || std::env::var_os("XDG_CACHE_HOME").is_some()
+            || std::env::var_os("XDG_DATA_DIRS").is_some()
+            || std::env::var_os("XDG_CONFIG_DIRS").is_some();
+
+        let (config_dir, data_dir) = if using_xdg {
+            (
+                xdg_config_user
+                    .unwrap_or_else(|| home.join(".config"))
+                    .join("sheldon"),
+                xdg_data_user
+                    .unwrap_or_else(|| home.join(".local/share"))
+                    .join("sheldon"),
+            )
+        } else {
+            let dir = root.clone().unwrap_or_else(|| home.join(".sheldon"));
+            (dir.clone(), dir)
+        };
+
+        let root = root.unwrap_or_else(|| data_dir.clone());
+        let config_file = config_file.unwrap_or_else(|| config_dir.join("plugins.toml"));
+        let lock_file = lock_file.unwrap_or_else(|| data_dir.join("plugins.lock"));
+        let clone_dir = clone_dir.unwrap_or_else(|| data_dir.join("repos"));
+        let download_dir = download_dir.unwrap_or_else(|| data_dir.join("downloads"));
 
         let settings = Settings {
             version: String::from(crate_version!()),
@@ -402,7 +429,8 @@ mod tests {
 
     fn setup() {
         for (k, _) in env::vars() {
-            if k.starts_with(&format!("{}_", crate_name!().to_uppercase())) {
+            if k.starts_with(&format!("{}_", crate_name!().to_uppercase())) || k.starts_with("XDG_")
+            {
                 env::remove_var(k);
             }
         }

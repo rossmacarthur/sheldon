@@ -148,7 +148,8 @@ The binary will be found at `target/release/sheldon`.
 ### Initializing
 
 Sheldon works by specifying plugin information in a [TOML](https://toml.io)
-configuration file. You can initialize this file by running `sheldon init`.
+configuration file, `plugins.toml`. You can initialize this file by running
+`sheldon init`.
 
 ```sh
 sheldon init --shell bash
@@ -160,9 +161,9 @@ or
 sheldon init --shell zsh
 ```
 
-This will create the `~/.sheldon` directory with an empty `plugins.toml` file.
-You can either edit this file directly or use the provided command line
-interface to add or remove plugins.
+This will create `plugins.toml` under `~/.sheldon` or, if defined,
+`$XDG_CONFIG_HOME/sheldon`. You can either edit this file directly or use the
+provided command line interface to add or remove plugins.
 
 ### Adding a plugin
 
