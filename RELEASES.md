@@ -1,5 +1,36 @@
 # Releases
 
+## 0.6.0
+
+*Unreleased*
+
+### Breaking changes
+
+- [Support XDG directory structure.][#110] If any XDG environment variable
+  is set then Sheldon will adopt the [XDG directory structure] by default. The
+  config file will be located at `$XDG_CONFIG_HOME/sheldon/plugins.toml` and
+  downloaded data will be located in `$XDG_CONFIG_DATA/sheldon`.
+  (Contributed by Andrew @tapeinosyne)
+- [Change the default lock file location.][10c64a3] For non-XDG directory
+  structures the lock file now always defaults to `$SHELDON_ROOT/plugins.lock`.
+  It previously was the config file path with a `.lock` extension.
+
+[XDG directory structure]: https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
+[#110]: https://github.com/rossmacarthur/sheldon/pull/110
+[10c64a3]: https://github.com/rossmacarthur/sheldon/commit/10c64a3cd0e1f95536a821016a165728dde59779
+
+### Fixes
+
+- [Fix performance bug introduced in version 0.5.4.][abf2027] A significant
+  drop in performance was introduced by switching to the Rust `rayon` package.
+  This change has been reverted.
+- [Fix `--relock` not being implied for other flags.][bc5f9d7] This fixes a bug
+  where passing `--update` or `--reinstall` to the `source` command didn't imply
+  `--relock` like the documentation says.
+
+[abf2027]: https://github.com/rossmacarthur/sheldon/commit/abf202737fa30b30465fbed6c47a034d4d0e9911
+[bc5f9d7]: https://github.com/rossmacarthur/sheldon/commit/bc5f9d7ae759cf5e3af7822d45e2bf7fb545d219
+
 ## 0.5.4
 
 *August 14th, 2020*
