@@ -453,7 +453,6 @@ impl ExternalPlugin {
                 .to_str()
                 .context("plugin directory is not valid UTF-8")?;
             data.insert("dir", dir_as_str);
-            data.insert("directory", dir_as_str);
 
             let mut files = Vec::new();
 
@@ -793,7 +792,6 @@ impl LockedConfig {
                                 .context("data directory is not valid UTF-8")?,
                             "name" => &plugin.name,
                             "dir" => dir_as_str,
-                            "directory" => dir_as_str,
                         };
 
                         if self.templates.get(name.as_str()).unwrap().each {
@@ -801,7 +799,6 @@ impl LockedConfig {
                                 let as_str =
                                     file.to_str().context("plugin file is not valid UTF-8")?;
                                 data.insert("file", as_str);
-                                data.insert("filename", as_str);
                                 script.push_str(
                                     &templates
                                         .render(name, &data)
