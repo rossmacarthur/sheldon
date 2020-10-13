@@ -15,9 +15,10 @@ build = "build.rs"
 include = ["src/**/*", "LICENSE-*", "README.md", "build.rs"]
 
 [dependencies]
-ansi_term = "0.11.0"
+ansi_term = "0.12.1"
 anyhow = "1.0.32"
 casual = "0.1.2"
+clap = { version = "3.0.0-beta.2", features = ["derive"] }
 fs2 = "0.4.3"
 git2 = "0.13.8"
 globwalk = "0.8.0"
@@ -32,7 +33,6 @@ regex-macro = "0.1.0"
 reqwest = { version = "0.10.7", features = ["blocking"] }
 scoped_threadpool = "0.1.9"
 serde = { version = "1.0.115", features = ["derive"] }
-structopt = "0.3.16"
 thiserror = "1.0.20"
 toml = { version = "0.5.6", features = ["preserve_order"] }
 toml_edit = "0.2.0"

@@ -889,7 +889,7 @@ mod tests {
     fn create_test_context(root: &Path) -> Context {
         Context {
             settings: Settings {
-                version: structopt::clap::crate_version!().to_string(),
+                version: clap::crate_version!().to_string(),
                 home: "/".into(),
                 config_file: root.join("config.toml"),
                 lock_file: root.join("config.lock"),

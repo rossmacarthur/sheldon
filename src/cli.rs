@@ -4,8 +4,7 @@ use std::path::PathBuf;
 use std::process;
 
 use anyhow::anyhow;
-use structopt::clap::{crate_version, AppSettings, ArgGroup};
-use structopt::StructOpt;
+use clap::{crate_version, AppSettings, ArgGroup, Clap};
 use url::Url;
 
 use crate::config::{
@@ -15,187 +14,169 @@ use crate::context::{LockMode, Settings};
 use crate::edit::Plugin;
 use crate::log::{Output, Verbosity};
 
-const SETTINGS: &[AppSettings] = &[
-    AppSettings::ColorNever,
-    AppSettings::DeriveDisplayOrder,
-    AppSettings::DisableHelpSubcommand,
-    AppSettings::VersionlessSubcommands,
-];
-const HELP_MESSAGE: &str = "Show this message and exit";
-const VERSION_MESSAGE: &str = "Show the version and exit";
-
-#[derive(Debug, PartialEq, StructOpt)]
-#[structopt(
-    group = ArgGroup::with_name("plugin").required(true),
-    group = ArgGroup::with_name("git-reference")
+#[derive(Debug, PartialEq, Clap)]
+#[clap(
+    group = ArgGroup::new("plugin").required(true),
+    group = ArgGroup::new("git-reference").conflicts_with_all(&["remote", "local"]),
 )]
 struct Add {
     /// A unique name for this plugin.
-    #[structopt(value_name = "NAME")]
+    #[clap(value_name = "NAME")]
     name: String,
 
     /// Add a clonable Git repository.
-    #[structopt(long, value_name = "URL", group = "plugin")]
+    #[clap(long, value_name = "URL", group = "plugin")]
     git: Option<Url>,
 
     /// Add a clonable Gist snippet.
-    #[structopt(long, value_name = "ID", group = "plugin")]
+    #[clap(long, value_name = "ID", group = "plugin")]
     gist: Option<GistRepository>,
 
     /// Add a clonable GitHub repository.
-    #[structopt(long, value_name = "REPO", group = "plugin")]
+    #[clap(long, value_name = "REPO", group = "plugin")]
     github: Option<GitHubRepository>,
 
     /// Add a downloadable file.
-    #[structopt(long, value_name = "URL", group = "plugin")]
+    #[clap(long, value_name = "URL", group = "plugin")]
     remote: Option<Url>,
 
     /// Add a local directory.
-    #[structopt(long, value_name = "DIR", group = "plugin")]
+    #[clap(long, value_name = "DIR", group = "plugin")]
     local: Option<PathBuf>,
 
     /// The Git protocol for a Gist or GitHub plugin.
-    #[structopt(long, value_name = "PROTO", conflicts_with_all = &["git", "remote", "local"])]
+    #[clap(long, value_name = "PROTO", conflicts_with_all = &["git", "remote", "local"])]
     proto: Option<GitProtocol>,
 
     /// Checkout the tip of a branch.
-    #[structopt(
-        long,
-        value_name = "BRANCH",
-        group = "git-reference",
-        // for some weird reason this makes all 'git-reference' options correctly conflict
-        // but putting it on the 'git-reference' ArgGroup doesn't work
-        conflicts_with_all = &["remote", "local"],
-    )]
+    #[clap(long, value_name = "BRANCH", group = "git-reference")]
     branch: Option<String>,
 
     /// Checkout a specific commit.
-    #[structopt(long, value_name = "SHA", group = "git-reference")]
+    #[clap(long, value_name = "SHA", group = "git-reference")]
     rev: Option<String>,
 
     /// Checkout a specific tag.
-    #[structopt(long, value_name = "TAG", group = "git-reference")]
+    #[clap(long, value_name = "TAG", group = "git-reference")]
     tag: Option<String>,
 
     /// Which sub directory to use in this plugin.
-    #[structopt(long, value_name = "PATH")]
+    #[clap(long, value_name = "PATH")]
     dir: Option<String>,
 
     /// Which files to use in this plugin.
-    #[structopt(long = "use", value_name = "MATCH")]
+    #[clap(long = "use", value_name = "MATCH")]
     uses: Option<Vec<String>>,
 
     /// Templates to apply to this plugin.
-    #[structopt(long, value_name = "TEMPLATE")]
+    #[clap(long, value_name = "TEMPLATE")]
     apply: Option<Vec<String>>,
 }
 
-#[derive(Debug, PartialEq, StructOpt)]
+#[derive(Debug, PartialEq, Clap)]
 enum RawCommand {
     /// Initialize a new config file.
-    #[structopt(help_message = HELP_MESSAGE)]
     Init {
         /// The type of shell, accepted values are: bash, zsh.
-        #[structopt(long, value_name = "SHELL")]
+        #[clap(long, value_name = "SHELL")]
         shell: Option<Shell>,
     },
 
     /// Add a new plugin to the config file.
-    #[structopt(help_message = HELP_MESSAGE)]
     Add(Box<Add>),
 
     /// Open up the config file in the default editor.
     Edit,
 
     /// Remove a plugin from the config file.
-    #[structopt(help_message = HELP_MESSAGE)]
     Remove {
         /// A unique name for this plugin.
-        #[structopt(value_name = "NAME")]
+        #[clap(value_name = "NAME")]
         name: String,
     },
 
     /// Install the plugins sources and generate the lock file.
-    #[structopt(help_message = HELP_MESSAGE)]
     Lock {
         /// Update all plugin sources.
-        #[structopt(long)]
+        #[clap(long)]
         update: bool,
 
         /// Reinstall all plugin sources.
-        #[structopt(long, conflicts_with = "update")]
+        #[clap(long, conflicts_with = "update")]
         reinstall: bool,
     },
 
     /// Generate and print out the script.
-    #[structopt(help_message = HELP_MESSAGE)]
     Source {
         /// Regenerate the lock file.
-        #[structopt(long)]
+        #[clap(long)]
         relock: bool,
 
         /// Update all plugin sources (implies --relock).
-        #[structopt(long)]
+        #[clap(long)]
         update: bool,
 
         /// Reinstall all plugin sources (implies --relock).
-        #[structopt(long, conflicts_with = "update")]
+        #[clap(long, conflicts_with = "update")]
         reinstall: bool,
     },
 }
 
-#[derive(Debug, PartialEq, StructOpt)]
-#[structopt(
+#[derive(Debug, PartialEq, Clap)]
+#[clap(
     author,
     about,
+    version,
+    term_width = 120,
     setting = AppSettings::SubcommandRequired,
-    global_settings = &SETTINGS,
-    help_message = HELP_MESSAGE,
-    version_message = VERSION_MESSAGE,
+    global_setting = AppSettings::DeriveDisplayOrder,
+    global_setting = AppSettings::DisableHelpSubcommand,
+    global_setting = AppSettings::GlobalVersion,
+    global_setting = AppSettings::VersionlessSubcommands,
 )]
 struct RawOpt {
     /// Suppress any informational output.
-    #[structopt(long, short)]
+    #[clap(long, short)]
     quiet: bool,
 
     /// Use verbose output.
-    #[structopt(long, short)]
+    #[clap(long, short)]
     verbose: bool,
 
     /// Do not use ANSI colored output.
-    #[structopt(long)]
+    #[clap(long)]
     no_color: bool,
 
     /// The home directory.
-    #[structopt(long, value_name = "PATH", hidden(true))]
+    #[clap(long, value_name = "PATH", hidden(true))]
     home: Option<PathBuf>,
 
     /// The configuration directory.
-    #[structopt(long, value_name = "PATH", env = "SHELDON_CONFIG_DIR")]
+    #[clap(long, value_name = "PATH", env = "SHELDON_CONFIG_DIR")]
     config_dir: Option<PathBuf>,
 
     /// The data directory
-    #[structopt(long, value_name = "PATH", env = "SHELDON_DATA_DIR")]
+    #[clap(long, value_name = "PATH", env = "SHELDON_DATA_DIR")]
     data_dir: Option<PathBuf>,
 
     /// The config file.
-    #[structopt(long, value_name = "PATH", env = "SHELDON_CONFIG_FILE")]
+    #[clap(long, value_name = "PATH", env = "SHELDON_CONFIG_FILE")]
     config_file: Option<PathBuf>,
 
     /// The lock file.
-    #[structopt(long, value_name = "PATH", env = "SHELDON_LOCK_FILE")]
+    #[clap(long, value_name = "PATH", env = "SHELDON_LOCK_FILE")]
     lock_file: Option<PathBuf>,
 
     /// The directory where git sources are cloned to.
-    #[structopt(long, value_name = "PATH", env = "SHELDON_CLONE_DIR")]
+    #[clap(long, value_name = "PATH", env = "SHELDON_CLONE_DIR")]
     clone_dir: Option<PathBuf>,
 
     /// The directory where remote sources are downloaded to.
-    #[structopt(long, value_name = "PATH", env = "SHELDON_DOWNLOAD_DIR")]
+    #[clap(long, value_name = "PATH", env = "SHELDON_DOWNLOAD_DIR")]
     download_dir: Option<PathBuf>,
 
     /// The subcommand to run.
-    #[structopt(subcommand)]
+    #[clap(subcommand)]
     command: RawCommand,
 }
 
@@ -415,7 +396,7 @@ impl Opt {
     /// Gets the struct from the command line arguments. Print the error message
     /// and quit the program in case of failure.
     pub fn from_args() -> Self {
-        Self::from_raw_opt(RawOpt::from_args())
+        Self::from_raw_opt(RawOpt::parse())
     }
 }
 
@@ -430,8 +411,8 @@ mod tests {
     use std::env;
     use std::iter;
 
+    use clap::{crate_authors, crate_description, crate_name};
     use pretty_assertions::assert_eq;
-    use structopt::clap::{crate_authors, crate_description, crate_name};
 
     fn setup() {
         for (k, _) in env::vars() {
@@ -443,12 +424,12 @@ mod tests {
     }
 
     fn raw_opt(args: &[&str]) -> RawOpt {
-        RawOpt::from_iter_safe(iter::once(crate_name!()).chain(args.into_iter().map(|s| *s)))
+        RawOpt::try_parse_from(iter::once(crate_name!()).chain(args.into_iter().map(|s| *s)))
             .unwrap()
     }
 
-    fn raw_opt_err(args: &[&str]) -> structopt::clap::Error {
-        RawOpt::from_iter_safe(iter::once(crate_name!()).chain(args.into_iter().map(|s| *s)))
+    fn raw_opt_err(args: &[&str]) -> clap::Error {
+        RawOpt::try_parse_from(iter::once(crate_name!()).chain(args.into_iter().map(|s| *s)))
             .unwrap_err()
     }
 
@@ -457,9 +438,8 @@ mod tests {
         setup();
         for opt in &["-V", "--version"] {
             let err = raw_opt_err(&[opt]);
-            assert_eq!(err.message, ""); // not sure why this doesn't contain the outputted data :/
-            assert_eq!(err.kind, structopt::clap::ErrorKind::VersionDisplayed);
-            assert_eq!(err.info, None);
+            assert_eq!(err.to_string(), format!("sheldon {}\n", crate_version!()));
+            assert_eq!(err.kind, clap::ErrorKind::DisplayVersion);
         }
     }
 
@@ -469,7 +449,7 @@ mod tests {
         for opt in &["-h", "--help"] {
             let err = raw_opt_err(&[opt]);
             assert_eq!(
-                err.message,
+                err.to_string(),
                 format!(
                     "\
 {name} {version}
@@ -483,8 +463,8 @@ FLAGS:
     -q, --quiet       Suppress any informational output
     -v, --verbose     Use verbose output
         --no-color    Do not use ANSI colored output
-    -h, --help        Show this message and exit
-    -V, --version     Show the version and exit
+    -h, --help        Prints help information
+    -V, --version     Prints version information
 
 OPTIONS:
         --config-dir <PATH>      The configuration directory [env: SHELDON_CONFIG_DIR=]
@@ -502,15 +482,15 @@ SUBCOMMANDS:
     edit      Open up the config file in the default editor
     remove    Remove a plugin from the config file
     lock      Install the plugins sources and generate the lock file
-    source    Generate and print out the script",
+    source    Generate and print out the script
+",
                     name = crate_name!(),
                     version = crate_version!(),
                     authors = crate_authors!(),
                     description = crate_description!(),
                 )
             );
-            assert_eq!(err.kind, structopt::clap::ErrorKind::HelpDisplayed);
-            assert_eq!(err.info, None);
+            assert_eq!(err.kind, clap::ErrorKind::DisplayHelp);
         }
     }
 
@@ -586,7 +566,7 @@ SUBCOMMANDS:
         setup();
         let err = raw_opt_err(&[]);
         assert_eq!(
-            err.message,
+            err.to_string(),
             format!(
                 "\
 error: '{name}' requires a subcommand, but one was not provided
@@ -594,12 +574,12 @@ error: '{name}' requires a subcommand, but one was not provided
 USAGE:
     {name} [FLAGS] [OPTIONS] <SUBCOMMAND>
 
-For more information try --help",
+For more information try --help
+",
                 name = crate_name!()
             )
         );
-        assert_eq!(err.kind, structopt::clap::ErrorKind::MissingSubcommand);
-        assert_eq!(err.info, None);
+        assert_eq!(err.kind, clap::ErrorKind::MissingSubcommand);
     }
 
     #[test]
@@ -607,7 +587,7 @@ For more information try --help",
         setup();
         let err = raw_opt_err(&["init", "--help"]);
         assert_eq!(
-            err.message,
+            err.to_string(),
             format!(
                 "\
 {name}-init {version}
@@ -617,16 +597,16 @@ USAGE:
     sheldon init [OPTIONS]
 
 FLAGS:
-    -h, --help    Show this message and exit
+    -h, --help    Prints help information
 
 OPTIONS:
-        --shell <SHELL>    The type of shell, accepted values are: bash, zsh",
+        --shell <SHELL>    The type of shell, accepted values are: bash, zsh
+",
                 name = crate_name!(),
                 version = crate_version!()
             )
         );
-        assert_eq!(err.kind, structopt::clap::ErrorKind::HelpDisplayed);
-        assert_eq!(err.info, None);
+        assert_eq!(err.kind, clap::ErrorKind::DisplayHelp);
     }
 
     #[test]
@@ -634,7 +614,7 @@ OPTIONS:
         setup();
         assert_eq!(
             raw_opt_err(&["init", "--shell", "ksh",]).kind,
-            structopt::clap::ErrorKind::ValueValidation
+            clap::ErrorKind::ValueValidation
         );
     }
 
@@ -643,7 +623,7 @@ OPTIONS:
         setup();
         let err = raw_opt_err(&["add", "--help"]);
         assert_eq!(
-            err.message,
+            err.to_string(),
             format!(
                 "\
 {name}-add {version}
@@ -653,8 +633,11 @@ USAGE:
     {name} add [OPTIONS] <NAME> <--git <URL>|--gist <ID>|--github <REPO>|--remote <URL>|--local \
                  <DIR>>
 
+ARGS:
+    <NAME>    A unique name for this plugin
+
 FLAGS:
-    -h, --help    Show this message and exit
+    -h, --help    Prints help information
 
 OPTIONS:
         --git <URL>              Add a clonable Git repository
@@ -669,15 +652,12 @@ OPTIONS:
         --dir <PATH>             Which sub directory to use in this plugin
         --use <MATCH>...         Which files to use in this plugin
         --apply <TEMPLATE>...    Templates to apply to this plugin
-
-ARGS:
-    <NAME>    A unique name for this plugin",
+",
                 name = crate_name!(),
                 version = crate_version!()
             )
         );
-        assert_eq!(err.kind, structopt::clap::ErrorKind::HelpDisplayed);
-        assert_eq!(err.info, None);
+        assert_eq!(err.kind, clap::ErrorKind::DisplayHelp);
     }
 
     #[test]
@@ -685,7 +665,7 @@ ARGS:
         setup();
         assert_eq!(
             raw_opt_err(&["add", "test",]).kind,
-            structopt::clap::ErrorKind::MissingRequiredArgument
+            clap::ErrorKind::MissingRequiredArgument
         );
     }
 
@@ -897,7 +877,7 @@ ARGS:
                 "feature"
             ])
             .kind,
-            structopt::clap::ErrorKind::ArgumentConflict
+            clap::ErrorKind::ArgumentConflict
         );
     }
 
@@ -914,7 +894,7 @@ ARGS:
                 "0.1.0"
             ])
             .kind,
-            structopt::clap::ErrorKind::ArgumentConflict
+            clap::ErrorKind::ArgumentConflict
         );
     }
 
@@ -931,7 +911,7 @@ ARGS:
                 "rossmacarthur/sheldon-test",
             ])
             .kind,
-            structopt::clap::ErrorKind::ArgumentConflict
+            clap::ErrorKind::ArgumentConflict
         );
     }
 
@@ -948,7 +928,7 @@ ARGS:
                 "ssh",
             ])
             .kind,
-            structopt::clap::ErrorKind::ArgumentConflict
+            clap::ErrorKind::ArgumentConflict
         );
     }
 
@@ -965,7 +945,7 @@ ARGS:
                 "ssh",
             ])
             .kind,
-            structopt::clap::ErrorKind::ArgumentConflict
+            clap::ErrorKind::ArgumentConflict
         );
     }
 
@@ -982,7 +962,7 @@ ARGS:
                 "ssh",
             ])
             .kind,
-            structopt::clap::ErrorKind::ArgumentConflict
+            clap::ErrorKind::ArgumentConflict
         );
     }
 
@@ -991,7 +971,7 @@ ARGS:
         setup();
         let err = raw_opt_err(&["lock", "--help"]);
         assert_eq!(
-            err.message,
+            err.to_string(),
             format!(
                 "\
 {name}-lock {version}
@@ -1003,13 +983,13 @@ USAGE:
 FLAGS:
         --update       Update all plugin sources
         --reinstall    Reinstall all plugin sources
-    -h, --help         Show this message and exit",
+    -h, --help         Prints help information
+",
                 name = crate_name!(),
                 version = crate_version!()
             )
         );
-        assert_eq!(err.kind, structopt::clap::ErrorKind::HelpDisplayed);
-        assert_eq!(err.info, None);
+        assert_eq!(err.kind, clap::ErrorKind::DisplayHelp);
     }
 
     #[test]
@@ -1017,7 +997,7 @@ FLAGS:
         setup();
         assert_eq!(
             raw_opt_err(&["lock", "--update", "--reinstall"]).kind,
-            structopt::clap::ErrorKind::ArgumentConflict
+            clap::ErrorKind::ArgumentConflict
         );
     }
 
@@ -1026,7 +1006,7 @@ FLAGS:
         setup();
         let err = raw_opt_err(&["source", "--help"]);
         assert_eq!(
-            err.message,
+            err.to_string(),
             format!(
                 "\
 {name}-source {version}
@@ -1039,13 +1019,13 @@ FLAGS:
         --relock       Regenerate the lock file
         --update       Update all plugin sources (implies --relock)
         --reinstall    Reinstall all plugin sources (implies --relock)
-    -h, --help         Show this message and exit",
+    -h, --help         Prints help information
+",
                 name = crate_name!(),
                 version = crate_version!()
             )
         );
-        assert_eq!(err.kind, structopt::clap::ErrorKind::HelpDisplayed);
-        assert_eq!(err.info, None);
+        assert_eq!(err.kind, clap::ErrorKind::DisplayHelp);
     }
 
     #[test]
@@ -1053,7 +1033,7 @@ FLAGS:
         setup();
         assert_eq!(
             raw_opt_err(&["source", "--update", "--reinstall"]).kind,
-            structopt::clap::ErrorKind::ArgumentConflict
+            clap::ErrorKind::ArgumentConflict
         );
     }
 }
