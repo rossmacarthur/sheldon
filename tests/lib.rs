@@ -87,7 +87,8 @@ impl TestCommand {
             .env_remove("SHELDON_DOWNLOAD_DIR")
             .args(&params)
             .arg("--verbose")
-            .arg("--no-color");
+            .arg("--color")
+            .arg("never");
 
         Self {
             command,

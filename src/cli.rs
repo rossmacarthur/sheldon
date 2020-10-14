@@ -1,10 +1,14 @@
 //! Command line interface.
 
+use std::fmt;
 use std::path::PathBuf;
 use std::process;
+use std::result;
+use std::str::FromStr;
 
 use anyhow::anyhow;
 use clap::{crate_version, AppSettings, ArgGroup, Clap};
+use thiserror::Error;
 use url::Url;
 
 use crate::config::{
@@ -13,6 +17,15 @@ use crate::config::{
 use crate::context::{LockMode, Settings};
 use crate::edit::Plugin;
 use crate::log::{Output, Verbosity};
+
+/// Whether messages should use color output.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum ColorChoice {
+    /// Force color output.
+    Always,
+    /// Force disable color output.
+    Never,
+}
 
 #[derive(Debug, PartialEq, Clap)]
 #[clap(
@@ -143,9 +156,9 @@ struct RawOpt {
     #[clap(long, short)]
     verbose: bool,
 
-    /// Do not use ANSI colored output.
-    #[clap(long)]
-    no_color: bool,
+    /// Output coloring: always or never.
+    #[clap(long, value_name = "WHEN", default_value)]
+    color: ColorChoice,
 
     /// The home directory.
     #[clap(long, value_name = "PATH", hidden(true))]
@@ -206,6 +219,47 @@ pub struct Opt {
     pub output: Output,
     /// The subcommand.
     pub command: Command,
+}
+
+impl Default for ColorChoice {
+    fn default() -> Self {
+        // FIXME: default to `Self::Auto` and detect if stdout and stderr is a TTY.
+        Self::Always
+    }
+}
+
+impl fmt::Display for ColorChoice {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::Always => f.write_str("always"),
+            Self::Never => f.write_str("never"),
+        }
+    }
+}
+
+#[derive(Debug, Error)]
+#[error("expected `always` or `never`, got `{}`", self.0)]
+pub struct ParseColorChoiceError(String);
+
+impl FromStr for ColorChoice {
+    type Err = ParseColorChoiceError;
+
+    fn from_str(s: &str) -> result::Result<Self, Self::Err> {
+        match s {
+            "always" => Ok(Self::Always),
+            "never" => Ok(Self::Never),
+            s => Err(ParseColorChoiceError(s.to_string())),
+        }
+    }
+}
+
+impl ColorChoice {
+    fn is_no_color(self) -> bool {
+        match self {
+            Self::Always => false,
+            Self::Never => true,
+        }
+    }
 }
 
 impl LockMode {
@@ -281,7 +335,7 @@ impl Opt {
         let RawOpt {
             quiet,
             verbose,
-            no_color,
+            color,
             home,
             data_dir,
             config_dir,
@@ -302,7 +356,7 @@ impl Opt {
 
         let output = Output {
             verbosity,
-            no_color,
+            no_color: color.is_no_color(),
         };
 
         let home = match home.or_else(home::home_dir).ok_or_else(|| {
@@ -460,13 +514,13 @@ USAGE:
     {name} [FLAGS] [OPTIONS] <SUBCOMMAND>
 
 FLAGS:
-    -q, --quiet       Suppress any informational output
-    -v, --verbose     Use verbose output
-        --no-color    Do not use ANSI colored output
-    -h, --help        Prints help information
-    -V, --version     Prints version information
+    -q, --quiet      Suppress any informational output
+    -v, --verbose    Use verbose output
+    -h, --help       Prints help information
+    -V, --version    Prints version information
 
 OPTIONS:
+        --color <WHEN>           Output coloring: always or never [default: always]
         --config-dir <PATH>      The configuration directory [env: SHELDON_CONFIG_DIR=]
         --data-dir <PATH>        The data directory [env: SHELDON_DATA_DIR=]
         --config-file <PATH>     The config file [env: SHELDON_CONFIG_FILE=]
@@ -502,7 +556,7 @@ SUBCOMMANDS:
             RawOpt {
                 quiet: false,
                 verbose: false,
-                no_color: false,
+                color: Default::default(),
                 home: None,
                 config_dir: None,
                 data_dir: None,
@@ -525,7 +579,8 @@ SUBCOMMANDS:
             raw_opt(&[
                 "--quiet",
                 "--verbose",
-                "--no-color",
+                "--color",
+                "never",
                 "--home",
                 "/",
                 "--config-dir",
@@ -545,7 +600,7 @@ SUBCOMMANDS:
             RawOpt {
                 quiet: true,
                 verbose: true,
-                no_color: true,
+                color: ColorChoice::Never,
                 home: Some("/".into()),
                 config_dir: Some("/test".into()),
                 data_dir: Some("/test".into()),
