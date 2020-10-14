@@ -15,8 +15,10 @@ pub struct Settings {
     pub version: String,
     /// The location of the home directory.
     pub home: PathBuf,
-    /// The location of the root directory.
-    pub root: PathBuf,
+    /// The location of the configuration directory.
+    pub config_dir: PathBuf,
+    /// The location of the data directory.
+    pub data_dir: PathBuf,
     /// The location of the config file.
     pub config_file: PathBuf,
     /// The location of the lock file.
@@ -85,7 +87,9 @@ pub trait SettingsExt {
 
     setting_access!(home);
 
-    setting_access!(root);
+    setting_access!(config_dir);
+
+    setting_access!(data_dir);
 
     setting_access!(config_file);
 

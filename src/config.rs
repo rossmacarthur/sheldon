@@ -577,7 +577,7 @@ impl RawPlugin {
             inline,
             mut proto,
             reference,
-            mut dir,
+            dir,
             uses,
             apply,
             mut rest,
@@ -595,16 +595,6 @@ impl RawPlugin {
                     name = name,
                 ));
                 proto = Some(protocol);
-            }
-        }
-        if dir.is_none() {
-            if let Some(directory) = pop_toml_value(&mut rest, "directory") {
-                warnings.push(anyhow!(
-                    "deprecated config key used: `plugins.{name}.directory`, please use \
-                     `plugins.{name}.dir` instead",
-                    name = name,
-                ));
-                dir = Some(directory);
             }
         }
 
@@ -734,22 +724,6 @@ impl RawConfig {
             // Check that the templates can be compiled.
             handlebars::Template::compile(&template.value)
                 .with_context(s!("failed to compile template `{}`", name))?;
-            // Simplistic check for deprecated template variables.
-            let replaced = template.value.replace(" ", "");
-            for (old, to_check, new) in &[
-                ("directory", "{{directory}}", "dir"),
-                ("filename", "{{filename}}", "file"),
-            ] {
-                if replaced.contains(to_check) {
-                    warnings.push(anyhow!(
-                        "deprecated template variable used in `templates.{}`: `{}`, please use \
-                         `{}` instead",
-                        name,
-                        old,
-                        new,
-                    ));
-                }
-            }
         }
 
         let shell = shell.unwrap_or_default();

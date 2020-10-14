@@ -126,14 +126,15 @@ Sheldon accepts the following global command line flags.
 
 Sheldon accepts the following global command line options.
 
-| Option                  | Environment variable   | Description                                                 |
-| ----------------------- | ---------------------- | ----------------------------------------------------------- |
-| `--home <path>`         | `HOME`                 | Set the home directory. (*default:* auto)                   |
-| `--root <path>`         | `SHELDON_ROOT`         | Set the root directory. (*default:* `<home>/.sheldon`)      |
-| `--config-file <path>`  | `SHELDON_CONFIG_FILE`  | Set the config file. (*default:*  `<root>/plugins.toml`)    |
-| `--lock-file <path>`    | `SHELDON_LOCK_FILE`    | Set the lock file. (*default:* `<root>/plugins.lock`)       |
-| `--clone-dir <path>`    | `SHELDON_CLONE_DIR`    | Set the clone directory. (*default:* `<root>/repos`)        |
-| `--download-dir <path>` | `SHELDON_DOWNLOAD_DIR` | Set the download directory. (*default:* `<root>/downloads`) |
+| Option                  | Environment variable   | Description                                                     |
+| ----------------------- | ---------------------- | ----------------------------------------------------------------|
+| `--home <path>`         | `HOME`                 | Set the home directory. (*default:* auto)                       |
+| `--config-dir <path>`   | `SHELDON_CONFIG_DIR`   | Set the config directory. (*default:* `<home>/.sheldon`)        |
+| `--data-dir <path>`     | `SHELDON_DATA_DIR`     | Set the data directory. (*default:* `<home>/.sheldon`)          |
+| `--config-file <path>`  | `SHELDON_CONFIG_FILE`  | Set the config file. (*default:* `<config_dir>/plugins.toml`)  |
+| `--lock-file <path>`    | `SHELDON_LOCK_FILE`    | Set the lock file. (*default:* `<data_dir>/plugins.lock`)       |
+| `--clone-dir <path>`    | `SHELDON_CLONE_DIR`    | Set the clone directory. (*default:* `<data_dir>/repos`)        |
+| `--download-dir <path>` | `SHELDON_DOWNLOAD_DIR` | Set the download directory. (*default:* `<data_dir>/downloads`) |
 
 The priority order for setting these values is the following
 

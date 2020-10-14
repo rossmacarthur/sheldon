@@ -23,7 +23,7 @@ github = "chriskempson/base16-shell"
 ### Git
 
 Git sources specify a remote Git repository that will be cloned to the Sheldon
-root directory. There are three flavors of Git sources.
+data directory. There are three flavors of Git sources.
 
 #### `github`
 
@@ -268,7 +268,7 @@ Plugins all have the following information that can be used in templates.
   option with `use`. These can be used in templates using `{{ file }}`. This
   information only makes sense in templates with `each` set to `true`.
 
-* **The Sheldon root directory.** This directory can be used as `{{ root }}`.
+* **The Sheldon data directory.** This directory can be used as `{{ data_dir }}`.
 
 To add or update a template add a new key to the `[templates]` table in the
 config file. Take a look at the [examples](Examples.md) for some interesting

@@ -37,7 +37,6 @@ struct TestCase {
 /// Temporary test directories and their layout.
 struct Directories {
     home: Rc<tempfile::TempDir>,
-    root: PathBuf,
     config: PathBuf,
     data: PathBuf,
 }
@@ -77,7 +76,8 @@ impl TestCommand {
 
         command
             .env("HOME", &dirs.home.path())
-            .env("SHELDON_ROOT", &dirs.root)
+            .env("SHELDON_CONFIG_DIR", &dirs.config)
+            .env("SHELDON_DATA_DIR", &dirs.data)
             .env_remove("XDG_CONFIG_HOME")
             .env_remove("XDG_DATA_HOME")
             .env_remove("XDG_CACHE_HOME")
@@ -179,7 +179,6 @@ impl TestCase {
         let substitute = |v: String| {
             [
                 ("<home>", dirs.home.path()),
-                ("<root>", &dirs.root),
                 ("<config>", &dirs.config),
                 ("<data>", &dirs.data),
                 ("<config_sub>", config_sub),
@@ -233,7 +232,7 @@ impl TestCase {
 
     fn assert_contents(&self, name: &str) -> io::Result<()> {
         assert_eq!(
-            &fs::read_to_string(self.dirs.root.join(name))?,
+            &fs::read_to_string(self.dirs.data.join(name))?,
             &self.get(name)
         );
         Ok(())
@@ -249,8 +248,7 @@ impl TestCase {
 
 impl Directories {
     fn conforms(&self) -> bool {
-        self.root.exists()
-            && self.config.join("plugins.toml").exists()
+        self.config.join("plugins.toml").exists()
             && self.data.join("plugins.lock").exists()
             && self.data.join("repos").exists()
             && self.data.join("downloads").exists()
@@ -267,25 +265,18 @@ impl Directories {
         let config = home.path().join(".config").join("sheldon");
         let data = home.path().join(".local/share").join("sheldon");
 
-        Directories {
-            home,
-            root: data.clone(),
-            config,
-            data,
-        }
-        .init()
+        Directories { home, config, data }.init()
     }
 
     fn default() -> io::Result<Self> {
         let home = Rc::new(tempfile::tempdir()?);
-        let root = home.path().join(".sheldon");
-        fs::create_dir(&root)?;
+        let data = home.path().join(".sheldon");
+        fs::create_dir(&data)?;
 
         Ok(Directories {
             home,
-            config: root.clone(),
-            data: root.clone(),
-            root,
+            config: data.clone(),
+            data,
         })
     }
 }
@@ -306,8 +297,8 @@ impl RepositoryExt for git2::Repository {
 }
 
 // Check that sheldon-test was in fact cloned.
-fn check_sheldon_test(root: &Path) -> Result<(), git2::Error> {
-    let dir = root.join("repos/github.com/rossmacarthur/sheldon-test");
+fn check_sheldon_test(data: &Path) -> Result<(), git2::Error> {
+    let dir = data.join("repos/github.com/rossmacarthur/sheldon-test");
     let file = dir.join("test.plugin.zsh");
     assert!(dir.is_dir());
     assert!(file.is_file());
@@ -329,13 +320,13 @@ fn check_sheldon_test(root: &Path) -> Result<(), git2::Error> {
 #[test]
 fn lock_and_source_clean() -> io::Result<()> {
     let case = TestCase::load("clean")?;
-    let root = &case.dirs.root;
-    fs::create_dir_all(root.join("repos/test.com"))?;
+    let data = &case.dirs.data;
+    fs::create_dir_all(data.join("repos/test.com"))?;
     {
         fs::OpenOptions::new()
             .create(true)
             .write(true)
-            .open(&root.join("repos/test.com/test.txt"))?;
+            .open(&data.join("repos/test.com/test.txt"))?;
     }
 
     case.run()?;
@@ -348,23 +339,23 @@ fn lock_and_source_clean_permission_denied() -> io::Result<()> {
     use std::os::unix::fs::PermissionsExt;
 
     let case = TestCase::load("clean_permission_denied")?;
-    let root = &case.dirs.root;
-    fs::create_dir_all(root.join("repos/test.com"))?;
+    let data = &case.dirs.data;
+    fs::create_dir_all(data.join("repos/test.com"))?;
     {
         fs::OpenOptions::new()
             .create(true)
             .write(true)
-            .open(root.join("repos/test.com/test.txt"))?;
+            .open(data.join("repos/test.com/test.txt"))?;
     }
     fs::set_permissions(
-        &root.join("repos/test.com"),
+        &data.join("repos/test.com"),
         fs::Permissions::from_mode(0o000),
     )?;
 
     case.run()?;
 
     fs::set_permissions(
-        &root.join("repos/test.com"),
+        &data.join("repos/test.com"),
         fs::Permissions::from_mode(0o777),
     )?;
 
@@ -380,7 +371,7 @@ fn lock_and_source_empty() -> io::Result<()> {
 fn lock_and_source_github_git() -> io::Result<()> {
     let case = TestCase::load("github_git")?;
     case.run()?;
-    check_sheldon_test(&case.dirs.root).unwrap();
+    check_sheldon_test(&case.dirs.data).unwrap();
     Ok(())
 }
 
@@ -388,7 +379,7 @@ fn lock_and_source_github_git() -> io::Result<()> {
 fn lock_and_source_github_https() -> io::Result<()> {
     let case = TestCase::load("github_https")?;
     case.run()?;
-    check_sheldon_test(&case.dirs.root).unwrap();
+    check_sheldon_test(&case.dirs.data).unwrap();
     Ok(())
 }
 
@@ -400,7 +391,7 @@ fn lock_and_source_github_branch() -> io::Result<()> {
     // Check that sheldon-test@feature was in fact cloned.
     let dir = case
         .dirs
-        .root
+        .data
         .join("repos/github.com/rossmacarthur/sheldon-test");
     let file = dir.join("test.plugin.zsh");
     assert!(dir.is_dir());
@@ -426,7 +417,7 @@ fn lock_and_source_github_submodule() -> io::Result<()> {
     // Check that sheldon-test@recursive-recursive was in fact cloned.
     let dir = case
         .dirs
-        .root
+        .data
         .join("repos/github.com/rossmacarthur/sheldon-test");
     let file = dir.join("test.plugin.zsh");
     assert!(dir.is_dir());
@@ -475,7 +466,7 @@ fn lock_and_source_github_submodule() -> io::Result<()> {
 fn lock_and_source_github_tag() -> io::Result<()> {
     let case = TestCase::load("github_tag")?;
     case.run()?;
-    check_sheldon_test(&case.dirs.root).unwrap();
+    check_sheldon_test(&case.dirs.data).unwrap();
     Ok(())
 }
 
@@ -491,11 +482,11 @@ fn lock_and_source_github_bad_url() -> io::Result<()> {
         .arg("lock")
         .run()?;
 
-    assert!(!case.dirs.root.join("plugins.lock").exists());
+    assert!(!case.dirs.data.join("plugins.lock").exists());
 
     case.run_command("source")?;
 
-    assert!(!case.dirs.root.join("plugins.lock").exists());
+    assert!(!case.dirs.data.join("plugins.lock").exists());
 
     Ok(())
 }
@@ -505,7 +496,7 @@ fn lock_and_source_github_bad_reinstall() -> io::Result<()> {
     // first setup up a correct situation
     let case = TestCase::load("github_tag")?;
     case.run()?;
-    check_sheldon_test(&case.dirs.root).unwrap();
+    check_sheldon_test(&case.dirs.data).unwrap();
 
     // Now use a bad URL and try reinstall
     let case = TestCase::load_with_dirs("github_bad_reinstall", case.dirs)?;
@@ -519,7 +510,7 @@ fn lock_and_source_github_bad_reinstall() -> io::Result<()> {
         .run()?;
 
     // check that the previously installed plugin and lock file is okay
-    check_sheldon_test(&case.dirs.root).unwrap();
+    check_sheldon_test(&case.dirs.data).unwrap();
     case.assert_contents("plugins.lock")?;
 
     Ok(())
@@ -533,7 +524,7 @@ fn lock_and_source_inline() -> io::Result<()> {
 #[test]
 fn lock_and_source_override_config_file() -> io::Result<()> {
     let case = TestCase::load("override_config_file")?;
-    let config_file = case.dirs.root.join("test.toml");
+    let config_file = case.dirs.config.join("test.toml");
     let args = ["--config-file", config_file.to_str().unwrap()];
 
     case.write_config_file("test.toml")?;
@@ -560,7 +551,7 @@ fn lock_and_source_override_config_file() -> io::Result<()> {
 #[test]
 fn lock_and_source_override_config_file_missing() -> io::Result<()> {
     let case = TestCase::load("override_config_file_missing")?;
-    let config_file = case.dirs.root.join("test.toml");
+    let config_file = case.dirs.config.join("test.toml");
     let args = ["--config-file", config_file.to_str().unwrap()];
 
     TestCommand::new(&case.dirs)
@@ -583,7 +574,7 @@ fn lock_and_source_override_config_file_missing() -> io::Result<()> {
 #[test]
 fn lock_and_source_override_lock_file() -> io::Result<()> {
     let case = TestCase::load("override_lock_file")?;
-    let lock_file = case.dirs.root.join("test.lock");
+    let lock_file = case.dirs.data.join("test.lock");
     let args = ["--lock-file", lock_file.to_str().unwrap()];
 
     case.write_config_file("plugins.toml")?;
@@ -653,7 +644,6 @@ fn dirs_xdg_from_env() -> io::Result<()> {
         home,
         config: xdg_config.join("sheldon"),
         data: xdg_data.join("sheldon"),
-        root: xdg_data.join("sheldon"),
     }
     .init()?;
 
