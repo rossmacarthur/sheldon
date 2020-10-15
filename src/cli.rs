@@ -23,6 +23,8 @@ use crate::log::{Output, Verbosity};
 pub enum ColorChoice {
     /// Force color output.
     Always,
+    /// Intelligently guess whether to use color output.
+    Auto,
     /// Force disable color output.
     Never,
 }
@@ -156,7 +158,7 @@ struct RawOpt {
     #[clap(long, short)]
     verbose: bool,
 
-    /// Output coloring: always or never.
+    /// Output coloring: always, auto, or never.
     #[clap(long, value_name = "WHEN", default_value)]
     color: ColorChoice,
 
@@ -223,8 +225,7 @@ pub struct Opt {
 
 impl Default for ColorChoice {
     fn default() -> Self {
-        // FIXME: default to `Self::Auto` and detect if stdout and stderr is a TTY.
-        Self::Always
+        Self::Auto
     }
 }
 
@@ -232,6 +233,7 @@ impl fmt::Display for ColorChoice {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Self::Always => f.write_str("always"),
+            Self::Auto => f.write_str("auto"),
             Self::Never => f.write_str("never"),
         }
     }
@@ -247,6 +249,7 @@ impl FromStr for ColorChoice {
     fn from_str(s: &str) -> result::Result<Self, Self::Err> {
         match s {
             "always" => Ok(Self::Always),
+            "auto" => Ok(Self::Auto),
             "never" => Ok(Self::Never),
             s => Err(ParseColorChoiceError(s.to_string())),
         }
@@ -257,6 +260,7 @@ impl ColorChoice {
     fn is_no_color(self) -> bool {
         match self {
             Self::Always => false,
+            Self::Auto => !atty::is(atty::Stream::Stderr),
             Self::Never => true,
         }
     }
@@ -520,7 +524,7 @@ FLAGS:
     -V, --version    Prints version information
 
 OPTIONS:
-        --color <WHEN>           Output coloring: always or never [default: always]
+        --color <WHEN>           Output coloring: always, auto, or never [default: auto]
         --config-dir <PATH>      The configuration directory [env: SHELDON_CONFIG_DIR=]
         --data-dir <PATH>        The data directory [env: SHELDON_DATA_DIR=]
         --config-file <PATH>     The config file [env: SHELDON_CONFIG_FILE=]

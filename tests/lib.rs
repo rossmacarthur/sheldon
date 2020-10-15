@@ -86,9 +86,7 @@ impl TestCommand {
             .env_remove("SHELDON_CLONE_DIR")
             .env_remove("SHELDON_DOWNLOAD_DIR")
             .args(&params)
-            .arg("--verbose")
-            .arg("--color")
-            .arg("never");
+            .arg("--verbose");
 
         Self {
             command,
