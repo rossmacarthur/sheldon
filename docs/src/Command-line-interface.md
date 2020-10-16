@@ -118,7 +118,6 @@ Sheldon accepts the following global command line flags.
 | ----------------- | --------------------------------- |
 | `-q`, `--quiet`   | Suppress any informational output |
 | `-v`, `--verbose` | Use verbose output                |
-| `--no-color`      | Do not use ANSI colored output    |
 | `-h`, `--help`    | Show the help message and exit    |
 | `-V`, `--version` | Show the version and exit         |
 
@@ -127,11 +126,12 @@ Sheldon accepts the following global command line flags.
 Sheldon accepts the following global command line options.
 
 | Option                  | Environment variable   | Description                                                     |
-| ----------------------- | ---------------------- | ----------------------------------------------------------------|
+| ----------------------- | ---------------------- | --------------------------------------------------------------- |
+| `--color <when>`        |                        | Output coloring: `always`, `auto`, `never`. (*default:* `auto`) |
 | `--home <path>`         | `HOME`                 | Set the home directory. (*default:* auto)                       |
 | `--config-dir <path>`   | `SHELDON_CONFIG_DIR`   | Set the config directory. (*default:* `<home>/.sheldon`)        |
 | `--data-dir <path>`     | `SHELDON_DATA_DIR`     | Set the data directory. (*default:* `<home>/.sheldon`)          |
-| `--config-file <path>`  | `SHELDON_CONFIG_FILE`  | Set the config file. (*default:* `<config_dir>/plugins.toml`)  |
+| `--config-file <path>`  | `SHELDON_CONFIG_FILE`  | Set the config file. (*default:* `<config_dir>/plugins.toml`)   |
 | `--lock-file <path>`    | `SHELDON_LOCK_FILE`    | Set the lock file. (*default:* `<data_dir>/plugins.lock`)       |
 | `--clone-dir <path>`    | `SHELDON_CLONE_DIR`    | Set the clone directory. (*default:* `<data_dir>/repos`)        |
 | `--download-dir <path>` | `SHELDON_DOWNLOAD_DIR` | Set the download directory. (*default:* `<data_dir>/downloads`) |

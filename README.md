@@ -319,7 +319,6 @@ Sheldon accepts the following global command line flags.
 |----|-----------|
 |`-q`, `--quiet`|Suppress any informational output|
 |`-v`, `--verbose`|Use verbose output|
-|`--no-color`|Do not use ANSI colored output|
 |`-h`, `--help`|Show the help message and exit|
 |`-V`, `--version`|Show the version and exit|
 
@@ -329,6 +328,7 @@ Sheldon accepts the following global command line options.
 
 |Option|Environment variable|Description|
 |------|--------------------|-----------|
+|`--color <when>`||Output coloring: `always`, `auto`, `never`. (*default:* `auto`)|
 |`--home <path>`|`HOME`|Set the home directory. (*default:* auto)|
 |`--config-dir <path>`|`SHELDON_CONFIG_DIR`|Set the config directory. (*default:* `<home>/.sheldon`)|
 |`--data-dir <path>`|`SHELDON_DATA_DIR`|Set the data directory. (*default:* `<home>/.sheldon`)|
