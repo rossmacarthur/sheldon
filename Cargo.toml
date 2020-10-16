@@ -18,7 +18,7 @@ include = ["src/**/*", "LICENSE-*", "README.md", "build.rs"]
 ansi_term = "0.12.1"
 anyhow = "1.0.32"
 atty = "0.2.14"
-casual = "0.1.2"
+casual = "0.2.0"
 clap = { version = "3.0.0-beta.2", features = ["derive"] }
 fs2 = "0.4.3"
 git2 = "0.13.8"

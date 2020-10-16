@@ -22,13 +22,12 @@ impl Sheldon {
     /// Initialize the config file.
     fn init_config(ctx: &EditContext, path: &Path, err: Error) -> Result<edit::Config> {
         if underlying_io_error_kind(&err) == Some(io::ErrorKind::NotFound) {
-            if !casual::confirm(&format!(
+            if !casual::confirm(format!(
                 "Initialize new config file `{}`?",
                 &ctx.replace_home(path).display()
             )) {
                 bail!("aborted initialization!");
             };
-
             if let Some(parent) = path.parent() {
                 fs::create_dir_all(parent).with_context(s!(
                     "failed to create directory `{}`",
@@ -41,7 +40,7 @@ impl Sheldon {
         }
     }
 
-    // /// Initialize a new config file.
+    /// Initialize a new config file.
     fn init(ctx: &EditContext) -> Result<()> {
         let path = ctx.config_file();
         match path
