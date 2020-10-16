@@ -2,7 +2,7 @@
 
 ## 0.6.0
 
-*Unreleased*
+*October 16th, 2020*
 
 ### Breaking changes
 
@@ -10,7 +10,7 @@
   is set then Sheldon will adopt the [XDG directory structure] by default. The
   config file will be located at `$XDG_CONFIG_HOME/sheldon/plugins.toml` and
   downloaded data will be located in `$XDG_CONFIG_DATA/sheldon`.
-  (Contributed by Andrew @tapeinosyne)
+  Contributed by Andrew [**@tapeinosyne**](https://github.com/tapeinosyne).
 - [Change the default lock file location.][10c64a3] For non-XDG directory
   structures the lock file now always defaults to
   `$SHELDON_DATA_DIR/plugins.lock`. It previously was the config file path with
@@ -18,6 +18,7 @@
 - [Remove the Sheldon root.][#112] The `root` directory has been replaced by
   individual directories for configuration and data: `config_dir` and
   `data_dir`. Both default to `$HOME/.sheldon`, the old default `root`.
+  Contributed by Andrew [**@tapeinosyne**](https://github.com/tapeinosyne).
 
   If you used Sheldon's defaults, everything will just keep working as it did;
   no action needs to be taken. Otherwise, you may refer to this migration table:
@@ -34,10 +35,18 @@
   |                    |                       | `--data-dir`                |
   | Template variables | `{{ root }}`          | `{{ data_dir }}`            |
 
+- [Auto-detect whether to use colored output.][2be1da7] A new `--color` option
+  was added with three values `always`, `auto`, or `never`. By default Sheldon
+  will now automatically whether to use colored output or not (`auto`). But you
+  can still force Sheldon to always use color or never use color with the
+  `--color always` option or `--color never`. The previous `--no-color` option
+  has been removed.
+
 [XDG directory structure]: https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
 [#110]: https://github.com/rossmacarthur/sheldon/pull/110
 [#112]: https://github.com/rossmacarthur/sheldon/pull/112
 [10c64a3]: https://github.com/rossmacarthur/sheldon/commit/10c64a3cd0e1f95536a821016a165728dde59779
+[2be1da7]: https://github.com/rossmacarthur/sheldon/commit/2be1da71076247518d1f5c78c190d488bb8743cf
 
 ### Fixes
 
