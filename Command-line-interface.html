@@ -240,11 +240,12 @@ edit the config file. In the following command we remove the plugin with name
 <p>Sheldon accepts the following global command line options.</p>
 <table><thead><tr><th>Option</th><th>Environment variable</th><th>Description</th></tr></thead><tbody>
 <tr><td><code>--home &lt;path&gt;</code></td><td><code>HOME</code></td><td>Set the home directory. (<em>default:</em> auto)</td></tr>
-<tr><td><code>--root &lt;path&gt;</code></td><td><code>SHELDON_ROOT</code></td><td>Set the root directory. (<em>default:</em> <code>&lt;home&gt;/.sheldon</code>)</td></tr>
-<tr><td><code>--config-file &lt;path&gt;</code></td><td><code>SHELDON_CONFIG_FILE</code></td><td>Set the config file. (<em>default:</em>  <code>&lt;root&gt;/plugins.toml</code>)</td></tr>
-<tr><td><code>--lock-file &lt;path&gt;</code></td><td><code>SHELDON_LOCK_FILE</code></td><td>Set the lock file. (<em>default:</em> <code>&lt;config-file&gt;.lock</code>)</td></tr>
-<tr><td><code>--clone-dir &lt;path&gt;</code></td><td><code>SHELDON_CLONE_DIR</code></td><td>Set the clone directory. (<em>default:</em> <code>&lt;root&gt;/repos</code>)</td></tr>
-<tr><td><code>--download-dir &lt;path&gt;</code></td><td><code>SHELDON_DOWNLOAD_DIR</code></td><td>Set the download directory. (<em>default:</em> <code>&lt;root&gt;/downloads</code>)</td></tr>
+<tr><td><code>--config-dir &lt;path&gt;</code></td><td><code>SHELDON_CONFIG_DIR</code></td><td>Set the config directory. (<em>default:</em> <code>&lt;home&gt;/.sheldon</code>)</td></tr>
+<tr><td><code>--data-dir &lt;path&gt;</code></td><td><code>SHELDON_DATA_DIR</code></td><td>Set the data directory. (<em>default:</em> <code>&lt;home&gt;/.sheldon</code>)</td></tr>
+<tr><td><code>--config-file &lt;path&gt;</code></td><td><code>SHELDON_CONFIG_FILE</code></td><td>Set the config file. (<em>default:</em> <code>&lt;config_dir&gt;/plugins.toml</code>)</td></tr>
+<tr><td><code>--lock-file &lt;path&gt;</code></td><td><code>SHELDON_LOCK_FILE</code></td><td>Set the lock file. (<em>default:</em> <code>&lt;data_dir&gt;/plugins.lock</code>)</td></tr>
+<tr><td><code>--clone-dir &lt;path&gt;</code></td><td><code>SHELDON_CLONE_DIR</code></td><td>Set the clone directory. (<em>default:</em> <code>&lt;data_dir&gt;/repos</code>)</td></tr>
+<tr><td><code>--download-dir &lt;path&gt;</code></td><td><code>SHELDON_DOWNLOAD_DIR</code></td><td>Set the download directory. (<em>default:</em> <code>&lt;data_dir&gt;/downloads</code>)</td></tr>
 </tbody></table>
 <p>The priority order for setting these values is the following</p>
 <ol>

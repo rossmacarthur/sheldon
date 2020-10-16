@@ -162,15 +162,16 @@
                         <h1><a class="header" href="#getting-started" id="getting-started">Getting started</a></h1>
 <h2><a class="header" href="#initializing" id="initializing">Initializing</a></h2>
 <p>Sheldon works by specifying plugin information in a <a href="https://toml.io">TOML</a>
-configuration file. You can initialize this file by running <code>sheldon init</code>.</p>
+configuration file, <code>plugins.toml</code>. You can initialize this file by running
+<code>sheldon init</code>.</p>
 <pre><code class="language-sh">sheldon init --shell bash
 </code></pre>
 <p>or</p>
 <pre><code class="language-sh">sheldon init --shell zsh
 </code></pre>
-<p>This will create the <code>~/.sheldon</code> directory with an empty <code>plugins.toml</code> file.
-You can either edit this file directly or use the provided command line
-interface to add or remove plugins.</p>
+<p>This will create <code>plugins.toml</code> under <code>~/.sheldon</code> or, if defined,
+<code>$XDG_CONFIG_HOME/sheldon</code>. You can either edit this file directly or use the
+provided command line interface to add or remove plugins.</p>
 <h2><a class="header" href="#adding-a-plugin" id="adding-a-plugin">Adding a plugin</a></h2>
 <p>To add your first plugin append the following to the Sheldon config file.</p>
 <pre><code class="language-toml"># ~/.sheldon/plugins.toml

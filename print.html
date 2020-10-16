@@ -215,15 +215,16 @@ cargo build --release
 <h1><a class="header" href="#getting-started" id="getting-started">Getting started</a></h1>
 <h2><a class="header" href="#initializing" id="initializing">Initializing</a></h2>
 <p>Sheldon works by specifying plugin information in a <a href="https://toml.io">TOML</a>
-configuration file. You can initialize this file by running <code>sheldon init</code>.</p>
+configuration file, <code>plugins.toml</code>. You can initialize this file by running
+<code>sheldon init</code>.</p>
 <pre><code class="language-sh">sheldon init --shell bash
 </code></pre>
 <p>or</p>
 <pre><code class="language-sh">sheldon init --shell zsh
 </code></pre>
-<p>This will create the <code>~/.sheldon</code> directory with an empty <code>plugins.toml</code> file.
-You can either edit this file directly or use the provided command line
-interface to add or remove plugins.</p>
+<p>This will create <code>plugins.toml</code> under <code>~/.sheldon</code> or, if defined,
+<code>$XDG_CONFIG_HOME/sheldon</code>. You can either edit this file directly or use the
+provided command line interface to add or remove plugins.</p>
 <h2><a class="header" href="#adding-a-plugin" id="adding-a-plugin">Adding a plugin</a></h2>
 <p>To add your first plugin append the following to the Sheldon config file.</p>
 <pre><code class="language-toml"># ~/.sheldon/plugins.toml
@@ -327,11 +328,12 @@ edit the config file. In the following command we remove the plugin with name
 <p>Sheldon accepts the following global command line options.</p>
 <table><thead><tr><th>Option</th><th>Environment variable</th><th>Description</th></tr></thead><tbody>
 <tr><td><code>--home &lt;path&gt;</code></td><td><code>HOME</code></td><td>Set the home directory. (<em>default:</em> auto)</td></tr>
-<tr><td><code>--root &lt;path&gt;</code></td><td><code>SHELDON_ROOT</code></td><td>Set the root directory. (<em>default:</em> <code>&lt;home&gt;/.sheldon</code>)</td></tr>
-<tr><td><code>--config-file &lt;path&gt;</code></td><td><code>SHELDON_CONFIG_FILE</code></td><td>Set the config file. (<em>default:</em>  <code>&lt;root&gt;/plugins.toml</code>)</td></tr>
-<tr><td><code>--lock-file &lt;path&gt;</code></td><td><code>SHELDON_LOCK_FILE</code></td><td>Set the lock file. (<em>default:</em> <code>&lt;config-file&gt;.lock</code>)</td></tr>
-<tr><td><code>--clone-dir &lt;path&gt;</code></td><td><code>SHELDON_CLONE_DIR</code></td><td>Set the clone directory. (<em>default:</em> <code>&lt;root&gt;/repos</code>)</td></tr>
-<tr><td><code>--download-dir &lt;path&gt;</code></td><td><code>SHELDON_DOWNLOAD_DIR</code></td><td>Set the download directory. (<em>default:</em> <code>&lt;root&gt;/downloads</code>)</td></tr>
+<tr><td><code>--config-dir &lt;path&gt;</code></td><td><code>SHELDON_CONFIG_DIR</code></td><td>Set the config directory. (<em>default:</em> <code>&lt;home&gt;/.sheldon</code>)</td></tr>
+<tr><td><code>--data-dir &lt;path&gt;</code></td><td><code>SHELDON_DATA_DIR</code></td><td>Set the data directory. (<em>default:</em> <code>&lt;home&gt;/.sheldon</code>)</td></tr>
+<tr><td><code>--config-file &lt;path&gt;</code></td><td><code>SHELDON_CONFIG_FILE</code></td><td>Set the config file. (<em>default:</em> <code>&lt;config_dir&gt;/plugins.toml</code>)</td></tr>
+<tr><td><code>--lock-file &lt;path&gt;</code></td><td><code>SHELDON_LOCK_FILE</code></td><td>Set the lock file. (<em>default:</em> <code>&lt;data_dir&gt;/plugins.lock</code>)</td></tr>
+<tr><td><code>--clone-dir &lt;path&gt;</code></td><td><code>SHELDON_CLONE_DIR</code></td><td>Set the clone directory. (<em>default:</em> <code>&lt;data_dir&gt;/repos</code>)</td></tr>
+<tr><td><code>--download-dir &lt;path&gt;</code></td><td><code>SHELDON_DOWNLOAD_DIR</code></td><td>Set the download directory. (<em>default:</em> <code>&lt;data_dir&gt;/downloads</code>)</td></tr>
 </tbody></table>
 <p>The priority order for setting these values is the following</p>
 <ol>
@@ -358,7 +360,7 @@ github = &quot;chriskempson/base16-shell&quot;
 </code></pre>
 <h3><a class="header" href="#git" id="git">Git</a></h3>
 <p>Git sources specify a remote Git repository that will be cloned to the Sheldon
-root directory. There are three flavors of Git sources.</p>
+data directory. There are three flavors of Git sources.</p>
 <h4><a class="header" href="#github" id="github"><code>github</code></a></h4>
 <p>A GitHub source must set the <code>github</code> field and specify the repository. This
 should be the username or organization and the repository name separated by a
@@ -523,7 +525,7 @@ option with <code>use</code>. These can be used in templates using <code>{{ file
 information only makes sense in templates with <code>each</code> set to <code>true</code>.</p>
 </li>
 <li>
-<p><strong>The Sheldon root directory.</strong> This directory can be used as <code>{{ root }}</code>.</p>
+<p><strong>The Sheldon data directory.</strong> This directory can be used as <code>{{ data_dir }}</code>.</p>
 </li>
 </ul>
 <p>To add or update a template add a new key to the <code>[templates]</code> table in the
@@ -716,6 +718,60 @@ use = [&quot;async.zsh&quot;, &quot;pure.zsh&quot;]
 <pre><code class="language-sh">sheldon add pure --github sindresorhus/pure --use async.zsh pure.zsh
 </code></pre>
 <h1><a class="header" href="#releases" id="releases">Releases</a></h1>
+<h2><a class="header" href="#060" id="060">0.6.0</a></h2>
+<p><em>October 16th, 2020</em></p>
+<h3><a class="header" href="#breaking-changes" id="breaking-changes">Breaking changes</a></h3>
+<ul>
+<li>
+<p><a href="https://github.com/rossmacarthur/sheldon/pull/110">Support XDG directory structure.</a> If any XDG environment variable
+is set then Sheldon will adopt the <a href="https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html">XDG directory structure</a> by default. The
+config file will be located at <code>$XDG_CONFIG_HOME/sheldon/plugins.toml</code> and
+downloaded data will be located in <code>$XDG_CONFIG_DATA/sheldon</code>.
+Contributed by Andrew <a href="https://github.com/tapeinosyne"><strong>@tapeinosyne</strong></a>.</p>
+</li>
+<li>
+<p><a href="https://github.com/rossmacarthur/sheldon/commit/10c64a3cd0e1f95536a821016a165728dde59779">Change the default lock file location.</a> For non-XDG directory
+structures the lock file now always defaults to
+<code>$SHELDON_DATA_DIR/plugins.lock</code>. It previously was the config file path with
+a <code>.lock</code> extension.</p>
+</li>
+<li>
+<p><a href="https://github.com/rossmacarthur/sheldon/pull/112">Remove the Sheldon root.</a> The <code>root</code> directory has been replaced by
+individual directories for configuration and data: <code>config_dir</code> and
+<code>data_dir</code>. Both default to <code>$HOME/.sheldon</code>, the old default <code>root</code>.
+Contributed by Andrew <a href="https://github.com/tapeinosyne"><strong>@tapeinosyne</strong></a>.</p>
+<p>If you used Sheldon's defaults, everything will just keep working as it did;
+no action needs to be taken. Otherwise, you may refer to this migration table:</p>
+<table><thead><tr><th align="right"></th><th>Old</th><th>New</th></tr></thead><tbody>
+<tr><td align="right">Config paths</td><td><code>&lt;root&gt;/plugins.toml</code></td><td><code>&lt;config_dir&gt;/plugins.toml</code></td></tr>
+<tr><td align="right">Data paths</td><td><code>&lt;root&gt;/plugins.lock</code></td><td><code>&lt;data_dir&gt;/plugins.lock</code></td></tr>
+<tr><td align="right"></td><td><code>&lt;root&gt;/repos</code></td><td><code>&lt;data_dir&gt;/repos</code></td></tr>
+<tr><td align="right"></td><td><code>&lt;root&gt;/downloads</code></td><td><code>&lt;data_dir&gt;/downloads</code></td></tr>
+<tr><td align="right">Env variables</td><td><code>SHELDON_ROOT</code></td><td><code>SHELDON_CONFIG_DIR</code></td></tr>
+<tr><td align="right"></td><td></td><td><code>SHELDON_DATA_DIR</code></td></tr>
+<tr><td align="right">CLI options</td><td><code>--root</code></td><td><code>--config-dir</code></td></tr>
+<tr><td align="right"></td><td></td><td><code>--data-dir</code></td></tr>
+<tr><td align="right">Template variables</td><td><code>{{ root }}</code></td><td><code>{{ data_dir }}</code></td></tr>
+</tbody></table>
+</li>
+<li>
+<p><a href="https://github.com/rossmacarthur/sheldon/commit/2be1da71076247518d1f5c78c190d488bb8743cf">Auto-detect whether to use colored output.</a> A new <code>--color</code> option
+was added with three values <code>always</code>, <code>auto</code>, or <code>never</code>. By default Sheldon
+will now automatically whether to use colored output or not (<code>auto</code>). But you
+can still force Sheldon to always use color or never use color with the
+<code>--color always</code> option or <code>--color never</code>. The previous <code>--no-color</code> option
+has been removed.</p>
+</li>
+</ul>
+<h3><a class="header" href="#fixes" id="fixes">Fixes</a></h3>
+<ul>
+<li><a href="https://github.com/rossmacarthur/sheldon/commit/abf202737fa30b30465fbed6c47a034d4d0e9911">Fix performance bug introduced in version 0.5.4.</a> A significant
+drop in performance was introduced by switching to the Rust <code>rayon</code> package.
+This change has been reverted.</li>
+<li><a href="https://github.com/rossmacarthur/sheldon/commit/bc5f9d7ae759cf5e3af7822d45e2bf7fb545d219">Fix <code>--relock</code> not being implied for other flags.</a> This fixes a bug
+where passing <code>--update</code> or <code>--reinstall</code> to the <code>source</code> command didn't imply
+<code>--relock</code> like the documentation says.</li>
+</ul>
 <h2><a class="header" href="#054" id="054">0.5.4</a></h2>
 <p><em>August 14th, 2020</em></p>
 <h3><a class="header" href="#features" id="features">Features</a></h3>
@@ -730,7 +786,7 @@ use = [&quot;{!git,!nvm,*}.zsh]
 </code></pre>
 </li>
 </ul>
-<h3><a class="header" href="#fixes" id="fixes">Fixes</a></h3>
+<h3><a class="header" href="#fixes-1" id="fixes-1">Fixes</a></h3>
 <ul>
 <li><a href="https://github.com/rossmacarthur/sheldon/commit/aa69e0c6c6ae56e98c9d19de3be191e9ce9a974b">Fix not erroring out when no files matched for plugin.</a> This fixes
 cases where no files would be matched for a plugin and Sheldon would silently
@@ -752,7 +808,7 @@ value is set.</li>
 </ul>
 <h2><a class="header" href="#052" id="052">0.5.2</a></h2>
 <p><em>June 4th, 2020</em></p>
-<h3><a class="header" href="#fixes-1" id="fixes-1">Fixes</a></h3>
+<h3><a class="header" href="#fixes-2" id="fixes-2">Fixes</a></h3>
 <ul>
 <li><a href="https://github.com/rossmacarthur/sheldon/commit/4ae64325fd8239dfb6e35f9efc05067c9c4a24d4">Fix not erroring out on a bad HTTP status code.</a> This fixes remote
 sources from silently not being downloaded correctly.</li>
@@ -806,7 +862,7 @@ file it will log warnings when there are unused config keys. Great for
 catching typos!</p>
 </li>
 </ul>
-<h3><a class="header" href="#breaking-changes" id="breaking-changes">Breaking changes</a></h3>
+<h3><a class="header" href="#breaking-changes-1" id="breaking-changes-1">Breaking changes</a></h3>
 <ul>
 <li>
 <p><a href="https://github.com/rossmacarthur/sheldon/commit/18454834cb6f1b2b1ebf2ef52617449b58917f28">Update default root directory and clone directory.</a> The root
@@ -822,7 +878,7 @@ export SHELDON_CLONE_DIR=&quot;$SHELDON_ROOT/repositories&quot;
 </code></pre>
 </li>
 </ul>
-<h3><a class="header" href="#fixes-2" id="fixes-2">Fixes</a></h3>
+<h3><a class="header" href="#fixes-3" id="fixes-3">Fixes</a></h3>
 <ul>
 <li>
 <p><a href="https://github.com/rossmacarthur/sheldon/commit/7293cbf61240a40333ef139b6ac6e7ab173f0f97">Download/clone sources to a temporary path first.</a></p>

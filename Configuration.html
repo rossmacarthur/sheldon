@@ -178,7 +178,7 @@ github = &quot;chriskempson/base16-shell&quot;
 </code></pre>
 <h3><a class="header" href="#git" id="git">Git</a></h3>
 <p>Git sources specify a remote Git repository that will be cloned to the Sheldon
-root directory. There are three flavors of Git sources.</p>
+data directory. There are three flavors of Git sources.</p>
 <h4><a class="header" href="#github" id="github"><code>github</code></a></h4>
 <p>A GitHub source must set the <code>github</code> field and specify the repository. This
 should be the username or organization and the repository name separated by a
@@ -343,7 +343,7 @@ option with <code>use</code>. These can be used in templates using <code>{{ file
 information only makes sense in templates with <code>each</code> set to <code>true</code>.</p>
 </li>
 <li>
-<p><strong>The Sheldon root directory.</strong> This directory can be used as <code>{{ root }}</code>.</p>
+<p><strong>The Sheldon data directory.</strong> This directory can be used as <code>{{ data_dir }}</code>.</p>
 </li>
 </ul>
 <p>To add or update a template add a new key to the <code>[templates]</code> table in the
