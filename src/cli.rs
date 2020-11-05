@@ -379,9 +379,9 @@ impl Opt {
         let xdg_config_user = std::env::var_os("XDG_CONFIG_HOME").map(PathBuf::from);
         let xdg_data_user = std::env::var_os("XDG_DATA_HOME").map(PathBuf::from);
 
-        // Note: "XDG_RUNTIME_DIR is not checked as it can be set by the
-        // system rather than the user, and cannot be relied upon to
-        // indicate a preference for XDG directory layout.
+        // Note: `XDG_RUNTIME_DIR` is not checked as it can be set by the system rather
+        // than the user, and cannot be relied upon to indicate a preference for XDG
+        // directory layout.
         let using_xdg = xdg_data_user.is_some()
             || xdg_config_user.is_some()
             || std::env::var_os("XDG_CACHE_HOME").is_some()
@@ -458,9 +458,9 @@ impl Opt {
     }
 }
 
-/////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 // Unit tests
-/////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
 #[cfg(test)]
 mod tests {

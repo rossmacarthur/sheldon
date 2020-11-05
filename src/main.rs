@@ -1,6 +1,4 @@
-#[macro_use]
 mod _macros;
-
 mod app;
 mod cli;
 mod config;
@@ -15,7 +13,7 @@ use std::panic;
 use std::process;
 
 fn run() {
-    if crate::app::Sheldon::run().is_err() {
+    if crate::app::run().is_err() {
         process::exit(2);
     }
 }
