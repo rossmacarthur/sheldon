@@ -294,14 +294,16 @@ impl Source {
             });
         }
 
-        let mut response =
-            util::download(url.clone()).with_context(s!("failed to download `{}`", url))?;
-        fs::create_dir_all(&dir).with_context(s!("failed to create dir `{}`", dir.display()))?;
-        let mut temp_file = TempPath::new(&file);
-        temp_file.write(&mut response).with_context(s!(
-            "failed to copy contents to `{}`",
-            temp_file.path().display()
-        ))?;
+        let temp_file = TempPath::new(&file);
+        {
+            let path = temp_file.path();
+            fs::create_dir_all(&dir)
+                .with_context(s!("failed to create dir `{}`", dir.display()))?;
+            let temp_file_handle =
+                fs::File::create(path).with_context(s!("failed to create `{}`", path.display()))?;
+            util::download(url.as_ref(), temp_file_handle)
+                .with_context(s!("failed to download `{}`", url))?;
+        }
         temp_file
             .rename(&file)
             .context("failed to rename temporary download file")?;

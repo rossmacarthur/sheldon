@@ -1,14 +1,14 @@
 //! Utility traits and functions.
 
 use std::fs::{self, File};
-use std::io;
+use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 use std::process;
+use std::result;
 use std::time;
 
 use anyhow::{Context as ResultExt, Error, Result};
 use fs2::{lock_contended_error, FileExt};
-use url::Url;
 
 use crate::context::{Context, SettingsExt};
 
@@ -31,9 +31,21 @@ fn nuke_path(path: &Path) -> io::Result<()> {
     }
 }
 
-/// Download a remote file and handle status code errors.
-pub fn download(url: Url) -> reqwest::Result<reqwest::blocking::Response> {
-    Ok(reqwest::blocking::get(url)?.error_for_status()?)
+/// Download a remote file.
+pub fn download(url: &str, mut file: File) -> result::Result<(), curl::Error> {
+    let mut easy = curl::easy::Easy::new();
+    easy.fail_on_error(true)?; // -f
+    easy.follow_location(true)?; // -L
+    easy.url(url.as_ref())?;
+    let mut transfer = easy.transfer();
+    transfer.write_function(move |data| {
+        match file.write_all(data) {
+            Ok(()) => Ok(data.len()),
+            Err(_) => Ok(0), // signals to cURL that the writing failed
+        }
+    })?;
+    transfer.perform()?;
+    Ok(())
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -129,16 +141,6 @@ impl TempPath {
     /// Access the underlying `Path`.
     pub fn path(&self) -> &Path {
         self.path.as_ref().unwrap()
-    }
-
-    /// Copy the contents of a stream to this `TempPath`.
-    pub fn write<R>(&mut self, mut reader: &mut R) -> io::Result<()>
-    where
-        R: io::Read,
-    {
-        let mut file = fs::File::create(self.path())?;
-        io::copy(&mut reader, &mut file)?;
-        Ok(())
     }
 
     /// Move the temporary path to a new location.
