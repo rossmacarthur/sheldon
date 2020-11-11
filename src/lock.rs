@@ -368,7 +368,7 @@ impl Source {
                     .with_context(s!("URL `{}` is cannot-be-a-base", url))?
                     .collect();
                 let (base, rest) = segments.split_last().unwrap();
-                let base = if *base == "" { "index" } else { *base };
+                let base = if base.is_empty() { "index" } else { *base };
                 dir.push(rest.iter().collect::<PathBuf>());
                 let file = dir.join(base);
 

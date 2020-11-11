@@ -36,10 +36,17 @@ where
     I: Iterator<Item = E>,
     E: Borrow<Event<'a>>,
 {
-    let mut options = pulldown_cmark_to_cmark::Options::default();
-    options.code_block_backticks = 3;
     let mut buf = String::new();
-    cmark_with_options(events, &mut buf, None, options).unwrap();
+    cmark_with_options(
+        events,
+        &mut buf,
+        None,
+        pulldown_cmark_to_cmark::Options {
+            code_block_backticks: 3,
+            ..Default::default()
+        },
+    )
+    .unwrap();
     buf
 }
 
