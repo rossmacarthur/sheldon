@@ -1,5 +1,6 @@
 //! Command line interface.
 
+use std::env;
 use std::fmt;
 use std::path::PathBuf;
 use std::process;
@@ -410,17 +411,19 @@ impl Opt {
             }
         };
 
-        let xdg_config_user = std::env::var_os("XDG_CONFIG_HOME").map(PathBuf::from);
-        let xdg_data_user = std::env::var_os("XDG_DATA_HOME").map(PathBuf::from);
+        let xdg_config_user = env::var_os("XDG_CONFIG_HOME").map(PathBuf::from);
+        let xdg_data_user = env::var_os("XDG_DATA_HOME").map(PathBuf::from);
 
         // Note: `XDG_RUNTIME_DIR` is not checked as it can be set by the system rather
         // than the user, and cannot be relied upon to indicate a preference for XDG
         // directory layout.
-        let using_xdg = xdg_data_user.is_some()
-            || xdg_config_user.is_some()
-            || std::env::var_os("XDG_CACHE_HOME").is_some()
-            || std::env::var_os("XDG_DATA_DIRS").is_some()
-            || std::env::var_os("XDG_CONFIG_DIRS").is_some();
+        let using_xdg = any!(
+            xdg_data_user,
+            xdg_config_user,
+            env::var_os("XDG_CACHE_HOME"),
+            env::var_os("XDG_DATA_DIRS"),
+            env::var_os("XDG_CONFIG_DIRS")
+        );
 
         let (config_pre, data_pre) = if using_xdg {
             (
@@ -475,7 +478,6 @@ impl Opt {
 mod tests {
     use super::*;
 
-    use std::env;
     use std::iter;
 
     use clap::{crate_authors, crate_description, crate_name};

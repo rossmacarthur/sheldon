@@ -6,6 +6,12 @@ macro_rules! s {
     ($fmt:expr, $($arg:tt)+) => (|| format!($fmt, $($arg)+))
 }
 
+/// Evaluates a sequence of Options to see if any is a `Some`.
+macro_rules! any {
+    ($opt:expr) => { $opt.is_some() };
+    ($opt:expr, $($rest:expr),+) => { $opt.is_some() || { any!($($rest),+) }};
+}
+
 /// Call .into() on each element in a vec! initialization.
 macro_rules! vec_into {
     ($($i:expr),*) => (vec![$($i.into()),*]);
