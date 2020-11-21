@@ -33,8 +33,8 @@ struct TestCase {
     data: HashMap<String, String>,
 }
 
-#[derive(Clone)]
 /// Temporary test directories and their layout.
+#[derive(Clone)]
 struct Directories {
     home: Rc<tempfile::TempDir>,
     config: PathBuf,
@@ -43,7 +43,7 @@ struct Directories {
 
 impl TestCommand {
     fn new(dirs: &Directories) -> Self {
-        // From: https://github.com/rust-lang/cargo/blob/master/crates/cargo-test-support/src/lib.rs#L545-L558
+        // https://github.com/rust-lang/cargo/blob/2af662e22177a839763ac8fb70d245a680b15214/crates/cargo-test-support/src/lib.rs#L427-L441
         let bin = env::var_os("CARGO_BIN_PATH")
             .map(PathBuf::from)
             .or_else(|| {
@@ -75,16 +75,10 @@ impl TestCommand {
         }
 
         command
+            .env_clear()
             .env("HOME", &dirs.home.path())
             .env("SHELDON_CONFIG_DIR", &dirs.config)
             .env("SHELDON_DATA_DIR", &dirs.data)
-            .env_remove("XDG_CONFIG_HOME")
-            .env_remove("XDG_DATA_HOME")
-            .env_remove("XDG_CACHE_HOME")
-            .env_remove("SHELDON_CONFIG_FILE")
-            .env_remove("SHELDON_LOCK_FILE")
-            .env_remove("SHELDON_CLONE_DIR")
-            .env_remove("SHELDON_DOWNLOAD_DIR")
             .args(&params)
             .arg("--verbose");
 
@@ -263,7 +257,6 @@ impl Directories {
         let home = Rc::new(tempfile::tempdir()?);
         let config = home.path().join(".config").join("sheldon");
         let data = home.path().join(".local/share").join("sheldon");
-
         Directories { home, config, data }.init()
     }
 
@@ -664,5 +657,24 @@ fn dirs_xdg_from_env() -> io::Result<()> {
     cmd(&case_incremental, "source").run()?;
 
     assert!(dirs.conforms());
+    Ok(())
+}
+
+#[test]
+fn version() -> io::Result<()> {
+    let dirs = Directories::default()?;
+    let expected = format!(
+        "{} {} ({} {})\n{}\n",
+        env!("CARGO_PKG_NAME"),
+        env!("CARGO_PKG_VERSION"),
+        env!("GIT_COMMIT_SHORT_HASH"),
+        env!("GIT_COMMIT_DATE"),
+        env!("RUSTC_VERSION_SUMMARY")
+    );
+    TestCommand::new(&dirs)
+        .arg("--version")
+        .expect_exit_code(0)
+        .expect_stdout(expected)
+        .run()?;
     Ok(())
 }

@@ -7,10 +7,11 @@ use std::result;
 use std::str::FromStr;
 
 use anyhow::anyhow;
-use clap::{crate_version, AppSettings, ArgGroup, Clap};
+use clap::{AppSettings, ArgGroup, Clap};
 use thiserror::Error;
 use url::Url;
 
+use crate::build;
 use crate::config::{
     GistRepository, GitHubRepository, GitProtocol, GitReference, RawPlugin, Shell,
 };
@@ -135,19 +136,23 @@ enum RawCommand {
         #[clap(long, conflicts_with = "update")]
         reinstall: bool,
     },
+
+    /// Prints detailed version information.
+    Version,
 }
 
 #[derive(Debug, PartialEq, Clap)]
 #[clap(
     author,
     about,
-    version,
+    version = build::CRATE_RELEASE,
+    long_version = build::CRATE_LONG_VERSION.as_str(),
     term_width = 120,
-    setting = AppSettings::SubcommandRequired,
     global_setting = AppSettings::DeriveDisplayOrder,
     global_setting = AppSettings::DisableHelpSubcommand,
     global_setting = AppSettings::GlobalVersion,
     global_setting = AppSettings::VersionlessSubcommands,
+    setting = AppSettings::SubcommandRequired,
 )]
 struct RawOpt {
     /// Suppress any informational output.
@@ -350,6 +355,35 @@ impl Opt {
             command,
         } = raw_opt;
 
+        let command = match command {
+            RawCommand::Init { shell } => Command::Init { shell },
+            RawCommand::Add(add) => {
+                let (name, plugin) = Plugin::from_add(*add);
+                Command::Add {
+                    name,
+                    plugin: Box::new(plugin),
+                }
+            }
+            RawCommand::Edit => Command::Edit,
+            RawCommand::Remove { name } => Command::Remove { name },
+            RawCommand::Lock { update, reinstall } => {
+                let mode = LockMode::from_lock_flags(update, reinstall);
+                Command::Lock { mode }
+            }
+            RawCommand::Source {
+                relock,
+                update,
+                reinstall,
+            } => {
+                let (relock, mode) = LockMode::from_source_flags(relock, update, reinstall);
+                Command::Source { relock, mode }
+            }
+            RawCommand::Version => {
+                println!("{} {}", build::CRATE_NAME, &*build::CRATE_VERBOSE_VERSION);
+                process::exit(0);
+            }
+        };
+
         let verbosity = if quiet {
             Verbosity::Quiet
         } else if verbose {
@@ -409,7 +443,7 @@ impl Opt {
         let download_dir = download_dir.unwrap_or_else(|| data_dir.join("downloads"));
 
         let settings = Settings {
-            version: String::from(crate_version!()),
+            version: build::CRATE_RELEASE.to_string(),
             home,
             config_dir,
             data_dir,
@@ -417,31 +451,6 @@ impl Opt {
             lock_file,
             clone_dir,
             download_dir,
-        };
-
-        let command = match command {
-            RawCommand::Init { shell } => Command::Init { shell },
-            RawCommand::Add(add) => {
-                let (name, plugin) = Plugin::from_add(*add);
-                Command::Add {
-                    name,
-                    plugin: Box::new(plugin),
-                }
-            }
-            RawCommand::Edit => Command::Edit,
-            RawCommand::Remove { name } => Command::Remove { name },
-            RawCommand::Lock { update, reinstall } => {
-                let mode = LockMode::from_lock_flags(update, reinstall);
-                Command::Lock { mode }
-            }
-            RawCommand::Source {
-                relock,
-                update,
-                reinstall,
-            } => {
-                let (relock, mode) = LockMode::from_source_flags(relock, update, reinstall);
-                Command::Source { relock, mode }
-            }
         };
 
         Self {
@@ -494,11 +503,23 @@ mod tests {
     #[test]
     fn raw_opt_version() {
         setup();
-        for opt in &["-V", "--version"] {
-            let err = raw_opt_err(&[opt]);
-            assert_eq!(err.to_string(), format!("sheldon {}\n", crate_version!()));
-            assert_eq!(err.kind, clap::ErrorKind::DisplayVersion);
-        }
+        let err = raw_opt_err(&["-V"]);
+        assert_eq!(
+            err.to_string(),
+            format!("sheldon {}\n", &*build::CRATE_RELEASE)
+        );
+        assert_eq!(err.kind, clap::ErrorKind::DisplayVersion);
+    }
+
+    #[test]
+    fn raw_opt_long_version() {
+        setup();
+        let err = raw_opt_err(&["--version"]);
+        assert_eq!(
+            err.to_string(),
+            format!("sheldon {}\n", &*build::CRATE_LONG_VERSION)
+        );
+        assert_eq!(err.kind, clap::ErrorKind::DisplayVersion);
     }
 
     #[test]
@@ -535,15 +556,16 @@ OPTIONS:
                      SHELDON_DOWNLOAD_DIR=]
 
 SUBCOMMANDS:
-    init      Initialize a new config file
-    add       Add a new plugin to the config file
-    edit      Open up the config file in the default editor
-    remove    Remove a plugin from the config file
-    lock      Install the plugins sources and generate the lock file
-    source    Generate and print out the script
+    init       Initialize a new config file
+    add        Add a new plugin to the config file
+    edit       Open up the config file in the default editor
+    remove     Remove a plugin from the config file
+    lock       Install the plugins sources and generate the lock file
+    source     Generate and print out the script
+    version    Prints detailed version information
 ",
-                    name = crate_name!(),
-                    version = crate_version!(),
+                    name = build::CRATE_NAME,
+                    version = build::CRATE_RELEASE,
                     authors = crate_authors!(),
                     description = crate_description!(),
                 )
@@ -661,8 +683,8 @@ FLAGS:
 OPTIONS:
         --shell <SHELL>    The type of shell, accepted values are: bash, zsh
 ",
-                name = crate_name!(),
-                version = crate_version!()
+                name = build::CRATE_NAME,
+                version = build::CRATE_RELEASE,
             )
         );
         assert_eq!(err.kind, clap::ErrorKind::DisplayHelp);
@@ -712,8 +734,8 @@ OPTIONS:
         --use <MATCH>...         Which files to use in this plugin
         --apply <TEMPLATE>...    Templates to apply to this plugin
 ",
-                name = crate_name!(),
-                version = crate_version!()
+                name = build::CRATE_NAME,
+                version = build::CRATE_RELEASE,
             )
         );
         assert_eq!(err.kind, clap::ErrorKind::DisplayHelp);
@@ -1044,8 +1066,8 @@ FLAGS:
         --reinstall    Reinstall all plugin sources
     -h, --help         Prints help information
 ",
-                name = crate_name!(),
-                version = crate_version!()
+                name = build::CRATE_NAME,
+                version = build::CRATE_RELEASE,
             )
         );
         assert_eq!(err.kind, clap::ErrorKind::DisplayHelp);
@@ -1080,8 +1102,8 @@ FLAGS:
         --reinstall    Reinstall all plugin sources (implies --relock)
     -h, --help         Prints help information
 ",
-                name = crate_name!(),
-                version = crate_version!()
+                name = build::CRATE_NAME,
+                version = build::CRATE_RELEASE,
             )
         );
         assert_eq!(err.kind, clap::ErrorKind::DisplayHelp);

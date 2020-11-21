@@ -1,5 +1,6 @@
 mod _macros;
 mod app;
+mod build;
 mod cli;
 mod config;
 mod context;
