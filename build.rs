@@ -87,7 +87,6 @@ macro_rules! print_git_env {
 /// no errors will be produced.
 fn print_git_envs() -> Result<()> {
     let git_dir = CARGO_MANIFEST_DIR.join(".git");
-    println!("cargo:rerun-if-changed={}", git_dir.display());
     if !git_dir.exists() {
         return Ok(());
     }
