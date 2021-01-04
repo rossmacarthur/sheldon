@@ -199,6 +199,16 @@ and print out the shell script to source. Simply add the following to your
 source <(sheldon source)
 ```
 
+**Note:** in older versions of Bash the `source` builtin does not work in
+conjunction with process substitution. If you encounter issues then you can use
+`eval` instead.
+
+```sh
+# ~/.bashrc
+
+eval "$(sheldon source)"
+```
+
 ## Command line interface
 
 Sheldon has three different types of commands.
