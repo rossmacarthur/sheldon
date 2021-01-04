@@ -53,7 +53,7 @@ pub enum Message<'a> {
 
 /// A trait for converting a reference to something into a `Message`.
 pub trait IntoMessage {
-    fn into_message<C>(&self, ctx: &C) -> Message
+    fn to_message<C>(&self, ctx: &C) -> Message
     where
         C: SettingsExt;
 }
@@ -101,7 +101,7 @@ where
 {
     /// Anything that implements `Display` can be easily converted into a
     /// `Message` without copying any data.
-    fn into_message<C>(&self, _: &C) -> Message
+    fn to_message<C>(&self, _: &C) -> Message
     where
         C: SettingsExt,
     {
@@ -113,7 +113,7 @@ impl IntoMessage for &Path {
     /// A reference to a path is converted into a `Message` by replacing a home
     /// path with a tilde. This implementation allocates a new `String` with the
     /// resultant data.
-    fn into_message<C>(&self, ctx: &C) -> Message
+    fn to_message<C>(&self, ctx: &C) -> Message
     where
         C: SettingsExt,
     {
@@ -127,7 +127,7 @@ where
     C: SettingsExt + OutputExt,
     M: IntoMessage,
 {
-    let message = message.into_message(ctx);
+    let message = message.to_message(ctx);
     if ctx.no_color() {
         eprintln!("[{}] {}", status.to_uppercase(), message);
     } else {
@@ -141,7 +141,7 @@ where
     C: SettingsExt + OutputExt,
     M: IntoMessage,
 {
-    let message = message.into_message(ctx);
+    let message = message.to_message(ctx);
     if ctx.no_color() {
         eprintln!(
             "{: >12} {}",
