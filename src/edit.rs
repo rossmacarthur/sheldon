@@ -75,7 +75,7 @@ impl Config {
     }
 
     /// Add a new plugin.
-    pub fn add(&mut self, name: &str, plugin: Plugin) -> Result<()> {
+    pub fn add(&mut self, name: &str, plugin: &Plugin) -> Result<()> {
         let contents =
             toml::to_string_pretty(&plugin.inner).expect("failed to serialize plugin as TOML");
 
@@ -182,7 +182,7 @@ tag = "0.1.0"
         config
             .add(
                 "sheldon-test",
-                Plugin::from(RawPlugin {
+                &Plugin::from(RawPlugin {
                     git: Some(Url::parse("https://github.com/rossmacarthur/sheldon-test").unwrap()),
                     reference: Some(GitReference::Branch("feature".to_string())),
                     ..Default::default()
@@ -205,7 +205,7 @@ branch = 'feature'
         config
             .add(
                 "sheldon-test",
-                Plugin::from(RawPlugin {
+                &Plugin::from(RawPlugin {
                     github: Some("rossmacarthur/sheldon-test".parse().unwrap()),
                     reference: Some(GitReference::Tag("0.1.0".to_string())),
                     ..Default::default()
@@ -243,7 +243,7 @@ use = ["{{ name }}.zsh"]
         config
             .add(
                 "sheldon-test",
-                Plugin::from(RawPlugin {
+                &Plugin::from(RawPlugin {
                     github: Some("rossmacarthur/sheldon-test".parse().unwrap()),
                     reference: Some(GitReference::Tag("0.1.0".to_string())),
                     ..Default::default()

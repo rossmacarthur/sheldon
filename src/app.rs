@@ -58,7 +58,7 @@ fn init(ctx: &EditContext) -> Result<()> {
 /// Executes the `add` subcommand.
 ///
 /// Add a new plugin to the config file.
-fn add(ctx: &EditContext, name: String, plugin: Plugin) -> Result<()> {
+fn add(ctx: &EditContext, name: String, plugin: &Plugin) -> Result<()> {
     let path = ctx.config_file();
     let mut config = match edit::Config::from_path(path) {
         Ok(config) => {
@@ -224,7 +224,7 @@ pub fn run() -> Result<()> {
                 output,
                 shell: None,
             };
-            add(&ctx, name, *plugin)
+            add(&ctx, name, &plugin)
         }
         Command::Edit => {
             let ctx = EditContext {

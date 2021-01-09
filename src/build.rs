@@ -13,14 +13,15 @@ pub const CRATE_RELEASE: &str = env!("CARGO_PKG_VERSION");
 
 /// This is the release with extra Git information if available.
 pub static CRATE_VERSION: Lazy<String> = Lazy::new(|| {
-    GIT.as_ref()
-        .map(|git| {
+    GIT.as_ref().map_or_else(
+        || CRATE_RELEASE.to_string(),
+        |git| {
             format!(
                 "{} ({} {})",
                 CRATE_RELEASE, git.commit_short_hash, git.commit_date
             )
-        })
-        .unwrap_or_else(|| CRATE_RELEASE.to_string())
+        },
+    )
 });
 
 /// This is the release with extra Git and Rustc information if available.

@@ -66,7 +66,7 @@ fn summary() -> Result<Vec<(String, PathBuf)>> {
                     vec.push((name.into(), path));
                 }
             }
-            _ => {}
+            Some(_) => {}
         }
     }
     Ok(vec)
@@ -162,7 +162,7 @@ fn generate_readme_contents(summary: &[(String, PathBuf)]) -> Result<String> {
 
 fn main() -> Result<()> {
     let args: Vec<_> = env::args().skip(1).collect();
-    let borrowed: Vec<_> = args.iter().map(|s| s.as_str()).collect();
+    let borrowed: Vec<_> = args.iter().map(String::as_str).collect();
     let check = match borrowed.as_slice() {
         &["--check"] => true,
         &[] => false,

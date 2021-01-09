@@ -154,7 +154,7 @@ impl Shell {
     }
 
     /// The default template names to apply.
-    pub fn default_apply(&self) -> &Vec<String> {
+    pub fn default_apply() -> &'static Vec<String> {
         static DEFAULT_APPLY: Lazy<Vec<String>> = Lazy::new(|| vec_into!["source"]);
         &DEFAULT_APPLY
     }
@@ -183,7 +183,7 @@ impl fmt::Display for GitCheckout {
 impl GitCheckout {
     /// Resolve `GitCheckout` to a Git object identifier.
     ///
-    /// From Cargo: https://github.com/rust-lang/cargo/blob/b49ccadb/src/cargo/sources/git/utils.rs#L308-L381
+    /// From Cargo: <https://github.com/rust-lang/cargo/blob/b49ccadb/src/cargo/sources/git/utils.rs#L308-L381>
     fn resolve(&self, repo: &git2::Repository) -> Result<git2::Oid> {
         match self {
             Self::DefaultBranch => git::resolve_head(repo),
@@ -211,7 +211,7 @@ impl Source {
     fn lock_git_install(
         ctx: &Context,
         dir: PathBuf,
-        url: Url,
+        url: &Url,
         checkout: GitCheckout,
     ) -> Result<LockedSource> {
         let temp_dir = TempPath::new(&dir);
@@ -258,7 +258,7 @@ impl Source {
     fn lock_git(
         ctx: &Context,
         dir: PathBuf,
-        url: Url,
+        url: &Url,
         checkout: GitCheckout,
     ) -> Result<LockedSource> {
         match ctx.mode {
@@ -270,7 +270,7 @@ impl Source {
                     }
                     Ok(LockedSource { dir, file: None })
                 }
-                Err(_) => Self::lock_git_install(ctx, dir, url, checkout),
+                Err(_) => Self::lock_git_install(ctx, dir, &url, checkout),
             },
             Mode::Update => match git::open(&dir) {
                 Ok(repo) => {
@@ -278,14 +278,14 @@ impl Source {
                     Self::lock_git_checkout(ctx, &repo, &url, checkout)?;
                     Ok(LockedSource { dir, file: None })
                 }
-                Err(_) => Self::lock_git_install(ctx, dir, url, checkout),
+                Err(_) => Self::lock_git_install(ctx, dir, &url, checkout),
             },
-            Mode::Reinstall => Self::lock_git_install(ctx, dir, url, checkout),
+            Mode::Reinstall => Self::lock_git_install(ctx, dir, &url, checkout),
         }
     }
 
     /// Downloads a Remote source.
-    fn lock_remote(ctx: &Context, dir: PathBuf, file: PathBuf, url: Url) -> Result<LockedSource> {
+    fn lock_remote(ctx: &Context, dir: PathBuf, file: PathBuf, url: &Url) -> Result<LockedSource> {
         if matches!(ctx.mode, Mode::Normal) && file.exists() {
             status!(ctx, "Checked", &url);
             return Ok(LockedSource {
@@ -356,7 +356,7 @@ impl Source {
                         .with_context(s!("URL `{}` has no host", url))?,
                 );
                 dir.push(url.path().trim_start_matches('/'));
-                Self::lock_git(ctx, dir, url, reference.into())
+                Self::lock_git(ctx, dir, &url, reference.into())
             }
             Self::Remote { url } => {
                 let mut dir = ctx.download_dir().to_path_buf();
@@ -374,7 +374,7 @@ impl Source {
                 dir.push(rest.iter().collect::<PathBuf>());
                 let file = dir.join(base);
 
-                Self::lock_remote(ctx, dir, file, url)
+                Self::lock_remote(ctx, dir, file, &url)
             }
             Self::Local { dir } => Self::lock_local(ctx, dir),
         }
@@ -540,7 +540,7 @@ impl Config {
         }
 
         let matches = &matches.as_ref().unwrap_or_else(|| shell.default_matches());
-        let apply = &apply.as_ref().unwrap_or_else(|| shell.default_apply());
+        let apply = &apply.as_ref().unwrap_or_else(|| Shell::default_apply());
         let count = map.len();
         let mut errors = Vec::new();
 
@@ -1012,13 +1012,8 @@ mod tests {
         let mut ctx = create_test_context(dir);
         let url = Url::parse("https://github.com/rossmacarthur/sheldon-test").unwrap();
 
-        let locked = Source::lock_git(
-            &ctx,
-            dir.to_path_buf(),
-            url.clone(),
-            GitCheckout::DefaultBranch,
-        )
-        .unwrap();
+        let locked =
+            Source::lock_git(&ctx, dir.to_path_buf(), &url, GitCheckout::DefaultBranch).unwrap();
 
         assert_eq!(locked.dir, dir);
         assert_eq!(locked.file, None);
@@ -1032,7 +1027,7 @@ mod tests {
         thread::sleep(time::Duration::from_secs(1));
         ctx.mode = Mode::Reinstall;
         let locked =
-            Source::lock_git(&ctx, dir.to_path_buf(), url, GitCheckout::DefaultBranch).unwrap();
+            Source::lock_git(&ctx, dir.to_path_buf(), &url, GitCheckout::DefaultBranch).unwrap();
         assert_eq!(locked.dir, dir);
         assert_eq!(locked.file, None);
         let repo = git2::Repository::open(&dir).unwrap();
@@ -1051,7 +1046,7 @@ mod tests {
         let locked = Source::lock_git(
             &create_test_context(dir),
             dir.to_path_buf(),
-            Url::parse("https://github.com/rossmacarthur/sheldon-test").unwrap(),
+            &Url::parse("https://github.com/rossmacarthur/sheldon-test").unwrap(),
             GitCheckout::Rev("ad149784a1538291f2477fb774eeeed4f4d29e45".to_string()),
         )
         .unwrap();
@@ -1074,7 +1069,7 @@ mod tests {
         let locked = Source::lock_git(
             &create_test_context(dir),
             dir.to_path_buf(),
-            Url::parse("git://github.com/rossmacarthur/sheldon-test").unwrap(),
+            &Url::parse("git://github.com/rossmacarthur/sheldon-test").unwrap(),
             GitCheckout::Rev("ad149784a1538291f2477fb774eeeed4f4d29e45".to_string()),
         )
         .unwrap();
@@ -1099,8 +1094,7 @@ mod tests {
         let url =
             Url::parse("https://github.com/rossmacarthur/sheldon/raw/0.3.0/LICENSE-MIT").unwrap();
 
-        let locked =
-            Source::lock_remote(&ctx, dir.to_path_buf(), file.clone(), url.clone()).unwrap();
+        let locked = Source::lock_remote(&ctx, dir.to_path_buf(), file.clone(), &url).unwrap();
 
         assert_eq!(locked.dir, dir);
         assert_eq!(locked.file, Some(file.clone()));
@@ -1112,7 +1106,7 @@ mod tests {
         let modified = fs::metadata(&file).unwrap().modified().unwrap();
         thread::sleep(time::Duration::from_secs(1));
         ctx.mode = Mode::Reinstall;
-        let locked = Source::lock_remote(&ctx, dir.to_path_buf(), file.clone(), url).unwrap();
+        let locked = Source::lock_remote(&ctx, dir.to_path_buf(), file.clone(), &url).unwrap();
 
         assert_eq!(locked.dir, dir);
         assert_eq!(locked.file, Some(file.clone()));

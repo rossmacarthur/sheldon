@@ -493,13 +493,11 @@ mod tests {
     }
 
     fn raw_opt(args: &[&str]) -> RawOpt {
-        RawOpt::try_parse_from(iter::once(crate_name!()).chain(args.into_iter().map(|s| *s)))
-            .unwrap()
+        RawOpt::try_parse_from(iter::once(crate_name!()).chain(args.iter().copied())).unwrap()
     }
 
     fn raw_opt_err(args: &[&str]) -> clap::Error {
-        RawOpt::try_parse_from(iter::once(crate_name!()).chain(args.into_iter().map(|s| *s)))
-            .unwrap_err()
+        RawOpt::try_parse_from(iter::once(crate_name!()).chain(args.iter().copied())).unwrap_err()
     }
 
     #[test]

@@ -512,7 +512,7 @@ where
 
 /// Check whether the specifed templates actually exist.
 fn validate_template_names(
-    shell: &Shell,
+    shell: Shell,
     apply: &Option<Vec<String>>,
     templates: &IndexMap<String, Template>,
 ) -> Result<()> {
@@ -565,7 +565,7 @@ impl RawPlugin {
     pub fn normalize(
         self,
         name: String,
-        shell: &Shell,
+        shell: Shell,
         templates: &IndexMap<String, Template>,
         warnings: &mut Vec<Error>,
     ) -> Result<Plugin> {
@@ -729,7 +729,7 @@ impl RawConfig {
 
         let shell = shell.unwrap_or_default();
 
-        validate_template_names(&shell, &apply, &templates)?;
+        validate_template_names(shell, &apply, &templates)?;
 
         // Normalize the plugins.
         let mut normalized_plugins = Vec::with_capacity(plugins.len());
@@ -737,7 +737,7 @@ impl RawConfig {
         for (name, plugin) in plugins {
             normalized_plugins.push(
                 plugin
-                    .normalize(name.clone(), &shell, &templates, &mut warnings)
+                    .normalize(name.clone(), shell, &templates, &mut warnings)
                     .with_context(s!("failed to normalize plugin `{}`", name))?,
             );
         }
@@ -1016,7 +1016,7 @@ mod tests {
                     .unwrap()
                     .normalize(
                         "test".to_string(),
-                        &Shell::default(),
+                        Shell::default(),
                         &IndexMap::new(),
                         &mut Vec::new(),
                     )
@@ -1046,7 +1046,7 @@ mod tests {
         };
         assert_eq!(
             raw_plugin
-                .normalize(name, &Shell::default(), &IndexMap::new(), &mut Vec::new())
+                .normalize(name, Shell::default(), &IndexMap::new(), &mut Vec::new())
                 .unwrap(),
             expected
         );
@@ -1076,7 +1076,7 @@ mod tests {
         };
         assert_eq!(
             raw_plugin
-                .normalize(name, &Shell::default(), &IndexMap::new(), &mut Vec::new())
+                .normalize(name, Shell::default(), &IndexMap::new(), &mut Vec::new())
                 .unwrap(),
             expected
         );
@@ -1102,7 +1102,7 @@ mod tests {
         };
         assert_eq!(
             raw_plugin
-                .normalize(name, &Shell::default(), &IndexMap::new(), &mut Vec::new())
+                .normalize(name, Shell::default(), &IndexMap::new(), &mut Vec::new())
                 .unwrap(),
             expected
         );
@@ -1133,7 +1133,7 @@ mod tests {
         };
         assert_eq!(
             raw_plugin
-                .normalize(name, &Shell::default(), &IndexMap::new(), &mut Vec::new())
+                .normalize(name, Shell::default(), &IndexMap::new(), &mut Vec::new())
                 .unwrap(),
             expected
         );
@@ -1162,7 +1162,7 @@ mod tests {
         };
         assert_eq!(
             raw_plugin
-                .normalize(name, &Shell::default(), &IndexMap::new(), &mut Vec::new())
+                .normalize(name, Shell::default(), &IndexMap::new(), &mut Vec::new())
                 .unwrap(),
             expected
         );
@@ -1190,7 +1190,7 @@ mod tests {
         };
         assert_eq!(
             raw_plugin
-                .normalize(name, &Shell::default(), &IndexMap::new(), &mut Vec::new())
+                .normalize(name, Shell::default(), &IndexMap::new(), &mut Vec::new())
                 .unwrap(),
             expected
         );
@@ -1219,7 +1219,7 @@ mod tests {
         };
         assert_eq!(
             raw_plugin
-                .normalize(name, &Shell::default(), &IndexMap::new(), &mut Vec::new())
+                .normalize(name, Shell::default(), &IndexMap::new(), &mut Vec::new())
                 .unwrap(),
             expected
         );
@@ -1244,7 +1244,7 @@ mod tests {
         };
         assert_eq!(
             raw_plugin
-                .normalize(name, &Shell::default(), &IndexMap::new(), &mut Vec::new())
+                .normalize(name, Shell::default(), &IndexMap::new(), &mut Vec::new())
                 .unwrap(),
             expected
         );
@@ -1265,7 +1265,7 @@ mod tests {
         let error = raw_plugin
             .normalize(
                 "test".to_string(),
-                &Shell::default(),
+                Shell::default(),
                 &IndexMap::new(),
                 &mut Vec::new(),
             )
@@ -1291,7 +1291,7 @@ mod tests {
         let error = raw_plugin
             .normalize(
                 "test".to_string(),
-                &Shell::default(),
+                Shell::default(),
                 &IndexMap::new(),
                 &mut Vec::new(),
             )
@@ -1320,7 +1320,7 @@ mod tests {
         };
         assert_eq!(
             raw_plugin
-                .normalize(name, &Shell::default(), &IndexMap::new(), &mut Vec::new())
+                .normalize(name, Shell::default(), &IndexMap::new(), &mut Vec::new())
                 .unwrap(),
             expected
         );
@@ -1339,7 +1339,7 @@ mod tests {
         };
         assert_eq!(
             raw_plugin
-                .normalize(name, &Shell::default(), &IndexMap::new(), &mut Vec::new())
+                .normalize(name, Shell::default(), &IndexMap::new(), &mut Vec::new())
                 .unwrap(),
             expected
         );
@@ -1355,7 +1355,7 @@ mod tests {
         let error = raw_plugin
             .normalize(
                 "test".to_string(),
-                &Shell::default(),
+                Shell::default(),
                 &IndexMap::new(),
                 &mut Vec::new(),
             )
@@ -1379,7 +1379,7 @@ mod tests {
         let error = raw_plugin
             .normalize(
                 "test".to_string(),
-                &Shell::default(),
+                Shell::default(),
                 &IndexMap::new(),
                 &mut Vec::new(),
             )
