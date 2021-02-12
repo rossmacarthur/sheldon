@@ -493,7 +493,7 @@ sheldon add example --remote https://github.com/owner/repo/raw/master/plugin.zsh
 
 Local sources reference local directories. A local source must set the `local`
 field and specify a directory. Tildes may be used and will be expanded to the
-current user's home directory. Add the following to the Sheldon config file.
+current user’s home directory. Add the following to the Sheldon config file.
 
 ```toml
 [plugins.example]
@@ -512,7 +512,7 @@ These are options that are common to all the above plugins.
 
 ### `use`
 
-A list of files / globs to use in the plugin's source directory. If this field
+A list of files / globs to use in the plugin’s source directory. If this field
 is not given then the first pattern in the global [`match`](#match) field that
 matches any files will be used. Add the following to the Sheldon config file.
 
@@ -647,8 +647,8 @@ shell = "zsh"
 
 ### `match`
 
-A list of glob patterns to match against a plugin's contents. The first pattern
-that matches any files will be used by default as a plugin's `use` field. This
+A list of glob patterns to match against a plugin’s contents. The first pattern
+that matches any files will be used by default as a plugin’s `use` field. This
 defaults to
 
 ```toml
