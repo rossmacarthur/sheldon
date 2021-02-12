@@ -214,7 +214,8 @@ impl Source {
         url: &Url,
         checkout: GitCheckout,
     ) -> Result<LockedSource> {
-        let temp_dir = TempPath::new(&dir);
+        let temp_dir =
+            TempPath::new_force(&dir).context("failed to prepare temporary clone directory")?;
         let repo = git::clone(&url, &temp_dir.path())?;
         git::checkout(&repo, checkout.resolve(&repo)?)?;
         git::submodule_update(&repo).context("failed to recursively update")?;
@@ -294,7 +295,8 @@ impl Source {
             });
         }
 
-        let temp_file = TempPath::new(&file);
+        let temp_file =
+            TempPath::new_force(&file).context("failed to prepare temporary download directory")?;
         {
             let path = temp_file.path();
             fs::create_dir_all(&dir)

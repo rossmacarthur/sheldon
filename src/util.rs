@@ -1,9 +1,9 @@
 //! Utility traits and functions.
 
+use std::ffi;
 use std::fs::{self, File};
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
-use std::process;
 use std::result;
 use std::time;
 
@@ -121,21 +121,39 @@ impl PathExt for Path {
 /// Holds a temporary directory or file path that is removed when dropped.
 pub struct TempPath {
     /// The temporary directory or file path.
-    pub path: Option<PathBuf>,
+    path: Option<PathBuf>,
 }
 
 impl TempPath {
-    /// Create a new `TempPath`.
-    pub fn new(original_path: &Path) -> Self {
+    /// Create a new `TempPath` based on an original path, the temporary
+    /// filename will be placed in the same directory with a deterministic name.
+    ///
+    /// # Errors
+    ///
+    /// If the temporary path already exists.
+    pub fn new(original_path: &Path) -> result::Result<Self, Self> {
         let mut path = original_path.parent().unwrap().to_path_buf();
-        let mut file_name = original_path.file_stem().unwrap().to_os_string();
-        file_name.push(format!("-tmp-{}", process::id()));
-        if let Some(ext) = original_path.extension() {
-            file_name.push(".");
-            file_name.push(ext);
-        }
+        let mut file_name = ffi::OsString::from("~");
+        file_name.push(original_path.file_name().unwrap());
         path.push(file_name);
-        Self { path: Some(path) }
+        let temp = Self { path: Some(path) };
+        if temp.path().exists() {
+            Err(temp)
+        } else {
+            Ok(temp)
+        }
+    }
+
+    /// Create a new `TempPath` based on an original path, if something exists
+    /// at that temporary path is will be deleted.
+    pub fn new_force(original_path: &Path) -> Result<Self> {
+        match Self::new(original_path) {
+            Ok(temp) => Ok(temp),
+            Err(temp) => {
+                nuke_path(temp.path())?;
+                Ok(temp)
+            }
+        }
     }
 
     /// Access the underlying `Path`.
