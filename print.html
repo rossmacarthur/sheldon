@@ -733,6 +733,17 @@ use = [&quot;async.zsh&quot;, &quot;pure.zsh&quot;]
 <pre><code class="language-sh">sheldon add pure --github sindresorhus/pure --use async.zsh pure.zsh
 </code></pre>
 <h1><a class="header" href="#releases" id="releases">Releases</a></h1>
+<h2><a class="header" href="#061" id="061">0.6.1</a></h2>
+<p><em>February 12th, 2021</em></p>
+<ul>
+<li><a href="https://github.com/rossmacarthur/sheldon/commit/f3c748324fce1a098fd00f9b645771e1164d0a53">Embed Git and Rustc information in binary.</a> Git (if available) and
+Rustc information will now be displayed when passing <code>--version</code> to Sheldon.</li>
+<li><a href="https://github.com/rossmacarthur/sheldon/commit/129490a08e893f2313f2da902bc4b53bfcd0d42c">Switch to <code>curl</code> instead of <code>reqwest</code>.</a> This significantly reduces
+compile time and binary size.</li>
+<li><a href="https://github.com/rossmacarthur/sheldon/issues/111">Fix temporary file issues when using <code>edit</code>.</a> Now the same file is used
+for editing, if it already exists then Sheldon will prompt the user to either
+re-open it or overwrite.</li>
+</ul>
 <h2><a class="header" href="#060" id="060">0.6.0</a></h2>
 <p><em>October 16th, 2020</em></p>
 <h3><a class="header" href="#breaking-changes" id="breaking-changes">Breaking changes</a></h3>
