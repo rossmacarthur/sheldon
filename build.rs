@@ -53,7 +53,7 @@ impl CommandExt for process::Command {
         if !output.status.success() {
             bail!(format_error_msg(self, output));
         }
-        Ok(String::from_utf8(output.stdout).context("failed to parse stdout")?)
+        String::from_utf8(output.stdout).context("failed to parse stdout")
     }
 }
 

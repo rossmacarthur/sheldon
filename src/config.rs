@@ -758,7 +758,7 @@ impl Config {
     where
         P: AsRef<Path>,
     {
-        Ok(RawConfig::from_path(path)?.normalize(&mut warnings)?)
+        RawConfig::from_path(path)?.normalize(&mut warnings)
     }
 }
 

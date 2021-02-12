@@ -26,8 +26,7 @@ const SOURCES: &[&str] = &[
 
 fn read_to_string<P: AsRef<Path>>(path: P) -> Result<String> {
     let path = path.as_ref();
-    Ok(fs::read_to_string(path)
-        .with_context(|| format!("failed to read from `{}`", path.display()))?)
+    fs::read_to_string(path).with_context(|| format!("failed to read from `{}`", path.display()))
 }
 
 /// Render Markdown events as Markdown.
