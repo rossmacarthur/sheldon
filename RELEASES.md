@@ -2,7 +2,7 @@
 
 ## 0.6.1
 
-*Unreleased*
+*February 12th, 2021*
 
 - [Embed Git and Rustc information in binary.][f3c7483] Git (if available) and
   Rustc information will now be displayed when passing `--version` to Sheldon.
