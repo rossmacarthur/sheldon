@@ -1,5 +1,21 @@
 # Releases
 
+## 0.6.1
+
+*Unreleased*
+
+- [Embed Git and Rustc information in binary.][f3c7483] Git (if available) and
+  Rustc information will now be displayed when passing `--version` to Sheldon.
+- [Switch to `curl` instead of `reqwest`.][129490a] This significantly reduces
+  compile time and binary size.
+- [Fix temporary file issues when using `edit`.][#111] Now the same file is used
+  for editing, if it already exists then Sheldon will prompt the user to either
+  re-open it or overwrite.
+
+[f3c7483]: https://github.com/rossmacarthur/sheldon/commit/f3c748324fce1a098fd00f9b645771e1164d0a53
+[129490a]: https://github.com/rossmacarthur/sheldon/commit/129490a08e893f2313f2da902bc4b53bfcd0d42c
+[#111]: https://github.com/rossmacarthur/sheldon/issues/111
+
 ## 0.6.0
 
 *October 16th, 2020*
