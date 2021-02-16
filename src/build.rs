@@ -30,21 +30,21 @@ pub static CRATE_LONG_VERSION: Lazy<String> =
 
 /// This is a very verbose description of the crate version.
 pub static CRATE_VERBOSE_VERSION: Lazy<String> = Lazy::new(|| {
+    let (commit_hash, commit_date) = GIT
+        .as_ref()
+        .map(|git| (git.commit_hash, git.commit_date))
+        .unwrap_or(("unknown", "unknown"));
     let mut v = CRATE_VERSION.clone();
     macro_rules! push {
         ($($arg:tt)*) => {v.push('\n'); v.push_str(&format!($($arg)+))};
     }
-    if let Some(git) = GIT.as_ref() {
-        push!("");
-        push!("Details:");
-        push!("  binary: {}", CRATE_NAME);
-        push!("  release: {}", CRATE_RELEASE);
-        push!("  commit-hash: {}", git.commit_hash);
-        push!("  commit-date: {}", git.commit_date);
-        push!("  target: {}", env!("TARGET"));
-    }
-    push!("");
-    push!("Compiled with:");
+    push!("\nDetails:");
+    push!("  binary: {}", CRATE_NAME);
+    push!("  release: {}", CRATE_RELEASE);
+    push!("  commit-hash: {}", commit_hash);
+    push!("  commit-date: {}", commit_date);
+    push!("  target: {}", env!("TARGET"));
+    push!("\nCompiled with:");
     push!("  binary: {}", env!("RUSTC_VERSION_BINARY"));
     push!("  release: {}", env!("RUSTC_VERSION_RELEASE"));
     push!("  commit-hash: {}", env!("RUSTC_VERSION_COMMIT_HASH"));
