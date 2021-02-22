@@ -86,7 +86,7 @@ export ZSH="$HOME/.sheldon/repos/github.com/ohmyzsh/ohmyzsh"
 
 # Oh My Zsh settings here
 
-source <(sheldon source)
+eval "$(sheldon source)"
 ```
 
 ## Zsh plugins

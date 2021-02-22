@@ -11,7 +11,7 @@ Sheldon renders an install script using user configurable
 A `~/.zshrc` or `~/.bashrc` that uses Sheldon simply contains the following.
 
 ```sh
-source <(sheldon source)
+eval "$(sheldon source)"
 ```
 
 Sheldon can manage GitHub or Git repositories, Gists, arbitrary remote scripts

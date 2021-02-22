@@ -58,11 +58,11 @@ sheldon lock --reinstall
 
 This command generates the shell script. This command will first check if there
 is an up to date lock file, if not, then it will first do the equivalent of the
-lock command above. This command is usually used with the built-in shell
-`source` command.
+lock command above. This command is usually used with the built-in shell `eval`
+command.
 
 ```sh
-source <(sheldon source)
+eval "$(sheldon source)"
 ```
 
 But you can also run it directly to inspect the output. The output of this

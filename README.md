@@ -196,16 +196,6 @@ and print out the shell script to source. Simply add the following to your
 ```sh
 # ~/.zshrc or ~/.bashrc
 
-source <(sheldon source)
-```
-
-**Note:** in older versions of Bash the `source` builtin does not work in
-conjunction with process substitution. If you encounter issues then you can use
-`eval` instead.
-
-```sh
-# ~/.bashrc
-
 eval "$(sheldon source)"
 ```
 
@@ -269,11 +259,11 @@ sheldon lock --reinstall
 
 This command generates the shell script. This command will first check if there
 is an up to date lock file, if not, then it will first do the equivalent of the
-lock command above. This command is usually used with the built-in shell
-`source` command.
+lock command above. This command is usually used with the built-in shell `eval`
+command.
 
 ```sh
-source <(sheldon source)
+eval "$(sheldon source)"
 ```
 
 But you can also run it directly to inspect the output. The output of this
