@@ -1,0 +1,32 @@
+name: docs
+
+on: [workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - uses: actions/checkout@v2
+      with:
+        ref: gh-pages
+        path: docs/book/html
+
+    - uses: extractions/setup-mdbook@v1
+
+    - name: Build
+      run: mdbook build docs
+
+    - name: Calculate Git short SHA
+      id: git
+      run: echo "::set-output name=short_sha::$(git rev-parse --short HEAD)"
+
+    - name: Git commit
+      uses: stefanzweifel/git-auto-commit-action@v4
+      with:
+        repository: docs/book/html
+        branch: gh-pages
+        commit_message: publish docs for ${{ steps.git.outputs.short_sha }}
+        commit_author: Ross MacArthur <ross@macarthur.io>
