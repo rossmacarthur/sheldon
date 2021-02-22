@@ -204,9 +204,9 @@ installed. It will always regenerate the lock file.</p>
 <h2><a class="header" href="#source" id="source"><code>source</code></a></h2>
 <p>This command generates the shell script. This command will first check if there
 is an up to date lock file, if not, then it will first do the equivalent of the
-lock command above. This command is usually used with the built-in shell
-<code>source</code> command.</p>
-<pre><code class="language-sh">source &lt;(sheldon source)
+lock command above. This command is usually used with the built-in shell <code>eval</code>
+command.</p>
+<pre><code class="language-sh">eval &quot;$(sheldon source)&quot;
 </code></pre>
 <p>But you can also run it directly to inspect the output. The output of this
 command is highly configurable. You can define your own custom templates to

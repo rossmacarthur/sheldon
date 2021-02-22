@@ -200,13 +200,6 @@ and print out the shell script to source. Simply add the following to your
 <code>~/.zshrc</code> or <code>~/.bashrc</code> file.</p>
 <pre><code class="language-sh"># ~/.zshrc or ~/.bashrc
 
-source &lt;(sheldon source)
-</code></pre>
-<p><strong>Note:</strong> in older versions of Bash the <code>source</code> builtin does not work in
-conjunction with process substitution. If you encounter issues then you can use
-<code>eval</code> instead.</p>
-<pre><code class="language-sh"># ~/.bashrc
-
 eval &quot;$(sheldon source)&quot;
 </code></pre>
 

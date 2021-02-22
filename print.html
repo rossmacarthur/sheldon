@@ -176,7 +176,7 @@
 Sheldon renders an install script using user configurable
 <a href="http://handlebarsjs.com">handlebars</a> templates.</p>
 <p>A <code>~/.zshrc</code> or <code>~/.bashrc</code> that uses Sheldon simply contains the following.</p>
-<pre><code class="language-sh">source &lt;(sheldon source)
+<pre><code class="language-sh">eval &quot;$(sheldon source)&quot;
 </code></pre>
 <p>Sheldon can manage GitHub or Git repositories, Gists, arbitrary remote scripts
 or binaries, local plugins, and inline plugins. Plugins are installed and
@@ -253,13 +253,6 @@ and print out the shell script to source. Simply add the following to your
 <code>~/.zshrc</code> or <code>~/.bashrc</code> file.</p>
 <pre><code class="language-sh"># ~/.zshrc or ~/.bashrc
 
-source &lt;(sheldon source)
-</code></pre>
-<p><strong>Note:</strong> in older versions of Bash the <code>source</code> builtin does not work in
-conjunction with process substitution. If you encounter issues then you can use
-<code>eval</code> instead.</p>
-<pre><code class="language-sh"># ~/.bashrc
-
 eval &quot;$(sheldon source)&quot;
 </code></pre>
 <h1><a class="header" href="#command-line-interface" id="command-line-interface">Command line interface</a></h1>
@@ -299,9 +292,9 @@ installed. It will always regenerate the lock file.</p>
 <h2><a class="header" href="#source" id="source"><code>source</code></a></h2>
 <p>This command generates the shell script. This command will first check if there
 is an up to date lock file, if not, then it will first do the equivalent of the
-lock command above. This command is usually used with the built-in shell
-<code>source</code> command.</p>
-<pre><code class="language-sh">source &lt;(sheldon source)
+lock command above. This command is usually used with the built-in shell <code>eval</code>
+command.</p>
+<pre><code class="language-sh">eval &quot;$(sheldon source)&quot;
 </code></pre>
 <p>But you can also run it directly to inspect the output. The output of this
 command is highly configurable. You can define your own custom templates to
@@ -644,7 +637,7 @@ export ZSH=&quot;$HOME/.sheldon/repos/github.com/ohmyzsh/ohmyzsh&quot;
 
 # Oh My Zsh settings here
 
-source &lt;(sheldon source)
+eval &quot;$(sheldon source)&quot;
 </code></pre>
 <h2><a class="header" href="#zsh-plugins" id="zsh-plugins">Zsh plugins</a></h2>
 <h3><a class="header" href="#a-hrefhttpsgithubcomzsh-userszsh-autosuggestionsautosuggestionsa" id="a-hrefhttpsgithubcomzsh-userszsh-autosuggestionsautosuggestionsa"><a href="https://github.com/zsh-users/zsh-autosuggestions">autosuggestions</a></a></h3>

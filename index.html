@@ -174,7 +174,7 @@
 Sheldon renders an install script using user configurable
 <a href="http://handlebarsjs.com">handlebars</a> templates.</p>
 <p>A <code>~/.zshrc</code> or <code>~/.bashrc</code> that uses Sheldon simply contains the following.</p>
-<pre><code class="language-sh">source &lt;(sheldon source)
+<pre><code class="language-sh">eval &quot;$(sheldon source)&quot;
 </code></pre>
 <p>Sheldon can manage GitHub or Git repositories, Gists, arbitrary remote scripts
 or binaries, local plugins, and inline plugins. Plugins are installed and
