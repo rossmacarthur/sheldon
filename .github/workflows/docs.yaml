@@ -17,16 +17,21 @@ jobs:
     - uses: extractions/setup-mdbook@v1
 
     - name: Build
-      run: mdbook build docs
+      run: |
+        mv docs/book/html/.git docs/book/.git
+        mdbook build docs
+        mv docs/book/.git docs/book/html/.git
 
     - name: Calculate Git short SHA
       id: git
       run: echo "::set-output name=short_sha::$(git rev-parse --short HEAD)"
 
     - name: Git commit
-      uses: stefanzweifel/git-auto-commit-action@v4
-      with:
-        repository: docs/book/html
-        branch: gh-pages
-        commit_message: publish docs for ${{ steps.git.outputs.short_sha }}
-        commit_author: Ross MacArthur <ross@macarthur.io>
+      run: |
+        cd docs/book/html
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git add .
+        git commit -m "publish docs for ${{ steps.git.outputs.short_sha }}"
+        git push
+        cd -
