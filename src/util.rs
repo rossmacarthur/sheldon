@@ -131,16 +131,15 @@ impl TempPath {
     /// # Errors
     ///
     /// If the temporary path already exists.
-    pub fn new(original_path: &Path) -> result::Result<Self, Self> {
+    pub fn new(original_path: &Path) -> result::Result<Self, PathBuf> {
         let mut path = original_path.parent().unwrap().to_path_buf();
         let mut file_name = ffi::OsString::from("~");
         file_name.push(original_path.file_name().unwrap());
         path.push(file_name);
-        let temp = Self { path: Some(path) };
-        if temp.path().exists() {
-            Err(temp)
+        if path.exists() {
+            Err(path)
         } else {
-            Ok(temp)
+            Ok(Self::new_unchecked(path))
         }
     }
 
@@ -149,11 +148,16 @@ impl TempPath {
     pub fn new_force(original_path: &Path) -> Result<Self> {
         match Self::new(original_path) {
             Ok(temp) => Ok(temp),
-            Err(temp) => {
-                nuke_path(temp.path())?;
-                Ok(temp)
+            Err(path) => {
+                nuke_path(&path)?;
+                Ok(Self::new_unchecked(path))
             }
         }
+    }
+
+    /// Create a new `TempPath` using the given temporary path.
+    pub fn new_unchecked(path: PathBuf) -> Self {
+        Self { path: Some(path) }
     }
 
     /// Access the underlying `Path`.

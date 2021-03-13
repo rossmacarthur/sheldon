@@ -97,11 +97,12 @@ impl Editor {
     pub fn edit(self, path: &Path, contents: &str) -> Result<Child> {
         let (overwrite, temp) = match TempPath::new(path) {
             Ok(temp) => (true, temp),
-            Err(temp) => {
-                let temp_contents = fs::read_to_string(&temp.path())
-                    .context("failed to read from temporary file")?;
+            Err(path) => {
+                let temp_contents =
+                    fs::read_to_string(&path).context("failed to read from temporary file")?;
+                let temp = || TempPath::new_unchecked(path);
                 if temp_contents == contents {
-                    (false, temp)
+                    (false, temp())
                 } else {
                     match casual::prompt(
                         "It looks like you already started editing the config file, what do you \
@@ -110,8 +111,8 @@ impl Editor {
                     .get()
                     {
                         Choice::Abort => bail!("aborted!"),
-                        Choice::Reopen => (false, temp),
-                        Choice::Overwrite => (true, temp),
+                        Choice::Reopen => (false, temp()),
+                        Choice::Overwrite => (true, temp()),
                     }
                 }
             }

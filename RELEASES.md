@@ -1,5 +1,16 @@
 # Releases
 
+## 0.6.2
+
+*Unreleased*
+
+- Fix edit bug. If the edit file existed and you chose the "Abort" option the
+  file would be deleted by mistake.
+- [Always include details section in version output.][92a23b5] This was
+  previously excluded if there was no Git information.
+
+[92a23b5]: https://github.com/rossmacarthur/sheldon/commit/92a23b5289c4c206a228e6bf11ce937c4649047b
+
 ## 0.6.1
 
 *February 12th, 2021*
