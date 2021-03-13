@@ -2,13 +2,14 @@
 
 ## 0.6.2
 
-*Unreleased*
+*March 13th, 2021*
 
-- Fix edit bug. If the edit file existed and you chose the "Abort" option the
-  file would be deleted by mistake.
+- [Fix edit bug.][a4a0602] If the edit file existed and you chose the "Abort"
+  option the file would be deleted by mistake.
 - [Always include details section in version output.][92a23b5] This was
   previously excluded if there was no Git information.
 
+[a4a0602]: https://github.com/rossmacarthur/sheldon/commit/a4a06023f5ec582964fdcf3ad036998dace02616
 [92a23b5]: https://github.com/rossmacarthur/sheldon/commit/92a23b5289c4c206a228e6bf11ce937c4649047b
 
 ## 0.6.1
