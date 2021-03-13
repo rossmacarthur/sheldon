@@ -28,7 +28,7 @@ jobs:
       run: cargo fmt -- --check
 
     - name: Clippy
-      run: cargo clippy --workspace -- -D clippy::use-self -D clippy::items-after-statements -D clippy::if-not-else
+      run: cargo clippy --workspace -- -D clippy::items-after-statements -D clippy::if-not-else
 
   test:
     needs: lint

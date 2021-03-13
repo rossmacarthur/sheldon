@@ -60,15 +60,15 @@ pub trait PathExt {
 
     fn newer_than<P>(&self, other: P) -> bool
     where
-        P: AsRef<Path>;
+        P: AsRef<Self>;
 
     fn expand_tilde<P>(&self, home: P) -> PathBuf
     where
-        P: AsRef<Path>;
+        P: AsRef<Self>;
 
     fn replace_home<P>(&self, home: P) -> PathBuf
     where
-        P: AsRef<Path>;
+        P: AsRef<Self>;
 }
 
 impl PathExt for Path {
@@ -81,7 +81,7 @@ impl PathExt for Path {
     /// given one. If either file does not exist, this method returns `false`.
     fn newer_than<P>(&self, other: P) -> bool
     where
-        P: AsRef<Path>,
+        P: AsRef<Self>,
     {
         match (self.metadata_modified(), other.as_ref().metadata_modified()) {
             (Some(self_time), Some(other_time)) => self_time > other_time,
@@ -92,7 +92,7 @@ impl PathExt for Path {
     /// Expands the tilde in the path with the given home directory.
     fn expand_tilde<P>(&self, home: P) -> PathBuf
     where
-        P: AsRef<Path>,
+        P: AsRef<Self>,
     {
         if let Ok(path) = self.strip_prefix("~") {
             home.as_ref().join(path)
@@ -104,7 +104,7 @@ impl PathExt for Path {
     /// Replaces the home directory in the path with a tilde.
     fn replace_home<P>(&self, home: P) -> PathBuf
     where
-        P: AsRef<Path>,
+        P: AsRef<Self>,
     {
         if let Ok(path) = self.strip_prefix(home) {
             Self::new("~").join(path)
