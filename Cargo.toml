@@ -43,7 +43,6 @@ which = { version = "4.0.2", default-features = false }
 
 [build-dependencies]
 anyhow = "1.0.38"
-once_cell = "1.7.2"
 
 [dev-dependencies]
 pest = "2.1.3"

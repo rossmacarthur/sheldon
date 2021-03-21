@@ -1,14 +1,9 @@
 use std::env;
 use std::io;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process;
 
 use anyhow::{bail, Context, Result};
-use once_cell::sync::Lazy;
-
-/// The directory containing the `Cargo.toml` file.
-static CARGO_MANIFEST_DIR: Lazy<PathBuf> =
-    Lazy::new(|| PathBuf::from(env::var_os("CARGO_MANIFEST_DIR").unwrap()));
 
 /// Nicely format an error message for when the subprocess didn't exit
 /// successfully.
@@ -20,10 +15,12 @@ pub fn format_error_msg(cmd: &process::Command, output: process::Output) -> Stri
         cmd, output.status
     );
     if !stdout.trim().is_empty() {
-        msg.push_str(&format!("\n--- stdout\n{}", stdout));
+        msg.push_str("\n--- stdout\n");
+        msg.push_str(&stdout);
     }
     if !stderr.trim().is_empty() {
-        msg.push_str(&format!("\n--- stderr\n{}", stderr));
+        msg.push_str("\n--- stderr\n");
+        msg.push_str(&stderr);
     }
     msg
 }
@@ -40,12 +37,12 @@ pub fn is_io_not_found(error: &anyhow::Error) -> bool {
 }
 
 trait CommandExt {
-    /// Run the command return the standard output as a UTF-8 string.
+    /// Run the command and return the standard output as a string.
     fn output_text(&mut self) -> Result<String>;
 }
 
 impl CommandExt for process::Command {
-    /// Run the command return the standard output as a UTF-8 string.
+    /// Run the command and return the standard output as a string.
     fn output_text(&mut self) -> Result<String> {
         let output = self
             .output()
@@ -57,28 +54,23 @@ impl CommandExt for process::Command {
     }
 }
 
-/// Simple macro to run a Git subcommand and set the result as a rustc
-/// environment variable.
+/// Run a Git subcommand and set the result as a rustc environment variable.
 ///
-/// Note:
-/// - The Cargo manifest directory is passed as the Git directory.
-/// - If the Git subcommand is not available then this macro will `return
-///   Ok(())`.
-macro_rules! print_git_env {
-    ($key:expr, $cmd:expr) => {{
-        let mut split = $cmd.split_whitespace();
-        let value = match process::Command::new(split.next().unwrap())
-            .arg("-C")
-            .arg(&*CARGO_MANIFEST_DIR)
-            .args(split)
-            .output_text()
-        {
-            Ok(text) => text.trim().to_string(),
-            Err(err) if is_io_not_found(&err) => return Ok(()),
-            Err(err) => return Err(err.into()),
-        };
-        println!("cargo:rustc-env={}={}", $key, value);
-    }};
+/// Note: Success is returned if the Git subcommand is not available.
+fn print_git_env(dir: &Path, key: &str, cmd: &str) -> Result<()> {
+    let mut split = cmd.split_whitespace();
+    let value = match process::Command::new(split.next().unwrap())
+        .arg("-C")
+        .arg(dir)
+        .args(split)
+        .output_text()
+    {
+        Ok(text) => text.trim().to_string(),
+        Err(err) if is_io_not_found(&err) => return Ok(()),
+        Err(err) => return Err(err),
+    };
+    println!("cargo:rustc-env={}={}", key, value);
+    Ok(())
 }
 
 /// Fetch Git info and set as rustc environment variables.
@@ -86,16 +78,21 @@ macro_rules! print_git_env {
 /// If the Git subcommand is missing or the `.git` directory does not exist then
 /// no errors will be produced.
 fn print_git_envs() -> Result<()> {
-    let git_dir = CARGO_MANIFEST_DIR.join(".git");
-    if !git_dir.exists() {
+    let dir = PathBuf::from(env::var_os("CARGO_MANIFEST_DIR").unwrap());
+    if !dir.join(".git").exists() {
         return Ok(());
     }
-    print_git_env!(
+    print_git_env(
+        &dir,
         "GIT_COMMIT_DATE",
-        "git log -1 --no-show-signature --date=short --format=%cd"
-    );
-    print_git_env!("GIT_COMMIT_HASH", "git rev-parse HEAD");
-    print_git_env!("GIT_COMMIT_SHORT_HASH", "git rev-parse --short=9 HEAD");
+        "git log -1 --no-show-signature --date=short --format=%cd",
+    )?;
+    print_git_env(&dir, "GIT_COMMIT_HASH", "git rev-parse HEAD")?;
+    print_git_env(
+        &dir,
+        "GIT_COMMIT_SHORT_HASH",
+        "git rev-parse --short=9 HEAD",
+    )?;
     Ok(())
 }
 
