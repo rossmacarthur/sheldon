@@ -268,9 +268,8 @@ pub mod git {
             ))
         });
 
-        // Creating a proxy option to, eventually, address the usage of Sheldon
-        // behind a http proxy. Using the [auto()] function to try to
-        // auto-detect the proxy from the git configuration.
+        // Try to auto-detect the proxy from the git configuration so that
+        // Sheldon can be used behind a proxy.
         let mut proxy_opts = git2::ProxyOptions::new();
         proxy_opts.auto();
 
