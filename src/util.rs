@@ -267,8 +267,15 @@ pub mod git {
                 "remote authentication required but none available",
             ))
         });
+
+        // Try to auto-detect the proxy from the git configuration so that
+        // Sheldon can be used behind a proxy.
+        let mut proxy_opts = git2::ProxyOptions::new();
+        proxy_opts.auto();
+
         let mut opts = FetchOptions::new();
         opts.remote_callbacks(rcb);
+        opts.proxy_options(proxy_opts);
         f(opts)
     }
 
