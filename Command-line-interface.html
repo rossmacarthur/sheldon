@@ -167,7 +167,7 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1><a class="header" href="#command-line-interface" id="command-line-interface">Command line interface</a></h1>
+                        <h1 id="command-line-interface"><a class="header" href="#command-line-interface">Command line interface</a></h1>
 <p>Sheldon has three different types of commands.</p>
 <ul>
 <li><a href="#init"><code>init</code></a> initializes a new config file.</li>
@@ -176,7 +176,7 @@ installation, and generation of shell source code.</li>
 <li><a href="#add"><code>add</code></a>, <a href="#edit"><code>edit</code></a>, and <a href="#remove"><code>remove</code></a> automate editing of
 the config file.</li>
 </ul>
-<h2><a class="header" href="#init" id="init"><code>init</code></a></h2>
+<h2 id="init"><a class="header" href="#init"><code>init</code></a></h2>
 <p>This command initializes a new config file. If a config file exists then this
 command does nothing.</p>
 <p>For example</p>
@@ -188,7 +188,7 @@ command does nothing.</p>
 <p>or</p>
 <pre><code class="language-sh">sheldon init --shell zsh
 </code></pre>
-<h2><a class="header" href="#lock" id="lock"><code>lock</code></a></h2>
+<h2 id="lock"><a class="header" href="#lock"><code>lock</code></a></h2>
 <p>The <code>lock</code> command installs the plugins sources and generates the lock file
 (<code>~/.sheldon/plugins.lock</code>). Rerunning this command without any extra options
 will not reinstall plugin sources, just verify that they are correctly
@@ -201,7 +201,7 @@ installed. It will always regenerate the lock file.</p>
 <p>To force a reinstall of all plugin sources you can use the <code>--reinstall</code> flag.</p>
 <pre><code class="language-sh">sheldon lock --reinstall
 </code></pre>
-<h2><a class="header" href="#source" id="source"><code>source</code></a></h2>
+<h2 id="source"><a class="header" href="#source"><code>source</code></a></h2>
 <p>This command generates the shell script. This command will first check if there
 is an up to date lock file, if not, then it will first do the equivalent of the
 lock command above. This command is usually used with the built-in shell <code>eval</code>
@@ -211,7 +211,7 @@ command.</p>
 <p>But you can also run it directly to inspect the output. The output of this
 command is highly configurable. You can define your own custom templates to
 apply to your plugins.</p>
-<h2><a class="header" href="#add" id="add"><code>add</code></a></h2>
+<h2 id="add"><a class="header" href="#add"><code>add</code></a></h2>
 <p>This command adds a new plugin to the config file. It does nothing else but edit
 the config file. In the following command we add a GitHub repository as a
 source.</p>
@@ -219,7 +219,7 @@ source.</p>
 </code></pre>
 <p>An example usage of this command for each source type is shown in the
 <a href="Configuration.html">Configuration</a> section.</p>
-<h2><a class="header" href="#edit" id="edit"><code>edit</code></a></h2>
+<h2 id="edit"><a class="header" href="#edit"><code>edit</code></a></h2>
 <p>This command will open the config file in the default editor and only overwrite
 the contents if the updated config file is valid. To override the editor that is
 used you should set the <code>EDITOR</code> environment variable.</p>
@@ -229,13 +229,13 @@ used you should set the <code>EDITOR</code> environment variable.</p>
 <p>Or with Visual Studio Code</p>
 <pre><code class="language-sh">EDITOR=&quot;code --wait&quot; sheldon edit
 </code></pre>
-<h2><a class="header" href="#remove" id="remove"><code>remove</code></a></h2>
+<h2 id="remove"><a class="header" href="#remove"><code>remove</code></a></h2>
 <p>This command removes a plugin from the config file. It does nothing else but
 edit the config file. In the following command we remove the plugin with name
 <code>my-repo</code>.</p>
 <pre><code class="language-sh">sheldon remove my-repo
 </code></pre>
-<h2><a class="header" href="#flags" id="flags">Flags</a></h2>
+<h2 id="flags"><a class="header" href="#flags">Flags</a></h2>
 <p>Sheldon accepts the following global command line flags.</p>
 <table><thead><tr><th>Flag</th><th>Description</th></tr></thead><tbody>
 <tr><td><code>-q</code>, <code>--quiet</code></td><td>Suppress any informational output</td></tr>
@@ -243,7 +243,7 @@ edit the config file. In the following command we remove the plugin with name
 <tr><td><code>-h</code>, <code>--help</code></td><td>Show the help message and exit</td></tr>
 <tr><td><code>-V</code>, <code>--version</code></td><td>Show the version and exit</td></tr>
 </tbody></table>
-<h2><a class="header" href="#options" id="options">Options</a></h2>
+<h2 id="options"><a class="header" href="#options">Options</a></h2>
 <p>Sheldon accepts the following global command line options.</p>
 <table><thead><tr><th>Option</th><th>Environment variable</th><th>Description</th></tr></thead><tbody>
 <tr><td><code>--color &lt;when&gt;</code></td><td></td><td>Output coloring: <code>always</code>, <code>auto</code>, <code>never</code>. (<em>default:</em> <code>auto</code>)</td></tr>

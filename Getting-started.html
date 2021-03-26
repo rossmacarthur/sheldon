@@ -167,8 +167,8 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1><a class="header" href="#getting-started" id="getting-started">Getting started</a></h1>
-<h2><a class="header" href="#initializing" id="initializing">Initializing</a></h2>
+                        <h1 id="getting-started"><a class="header" href="#getting-started">Getting started</a></h1>
+<h2 id="initializing"><a class="header" href="#initializing">Initializing</a></h2>
 <p>Sheldon works by specifying plugin information in a <a href="https://toml.io">TOML</a>
 configuration file, <code>plugins.toml</code>. You can initialize this file by running
 <code>sheldon init</code>.</p>
@@ -180,7 +180,7 @@ configuration file, <code>plugins.toml</code>. You can initialize this file by r
 <p>This will create <code>plugins.toml</code> under <code>~/.sheldon</code> or, if defined,
 <code>$XDG_CONFIG_HOME/sheldon</code>. You can either edit this file directly or use the
 provided command line interface to add or remove plugins.</p>
-<h2><a class="header" href="#adding-a-plugin" id="adding-a-plugin">Adding a plugin</a></h2>
+<h2 id="adding-a-plugin"><a class="header" href="#adding-a-plugin">Adding a plugin</a></h2>
 <p>To add your first plugin append the following to the Sheldon config file.</p>
 <pre><code class="language-toml"># ~/.sheldon/plugins.toml
 
@@ -194,7 +194,7 @@ github = &quot;chriskempson/base16-shell&quot;
 <code>--github</code> option specifies that we want Sheldon to manage a clone of the
 <a href="https://github.com/chriskempson/base16-shell">https://github.com/chriskempson/base16-shell</a>
 repository.</p>
-<h2><a class="header" href="#loading-plugins" id="loading-plugins">Loading plugins</a></h2>
+<h2 id="loading-plugins"><a class="header" href="#loading-plugins">Loading plugins</a></h2>
 <p>You can then use <code>sheldon source</code> to install this plugin, generate a lock file,
 and print out the shell script to source. Simply add the following to your
 <code>~/.zshrc</code> or <code>~/.bashrc</code> file.</p>

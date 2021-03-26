@@ -171,7 +171,7 @@
                     <main>
                         <p><br><br></p>
 <p>Sheldon is a fast, configurable, command-line tool to manage your shell plugins.</p>
-<h2><a class="header" href="#how-does-it-work" id="how-does-it-work">How does it work?</a></h2>
+<h2 id="how-does-it-work"><a class="header" href="#how-does-it-work">How does it work?</a></h2>
 <p>Plugins are specified in a <a href="https://toml.io">TOML</a> configuration file and
 Sheldon renders an install script using user configurable
 <a href="http://handlebarsjs.com">handlebars</a> templates.</p>
@@ -181,18 +181,18 @@ Sheldon renders an install script using user configurable
 <p>Sheldon can manage GitHub or Git repositories, Gists, arbitrary remote scripts
 or binaries, local plugins, and inline plugins. Plugins are installed and
 updated in parallel and as a result Sheldon is blazingly fast.</p>
-<h2><a class="header" href="#source-code" id="source-code">Source code</a></h2>
+<h2 id="source-code"><a class="header" href="#source-code">Source code</a></h2>
 <p>Sheldon is open source and you can find the code on
 <a href="https://github.com/rossmacarthur/sheldon">GitHub</a>.</p>
-<h2><a class="header" href="#license" id="license">License</a></h2>
+<h2 id="license"><a class="header" href="#license">License</a></h2>
 <p>Sheldon and its source code is licensed under either of</p>
 <ul>
 <li><a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a></li>
 <li><a href="http://opensource.org/licenses/MIT">MIT license</a></li>
 </ul>
 <p>at your option.</p>
-<h1><a class="header" href="#installation" id="installation">Installation</a></h1>
-<h2><a class="header" href="#pre-built-binaries" id="pre-built-binaries">Pre-built binaries</a></h2>
+<h1 id="installation"><a class="header" href="#installation">Installation</a></h1>
+<h2 id="pre-built-binaries"><a class="header" href="#pre-built-binaries">Pre-built binaries</a></h2>
 <p>Pre-built binaries for Linux (x86-64, aarch64, armv7) and macOS (x86-64) are
 provided. The following script can be used to automatically detect your host
 system, download the required artefact, and extract the <code>sheldon</code> binary to the
@@ -202,16 +202,16 @@ given directory.</p>
 </code></pre>
 <p>Alternatively, you can download an artifact directly from the <a href="https://github.com/rossmacarthur/sheldon/releases">the releases
 page</a>.</p>
-<h2><a class="header" href="#homebrew" id="homebrew">Homebrew</a></h2>
+<h2 id="homebrew"><a class="header" href="#homebrew">Homebrew</a></h2>
 <p>Sheldon can be installed using Homebrew.</p>
 <pre><code class="language-sh">brew install sheldon
 </code></pre>
-<h2><a class="header" href="#cargo" id="cargo">Cargo</a></h2>
+<h2 id="cargo"><a class="header" href="#cargo">Cargo</a></h2>
 <p>Sheldon can be installed from <a href="https://crates.io/crates/sheldon">Crates.io</a>
 using <a href="https://doc.rust-lang.org/cargo/">Cargo</a>, the Rust package manager.</p>
 <pre><code class="language-sh">cargo install sheldon
 </code></pre>
-<h2><a class="header" href="#building-from-source" id="building-from-source">Building from source</a></h2>
+<h2 id="building-from-source"><a class="header" href="#building-from-source">Building from source</a></h2>
 <p>Sheldon is written in Rust, so to install it from source you will first need to
 install Rust and Cargo using <a href="https://rustup.rs/">rustup</a>. Then you can run the
 following to build Sheldon.</p>
@@ -220,8 +220,8 @@ cd sheldon
 cargo build --release
 </code></pre>
 <p>The binary will be found at <code>target/release/sheldon</code>.</p>
-<h1><a class="header" href="#getting-started" id="getting-started">Getting started</a></h1>
-<h2><a class="header" href="#initializing" id="initializing">Initializing</a></h2>
+<h1 id="getting-started"><a class="header" href="#getting-started">Getting started</a></h1>
+<h2 id="initializing"><a class="header" href="#initializing">Initializing</a></h2>
 <p>Sheldon works by specifying plugin information in a <a href="https://toml.io">TOML</a>
 configuration file, <code>plugins.toml</code>. You can initialize this file by running
 <code>sheldon init</code>.</p>
@@ -233,7 +233,7 @@ configuration file, <code>plugins.toml</code>. You can initialize this file by r
 <p>This will create <code>plugins.toml</code> under <code>~/.sheldon</code> or, if defined,
 <code>$XDG_CONFIG_HOME/sheldon</code>. You can either edit this file directly or use the
 provided command line interface to add or remove plugins.</p>
-<h2><a class="header" href="#adding-a-plugin" id="adding-a-plugin">Adding a plugin</a></h2>
+<h2 id="adding-a-plugin"><a class="header" href="#adding-a-plugin">Adding a plugin</a></h2>
 <p>To add your first plugin append the following to the Sheldon config file.</p>
 <pre><code class="language-toml"># ~/.sheldon/plugins.toml
 
@@ -247,7 +247,7 @@ github = &quot;chriskempson/base16-shell&quot;
 <code>--github</code> option specifies that we want Sheldon to manage a clone of the
 <a href="https://github.com/chriskempson/base16-shell">https://github.com/chriskempson/base16-shell</a>
 repository.</p>
-<h2><a class="header" href="#loading-plugins" id="loading-plugins">Loading plugins</a></h2>
+<h2 id="loading-plugins"><a class="header" href="#loading-plugins">Loading plugins</a></h2>
 <p>You can then use <code>sheldon source</code> to install this plugin, generate a lock file,
 and print out the shell script to source. Simply add the following to your
 <code>~/.zshrc</code> or <code>~/.bashrc</code> file.</p>
@@ -255,7 +255,7 @@ and print out the shell script to source. Simply add the following to your
 
 eval &quot;$(sheldon source)&quot;
 </code></pre>
-<h1><a class="header" href="#command-line-interface" id="command-line-interface">Command line interface</a></h1>
+<h1 id="command-line-interface"><a class="header" href="#command-line-interface">Command line interface</a></h1>
 <p>Sheldon has three different types of commands.</p>
 <ul>
 <li><a href="Command-line-interface.html#init"><code>init</code></a> initializes a new config file.</li>
@@ -264,7 +264,7 @@ installation, and generation of shell source code.</li>
 <li><a href="Command-line-interface.html#add"><code>add</code></a>, <a href="Command-line-interface.html#edit"><code>edit</code></a>, and <a href="Command-line-interface.html#remove"><code>remove</code></a> automate editing of
 the config file.</li>
 </ul>
-<h2><a class="header" href="#init" id="init"><code>init</code></a></h2>
+<h2 id="init"><a class="header" href="#init"><code>init</code></a></h2>
 <p>This command initializes a new config file. If a config file exists then this
 command does nothing.</p>
 <p>For example</p>
@@ -276,7 +276,7 @@ command does nothing.</p>
 <p>or</p>
 <pre><code class="language-sh">sheldon init --shell zsh
 </code></pre>
-<h2><a class="header" href="#lock" id="lock"><code>lock</code></a></h2>
+<h2 id="lock"><a class="header" href="#lock"><code>lock</code></a></h2>
 <p>The <code>lock</code> command installs the plugins sources and generates the lock file
 (<code>~/.sheldon/plugins.lock</code>). Rerunning this command without any extra options
 will not reinstall plugin sources, just verify that they are correctly
@@ -289,7 +289,7 @@ installed. It will always regenerate the lock file.</p>
 <p>To force a reinstall of all plugin sources you can use the <code>--reinstall</code> flag.</p>
 <pre><code class="language-sh">sheldon lock --reinstall
 </code></pre>
-<h2><a class="header" href="#source" id="source"><code>source</code></a></h2>
+<h2 id="source"><a class="header" href="#source"><code>source</code></a></h2>
 <p>This command generates the shell script. This command will first check if there
 is an up to date lock file, if not, then it will first do the equivalent of the
 lock command above. This command is usually used with the built-in shell <code>eval</code>
@@ -299,7 +299,7 @@ command.</p>
 <p>But you can also run it directly to inspect the output. The output of this
 command is highly configurable. You can define your own custom templates to
 apply to your plugins.</p>
-<h2><a class="header" href="#add" id="add"><code>add</code></a></h2>
+<h2 id="add"><a class="header" href="#add"><code>add</code></a></h2>
 <p>This command adds a new plugin to the config file. It does nothing else but edit
 the config file. In the following command we add a GitHub repository as a
 source.</p>
@@ -307,7 +307,7 @@ source.</p>
 </code></pre>
 <p>An example usage of this command for each source type is shown in the
 <a href="Configuration.html">Configuration</a> section.</p>
-<h2><a class="header" href="#edit" id="edit"><code>edit</code></a></h2>
+<h2 id="edit"><a class="header" href="#edit"><code>edit</code></a></h2>
 <p>This command will open the config file in the default editor and only overwrite
 the contents if the updated config file is valid. To override the editor that is
 used you should set the <code>EDITOR</code> environment variable.</p>
@@ -317,13 +317,13 @@ used you should set the <code>EDITOR</code> environment variable.</p>
 <p>Or with Visual Studio Code</p>
 <pre><code class="language-sh">EDITOR=&quot;code --wait&quot; sheldon edit
 </code></pre>
-<h2><a class="header" href="#remove" id="remove"><code>remove</code></a></h2>
+<h2 id="remove"><a class="header" href="#remove"><code>remove</code></a></h2>
 <p>This command removes a plugin from the config file. It does nothing else but
 edit the config file. In the following command we remove the plugin with name
 <code>my-repo</code>.</p>
 <pre><code class="language-sh">sheldon remove my-repo
 </code></pre>
-<h2><a class="header" href="#flags" id="flags">Flags</a></h2>
+<h2 id="flags"><a class="header" href="#flags">Flags</a></h2>
 <p>Sheldon accepts the following global command line flags.</p>
 <table><thead><tr><th>Flag</th><th>Description</th></tr></thead><tbody>
 <tr><td><code>-q</code>, <code>--quiet</code></td><td>Suppress any informational output</td></tr>
@@ -331,7 +331,7 @@ edit the config file. In the following command we remove the plugin with name
 <tr><td><code>-h</code>, <code>--help</code></td><td>Show the help message and exit</td></tr>
 <tr><td><code>-V</code>, <code>--version</code></td><td>Show the version and exit</td></tr>
 </tbody></table>
-<h2><a class="header" href="#options" id="options">Options</a></h2>
+<h2 id="options"><a class="header" href="#options">Options</a></h2>
 <p>Sheldon accepts the following global command line options.</p>
 <table><thead><tr><th>Option</th><th>Environment variable</th><th>Description</th></tr></thead><tbody>
 <tr><td><code>--color &lt;when&gt;</code></td><td></td><td>Output coloring: <code>always</code>, <code>auto</code>, <code>never</code>. (<em>default:</em> <code>auto</code>)</td></tr>
@@ -349,8 +349,8 @@ edit the config file. In the following command we remove the plugin with name
 <li>Environment variable.</li>
 <li>Default value.</li>
 </ol>
-<h1><a class="header" href="#configuration" id="configuration">Configuration</a></h1>
-<h2><a class="header" href="#plugin-sources" id="plugin-sources">Plugin sources</a></h2>
+<h1 id="configuration"><a class="header" href="#configuration">Configuration</a></h1>
+<h2 id="plugin-sources"><a class="header" href="#plugin-sources">Plugin sources</a></h2>
 <p>A plugin is defined by adding a new unique name to the <code>plugins</code> table in the
 <a href="https://toml.io">TOML</a> config file. This can be done by either editing the file
 directly or using the provided Sheldon commands. A plugin must provide the
@@ -366,10 +366,10 @@ github = &quot;chriskempson/base16-shell&quot;
 #               │            └─ GitHub repository name
 #               └─ GitHub user or organization
 </code></pre>
-<h3><a class="header" href="#git" id="git">Git</a></h3>
+<h3 id="git"><a class="header" href="#git">Git</a></h3>
 <p>Git sources specify a remote Git repository that will be cloned to the Sheldon
 data directory. There are three flavors of Git sources.</p>
-<h4><a class="header" href="#github" id="github"><code>github</code></a></h4>
+<h4 id="github"><a class="header" href="#github"><code>github</code></a></h4>
 <p>A GitHub source must set the <code>github</code> field and specify the repository. This
 should be the username or organization and the repository name separated by a
 forward slash. Add the following to the Sheldon config file.</p>
@@ -379,7 +379,7 @@ github = &quot;owner/repo&quot;
 <p>Or run <code>add</code> with the <code>--github</code> option.</p>
 <pre><code class="language-sh">sheldon add example --github owner/repo
 </code></pre>
-<h4><a class="header" href="#gist" id="gist"><code>gist</code></a></h4>
+<h4 id="gist"><a class="header" href="#gist"><code>gist</code></a></h4>
 <p>A Gist source must set the <code>gist</code> field and specify the repository. This should
 be the hash or username and hash of the Gist. Add the following to the Sheldon
 config file.</p>
@@ -389,7 +389,7 @@ gist = &quot;579d02802b1cc17baed07753d09f5009&quot;
 <p>Or run <code>add</code> with the <code>--gist</code> option.</p>
 <pre><code class="language-sh">sheldon add example --gist 579d02802b1cc17baed07753d09f5009
 </code></pre>
-<h4><a class="header" href="#git-1" id="git-1"><code>git</code></a></h4>
+<h4 id="git-1"><a class="header" href="#git-1"><code>git</code></a></h4>
 <p>A Git source must set the <code>git</code> field and specify the URL to clone. Add the
 following to the Sheldon config file.</p>
 <pre><code class="language-toml">[plugins.example]
@@ -398,7 +398,7 @@ git = &quot;https://github.com/owner/repo&quot;
 <p>Or run <code>add</code> with the <code>--git</code> option.</p>
 <pre><code class="language-sh">sheldon add example --git https://github.com/owner/repo
 </code></pre>
-<h4><a class="header" href="#specifying-a-branch-tag-or-commit" id="specifying-a-branch-tag-or-commit">Specifying a branch, tag, or commit</a></h4>
+<h4 id="specifying-a-branch-tag-or-commit"><a class="header" href="#specifying-a-branch-tag-or-commit">Specifying a branch, tag, or commit</a></h4>
 <p>All Git sources also allow setting of one of the <code>branch</code>, <code>tag</code> or <code>rev</code>
 fields. Sheldon will then checkout the repository at this reference.</p>
 <pre><code class="language-toml">[plugins.example]
@@ -408,7 +408,7 @@ tag = &quot;v0.1.0&quot;
 <p>Or run <code>add</code> with the <code>--tag</code>, <code>--branch</code>, or <code>--rev</code> option.</p>
 <pre><code class="language-sh">sheldon add example --github owner/repo --tag v0.1.0
 </code></pre>
-<h4><a class="header" href="#cloning-with-git-or-ssh-protocols" id="cloning-with-git-or-ssh-protocols">Cloning with Git or SSH protocols</a></h4>
+<h4 id="cloning-with-git-or-ssh-protocols"><a class="header" href="#cloning-with-git-or-ssh-protocols">Cloning with Git or SSH protocols</a></h4>
 <p>GitHub and Gist sources are cloned using HTTPS by default. You can specify that
 Git or SSH should be used by setting the <code>proto</code> field to the protocol type.
 This must be one of <code>git</code>, <code>https</code>, or <code>ssh</code>.</p>
@@ -421,12 +421,12 @@ For SSH you will need to specify the username as well (it is <code>git</code> fo
 <pre><code class="language-toml">[plugins.example]
 git = &quot;ssh://git@github.com/owner/repo&quot;
 </code></pre>
-<h4><a class="header" href="#private-git-repositories" id="private-git-repositories">Private Git repositories</a></h4>
+<h4 id="private-git-repositories"><a class="header" href="#private-git-repositories">Private Git repositories</a></h4>
 <p>Currently Sheldon only supports authentication when cloning using SSH and
 requires an SSH agent to provide credentials. This means if you have a plugin
 source that is a private repository you will have to use the SSH protocol for
 cloning.</p>
-<h3><a class="header" href="#remote" id="remote">Remote</a></h3>
+<h3 id="remote"><a class="header" href="#remote">Remote</a></h3>
 <p>Remote sources specify a remote file that will be downloaded by Sheldon. A
 remote source must set the <code>remote</code> field and specify the URL. Add the following
 to the Sheldon config file.</p>
@@ -436,7 +436,7 @@ remote = &quot;https://github.com/owner/repo/raw/master/plugin.zsh&quot;
 <p>Or run <code>add</code> with the <code>--remote</code> option.</p>
 <pre><code class="language-sh">sheldon add example --remote https://github.com/owner/repo/raw/master/plugin.zsh
 </code></pre>
-<h3><a class="header" href="#local" id="local">Local</a></h3>
+<h3 id="local"><a class="header" href="#local">Local</a></h3>
 <p>Local sources reference local directories. A local source must set the <code>local</code>
 field and specify a directory. Tildes may be used and will be expanded to the
 current user's home directory. Add the following to the Sheldon config file.</p>
@@ -446,9 +446,9 @@ local = &quot;~/Downloads/plugin&quot;
 <p>Or run <code>add</code> with the <code>--local</code> option.</p>
 <pre><code class="language-sh">sheldon add example --local '~/Downloads/plugin'
 </code></pre>
-<h2><a class="header" href="#plugin-options" id="plugin-options">Plugin options</a></h2>
+<h2 id="plugin-options"><a class="header" href="#plugin-options">Plugin options</a></h2>
 <p>These are options that are common to all the above plugins.</p>
-<h3><a class="header" href="#use" id="use"><code>use</code></a></h3>
+<h3 id="use"><a class="header" href="#use"><code>use</code></a></h3>
 <p>A list of files / globs to use in the plugin's source directory. If this field
 is not given then the first pattern in the global <a href="Configuration.html#match"><code>match</code></a> field that
 matches any files will be used. Add the following to the Sheldon config file.</p>
@@ -459,7 +459,7 @@ use = [&quot;*.zsh&quot;]
 <p>Or run <code>add</code> with the <code>--use</code> option when adding the plugin.</p>
 <pre><code class="language-sh">sheldon add example --github owner/repo --use '*.zsh'
 </code></pre>
-<h3><a class="header" href="#apply" id="apply"><code>apply</code></a></h3>
+<h3 id="apply"><a class="header" href="#apply"><code>apply</code></a></h3>
 <p>A list of template names to apply to this plugin. This defaults to the global
 <a href="Configuration.html#apply-1"><code>apply</code></a>.</p>
 <pre><code class="language-toml">[plugins.example]
@@ -471,13 +471,13 @@ apply = [&quot;source&quot;, &quot;PATH&quot;]
 </code></pre>
 <p>You can define your own <a href="Configuration.html#custom-templates">custom templates</a> to apply to your
 plugins.</p>
-<h2><a class="header" href="#inline-plugins" id="inline-plugins">Inline plugins</a></h2>
+<h2 id="inline-plugins"><a class="header" href="#inline-plugins">Inline plugins</a></h2>
 <p>For convenience it also possible to define Inline plugins. An Inline plugin must
 set the <code>inline</code> field and specify the raw source.</p>
 <pre><code class="language-toml">[plugins.example]
 inline = 'example() { echo &quot;Just an example of inline shell code&quot; }'
 </code></pre>
-<h2><a class="header" href="#templates" id="templates">Templates</a></h2>
+<h2 id="templates"><a class="header" href="#templates">Templates</a></h2>
 <p>A template defines how the shell source for a particular plugin is generated.
 For example the <strong>PATH</strong> template adds the plugin directory to the shell <code>PATH</code>
 variable. A template will be applied to a plugin if you add the template name to
@@ -511,7 +511,7 @@ apply = [&quot;PATH&quot;, &quot;fpath&quot;]
 <p>The <code>each</code> value, as used in the <code>source</code> template above, specifies that the
 template should be applied to each matched file for the plugin. This defaults to
 <code>false</code>.</p>
-<h3><a class="header" href="#custom-templates" id="custom-templates">Custom templates</a></h3>
+<h3 id="custom-templates"><a class="header" href="#custom-templates">Custom templates</a></h3>
 <p>It is possible to create your own custom templates, and you can even override
 the built-in ones.</p>
 <p>Plugins all have the following information that can be used in templates.</p>
@@ -539,8 +539,8 @@ information only makes sense in templates with <code>each</code> set to <code>tr
 <p>To add or update a template add a new key to the <code>[templates]</code> table in the
 config file. Take a look at the <a href="Examples.html">examples</a> for some interesting
 applications of this.</p>
-<h2><a class="header" href="#global-options" id="global-options">Global options</a></h2>
-<h3><a class="header" href="#shell" id="shell"><code>shell</code></a></h3>
+<h2 id="global-options"><a class="header" href="#global-options">Global options</a></h2>
+<h3 id="shell"><a class="header" href="#shell"><code>shell</code></a></h3>
 <p>Indicates the shell that you are using. This setting will affect the default
 values for several global config settings. This includes the global
 <a href="Configuration.html#match"><code>match</code></a> setting and the available templates. This defaults to <code>zsh</code>.</p>
@@ -549,7 +549,7 @@ values for several global config settings. This includes the global
 <p>or</p>
 <pre><code class="language-toml">shell = &quot;zsh&quot;
 </code></pre>
-<h3><a class="header" href="#match" id="match"><code>match</code></a></h3>
+<h3 id="match"><a class="header" href="#match"><code>match</code></a></h3>
 <p>A list of glob patterns to match against a plugin's contents. The first pattern
 that matches any files will be used by default as a plugin's <code>use</code> field. This
 defaults to</p>
@@ -576,15 +576,15 @@ defaults to</p>
     &quot;*.sh&quot;
 ]
 </code></pre>
-<h3><a class="header" href="#apply-1" id="apply-1"><code>apply</code></a></h3>
+<h3 id="apply-1"><a class="header" href="#apply-1"><code>apply</code></a></h3>
 <p>A list of template names to apply to all plugins by default (see
 <a href="Configuration.html#apply"><code>apply</code></a>). This defaults to</p>
 <pre><code class="language-toml">apply = [&quot;source&quot;]
 </code></pre>
-<h1><a class="header" href="#examples" id="examples">Examples</a></h1>
+<h1 id="examples"><a class="header" href="#examples">Examples</a></h1>
 <p>This section demonstrates the configuration file contents for some common
 installation practices as well how to configure popular plugins and themes.</p>
-<h2><a class="header" href="#deferred-loading-of-plugins-in-zsh" id="deferred-loading-of-plugins-in-zsh">Deferred loading of plugins in Zsh</a></h2>
+<h2 id="deferred-loading-of-plugins-in-zsh"><a class="header" href="#deferred-loading-of-plugins-in-zsh">Deferred loading of plugins in Zsh</a></h2>
 <p>A commonly desired feature of shell plugin managers is deferred loading of
 plugins because of the massive increase in speed that it provides. Because
 Sheldon is not written in a shell language it cannot provide the level of
@@ -608,7 +608,7 @@ example if you wanted to defer loading of <code>zsh-syntax-highlighting</code>.<
 github = &quot;zsh-users/zsh-syntax-highlighting&quot;
 apply = [&quot;defer&quot;]
 </code></pre>
-<h2><a class="header" href="#overriding-the-path-template" id="overriding-the-path-template">Overriding the PATH template</a></h2>
+<h2 id="overriding-the-path-template"><a class="header" href="#overriding-the-path-template">Overriding the PATH template</a></h2>
 <p>The built-in <strong>PATH</strong> template adds the directory path to the beginning of the
 <code>PATH</code> variable, we might want to change it to the be added at the end. We could
 do this like this</p>
@@ -621,8 +621,8 @@ github = &quot;owner/repo&quot;
 apply = [&quot;source&quot;, &quot;PATH&quot;]
 </code></pre>
 <p><strong>Note:</strong> this would change the behavior of <strong>PATH</strong> for <em>all</em> plugins using it.</p>
-<h2><a class="header" href="#zsh-frameworks" id="zsh-frameworks">Zsh frameworks</a></h2>
-<h3><a class="header" href="#a-hrefhttpsgithubcomohmyzshohmyzshohmyzsha" id="a-hrefhttpsgithubcomohmyzshohmyzshohmyzsha"><a href="https://github.com/ohmyzsh/ohmyzsh">ohmyzsh</a></a></h3>
+<h2 id="zsh-frameworks"><a class="header" href="#zsh-frameworks">Zsh frameworks</a></h2>
+<h3 id="a-hrefhttpsgithubcomohmyzshohmyzshohmyzsha"><a class="header" href="#a-hrefhttpsgithubcomohmyzshohmyzshohmyzsha"><a href="https://github.com/ohmyzsh/ohmyzsh">ohmyzsh</a></a></h3>
 <p>Add the following to the Sheldon config file.</p>
 <pre><code class="language-toml">[plugins.oh-my-zsh]
 github = &quot;ohmyzsh/ohmyzsh&quot;
@@ -639,8 +639,8 @@ export ZSH=&quot;$HOME/.sheldon/repos/github.com/ohmyzsh/ohmyzsh&quot;
 
 eval &quot;$(sheldon source)&quot;
 </code></pre>
-<h2><a class="header" href="#zsh-plugins" id="zsh-plugins">Zsh plugins</a></h2>
-<h3><a class="header" href="#a-hrefhttpsgithubcomzsh-userszsh-autosuggestionsautosuggestionsa" id="a-hrefhttpsgithubcomzsh-userszsh-autosuggestionsautosuggestionsa"><a href="https://github.com/zsh-users/zsh-autosuggestions">autosuggestions</a></a></h3>
+<h2 id="zsh-plugins"><a class="header" href="#zsh-plugins">Zsh plugins</a></h2>
+<h3 id="a-hrefhttpsgithubcomzsh-userszsh-autosuggestionsautosuggestionsa"><a class="header" href="#a-hrefhttpsgithubcomzsh-userszsh-autosuggestionsautosuggestionsa"><a href="https://github.com/zsh-users/zsh-autosuggestions">autosuggestions</a></a></h3>
 <p>Add the following to the Sheldon config file.</p>
 <pre><code class="language-toml">[plugins.zsh-autosuggestions]
 github = &quot;zsh-users/zsh-autosuggestions&quot;
@@ -649,7 +649,7 @@ use = [&quot;{{ name }}.zsh&quot;]
 <p>Or run the following to automatically add it.</p>
 <pre><code class="language-sh">sheldon add zsh-autosuggestions --github zsh-users/zsh-autosuggestions --use '{{ name }}.zsh'
 </code></pre>
-<h3><a class="header" href="#a-hrefhttpsgithubcomwtingautojumpautojumpa" id="a-hrefhttpsgithubcomwtingautojumpautojumpa"><a href="https://github.com/wting/autojump">autojump</a></a></h3>
+<h3 id="a-hrefhttpsgithubcomwtingautojumpautojumpa"><a class="header" href="#a-hrefhttpsgithubcomwtingautojumpautojumpa"><a href="https://github.com/wting/autojump">autojump</a></a></h3>
 <p>Add the following to the Sheldon config file.</p>
 <pre><code class="language-toml">[plugins.autojump]
 github = &quot;wting/autojump&quot;
@@ -659,7 +659,7 @@ apply = [&quot;PATH&quot;, &quot;source&quot;]
 <p>Or run the following to automatically add it.</p>
 <pre><code class="language-sh">sheldon add autojump --github wting/autojump --dir bin --apply PATH source
 </code></pre>
-<h3><a class="header" href="#a-hrefhttpsgithubcomzsh-userszsh-syntax-highlightingsyntax-highlightinga" id="a-hrefhttpsgithubcomzsh-userszsh-syntax-highlightingsyntax-highlightinga"><a href="https://github.com/zsh-users/zsh-syntax-highlighting">syntax-highlighting</a></a></h3>
+<h3 id="a-hrefhttpsgithubcomzsh-userszsh-syntax-highlightingsyntax-highlightinga"><a class="header" href="#a-hrefhttpsgithubcomzsh-userszsh-syntax-highlightingsyntax-highlightinga"><a href="https://github.com/zsh-users/zsh-syntax-highlighting">syntax-highlighting</a></a></h3>
 <p>Add the following to the Sheldon config file.</p>
 <pre><code class="language-toml">[plugins.zsh-syntax-highlighting]
 github = &quot;zsh-users/zsh-syntax-highlighting&quot;
@@ -667,7 +667,7 @@ github = &quot;zsh-users/zsh-syntax-highlighting&quot;
 <p>Or run the following to automatically add it.</p>
 <pre><code class="language-sh">sheldon add zsh-syntax-highlighting --github zsh-users/zsh-syntax-highlighting
 </code></pre>
-<h3><a class="header" href="#a-hrefhttpsgithubcomstackexchangeblackboxblackboxa" id="a-hrefhttpsgithubcomstackexchangeblackboxblackboxa"><a href="https://github.com/StackExchange/blackbox">blackbox</a></a></h3>
+<h3 id="a-hrefhttpsgithubcomstackexchangeblackboxblackboxa"><a class="header" href="#a-hrefhttpsgithubcomstackexchangeblackboxblackboxa"><a href="https://github.com/StackExchange/blackbox">blackbox</a></a></h3>
 <p>Add the following to the Sheldon config file.</p>
 <pre><code class="language-toml">[plugins.blackbox]
 github = &quot;StackExchange/blackbox&quot;
@@ -675,7 +675,7 @@ github = &quot;StackExchange/blackbox&quot;
 <p>Or run the following to automatically add it.</p>
 <pre><code class="language-sh">sheldon add blackbox --github StackExchange/blackbox
 </code></pre>
-<h3><a class="header" href="#a-hrefhttpsgithubcomskywind3000zluazluaa" id="a-hrefhttpsgithubcomskywind3000zluazluaa"><a href="https://github.com/skywind3000/z.lua">z.lua</a></a></h3>
+<h3 id="a-hrefhttpsgithubcomskywind3000zluazluaa"><a class="header" href="#a-hrefhttpsgithubcomskywind3000zluazluaa"><a href="https://github.com/skywind3000/z.lua">z.lua</a></a></h3>
 <p>Add the following to the Sheldon config file.</p>
 <pre><code class="language-toml">[plugins.&quot;z.lua&quot;]
 github = &quot;skywind3000/z.lua&quot;
@@ -683,7 +683,7 @@ github = &quot;skywind3000/z.lua&quot;
 <p>Or run the following to automatically add it.</p>
 <pre><code class="language-sh">sheldon add z.lua --github skywind3000/z.lua
 </code></pre>
-<h3><a class="header" href="#a-hrefhttpsgithubcomb4b4r07enhancdenhancda" id="a-hrefhttpsgithubcomb4b4r07enhancdenhancda"><a href="https://github.com/b4b4r07/enhancd">enhancd</a></a></h3>
+<h3 id="a-hrefhttpsgithubcomb4b4r07enhancdenhancda"><a class="header" href="#a-hrefhttpsgithubcomb4b4r07enhancdenhancda"><a href="https://github.com/b4b4r07/enhancd">enhancd</a></a></h3>
 <p>Add the following to the Sheldon config file.</p>
 <pre><code class="language-toml">[plugins.enhancd]
 github = &quot;b4b4r07/enhancd&quot;
@@ -691,7 +691,7 @@ github = &quot;b4b4r07/enhancd&quot;
 <p>Or run the following to automatically add it.</p>
 <pre><code class="language-sh">sheldon add enhancd --github b4b4r07/enhancd
 </code></pre>
-<h3><a class="header" href="#a-hrefhttpsgithubcomchriskempsonbase16-shellbase16a" id="a-hrefhttpsgithubcomchriskempsonbase16-shellbase16a"><a href="https://github.com/chriskempson/base16-shell">base16</a></a></h3>
+<h3 id="a-hrefhttpsgithubcomchriskempsonbase16-shellbase16a"><a class="header" href="#a-hrefhttpsgithubcomchriskempsonbase16-shellbase16a"><a href="https://github.com/chriskempson/base16-shell">base16</a></a></h3>
 <p>Add the following to the Sheldon config file.</p>
 <pre><code class="language-toml">[plugins.base16]
 github = &quot;chriskempson/base16-shell&quot;
@@ -699,8 +699,8 @@ github = &quot;chriskempson/base16-shell&quot;
 <p>Or run the following to automatically add it.</p>
 <pre><code class="language-sh">sheldon add base16 --github chriskempson/base16-shell
 </code></pre>
-<h2><a class="header" href="#zsh-themes" id="zsh-themes">Zsh themes</a></h2>
-<h3><a class="header" href="#a-hrefhttpsgithubcomromkatvpowerlevel10kpowerlevel10ka" id="a-hrefhttpsgithubcomromkatvpowerlevel10kpowerlevel10ka"><a href="https://github.com/romkatv/powerlevel10k">powerlevel10k</a></a></h3>
+<h2 id="zsh-themes"><a class="header" href="#zsh-themes">Zsh themes</a></h2>
+<h3 id="a-hrefhttpsgithubcomromkatvpowerlevel10kpowerlevel10ka"><a class="header" href="#a-hrefhttpsgithubcomromkatvpowerlevel10kpowerlevel10ka"><a href="https://github.com/romkatv/powerlevel10k">powerlevel10k</a></a></h3>
 <p>Add the following to the Sheldon config file.</p>
 <pre><code class="language-toml">[plugins.powerlevel10k]
 github = &quot;romkatv/powerlevel10k&quot;
@@ -708,7 +708,7 @@ github = &quot;romkatv/powerlevel10k&quot;
 <p>Or run the following to automatically add it.</p>
 <pre><code>sheldon add powerlevel10k --github romkatv/powerlevel10k
 </code></pre>
-<h3><a class="header" href="#a-hrefhttpsgithubcomdenysdovhanspaceship-promptspaceshipa" id="a-hrefhttpsgithubcomdenysdovhanspaceship-promptspaceshipa"><a href="https://github.com/denysdovhan/spaceship-prompt">spaceship</a></a></h3>
+<h3 id="a-hrefhttpsgithubcomdenysdovhanspaceship-promptspaceshipa"><a class="header" href="#a-hrefhttpsgithubcomdenysdovhanspaceship-promptspaceshipa"><a href="https://github.com/denysdovhan/spaceship-prompt">spaceship</a></a></h3>
 <p>Add the following to the Sheldon config file.</p>
 <pre><code class="language-toml">[plugins.spaceship]
 github = &quot;denysdovhan/spaceship-prompt&quot;
@@ -716,7 +716,7 @@ github = &quot;denysdovhan/spaceship-prompt&quot;
 <p>Or run the following to automatically add it.</p>
 <pre><code class="language-sh">sheldon add spaceship --github denysdovhan/spaceship-prompt
 </code></pre>
-<h3><a class="header" href="#a-hrefhttpsgithubcomsindresorhuspurepurea" id="a-hrefhttpsgithubcomsindresorhuspurepurea"><a href="https://github.com/sindresorhus/pure">pure</a></a></h3>
+<h3 id="a-hrefhttpsgithubcomsindresorhuspurepurea"><a class="header" href="#a-hrefhttpsgithubcomsindresorhuspurepurea"><a href="https://github.com/sindresorhus/pure">pure</a></a></h3>
 <p>Add the following to the Sheldon config file.</p>
 <pre><code class="language-toml">[plugins.pure]
 github = &quot;sindresorhus/pure&quot;
@@ -725,8 +725,16 @@ use = [&quot;async.zsh&quot;, &quot;pure.zsh&quot;]
 <p>Or run the following to automatically add it.</p>
 <pre><code class="language-sh">sheldon add pure --github sindresorhus/pure --use async.zsh pure.zsh
 </code></pre>
-<h1><a class="header" href="#releases" id="releases">Releases</a></h1>
-<h2><a class="header" href="#061" id="061">0.6.1</a></h2>
+<h1 id="releases"><a class="header" href="#releases">Releases</a></h1>
+<h2 id="062"><a class="header" href="#062">0.6.2</a></h2>
+<p><em>March 13th, 2021</em></p>
+<ul>
+<li><a href="https://github.com/rossmacarthur/sheldon/commit/a4a06023f5ec582964fdcf3ad036998dace02616">Fix edit bug.</a> If the edit file existed and you chose the &quot;Abort&quot;
+option the file would be deleted by mistake.</li>
+<li><a href="https://github.com/rossmacarthur/sheldon/commit/92a23b5289c4c206a228e6bf11ce937c4649047b">Always include details section in version output.</a> This was
+previously excluded if there was no Git information.</li>
+</ul>
+<h2 id="061"><a class="header" href="#061">0.6.1</a></h2>
 <p><em>February 12th, 2021</em></p>
 <ul>
 <li><a href="https://github.com/rossmacarthur/sheldon/commit/f3c748324fce1a098fd00f9b645771e1164d0a53">Embed Git and Rustc information in binary.</a> Git (if available) and
@@ -737,9 +745,9 @@ compile time and binary size.</li>
 for editing, if it already exists then Sheldon will prompt the user to either
 re-open it or overwrite.</li>
 </ul>
-<h2><a class="header" href="#060" id="060">0.6.0</a></h2>
+<h2 id="060"><a class="header" href="#060">0.6.0</a></h2>
 <p><em>October 16th, 2020</em></p>
-<h3><a class="header" href="#breaking-changes" id="breaking-changes">Breaking changes</a></h3>
+<h3 id="breaking-changes"><a class="header" href="#breaking-changes">Breaking changes</a></h3>
 <ul>
 <li>
 <p><a href="https://github.com/rossmacarthur/sheldon/pull/110">Support XDG directory structure.</a> If any XDG environment variable
@@ -782,7 +790,7 @@ can still force Sheldon to always use color or never use color with the
 has been removed.</p>
 </li>
 </ul>
-<h3><a class="header" href="#fixes" id="fixes">Fixes</a></h3>
+<h3 id="fixes"><a class="header" href="#fixes">Fixes</a></h3>
 <ul>
 <li><a href="https://github.com/rossmacarthur/sheldon/commit/abf202737fa30b30465fbed6c47a034d4d0e9911">Fix performance bug introduced in version 0.5.4.</a> A significant
 drop in performance was introduced by switching to the Rust <code>rayon</code> package.
@@ -791,9 +799,9 @@ This change has been reverted.</li>
 where passing <code>--update</code> or <code>--reinstall</code> to the <code>source</code> command didn't imply
 <code>--relock</code> like the documentation says.</li>
 </ul>
-<h2><a class="header" href="#054" id="054">0.5.4</a></h2>
+<h2 id="054"><a class="header" href="#054">0.5.4</a></h2>
 <p><em>August 14th, 2020</em></p>
-<h3><a class="header" href="#features" id="features">Features</a></h3>
+<h3 id="features"><a class="header" href="#features">Features</a></h3>
 <ul>
 <li>
 <p><a href="https://github.com/rossmacarthur/sheldon/commit/a972c3543d3c5ed339028ab316b1c48f733aed7">Support extended glob syntax.</a> This means that <code>{a,b}</code> and <code>!</code>
@@ -805,7 +813,7 @@ use = [&quot;{!git,!nvm,*}.zsh]
 </code></pre>
 </li>
 </ul>
-<h3><a class="header" href="#fixes-1" id="fixes-1">Fixes</a></h3>
+<h3 id="fixes-1"><a class="header" href="#fixes-1">Fixes</a></h3>
 <ul>
 <li><a href="https://github.com/rossmacarthur/sheldon/commit/aa69e0c6c6ae56e98c9d19de3be191e9ce9a974b">Fix not erroring out when no files matched for plugin.</a> This fixes
 cases where no files would be matched for a plugin and Sheldon would silently
@@ -813,9 +821,9 @@ continue, resulting in no source rendered by <code>sheldon source</code>.</li>
 <li><a href="https://github.com/rossmacarthur/sheldon/commit/2a607885ead211ec78e3494f32cad91476bd4184">Update default templates for Bash, <code>path</code> and <code>fpath</code> are now
 removed.</a> These templates were meaningless in a Bash context.</li>
 </ul>
-<h2><a class="header" href="#053" id="053">0.5.3</a></h2>
+<h2 id="053"><a class="header" href="#053">0.5.3</a></h2>
 <p><em>July 28th, 2020</em></p>
-<h3><a class="header" href="#features-1" id="features-1">Features</a></h3>
+<h3 id="features-1"><a class="header" href="#features-1">Features</a></h3>
 <ul>
 <li><a href="https://github.com/rossmacarthur/sheldon/commit/131576dfddc53ec76e87ce6ee64326ae119a383c">Add <code>init</code> command.</a> Adds a new command to Sheldon which initializes
 a config file. Simply run <code>sheldon init</code>.</li>
@@ -825,22 +833,22 @@ value is set.</li>
 <li><a href="https://github.com/rossmacarthur/sheldon/commit/5a8254d36c73e79cf67782160cf63e9e6f5c3d9b">Support updating of plugins via <code>--update</code> option.</a> Simply run
 <code>sheldon lock --update</code> to update all plugin sources.</li>
 </ul>
-<h2><a class="header" href="#052" id="052">0.5.2</a></h2>
+<h2 id="052"><a class="header" href="#052">0.5.2</a></h2>
 <p><em>June 4th, 2020</em></p>
-<h3><a class="header" href="#fixes-2" id="fixes-2">Fixes</a></h3>
+<h3 id="fixes-2"><a class="header" href="#fixes-2">Fixes</a></h3>
 <ul>
 <li><a href="https://github.com/rossmacarthur/sheldon/commit/4ae64325fd8239dfb6e35f9efc05067c9c4a24d4">Fix not erroring out on a bad HTTP status code.</a> This fixes remote
 sources from silently not being downloaded correctly.</li>
 <li><a href="https://github.com/rossmacarthur/sheldon/commit/4ba58227be394e961d721804d7e6b02b882495ec">Fix missing status log.</a> This fixes a missing status log for when
 fetching remote sources.</li>
 </ul>
-<h3><a class="header" href="#other" id="other">Other</a></h3>
+<h3 id="other"><a class="header" href="#other">Other</a></h3>
 <ul>
 <li><a href="https://github.com/rossmacarthur/sheldon/commit/3ef9d7a7a8fd6b429e8405ba3e9ba7c621326543">Only ship musl binaries.</a> The <a href="https://github.com/rossmacarthur/install">download
 script</a> will figure this out
 automatically.</li>
 </ul>
-<h2><a class="header" href="#051" id="051">0.5.1</a></h2>
+<h2 id="051"><a class="header" href="#051">0.5.1</a></h2>
 <p><em>May 11th, 2020</em></p>
 <ul>
 <li><a href="https://github.com/rossmacarthur/sheldon/commit/081f940bc75711d3a587673178c738dd9ad40258">Using <code>--reinstall</code> on source command now implies <code>--relock</code>.</a></li>
@@ -848,9 +856,9 @@ automatically.</li>
 <li><a href="https://github.com/rossmacarthur/sheldon/commit/4b14975238412a9ae83fcc9a202586bd725b331b">Update Docker images to use OpenSSL 1.1.1g.</a> This affects the
 shipped musl binaries which statically bundle OpenSSL.</li>
 </ul>
-<h2><a class="header" href="#050" id="050">0.5.0</a></h2>
+<h2 id="050"><a class="header" href="#050">0.5.0</a></h2>
 <p><em>May 2nd, 2020</em></p>
-<h3><a class="header" href="#features-2" id="features-2">Features</a></h3>
+<h3 id="features-2"><a class="header" href="#features-2">Features</a></h3>
 <ul>
 <li>
 <p><a href="https://github.com/rossmacarthur/sheldon/commit/140d17142d5be2b0653f559612aebffbd3c39ce1">Add <code>add</code> and <code>remove</code> commands to edit config.</a> These commands will
@@ -881,7 +889,7 @@ file it will log warnings when there are unused config keys. Great for
 catching typos!</p>
 </li>
 </ul>
-<h3><a class="header" href="#breaking-changes-1" id="breaking-changes-1">Breaking changes</a></h3>
+<h3 id="breaking-changes-1"><a class="header" href="#breaking-changes-1">Breaking changes</a></h3>
 <ul>
 <li>
 <p><a href="https://github.com/rossmacarthur/sheldon/commit/18454834cb6f1b2b1ebf2ef52617449b58917f28">Update default root directory and clone directory.</a> The root
@@ -897,7 +905,7 @@ export SHELDON_CLONE_DIR=&quot;$SHELDON_ROOT/repositories&quot;
 </code></pre>
 </li>
 </ul>
-<h3><a class="header" href="#fixes-3" id="fixes-3">Fixes</a></h3>
+<h3 id="fixes-3"><a class="header" href="#fixes-3">Fixes</a></h3>
 <ul>
 <li>
 <p><a href="https://github.com/rossmacarthur/sheldon/commit/7293cbf61240a40333ef139b6ac6e7ab173f0f97">Download/clone sources to a temporary path first.</a></p>
@@ -906,7 +914,7 @@ left without any plugins because they would all be nuked up front prior to
 trying to download them.</p>
 </li>
 </ul>
-<h3><a class="header" href="#deprecations" id="deprecations">Deprecations</a></h3>
+<h3 id="deprecations"><a class="header" href="#deprecations">Deprecations</a></h3>
 <p>Most of these are still supported, however Sheldon will log a deprecation
 warning if you use them.</p>
 <ul>
@@ -917,7 +925,7 @@ and the template rendering context.</li>
 <li><a href="https://github.com/rossmacarthur/sheldon/commit/ce4d8e29e19d52a7ab9d5c83b93cfe91b643a227">Rename <code>protocol</code> plugin config key to <code>proto</code>.</a></li>
 <li><a href="https://github.com/rossmacarthur/sheldon/commit/92bb588612e58498fe668e0f7f4fa274b6f9cb11">Rename <code>revision</code> plugin config key to <code>rev</code>.</a></li>
 </ul>
-<h2><a class="header" href="#048" id="048">0.4.8</a></h2>
+<h2 id="048"><a class="header" href="#048">0.4.8</a></h2>
 <p><em>November 3rd, 2019</em></p>
 <ul>
 <li><a href="https://github.com/rossmacarthur/sheldon/pull/87">Auto clean clone and download directories</a>. Unused source directories
@@ -929,7 +937,7 @@ optional <code>protocol</code> field to plugin configuration which can be used t
 the protocol for Gist and GitHub sources. Additionally, Git sources can now
 specify URLs with protocols <code>git://</code> and <code>ssh://</code>.</li>
 </ul>
-<h2><a class="header" href="#047" id="047">0.4.7</a></h2>
+<h2 id="047"><a class="header" href="#047">0.4.7</a></h2>
 <p><em>October 22nd, 2019</em></p>
 <ul>
 <li><a href="https://github.com/rossmacarthur/sheldon/pull/76">Add <code>--clone-dir</code> and <code>--download-dir</code> options.</a> The directories where
@@ -939,37 +947,37 @@ available.</li>
 <li><a href="https://github.com/rossmacarthur/sheldon/pull/72">Fix <code>--config-file</code> and <code>--lock-file</code> options.</a> These two options were
 previously ignored and only the environment variables were recognized.</li>
 </ul>
-<h2><a class="header" href="#046" id="046">0.4.6</a></h2>
+<h2 id="046"><a class="header" href="#046">0.4.6</a></h2>
 <p><em>August 18th, 2019</em></p>
 <ul>
 <li><a href="https://github.com/rossmacarthur/sheldon/pull/66">Support globs in local plugin directories.</a> Globs should match only one
 directory.</li>
 <li><a href="https://github.com/rossmacarthur/sheldon/pull/65">Support for inline plugins.</a></li>
 </ul>
-<h2><a class="header" href="#045" id="045">0.4.5</a></h2>
+<h2 id="045"><a class="header" href="#045">0.4.5</a></h2>
 <p><em>July 19th, 2019</em></p>
 <ul>
 <li><a href="https://github.com/rossmacarthur/sheldon/pull/58">Require mutex to run a Sheldon command.</a> Makes sure multiple instances
 of Sheldon do not interfere with each other!</li>
 </ul>
-<h2><a class="header" href="#044" id="044">0.4.4</a></h2>
+<h2 id="044"><a class="header" href="#044">0.4.4</a></h2>
 <p><em>July 7th, 2019</em></p>
 <ul>
 <li><a href="https://github.com/rossmacarthur/sheldon/pull/54">Warn instead of erroring when running <code>sheldon source</code>.</a> This allows at
 least some plugins to be sourced, this only happens if there is already a lock
 file.</li>
 </ul>
-<h2><a class="header" href="#043" id="043">0.4.3</a></h2>
+<h2 id="043"><a class="header" href="#043">0.4.3</a></h2>
 <p><em>July 3rd, 2019</em></p>
 <ul>
 <li><a href="https://github.com/rossmacarthur/sheldon/pull/47">Verify that locked directories and filenames exist when running <code>sheldon source</code>.</a> If they do not then <code>sheldon lock</code> will be run again.</li>
 </ul>
-<h2><a class="header" href="#042" id="042">0.4.2</a></h2>
+<h2 id="042"><a class="header" href="#042">0.4.2</a></h2>
 <p><em>June 27th, 2019</em></p>
 <ul>
 <li><a href="https://github.com/rossmacarthur/sheldon/pull/44">Improve output granularity and add <code>--verbose</code> option.</a></li>
 </ul>
-<h2><a class="header" href="#041" id="041">0.4.1</a></h2>
+<h2 id="041"><a class="header" href="#041">0.4.1</a></h2>
 <p><em>June 2nd, 2019</em></p>
 <ul>
 <li><a href="https://github.com/rossmacarthur/sheldon/pull/43">Add <code>--no-color</code> option.</a></li>
@@ -977,7 +985,7 @@ file.</li>
 <li><a href="https://github.com/rossmacarthur/sheldon/pull/42">Support directory key for plugins.</a> The plugin directory can now be
 configured to be a sub directory of the source.</li>
 </ul>
-<h2><a class="header" href="#040" id="040">0.4.0</a></h2>
+<h2 id="040"><a class="header" href="#040">0.4.0</a></h2>
 <p><em>May 26th, 2019</em></p>
 <p>Complete refactor including breaking changes to the configuration file from
 prior versions.</p>
