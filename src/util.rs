@@ -275,7 +275,6 @@ pub mod git {
 
         let mut opts = FetchOptions::new();
         opts.remote_callbacks(rcb);
-        // adds proxy_opts to opts
         opts.proxy_options(proxy_opts);
         f(opts)
     }
