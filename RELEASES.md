@@ -1,5 +1,14 @@
 # Releases
 
+## 0.6.3
+
+*March 27th, 2021*
+
+- [Support Git proxy settings.][#116] <small>(Contributed by
+  [**@iclac**](https://github.com/iclac).)</small>
+
+[#116]: https://github.com/rossmacarthur/sheldon/issues/116
+
 ## 0.6.2
 
 *March 13th, 2021*
@@ -34,11 +43,12 @@
 
 ### Breaking changes
 
-- [Support XDG directory structure.][#110] If any XDG environment variable
-  is set then Sheldon will adopt the [XDG directory structure] by default. The
+- [Support XDG directory structure.][#110] If any XDG environment variable is
+  set then Sheldon will adopt the [XDG directory structure] by default. The
   config file will be located at `$XDG_CONFIG_HOME/sheldon/plugins.toml` and
   downloaded data will be located in `$XDG_CONFIG_DATA/sheldon`.
-  Contributed by Andrew [**@tapeinosyne**](https://github.com/tapeinosyne).
+  <small>(Contributed by
+  [**@tapeinosyne**](https://github.com/tapeinosyne).)</small>
 - [Change the default lock file location.][10c64a3] For non-XDG directory
   structures the lock file now always defaults to
   `$SHELDON_DATA_DIR/plugins.lock`. It previously was the config file path with
@@ -46,7 +56,8 @@
 - [Remove the Sheldon root.][#112] The `root` directory has been replaced by
   individual directories for configuration and data: `config_dir` and
   `data_dir`. Both default to `$HOME/.sheldon`, the old default `root`.
-  Contributed by Andrew [**@tapeinosyne**](https://github.com/tapeinosyne).
+  <small>(Contributed by
+  [**@tapeinosyne**](https://github.com/tapeinosyne).)</small>
 
   If you used Sheldon's defaults, everything will just keep working as it did;
   no action needs to be taken. Otherwise, you may refer to this migration table:
@@ -78,9 +89,9 @@
 
 ### Fixes
 
-- [Fix performance bug introduced in version 0.5.4.][abf2027] A significant
-  drop in performance was introduced by switching to the Rust `rayon` package.
-  This change has been reverted.
+- [Fix performance bug introduced in version 0.5.4.][abf2027] A significant drop
+  in performance was introduced by switching to the Rust `rayon` package. This
+  change has been reverted.
 - [Fix `--relock` not being implied for other flags.][bc5f9d7] This fixes a bug
   where passing `--update` or `--reinstall` to the `source` command didn't imply
   `--relock` like the documentation says.
@@ -94,8 +105,8 @@
 
 ### Features
 
-- [Support extended glob syntax.][a972c35] This means that `{a,b}` and `!`
-  glob patterns can now be used. For example, the following is now valid.
+- [Support extended glob syntax.][a972c35] This means that `{a,b}` and `!` glob
+  patterns can now be used. For example, the following is now valid.
 
   ```toml
   [plugins.ohmyzsh]
