@@ -726,6 +726,12 @@ use = [&quot;async.zsh&quot;, &quot;pure.zsh&quot;]
 <pre><code class="language-sh">sheldon add pure --github sindresorhus/pure --use async.zsh pure.zsh
 </code></pre>
 <h1 id="releases"><a class="header" href="#releases">Releases</a></h1>
+<h2 id="063"><a class="header" href="#063">0.6.3</a></h2>
+<p><em>March 27th, 2021</em></p>
+<ul>
+<li><a href="https://github.com/rossmacarthur/sheldon/issues/116">Support Git proxy settings.</a> <small>(Contributed by
+<a href="https://github.com/iclac"><strong>@iclac</strong></a>.)</small></li>
+</ul>
 <h2 id="062"><a class="header" href="#062">0.6.2</a></h2>
 <p><em>March 13th, 2021</em></p>
 <ul>
@@ -750,11 +756,12 @@ re-open it or overwrite.</li>
 <h3 id="breaking-changes"><a class="header" href="#breaking-changes">Breaking changes</a></h3>
 <ul>
 <li>
-<p><a href="https://github.com/rossmacarthur/sheldon/pull/110">Support XDG directory structure.</a> If any XDG environment variable
-is set then Sheldon will adopt the <a href="https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html">XDG directory structure</a> by default. The
+<p><a href="https://github.com/rossmacarthur/sheldon/pull/110">Support XDG directory structure.</a> If any XDG environment variable is
+set then Sheldon will adopt the <a href="https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html">XDG directory structure</a> by default. The
 config file will be located at <code>$XDG_CONFIG_HOME/sheldon/plugins.toml</code> and
 downloaded data will be located in <code>$XDG_CONFIG_DATA/sheldon</code>.
-Contributed by Andrew <a href="https://github.com/tapeinosyne"><strong>@tapeinosyne</strong></a>.</p>
+<small>(Contributed by
+<a href="https://github.com/tapeinosyne"><strong>@tapeinosyne</strong></a>.)</small></p>
 </li>
 <li>
 <p><a href="https://github.com/rossmacarthur/sheldon/commit/10c64a3cd0e1f95536a821016a165728dde59779">Change the default lock file location.</a> For non-XDG directory
@@ -766,7 +773,8 @@ a <code>.lock</code> extension.</p>
 <p><a href="https://github.com/rossmacarthur/sheldon/pull/112">Remove the Sheldon root.</a> The <code>root</code> directory has been replaced by
 individual directories for configuration and data: <code>config_dir</code> and
 <code>data_dir</code>. Both default to <code>$HOME/.sheldon</code>, the old default <code>root</code>.
-Contributed by Andrew <a href="https://github.com/tapeinosyne"><strong>@tapeinosyne</strong></a>.</p>
+<small>(Contributed by
+<a href="https://github.com/tapeinosyne"><strong>@tapeinosyne</strong></a>.)</small></p>
 <p>If you used Sheldon's defaults, everything will just keep working as it did;
 no action needs to be taken. Otherwise, you may refer to this migration table:</p>
 <table><thead><tr><th align="right"></th><th>Old</th><th>New</th></tr></thead><tbody>
@@ -792,9 +800,9 @@ has been removed.</p>
 </ul>
 <h3 id="fixes"><a class="header" href="#fixes">Fixes</a></h3>
 <ul>
-<li><a href="https://github.com/rossmacarthur/sheldon/commit/abf202737fa30b30465fbed6c47a034d4d0e9911">Fix performance bug introduced in version 0.5.4.</a> A significant
-drop in performance was introduced by switching to the Rust <code>rayon</code> package.
-This change has been reverted.</li>
+<li><a href="https://github.com/rossmacarthur/sheldon/commit/abf202737fa30b30465fbed6c47a034d4d0e9911">Fix performance bug introduced in version 0.5.4.</a> A significant drop
+in performance was introduced by switching to the Rust <code>rayon</code> package. This
+change has been reverted.</li>
 <li><a href="https://github.com/rossmacarthur/sheldon/commit/bc5f9d7ae759cf5e3af7822d45e2bf7fb545d219">Fix <code>--relock</code> not being implied for other flags.</a> This fixes a bug
 where passing <code>--update</code> or <code>--reinstall</code> to the <code>source</code> command didn't imply
 <code>--relock</code> like the documentation says.</li>
@@ -804,8 +812,8 @@ where passing <code>--update</code> or <code>--reinstall</code> to the <code>sou
 <h3 id="features"><a class="header" href="#features">Features</a></h3>
 <ul>
 <li>
-<p><a href="https://github.com/rossmacarthur/sheldon/commit/a972c3543d3c5ed339028ab316b1c48f733aed7">Support extended glob syntax.</a> This means that <code>{a,b}</code> and <code>!</code>
-glob patterns can now be used. For example, the following is now valid.</p>
+<p><a href="https://github.com/rossmacarthur/sheldon/commit/a972c3543d3c5ed339028ab316b1c48f733aed7">Support extended glob syntax.</a> This means that <code>{a,b}</code> and <code>!</code> glob
+patterns can now be used. For example, the following is now valid.</p>
 <pre><code class="language-toml">[plugins.ohmyzsh]
 github = &quot;ohmyzsh/ohmyzsh&quot;
 dir = &quot;lib&quot;
