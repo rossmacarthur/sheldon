@@ -1,4 +1,4 @@
-# Command line interface
+# 💻 Command line interface
 
 Sheldon has three different types of commands.
 

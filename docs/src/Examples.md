@@ -1,4 +1,4 @@
-# Examples
+# 💡 Examples
 
 This section demonstrates the configuration file contents for some common
 installation practices as well how to configure popular plugins and themes.

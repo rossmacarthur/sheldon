@@ -1,4 +1,4 @@
-# Installation
+# 📦 Installation
 
 ## Pre-built binaries
 

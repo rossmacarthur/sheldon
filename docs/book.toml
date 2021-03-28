@@ -4,6 +4,7 @@ title = "sheldon docs"
 
 [output.html]
 git-repository-url = "https://github.com/rossmacarthur/sheldon"
+no-section-label = true
 
 [output.linkcheck]
 # See https://github.com/rust-lang/crates.io/issues/788 for why we exclude this.

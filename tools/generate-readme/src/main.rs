@@ -18,10 +18,10 @@ const DOCS_DIR: &str = "docs/";
 const DOCS_SRC_DIR: &str = "docs/src/";
 /// A list of SUMMARY titles to add to the README.
 const SOURCES: &[&str] = &[
-    "Installation",
-    "Getting started",
-    "Command line interface",
-    "Configuration",
+    "Installation.md",
+    "Getting-started.md",
+    "Command-line-interface.md",
+    "Configuration.md",
 ];
 
 fn read_to_string<P: AsRef<Path>>(path: P) -> Result<String> {
@@ -50,7 +50,7 @@ where
 }
 
 /// Returns a list of title and path links contained in the SUMMARY file.
-fn summary() -> Result<Vec<(String, PathBuf)>> {
+fn summary() -> Result<Vec<PathBuf>> {
     let docs_src = Path::new(DOCS_SRC_DIR);
     let text = read_to_string(docs_src.join("SUMMARY.md"))?;
     let mut parser = Parser::new_ext(&text, Options::all());
@@ -60,9 +60,9 @@ fn summary() -> Result<Vec<(String, PathBuf)>> {
         match event {
             None => break,
             Some(Event::Start(Tag::Link(LinkType::Inline, path, _))) => {
-                if let Event::Text(CowStr::Borrowed(name)) = parser.next().unwrap() {
+                if let Event::Text(CowStr::Borrowed(_)) = parser.next().unwrap() {
                     let path = docs_src.join(path.into_string().trim_start_matches("./"));
-                    vec.push((name.into(), path));
+                    vec.push(path);
                 }
             }
             Some(_) => {}
@@ -87,41 +87,6 @@ fn fix_broken_link(dest: CowStr) -> CowStr {
     dest
 }
 
-/// Reformat a Markdown file and prefix headings with the given value.
-fn fmt_with_renamed_headings(text: &str, prefix: &str) -> String {
-    let mut parser = Parser::new_ext(&text, Options::all());
-    let mut events = Vec::new();
-
-    loop {
-        match parser.next() {
-            Some(Event::Start(Tag::Heading(1))) => {
-                while !matches!(parser.next(), None | Some(Event::End(Tag::Heading(_)))) {}
-            }
-            Some(event @ Event::Start(Tag::Heading(2))) => {
-                events.push(event);
-                match parser.next().unwrap() {
-                    Event::Text(CowStr::Borrowed(name)) => {
-                        let new_name = format!("{} {}", prefix, name);
-                        events.push(Event::Text(new_name.into()));
-                    }
-                    event => panic!("expected heading to contain text, got {:?}", event),
-                }
-            }
-            Some(Event::Start(Tag::Link(link_type, dest, title))) => events.push(Event::Start(
-                Tag::Link(link_type, fix_broken_link(dest), title),
-            )),
-            Some(Event::End(Tag::Link(link_type, dest, title))) => events.push(Event::End(
-                Tag::Link(link_type, fix_broken_link(dest), title),
-            )),
-            Some(event) => {
-                events.push(event);
-            }
-            None => break,
-        }
-    }
-    to_cmark(events.into_iter())
-}
-
 /// Reformat a Markdown file and increase the heading level.
 fn fmt_with_increased_heading_level(text: &str) -> String {
     to_cmark(
@@ -139,22 +104,18 @@ fn fmt_with_increased_heading_level(text: &str) -> String {
 }
 
 // Construct the contents of our README from docs/
-fn generate_readme_contents(summary: &[(String, PathBuf)]) -> Result<String> {
+fn generate_readme_contents(summary: &[PathBuf]) -> Result<String> {
     let mut contents = String::new();
-    for (i, (name, path)) in summary
+    for (i, path) in summary
         .iter()
-        .filter(|(name, _)| SOURCES.contains(&name.as_str()))
+        .filter(|path| SOURCES.contains(&path.file_name().unwrap().to_str().unwrap()))
         .enumerate()
     {
         if i != 0 {
             contents.push_str("\n\n");
         }
         let text = read_to_string(&path)?;
-        if name == "Configuration" {
-            contents.push_str(&fmt_with_renamed_headings(&text, "Configuration:"));
-        } else {
-            contents.push_str(&fmt_with_increased_heading_level(&text));
-        }
+        contents.push_str(&fmt_with_increased_heading_level(&text));
     }
     Ok(contents)
 }
