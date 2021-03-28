@@ -97,7 +97,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded affix "><a href="Introduction.html">Introduction</a></li><li class="chapter-item expanded "><a href="Installation.html"><strong aria-hidden="true">1.</strong> Installation</a></li><li class="chapter-item expanded "><a href="Getting-started.html"><strong aria-hidden="true">2.</strong> Getting started</a></li><li class="chapter-item expanded "><a href="Command-line-interface.html"><strong aria-hidden="true">3.</strong> Command line interface</a></li><li class="chapter-item expanded "><a href="Configuration.html"><strong aria-hidden="true">4.</strong> Configuration</a></li><li class="chapter-item expanded "><a href="Examples.html"><strong aria-hidden="true">5.</strong> Examples</a></li><li class="chapter-item expanded "><a href="RELEASES.html"><strong aria-hidden="true">6.</strong> RELEASES</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="Introduction.html">Introduction</a></li><li class="chapter-item expanded "><a href="Installation.html">📦 Installation</a></li><li class="chapter-item expanded "><a href="Getting-started.html">🚀 Getting started</a></li><li class="chapter-item expanded "><a href="Command-line-interface.html">💻 Command line interface</a></li><li class="chapter-item expanded "><a href="Configuration.html">⚙️ Configuration</a></li><li class="chapter-item expanded "><a href="Examples.html">💡 Examples</a></li><li class="chapter-item expanded "><a href="RELEASES.html">📝 Release notes</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -191,7 +191,7 @@ updated in parallel and as a result Sheldon is blazingly fast.</p>
 <li><a href="http://opensource.org/licenses/MIT">MIT license</a></li>
 </ul>
 <p>at your option.</p>
-<h1 id="installation"><a class="header" href="#installation">Installation</a></h1>
+<h1 id="-installation"><a class="header" href="#-installation">📦 Installation</a></h1>
 <h2 id="pre-built-binaries"><a class="header" href="#pre-built-binaries">Pre-built binaries</a></h2>
 <p>Pre-built binaries for Linux (x86-64, aarch64, armv7) and macOS (x86-64) are
 provided. The following script can be used to automatically detect your host
@@ -220,7 +220,7 @@ cd sheldon
 cargo build --release
 </code></pre>
 <p>The binary will be found at <code>target/release/sheldon</code>.</p>
-<h1 id="getting-started"><a class="header" href="#getting-started">Getting started</a></h1>
+<h1 id="-getting-started"><a class="header" href="#-getting-started">🚀 Getting started</a></h1>
 <h2 id="initializing"><a class="header" href="#initializing">Initializing</a></h2>
 <p>Sheldon works by specifying plugin information in a <a href="https://toml.io">TOML</a>
 configuration file, <code>plugins.toml</code>. You can initialize this file by running
@@ -255,7 +255,7 @@ and print out the shell script to source. Simply add the following to your
 
 eval &quot;$(sheldon source)&quot;
 </code></pre>
-<h1 id="command-line-interface"><a class="header" href="#command-line-interface">Command line interface</a></h1>
+<h1 id="-command-line-interface"><a class="header" href="#-command-line-interface">💻 Command line interface</a></h1>
 <p>Sheldon has three different types of commands.</p>
 <ul>
 <li><a href="Command-line-interface.html#init"><code>init</code></a> initializes a new config file.</li>
@@ -349,7 +349,7 @@ edit the config file. In the following command we remove the plugin with name
 <li>Environment variable.</li>
 <li>Default value.</li>
 </ol>
-<h1 id="configuration"><a class="header" href="#configuration">Configuration</a></h1>
+<h1 id="-configuration"><a class="header" href="#-configuration">⚙️ Configuration</a></h1>
 <h2 id="plugin-sources"><a class="header" href="#plugin-sources">Plugin sources</a></h2>
 <p>A plugin is defined by adding a new unique name to the <code>plugins</code> table in the
 <a href="https://toml.io">TOML</a> config file. This can be done by either editing the file
@@ -581,7 +581,7 @@ defaults to</p>
 <a href="Configuration.html#apply"><code>apply</code></a>). This defaults to</p>
 <pre><code class="language-toml">apply = [&quot;source&quot;]
 </code></pre>
-<h1 id="examples"><a class="header" href="#examples">Examples</a></h1>
+<h1 id="-examples"><a class="header" href="#-examples">💡 Examples</a></h1>
 <p>This section demonstrates the configuration file contents for some common
 installation practices as well how to configure popular plugins and themes.</p>
 <h2 id="deferred-loading-of-plugins-in-zsh"><a class="header" href="#deferred-loading-of-plugins-in-zsh">Deferred loading of plugins in Zsh</a></h2>
@@ -725,7 +725,7 @@ use = [&quot;async.zsh&quot;, &quot;pure.zsh&quot;]
 <p>Or run the following to automatically add it.</p>
 <pre><code class="language-sh">sheldon add pure --github sindresorhus/pure --use async.zsh pure.zsh
 </code></pre>
-<h1 id="releases"><a class="header" href="#releases">Releases</a></h1>
+<h1 id="-release-notes"><a class="header" href="#-release-notes">📝 Release notes</a></h1>
 <h2 id="063"><a class="header" href="#063">0.6.3</a></h2>
 <p><em>March 27th, 2021</em></p>
 <ul>
