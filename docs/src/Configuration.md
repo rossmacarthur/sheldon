@@ -127,13 +127,13 @@ to the Sheldon config file.
 
 ```toml
 [plugins.example]
-remote = "https://github.com/owner/repo/raw/master/plugin.zsh"
+remote = "https://github.com/owner/repo/raw/branch/plugin.zsh"
 ```
 
 Or run `add` with the `--remote` option.
 
 ```sh
-sheldon add example --remote https://github.com/owner/repo/raw/master/plugin.zsh
+sheldon add example --remote https://github.com/owner/repo/raw/branch/plugin.zsh
 ```
 
 ### Local

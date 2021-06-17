@@ -6,7 +6,7 @@
 
 [![Crates.io version](https://img.shields.io/crates/v/sheldon.svg)](https://crates.io/crates/sheldon)
 [![Download](https://img.shields.io/github/v/release/rossmacarthur/sheldon?label=binary)](https://github.com/rossmacarthur/sheldon/releases/latest)
-[![Build status](https://img.shields.io/github/workflow/status/rossmacarthur/sheldon/build/master)](https://github.com/rossmacarthur/sheldon/actions?query=workflow%3Abuild)
+[![Build status](https://img.shields.io/github/workflow/status/rossmacarthur/sheldon/build/trunk)](https://github.com/rossmacarthur/sheldon/actions?query=workflow%3Abuild)
 [![Release status](https://img.shields.io/github/workflow/status/rossmacarthur/sheldon/release?label=release)](https://github.com/rossmacarthur/sheldon/actions?query=workflow%3Arelease)
 
 ## Features
@@ -449,13 +449,13 @@ to the Sheldon config file.
 
 ```toml
 [plugins.example]
-remote = "https://github.com/owner/repo/raw/master/plugin.zsh"
+remote = "https://github.com/owner/repo/raw/branch/plugin.zsh"
 ```
 
 Or run `add` with the `--remote` option.
 
 ```sh
-sheldon add example --remote https://github.com/owner/repo/raw/master/plugin.zsh
+sheldon add example --remote https://github.com/owner/repo/raw/branch/plugin.zsh
 ```
 
 #### Local
