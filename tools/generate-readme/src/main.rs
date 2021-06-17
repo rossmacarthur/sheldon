@@ -75,7 +75,7 @@ fn fix_broken_link(dest: CowStr) -> CowStr {
     let link = dest.as_ref();
     if !regex!(r"^(#|[a-z][a-z0-9+.-]*:)").is_match(link) {
         if let Some(captures) = regex!(r"^(?P<link>.*)\.md(?P<anchor>#.*)?$").captures(link) {
-            let mut new_link = String::from("https://rossmacarthur.github.io/sheldon/");
+            let mut new_link = String::from("https://sheldon.cli.rs/");
             new_link.push_str(&captures["link"]);
             new_link.push_str(".html");
             if let Some(capture) = captures.name("anchor") {

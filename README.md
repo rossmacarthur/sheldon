@@ -258,7 +258,7 @@ sheldon add my-repo --git https://github.com/owner/repo.git
 ```
 
 An example usage of this command for each source type is shown in the
-[Configuration](https://rossmacarthur.github.io/sheldon/Configuration.html) section.
+[Configuration](https://sheldon.cli.rs/Configuration.html) section.
 
 ### `edit`
 
@@ -593,7 +593,7 @@ Plugins all have the following information that can be used in templates.
 * **The Sheldon data directory.** This directory can be used as `{{ data_dir }}`.
 
 To add or update a template add a new key to the `[templates]` table in the
-config file. Take a look at the [examples](https://rossmacarthur.github.io/sheldon/Examples.html) for some interesting
+config file. Take a look at the [examples](https://sheldon.cli.rs/Examples.html) for some interesting
 applications of this.
 
 ### Global options
@@ -660,7 +660,7 @@ apply = ["source"]
 ## 💡 Examples
 
 You can find many examples including deferred loading of plugins in the
-[documentation](https://rossmacarthur.github.io/sheldon/Examples.html).
+[documentation](https://sheldon.cli.rs/Examples.html).
 
 ## License
 
