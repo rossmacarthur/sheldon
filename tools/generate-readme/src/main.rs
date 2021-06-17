@@ -90,7 +90,7 @@ fn fix_broken_link(dest: CowStr) -> CowStr {
 /// Reformat a Markdown file and increase the heading level.
 fn fmt_with_increased_heading_level(text: &str) -> String {
     to_cmark(
-        Parser::new_ext(&text, Options::all()).map(|event| match event {
+        Parser::new_ext(text, Options::all()).map(|event| match event {
             Event::Start(Tag::Heading(level)) => Event::Start(Tag::Heading(level + 1)),
             Event::Start(Tag::Link(link_type, dest, title)) => {
                 Event::Start(Tag::Link(link_type, fix_broken_link(dest), title))

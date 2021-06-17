@@ -184,7 +184,7 @@ impl TempPath {
 impl Drop for TempPath {
     fn drop(&mut self) {
         if let Some(path) = &self.path {
-            nuke_path(&path).ok();
+            nuke_path(path).ok();
         }
     }
 }
@@ -336,7 +336,7 @@ pub mod git {
             Ok(())
         }
         let mut repos = Vec::new();
-        _submodule_update(&repo, &mut repos)?;
+        _submodule_update(repo, &mut repos)?;
         while let Some(repo) = repos.pop() {
             _submodule_update(&repo, &mut repos)?;
         }

@@ -183,7 +183,7 @@ fn source(ctx: &LockContext, relock: bool, mut warnings: &mut Vec<Error>) -> Res
         header!(ctx, "Locked", lock_path);
     } else {
         for err in &locked_config.errors {
-            error!(ctx, &err);
+            error!(ctx, err);
         }
     }
 

@@ -216,7 +216,7 @@ impl Source {
     ) -> Result<LockedSource> {
         let temp_dir =
             TempPath::new_force(&dir).context("failed to prepare temporary clone directory")?;
-        let repo = git::clone(&url, &temp_dir.path())?;
+        let repo = git::clone(url, temp_dir.path())?;
         git::checkout(&repo, checkout.resolve(&repo)?)?;
         git::submodule_update(&repo).context("failed to recursively update")?;
         temp_dir
@@ -234,12 +234,12 @@ impl Source {
         checkout: GitCheckout,
     ) -> Result<()> {
         let current_oid = repo.head()?.target().context("current HEAD as no target")?;
-        let expected_oid = checkout.resolve(&repo)?;
+        let expected_oid = checkout.resolve(repo)?;
         if current_oid == expected_oid {
             status!(ctx, "Checked", &format!("{}{}", url, checkout))
         } else {
-            git::checkout(&repo, expected_oid)?;
-            git::submodule_update(&repo).context("failed to recursively update")?;
+            git::checkout(repo, expected_oid)?;
+            git::submodule_update(repo).context("failed to recursively update")?;
             status!(
                 ctx,
                 "Updated",
@@ -265,23 +265,23 @@ impl Source {
         match ctx.mode {
             Mode::Normal => match git::open(&dir) {
                 Ok(repo) => {
-                    if Self::lock_git_checkout(ctx, &repo, &url, checkout.clone()).is_err() {
+                    if Self::lock_git_checkout(ctx, &repo, url, checkout.clone()).is_err() {
                         git::fetch(&repo)?;
-                        Self::lock_git_checkout(ctx, &repo, &url, checkout)?;
+                        Self::lock_git_checkout(ctx, &repo, url, checkout)?;
                     }
                     Ok(LockedSource { dir, file: None })
                 }
-                Err(_) => Self::lock_git_install(ctx, dir, &url, checkout),
+                Err(_) => Self::lock_git_install(ctx, dir, url, checkout),
             },
             Mode::Update => match git::open(&dir) {
                 Ok(repo) => {
                     git::fetch(&repo)?;
-                    Self::lock_git_checkout(ctx, &repo, &url, checkout)?;
+                    Self::lock_git_checkout(ctx, &repo, url, checkout)?;
                     Ok(LockedSource { dir, file: None })
                 }
-                Err(_) => Self::lock_git_install(ctx, dir, &url, checkout),
+                Err(_) => Self::lock_git_install(ctx, dir, url, checkout),
             },
-            Mode::Reinstall => Self::lock_git_install(ctx, dir, &url, checkout),
+            Mode::Reinstall => Self::lock_git_install(ctx, dir, url, checkout),
         }
     }
 
@@ -772,7 +772,7 @@ impl LockedConfig {
         templates.set_strict_mode(true);
         for (name, template) in &self.templates {
             templates
-                .register_template_string(&name, &template.value)
+                .register_template_string(name, &template.value)
                 .with_context(s!("failed to compile template `{}`", name))?;
         }
 

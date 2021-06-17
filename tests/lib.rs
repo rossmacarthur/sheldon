@@ -165,7 +165,7 @@ impl TestCase {
             .join("tests/cases")
             .join(name);
         let case = &fs::read_to_string(path)?;
-        let parsed = TestCaseParser::parse(Rule::case, &case).expect("failed to parse case");
+        let parsed = TestCaseParser::parse(Rule::case, case).expect("failed to parse case");
 
         let config_sub = dirs.config.strip_prefix(dirs.home.path()).unwrap();
         let data_sub = dirs.data.strip_prefix(dirs.home.path()).unwrap();
@@ -280,7 +280,7 @@ trait RepositoryExt {
 
 impl RepositoryExt for git2::Repository {
     fn revparse_commit(&self, spec: &str) -> Result<git2::Commit, git2::Error> {
-        Ok(self.revparse_single(spec)?.peel_to_commit()?)
+        self.revparse_single(spec)?.peel_to_commit()
     }
 
     fn status(&self) -> Result<git2::Statuses, git2::Error> {
@@ -611,7 +611,7 @@ fn dirs_xdg_default() -> io::Result<()> {
     let env_vars = &[("XDG_CACHE_HOME", dirs.home.path().join(".cache"))];
     let cmd = |case: &TestCase, cmd: &str| {
         TestCommand::new(&case.dirs)
-            .expect_success(&case, cmd)
+            .expect_success(case, cmd)
             .envs(env_vars.iter().cloned())
     };
 
@@ -645,7 +645,7 @@ fn dirs_xdg_from_env() -> io::Result<()> {
     let env_vars = &[("XDG_CONFIG_HOME", xdg_config), ("XDG_DATA_HOME", xdg_data)];
     let cmd = |case: &TestCase, cmd: &str| {
         TestCommand::new(&case.dirs)
-            .expect_success(&case, cmd)
+            .expect_success(case, cmd)
             .envs(env_vars.iter().cloned())
     };
 
