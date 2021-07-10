@@ -2,6 +2,9 @@ name: build
 
 on: [push, pull_request]
 
+env:
+  CARGO_TERM_COLOR: always
+
 jobs:
   lint:
     strategy:
@@ -28,6 +31,7 @@ jobs:
       run: cargo fmt -- --check
 
     - name: Clippy
+      continue-on-error: ${{ matrix.toolchain == 'nightly' }}
       run: cargo clippy --workspace -- -D clippy::items-after-statements -D clippy::if-not-else
 
   test:
