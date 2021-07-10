@@ -384,16 +384,23 @@ impl Source {
 }
 
 impl ExternalPlugin {
-    fn match_globs(dir: &Path, pattern: &str, files: &mut Vec<PathBuf>) -> Result<bool> {
+    fn match_globs(dir: &Path, patterns: &[String], files: &mut Vec<PathBuf>) -> Result<bool> {
+        let debug = || {
+            patterns
+                .iter()
+                .map(|p| format!("`{}`", p))
+                .collect::<Vec<_>>()
+                .join(", ")
+        };
         let mut matched = false;
-        for entry in globwalk::GlobWalkerBuilder::new(dir, &pattern)
+        for entry in globwalk::GlobWalkerBuilder::from_patterns(dir, patterns)
             .sort_by(|a, b| a.file_name().cmp(b.file_name()))
             .build()
-            .with_context(s!("failed to parse glob pattern `{}`", pattern))?
+            .with_context(s!("failed to parse glob patterns: {}", debug()))?
         {
             files.push(
                 entry
-                    .with_context(s!("failed to read path matched by pattern `{}`", &pattern))?
+                    .with_context(s!("failed to read path matched by patterns: {}", debug()))?
                     .into_path(),
             );
             matched = true;
@@ -462,13 +469,15 @@ impl ExternalPlugin {
 
             // If the plugin defined what files to use, we do all of them.
             if let Some(uses) = &uses {
-                for u in uses {
-                    let pattern = hbs
-                        .render_template(u, &data)
-                        .with_context(s!("failed to render template `{}`", u))?;
-                    if !Self::match_globs(dir, &pattern, &mut files)? {
-                        bail!("failed to find any files matching `{}`", &pattern);
-                    };
+                let patterns = uses
+                    .iter()
+                    .map(|u| {
+                        hbs.render_template(u, &data)
+                            .with_context(s!("failed to render template `{}`", u))
+                    })
+                    .collect::<Result<Vec<_>>>()?;
+                if !Self::match_globs(dir, &patterns, &mut files)? {
+                    bail!("failed to find any files matching any of `{:?}`", patterns);
                 }
             // Otherwise we try to figure out which files to use...
             } else {
@@ -476,7 +485,7 @@ impl ExternalPlugin {
                     let pattern = hbs
                         .render_template(g, &data)
                         .with_context(s!("failed to render template `{}`", g))?;
-                    if Self::match_globs(dir, &pattern, &mut files)? {
+                    if Self::match_globs(dir, &[pattern], &mut files)? {
                         break;
                     }
                 }
