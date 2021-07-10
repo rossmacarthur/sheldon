@@ -216,19 +216,19 @@ Or run the following to automatically add it.
 sheldon add powerlevel10k --github romkatv/powerlevel10k
 ```
 
-### [spaceship](https://github.com/denysdovhan/spaceship-prompt)
+### [spaceship](https://github.com/spaceship-prompt/spaceship-prompt)
 
 Add the following to the Sheldon config file.
 
 ```toml
 [plugins.spaceship]
-github = "denysdovhan/spaceship-prompt"
+github = "spaceship-prompt/spaceship-prompt"
 ```
 
 Or run the following to automatically add it.
 
 ```sh
-sheldon add spaceship --github denysdovhan/spaceship-prompt
+sheldon add spaceship --github spaceship-prompt/spaceship-prompt
 ```
 
 ### [pure](https://github.com/sindresorhus/pure)
