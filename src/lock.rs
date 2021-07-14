@@ -398,11 +398,15 @@ impl ExternalPlugin {
             .build()
             .with_context(s!("failed to parse glob patterns: {}", debug()))?
         {
-            files.push(
+            let entry = entry.with_context(s!("failed to match patterns: {}", debug()))?;
+            if entry.metadata()?.file_type().is_symlink() {
                 entry
-                    .with_context(s!("failed to read path matched by patterns: {}", debug()))?
-                    .into_path(),
-            );
+                    .path()
+                    .metadata()
+                    .with_context(s!("failed to read symlink `{}`", entry.path().display()))
+                    .with_context(s!("failed to match patterns: {}", debug()))?;
+            }
+            files.push(entry.into_path());
             matched = true;
         }
         Ok(matched)
