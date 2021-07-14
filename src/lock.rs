@@ -3,20 +3,18 @@
 //! This module handles the downloading of `Source`s and figuring out which
 //! files to use for `Plugins`.
 
-use std::cmp;
 use std::collections::HashSet;
-use std::convert::TryInto;
 use std::fmt;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::result;
-use std::sync;
 
 use anyhow::{anyhow, bail, Context as ResultExt, Error, Result};
 use indexmap::{indexmap, IndexMap};
 use itertools::{Either, Itertools};
 use maplit::hashmap;
 use once_cell::sync::Lazy;
+use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use url::Url;
 use walkdir::WalkDir;
@@ -565,46 +563,26 @@ impl Config {
                 .map(|(_, locked)| locked)
                 .collect::<Vec<_>>()
         } else {
-            /// The maximmum number of threads to use while downloading sources.
-            const MAX_THREADS: u32 = 8;
+            // Install the sources in parallel.
+            map.into_par_iter()
+                .map(|(source, plugins)| {
+                    let source_name = source.to_string();
+                    let source = source
+                        .lock(ctx)
+                        .with_context(s!("failed to install source `{}`", source_name))?;
 
-            // Create a thread pool and install the sources in parallel.
-            let thread_count = cmp::min(count.try_into().unwrap_or(MAX_THREADS), MAX_THREADS);
-            let mut pool = scoped_threadpool::Pool::new(thread_count);
-            let (tx, rx) = sync::mpsc::channel();
-            let templates_ref = &templates;
-
-            pool.scoped(move |scoped| {
-                for (source, plugins) in map {
-                    let tx = tx.clone();
-                    scoped.execute(move || {
-                        tx.send((|| {
-                            let source_name = source.to_string();
-                            let source = source
-                                .lock(ctx)
-                                .with_context(s!("failed to install source `{}`", source_name))?;
-
-                            let mut locked = Vec::with_capacity(plugins.len());
-                            for (index, plugin) in plugins {
-                                let name = plugin.name.clone();
-                                locked.push((
-                                    index,
-                                    plugin
-                                        .lock(ctx, templates_ref, source.clone(), matches, apply)
-                                        .with_context(s!("failed to install plugin `{}`", name)),
-                                ));
-                            }
-                            Ok(locked)
-                        })())
-                        .expect("oops! did main thread die?");
-                    })
-                }
-                scoped.join_all();
-            });
-
-            rx.iter()
-                // all threads must send a response
-                .take(count)
+                    let mut locked = Vec::with_capacity(plugins.len());
+                    for (index, plugin) in plugins {
+                        let name = plugin.name.clone();
+                        locked.push((
+                            index,
+                            plugin
+                                .lock(ctx, &templates, source.clone(), matches, apply)
+                                .with_context(s!("failed to install plugin `{}`", name)),
+                        ));
+                    }
+                    Ok(locked)
+                })
                 // The result of this is basically an `Iter<Result<Vec<(usize, Result)>, _>>`
                 // The first thing we need to do is to filter out the failures and record the
                 // errors that occurred while installing the source in our `errors` list.
@@ -635,7 +613,7 @@ impl Config {
                         None
                     }
                 })
-                .chain(inlines.into_iter())
+                .chain(inlines)
                 .sorted_by_key(|(index, _)| *index)
                 .map(|(_, locked)| locked)
                 .collect::<Vec<_>>()
