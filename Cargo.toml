@@ -1,6 +1,6 @@
 [package]
 name = "sheldon"
-version = "0.6.3"
+version = "0.6.4"
 authors = ["Ross MacArthur <ross@macarthur.io>"]
 edition = "2018"
 description = "Fast, configurable, shell plugin manager."

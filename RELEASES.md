@@ -1,5 +1,16 @@
 # 📝 Release notes
 
+## 0.6.4
+
+*July 14th, 2021*
+
+- [Fix broken symlink handling.][8df07e3] If a glob match includes a broken
+  symlink Sheldon will now emit an error.
+- [Fix glob behaviour with `uses`.][a831709]
+
+[8df07e3]: https://github.com/rossmacarthur/sheldon/commit/8df07e3295247259213565c632ce0c8d2fd90735
+[a831709]: https://github.com/rossmacarthur/sheldon/commit/a8317097b0feb9c1df02bbe9d0ae7c2e4518b290
+
 ## 0.6.3
 
 *March 27th, 2021*
