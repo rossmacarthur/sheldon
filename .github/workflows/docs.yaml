@@ -14,7 +14,15 @@ jobs:
         ref: gh-pages
         path: gh-pages
 
-    - uses: extractions/setup-mdbook@v1
+    - uses: extractions/setup-crate@v1
+      with:
+        owner: rust-lang
+        name: mdBook
+
+    - uses: extractions/setup-crate@v1
+      with:
+        owner: Michael-F-Bryan
+        name: mdbook-linkcheck
 
     - name: Build
       run: |
