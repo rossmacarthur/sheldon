@@ -30,9 +30,7 @@ itertools = "0.10.1"
 maplit = "1.0.2"
 once_cell = "1.8.0"
 rayon = "1.5.1"
-regex = "1.5.4"
 regex-macro = "0.1.1"
-scoped_threadpool = "0.1.9"
 serde = { version = "1.0.126", features = ["derive"] }
 thiserror = "1.0.26"
 toml = { version = "0.5.8", features = ["preserve_order"] }

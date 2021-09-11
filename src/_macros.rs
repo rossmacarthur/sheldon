@@ -40,26 +40,26 @@ macro_rules! _status {
 
 /// Log a pretty header.
 macro_rules! header {
-    ($($arg:tt)*) => { _header!(crate::log::Verbosity::Normal, $($arg)+) };
+    ($($arg:tt)*) => { _header!(crate::log::Verbosity::Normal, $($arg)*) };
 }
 macro_rules! header_v {
-    ($($arg:tt)*) => { _header!(crate::log::Verbosity::Verbose, $($arg)+) };
+    ($($arg:tt)*) => { _header!(crate::log::Verbosity::Verbose, $($arg)*) };
 }
 
 /// Log a status.
 macro_rules! status {
-    ($($arg:tt)*) => { _status!(crate::log::Verbosity::Normal, crate::log::Color::Cyan, $($arg)+) }
+    ($($arg:tt)*) => { _status!(crate::log::Verbosity::Normal, crate::log::Color::Cyan, $($arg)*) }
 }
 macro_rules! status_v {
-    ($($arg:tt)*) => { _status!(crate::log::Verbosity::Verbose, crate::log::Color::Cyan, $($arg)+) }
+    ($($arg:tt)*) => { _status!(crate::log::Verbosity::Verbose, crate::log::Color::Cyan, $($arg)*) }
 }
 
 /// Log a warning.
 macro_rules! warning {
-    ($($arg:tt)*) => { _status!(crate::log::Verbosity::Normal, crate::log::Color::Yellow, $($arg)+) }
+    ($($arg:tt)*) => { _status!(crate::log::Verbosity::Normal, crate::log::Color::Yellow, $($arg)*) }
 }
 macro_rules! warning_v {
-    ($($arg:tt)*) => { _status!(crate::log::Verbosity::Verbose, crate::log::Color::Yellow, $($arg)+) }
+    ($($arg:tt)*) => { _status!(crate::log::Verbosity::Verbose, crate::log::Color::Yellow, $($arg)*) }
 }
 
 /// Log an error.

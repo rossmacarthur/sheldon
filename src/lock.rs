@@ -170,7 +170,7 @@ impl From<Option<GitReference>> for GitCheckout {
 }
 
 impl fmt::Display for GitCheckout {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::DefaultBranch => write!(f, ""),
             Self::Branch(s) | Self::Rev(s) | Self::Tag(s) => write!(f, "@{}", s),
@@ -193,7 +193,7 @@ impl GitCheckout {
 }
 
 impl fmt::Display for Source {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Git { url, reference } => {
                 let checkout: GitCheckout = reference.clone().into();

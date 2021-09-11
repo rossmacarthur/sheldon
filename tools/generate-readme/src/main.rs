@@ -71,7 +71,7 @@ fn summary() -> Result<Vec<PathBuf>> {
     Ok(vec)
 }
 
-fn fix_broken_link(dest: CowStr) -> CowStr {
+fn fix_broken_link(dest: CowStr<'_>) -> CowStr<'_> {
     let link = dest.as_ref();
     if !regex!(r"^(#|[a-z][a-z0-9+.-]*:)").is_match(link) {
         if let Some(captures) = regex!(r"^(?P<link>.*)\.md(?P<anchor>#.*)?$").captures(link) {

@@ -36,7 +36,7 @@ pub static CRATE_VERBOSE_VERSION: Lazy<String> = Lazy::new(|| {
         .unwrap_or(("unknown", "unknown"));
     let mut v = CRATE_VERSION.clone();
     macro_rules! push {
-        ($($arg:tt)*) => {v.push('\n'); v.push_str(&format!($($arg)+))};
+        ($($arg:tt)*) => {v.push('\n'); v.push_str(&format!($($arg)*))};
     }
     push!("\nDetails:");
     push!("  binary: {}", CRATE_NAME);
@@ -59,7 +59,7 @@ struct Git<'a> {
     commit_short_hash: &'a str,
 }
 
-static GIT: Lazy<Option<Git>> = Lazy::new(|| {
+static GIT: Lazy<Option<Git<'_>>> = Lazy::new(|| {
     match (
         option_env!("GIT_COMMIT_DATE"),
         option_env!("GIT_COMMIT_HASH"),

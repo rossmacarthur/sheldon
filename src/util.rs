@@ -198,7 +198,7 @@ pub struct Mutex(File);
 
 impl Mutex {
     /// Create a new `Mutex` at the given path and attempt to acquire it.
-    pub fn acquire(ctx: &Context, path: &Path) -> Result<Self> {
+    pub fn acquire(ctx: &Context<'_>, path: &Path) -> Result<Self> {
         let file = fs::OpenOptions::new()
             .read(true)
             .open(path)

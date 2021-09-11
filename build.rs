@@ -7,7 +7,7 @@ use anyhow::{bail, Context, Result};
 
 /// Nicely format an error message for when the subprocess didn't exit
 /// successfully.
-pub fn format_error_msg(cmd: &process::Command, output: process::Output) -> String {
+pub fn format_error_msg(cmd: &process::Command, output: &process::Output) -> String {
     let stdout = String::from_utf8_lossy(&output.stdout);
     let stderr = String::from_utf8_lossy(&output.stderr);
     let mut msg = format!(
@@ -48,7 +48,7 @@ impl CommandExt for process::Command {
             .output()
             .with_context(|| format!("could not execute subprocess: `{:?}`", self))?;
         if !output.status.success() {
-            bail!(format_error_msg(self, output));
+            bail!(format_error_msg(self, &output));
         }
         String::from_utf8(output.stdout).context("failed to parse stdout")
     }
@@ -115,7 +115,7 @@ fn print_rustc_envs() -> Result<()> {
             "cargo:rustc-env=RUSTC_VERSION_{}={}",
             key.replace('-', "_").replace(' ', "_").to_uppercase(),
             value,
-        )
+        );
     }
     Ok(())
 }

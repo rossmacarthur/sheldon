@@ -204,7 +204,7 @@ pub struct Config {
 
 impl fmt::Display for Shell {
     /// Displays a `Shell`.
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Bash => f.write_str("bash"),
             Self::Zsh => f.write_str("zsh"),
@@ -214,7 +214,7 @@ impl fmt::Display for Shell {
 
 impl fmt::Display for GitProtocol {
     /// Displays a `GitProtocol`.
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Git => f.write_str("git"),
             Self::Https => f.write_str("https"),
@@ -225,7 +225,7 @@ impl fmt::Display for GitProtocol {
 
 impl fmt::Display for GistRepository {
     /// Displays a `GistRepository` as "[{owner}/]{identifier}".
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self {
                 owner: Some(owner),
@@ -241,7 +241,7 @@ impl fmt::Display for GistRepository {
 
 impl fmt::Display for GitHubRepository {
     /// Displays a `GitHubRepository` as "{owner}/{repository}".
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}/{}", self.owner, self.name)
     }
 }
@@ -279,7 +279,7 @@ impl Default for Shell {
 #[error("expected one of `bash` or `zsh`, got `{}`", self.0)]
 pub struct ParseShellError(String);
 
-impl str::FromStr for Shell {
+impl FromStr for Shell {
     type Err = ParseShellError;
 
     fn from_str(s: &str) -> result::Result<Self, Self::Err> {
@@ -321,8 +321,8 @@ impl From<&str> for Template {
 impl<'de> de::Visitor<'de> for TemplateVisitor {
     type Value = Template;
 
-    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        formatter.write_str("string or map")
+    fn expecting(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str("string or map")
     }
 
     fn visit_str<E>(self, value: &str) -> result::Result<Self::Value, E>
@@ -420,8 +420,8 @@ macro_rules! impl_deserialize_from_str {
             impl<'de> de::Visitor<'de> for Visitor {
                 type Value = $name;
 
-                fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-                    formatter.write_str($expecting)
+                fn expecting(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                    f.write_str($expecting)
                 }
 
                 fn visit_str<E>(self, value: &str) -> result::Result<Self::Value, E>
@@ -453,7 +453,7 @@ impl_deserialize_from_str!(github_repository, GitHubRepository, "a GitHub reposi
 /// are coerced to `None`.
 fn deserialize_rest_toml_value<'de, D>(deserializer: D) -> Result<Option<toml::Value>, D::Error>
 where
-    D: de::Deserializer<'de>,
+    D: Deserializer<'de>,
 {
     let value: toml::Value = de::Deserialize::deserialize(deserializer)?;
     Ok(match value {

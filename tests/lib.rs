@@ -257,7 +257,7 @@ impl Directories {
         let home = Rc::new(tempfile::tempdir()?);
         let config = home.path().join(".config").join("sheldon");
         let data = home.path().join(".local/share").join("sheldon");
-        Directories { home, config, data }.init()
+        Self { home, config, data }.init()
     }
 
     fn default() -> io::Result<Self> {
@@ -265,7 +265,7 @@ impl Directories {
         let data = home.path().join(".sheldon");
         fs::create_dir(&data)?;
 
-        Ok(Directories {
+        Ok(Self {
             home,
             config: data.clone(),
             data,
@@ -274,16 +274,16 @@ impl Directories {
 }
 
 trait RepositoryExt {
-    fn revparse_commit(&self, spec: &str) -> Result<git2::Commit, git2::Error>;
-    fn status(&self) -> Result<git2::Statuses, git2::Error>;
+    fn revparse_commit(&self, spec: &str) -> Result<git2::Commit<'_>, git2::Error>;
+    fn status(&self) -> Result<git2::Statuses<'_>, git2::Error>;
 }
 
 impl RepositoryExt for git2::Repository {
-    fn revparse_commit(&self, spec: &str) -> Result<git2::Commit, git2::Error> {
+    fn revparse_commit(&self, spec: &str) -> Result<git2::Commit<'_>, git2::Error> {
         self.revparse_single(spec)?.peel_to_commit()
     }
 
-    fn status(&self) -> Result<git2::Statuses, git2::Error> {
+    fn status(&self) -> Result<git2::Statuses<'_>, git2::Error> {
         self.statuses(Some(git2::StatusOptions::new().include_untracked(true)))
     }
 }

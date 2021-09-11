@@ -4,7 +4,6 @@ use std::env;
 use std::fmt;
 use std::path::PathBuf;
 use std::process;
-use std::result;
 use std::str::FromStr;
 
 use anyhow::anyhow;
@@ -236,7 +235,7 @@ impl Default for ColorChoice {
 }
 
 impl fmt::Display for ColorChoice {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Always => f.write_str("always"),
             Self::Auto => f.write_str("auto"),
@@ -252,7 +251,7 @@ pub struct ParseColorChoiceError(String);
 impl FromStr for ColorChoice {
     type Err = ParseColorChoiceError;
 
-    fn from_str(s: &str) -> result::Result<Self, Self::Err> {
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "always" => Ok(Self::Always),
             "auto" => Ok(Self::Auto),
