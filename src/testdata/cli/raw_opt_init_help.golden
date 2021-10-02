@@ -1,11 +1,12 @@
 {name}-init {version}
+
 Initialize a new config file
 
 USAGE:
     sheldon init [OPTIONS]
 
 FLAGS:
-    -h, --help    Prints help information
+    -h, --help    Print help information
 
 OPTIONS:
         --shell <SHELL>    The type of shell, accepted values are: bash, zsh

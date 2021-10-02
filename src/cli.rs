@@ -150,8 +150,8 @@ enum RawCommand {
     term_width = 120,
     global_setting = AppSettings::DeriveDisplayOrder,
     global_setting = AppSettings::DisableHelpSubcommand,
-    global_setting = AppSettings::GlobalVersion,
-    global_setting = AppSettings::VersionlessSubcommands,
+    global_setting = AppSettings::PropagateVersion,
+    global_setting = AppSettings::DisableVersionForSubcommands,
     setting = AppSettings::SubcommandRequired,
 )]
 struct RawOpt {
@@ -164,7 +164,7 @@ struct RawOpt {
     verbose: bool,
 
     /// Output coloring: always, auto, or never.
-    #[clap(long, value_name = "WHEN", default_value)]
+    #[clap(long, value_name = "WHEN", default_value_t)]
     color: ColorChoice,
 
     /// The home directory.

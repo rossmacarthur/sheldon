@@ -1,14 +1,15 @@
 {name}-add {version}
+
 Add a new plugin to the config file
 
 USAGE:
-    {name} add [OPTIONS] <NAME> <--git <URL>|--gist <ID>|--github <REPO>|--remote <URL>|--local <DIR>>
+    {name} add [OPTIONS] <--git <URL>|--gist <ID>|--github <REPO>|--remote <URL>|--local <DIR>> <NAME>
 
 ARGS:
     <NAME>    A unique name for this plugin
 
 FLAGS:
-    -h, --help    Prints help information
+    -h, --help    Print help information
 
 OPTIONS:
         --git <URL>              Add a clonable Git repository

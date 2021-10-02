@@ -1,4 +1,5 @@
 {name}-lock {version}
+
 Install the plugins sources and generate the lock file
 
 USAGE:
@@ -7,4 +8,4 @@ USAGE:
 FLAGS:
         --update       Update all plugin sources
         --reinstall    Reinstall all plugin sources
-    -h, --help         Prints help information
+    -h, --help         Print help information

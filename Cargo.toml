@@ -15,15 +15,15 @@ include = ["src/**/*", "LICENSE-*", "README.md", "build.rs"]
 
 [dependencies]
 ansi_term = "0.12.1"
-anyhow = "1.0.42"
+anyhow = "1.0.44"
 atty = "0.2.14"
 casual = "0.2.0"
-clap = "=3.0.0-beta.2"
-curl = "0.4.38"
+clap = "3.0.0-beta.4"
+curl = "0.4.39"
 fs2 = "0.4.3"
-git2 = "0.13.20"
+git2 = "0.13.23"
 globwalk = "0.8.1"
-handlebars = "4.1.0"
+handlebars = "4.1.3"
 home = "0.5.3"
 indexmap = { version = "1.7.0", features = ["rayon", "serde"] }
 itertools = "0.10.1"
@@ -31,16 +31,16 @@ maplit = "1.0.2"
 once_cell = "1.8.0"
 rayon = "1.5.1"
 regex-macro = "0.1.1"
-serde = { version = "1.0.126", features = ["derive"] }
-thiserror = "1.0.26"
+serde = { version = "1.0.130", features = ["derive"] }
+thiserror = "1.0.29"
 toml = { version = "0.5.8", features = ["preserve_order"] }
-toml_edit = "0.2.1"
+toml_edit = "0.5.0"
 url = { version = "2.2.2", features = ["serde"] }
 walkdir = "2.3.2"
-which = { version = "4.1.0", default-features = false }
+which = { version = "4.2.2", default-features = false }
 
 [build-dependencies]
-anyhow = "1.0.42"
+anyhow = "1.0.44"
 
 [dev-dependencies]
 goldie = "0.1.0"

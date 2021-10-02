@@ -83,7 +83,7 @@ impl Config {
             .parse::<toml_edit::Document>()
             .expect("failed to parse valid TOML");
 
-        match self.doc.as_table_mut().entry("plugins") {
+        match &mut self.doc["plugins"] {
             item @ toml_edit::Item::None => {
                 let mut plugins = toml_edit::Table::new();
                 plugins.set_implicit(true);

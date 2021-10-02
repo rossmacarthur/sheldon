@@ -1,15 +1,17 @@
 {name} {version}
+
 {authors}
+
 {description}
 
 USAGE:
     {name} [FLAGS] [OPTIONS] <SUBCOMMAND>
 
 FLAGS:
+    -h, --help       Print help information
+    -V, --version    Print version information
     -q, --quiet      Suppress any informational output
     -v, --verbose    Use verbose output
-    -h, --help       Prints help information
-    -V, --version    Prints version information
 
 OPTIONS:
         --color <WHEN>           Output coloring: always, auto, or never [default: auto]
