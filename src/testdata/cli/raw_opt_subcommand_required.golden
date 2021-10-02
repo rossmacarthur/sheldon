@@ -1,0 +1,6 @@
+error: '{name}' requires a subcommand, but one was not provided
+
+USAGE:
+    {name} [FLAGS] [OPTIONS] <SUBCOMMAND>
+
+For more information try --help

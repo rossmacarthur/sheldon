@@ -1,0 +1,25 @@
+{name}-add {version}
+Add a new plugin to the config file
+
+USAGE:
+    {name} add [OPTIONS] <NAME> <--git <URL>|--gist <ID>|--github <REPO>|--remote <URL>|--local <DIR>>
+
+ARGS:
+    <NAME>    A unique name for this plugin
+
+FLAGS:
+    -h, --help    Prints help information
+
+OPTIONS:
+        --git <URL>              Add a clonable Git repository
+        --gist <ID>              Add a clonable Gist snippet
+        --github <REPO>          Add a clonable GitHub repository
+        --remote <URL>           Add a downloadable file
+        --local <DIR>            Add a local directory
+        --proto <PROTO>          The Git protocol for a Gist or GitHub plugin
+        --branch <BRANCH>        Checkout the tip of a branch
+        --rev <SHA>              Checkout a specific commit
+        --tag <TAG>              Checkout a specific tag
+        --dir <PATH>             Which sub directory to use in this plugin
+        --use <MATCH>...         Which files to use in this plugin
+        --apply <TEMPLATE>...    Templates to apply to this plugin

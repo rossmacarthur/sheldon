@@ -481,6 +481,8 @@ mod tests {
 
     use clap::{crate_authors, crate_description, crate_name};
     use pretty_assertions::assert_eq;
+    use serde_json as json;
+    use serde_json::json;
 
     fn setup() {
         for (k, _) in env::vars() {
@@ -489,6 +491,15 @@ mod tests {
                 env::remove_var(k);
             }
         }
+    }
+
+    fn ctx() -> json::Value {
+        json!({
+            "name": build::CRATE_NAME,
+            "version": build::CRATE_RELEASE,
+            "authors": crate_authors!(),
+            "description": crate_description!(),
+        })
     }
 
     fn raw_opt(args: &[&str]) -> RawOpt {
@@ -526,49 +537,7 @@ mod tests {
         setup();
         for opt in &["-h", "--help"] {
             let err = raw_opt_err(&[opt]);
-            assert_eq!(
-                err.to_string(),
-                format!(
-                    "\
-{name} {version}
-{authors}
-{description}
-
-USAGE:
-    {name} [FLAGS] [OPTIONS] <SUBCOMMAND>
-
-FLAGS:
-    -q, --quiet      Suppress any informational output
-    -v, --verbose    Use verbose output
-    -h, --help       Prints help information
-    -V, --version    Prints version information
-
-OPTIONS:
-        --color <WHEN>           Output coloring: always, auto, or never [default: auto]
-        --config-dir <PATH>      The configuration directory [env: SHELDON_CONFIG_DIR=]
-        --data-dir <PATH>        The data directory [env: SHELDON_DATA_DIR=]
-        --config-file <PATH>     The config file [env: SHELDON_CONFIG_FILE=]
-        --lock-file <PATH>       The lock file [env: SHELDON_LOCK_FILE=]
-        --clone-dir <PATH>       The directory where git sources are cloned to [env: \
-                     SHELDON_CLONE_DIR=]
-        --download-dir <PATH>    The directory where remote sources are downloaded to [env: \
-                     SHELDON_DOWNLOAD_DIR=]
-
-SUBCOMMANDS:
-    init       Initialize a new config file
-    add        Add a new plugin to the config file
-    edit       Open up the config file in the default editor
-    remove     Remove a plugin from the config file
-    lock       Install the plugins sources and generate the lock file
-    source     Generate and print out the script
-    version    Prints detailed version information
-",
-                    name = build::CRATE_NAME,
-                    version = build::CRATE_RELEASE,
-                    authors = crate_authors!(),
-                    description = crate_description!(),
-                )
-            );
+            goldie::assert_template!(ctx(), err.to_string());
             assert_eq!(err.kind, clap::ErrorKind::DisplayHelp);
         }
     }
@@ -645,20 +614,7 @@ SUBCOMMANDS:
     fn raw_opt_subcommand_required() {
         setup();
         let err = raw_opt_err(&[]);
-        assert_eq!(
-            err.to_string(),
-            format!(
-                "\
-error: '{name}' requires a subcommand, but one was not provided
-
-USAGE:
-    {name} [FLAGS] [OPTIONS] <SUBCOMMAND>
-
-For more information try --help
-",
-                name = crate_name!()
-            )
-        );
+        goldie::assert_template!(ctx(), err.to_string());
         assert_eq!(err.kind, clap::ErrorKind::MissingSubcommand);
     }
 
@@ -666,26 +622,7 @@ For more information try --help
     fn raw_opt_init_help() {
         setup();
         let err = raw_opt_err(&["init", "--help"]);
-        assert_eq!(
-            err.to_string(),
-            format!(
-                "\
-{name}-init {version}
-Initialize a new config file
-
-USAGE:
-    sheldon init [OPTIONS]
-
-FLAGS:
-    -h, --help    Prints help information
-
-OPTIONS:
-        --shell <SHELL>    The type of shell, accepted values are: bash, zsh
-",
-                name = build::CRATE_NAME,
-                version = build::CRATE_RELEASE,
-            )
-        );
+        goldie::assert_template!(ctx(), err.to_string());
         assert_eq!(err.kind, clap::ErrorKind::DisplayHelp);
     }
 
@@ -702,41 +639,7 @@ OPTIONS:
     fn raw_opt_add_help() {
         setup();
         let err = raw_opt_err(&["add", "--help"]);
-        assert_eq!(
-            err.to_string(),
-            format!(
-                "\
-{name}-add {version}
-Add a new plugin to the config file
-
-USAGE:
-    {name} add [OPTIONS] <NAME> <--git <URL>|--gist <ID>|--github <REPO>|--remote <URL>|--local \
-                 <DIR>>
-
-ARGS:
-    <NAME>    A unique name for this plugin
-
-FLAGS:
-    -h, --help    Prints help information
-
-OPTIONS:
-        --git <URL>              Add a clonable Git repository
-        --gist <ID>              Add a clonable Gist snippet
-        --github <REPO>          Add a clonable GitHub repository
-        --remote <URL>           Add a downloadable file
-        --local <DIR>            Add a local directory
-        --proto <PROTO>          The Git protocol for a Gist or GitHub plugin
-        --branch <BRANCH>        Checkout the tip of a branch
-        --rev <SHA>              Checkout a specific commit
-        --tag <TAG>              Checkout a specific tag
-        --dir <PATH>             Which sub directory to use in this plugin
-        --use <MATCH>...         Which files to use in this plugin
-        --apply <TEMPLATE>...    Templates to apply to this plugin
-",
-                name = build::CRATE_NAME,
-                version = build::CRATE_RELEASE,
-            )
-        );
+        goldie::assert_template!(ctx(), err.to_string());
         assert_eq!(err.kind, clap::ErrorKind::DisplayHelp);
     }
 
@@ -1050,25 +953,7 @@ OPTIONS:
     fn raw_opt_lock_help() {
         setup();
         let err = raw_opt_err(&["lock", "--help"]);
-        assert_eq!(
-            err.to_string(),
-            format!(
-                "\
-{name}-lock {version}
-Install the plugins sources and generate the lock file
-
-USAGE:
-    {name} lock [FLAGS]
-
-FLAGS:
-        --update       Update all plugin sources
-        --reinstall    Reinstall all plugin sources
-    -h, --help         Prints help information
-",
-                name = build::CRATE_NAME,
-                version = build::CRATE_RELEASE,
-            )
-        );
+        goldie::assert_template!(ctx(), err.to_string());
         assert_eq!(err.kind, clap::ErrorKind::DisplayHelp);
     }
 
@@ -1085,26 +970,7 @@ FLAGS:
     fn raw_opt_source_help() {
         setup();
         let err = raw_opt_err(&["source", "--help"]);
-        assert_eq!(
-            err.to_string(),
-            format!(
-                "\
-{name}-source {version}
-Generate and print out the script
-
-USAGE:
-    {name} source [FLAGS]
-
-FLAGS:
-        --relock       Regenerate the lock file
-        --update       Update all plugin sources (implies --relock)
-        --reinstall    Reinstall all plugin sources (implies --relock)
-    -h, --help         Prints help information
-",
-                name = build::CRATE_NAME,
-                version = build::CRATE_RELEASE,
-            )
-        );
+        goldie::assert_template!(ctx(), err.to_string());
         assert_eq!(err.kind, clap::ErrorKind::DisplayHelp);
     }
 

@@ -1,0 +1,30 @@
+{name} {version}
+{authors}
+{description}
+
+USAGE:
+    {name} [FLAGS] [OPTIONS] <SUBCOMMAND>
+
+FLAGS:
+    -q, --quiet      Suppress any informational output
+    -v, --verbose    Use verbose output
+    -h, --help       Prints help information
+    -V, --version    Prints version information
+
+OPTIONS:
+        --color <WHEN>           Output coloring: always, auto, or never [default: auto]
+        --config-dir <PATH>      The configuration directory [env: SHELDON_CONFIG_DIR=]
+        --data-dir <PATH>        The data directory [env: SHELDON_DATA_DIR=]
+        --config-file <PATH>     The config file [env: SHELDON_CONFIG_FILE=]
+        --lock-file <PATH>       The lock file [env: SHELDON_LOCK_FILE=]
+        --clone-dir <PATH>       The directory where git sources are cloned to [env: SHELDON_CLONE_DIR=]
+        --download-dir <PATH>    The directory where remote sources are downloaded to [env: SHELDON_DOWNLOAD_DIR=]
+
+SUBCOMMANDS:
+    init       Initialize a new config file
+    add        Add a new plugin to the config file
+    edit       Open up the config file in the default editor
+    remove     Remove a plugin from the config file
+    lock       Install the plugins sources and generate the lock file
+    source     Generate and print out the script
+    version    Prints detailed version information

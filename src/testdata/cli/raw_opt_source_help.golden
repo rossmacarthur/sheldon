@@ -1,0 +1,11 @@
+{name}-source {version}
+Generate and print out the script
+
+USAGE:
+    {name} source [FLAGS]
+
+FLAGS:
+        --relock       Regenerate the lock file
+        --update       Update all plugin sources (implies --relock)
+        --reinstall    Reinstall all plugin sources (implies --relock)
+    -h, --help         Prints help information
