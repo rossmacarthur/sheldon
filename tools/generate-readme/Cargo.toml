@@ -8,10 +8,10 @@ publish = false
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = "1.0.39"
-handlebars = "3.5.3"
+anyhow = "1.0.44"
+handlebars = "4.1.3"
 maplit = "1.0.2"
 pulldown-cmark = "0.8.0"
-pulldown-cmark-to-cmark = "6.0.0"
+pulldown-cmark-to-cmark = "6.0.4"
 pulldown-cmark-toc = "0.1.1"
 regex-macro = "0.1.1"
