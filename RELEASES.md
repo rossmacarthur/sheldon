@@ -1,5 +1,13 @@
 # 📝 Release notes
 
+## 0.6.5
+
+*October 27th, 2021*
+
+- [Fix `libgit2` compatibility issues.][#124]
+
+[#124]: https://github.com/rossmacarthur/sheldon/issues/124
+
 ## 0.6.4
 
 *July 14th, 2021*
