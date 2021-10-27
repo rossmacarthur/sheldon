@@ -19,6 +19,7 @@ anyhow = "1.0.44"
 atty = "0.2.14"
 casual = "0.2.0"
 clap = "=3.0.0-beta.4"
+clap_derive = "=3.0.0-beta.4"
 curl = "0.4.39"
 fs2 = "0.4.3"
 git2 = { version = "0.13.23", features = ["vendored-libgit2"] }

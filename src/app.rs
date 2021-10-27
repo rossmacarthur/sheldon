@@ -118,9 +118,9 @@ fn remove(ctx: &EditContext, name: String) -> Result<()> {
 
 /// Reads the config from the config file path, locks it, and returns the
 /// locked config.
-fn locked(ctx: &LockContext, mut warnings: &mut Vec<Error>) -> Result<LockedConfig> {
+fn locked(ctx: &LockContext, warnings: &mut Vec<Error>) -> Result<LockedConfig> {
     let path = ctx.config_file();
-    let config = Config::from_path(path, &mut warnings).context("failed to load config file")?;
+    let config = Config::from_path(path, warnings).context("failed to load config file")?;
     header!(ctx, "Loaded", path);
     config.lock(ctx)
 }
@@ -128,8 +128,8 @@ fn locked(ctx: &LockContext, mut warnings: &mut Vec<Error>) -> Result<LockedConf
 /// Execute the `lock` subcommand.
 ///
 /// Install the plugins sources and generate the lock file.
-fn lock(ctx: &LockContext, mut warnings: &mut Vec<Error>) -> Result<()> {
-    let mut locked = locked(ctx, &mut warnings)?;
+fn lock(ctx: &LockContext, warnings: &mut Vec<Error>) -> Result<()> {
+    let mut locked = locked(ctx, warnings)?;
 
     if let Some(last) = locked.errors.pop() {
         for err in locked.errors {
@@ -137,7 +137,7 @@ fn lock(ctx: &LockContext, mut warnings: &mut Vec<Error>) -> Result<()> {
         }
         Err(last)
     } else {
-        locked.clean(ctx, &mut warnings);
+        locked.clean(ctx, warnings);
         let path = ctx.lock_file();
         locked.to_path(path).context("failed to write lock file")?;
         header!(ctx, "Locked", path);
@@ -148,14 +148,14 @@ fn lock(ctx: &LockContext, mut warnings: &mut Vec<Error>) -> Result<()> {
 /// Execute the `source` subcommand.
 ///
 /// Generate and print out the shell script.
-fn source(ctx: &LockContext, relock: bool, mut warnings: &mut Vec<Error>) -> Result<()> {
+fn source(ctx: &LockContext, relock: bool, warnings: &mut Vec<Error>) -> Result<()> {
     let config_path = ctx.config_file();
     let lock_path = ctx.lock_file();
 
     let mut to_path = true;
 
     let locked_config = if relock || config_path.newer_than(lock_path) {
-        locked(ctx, &mut warnings)?
+        locked(ctx, warnings)?
     } else {
         match LockedConfig::from_path(lock_path) {
             Ok(locked_config) => {
@@ -164,10 +164,10 @@ fn source(ctx: &LockContext, relock: bool, mut warnings: &mut Vec<Error>) -> Res
                     header_v!(ctx, "Unlocked", lock_path);
                     locked_config
                 } else {
-                    locked(ctx, &mut warnings)?
+                    locked(ctx, warnings)?
                 }
             }
-            Err(_) => locked(ctx, &mut warnings)?,
+            Err(_) => locked(ctx, warnings)?,
         }
     };
 
@@ -176,7 +176,7 @@ fn source(ctx: &LockContext, relock: bool, mut warnings: &mut Vec<Error>) -> Res
         .context("failed to render source")?;
 
     if to_path && locked_config.errors.is_empty() {
-        locked_config.clean(ctx, &mut warnings);
+        locked_config.clean(ctx, warnings);
         locked_config
             .to_path(lock_path)
             .context("failed to write lock file")?;

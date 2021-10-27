@@ -707,7 +707,7 @@ impl RawConfig {
     }
 
     /// Normalize a `RawConfig` into a `Config`.
-    fn normalize(self, mut warnings: &mut Vec<Error>) -> Result<Config> {
+    fn normalize(self, warnings: &mut Vec<Error>) -> Result<Config> {
         let Self {
             shell,
             matches,
@@ -737,7 +737,7 @@ impl RawConfig {
         for (name, plugin) in plugins {
             normalized_plugins.push(
                 plugin
-                    .normalize(name.clone(), shell, &templates, &mut warnings)
+                    .normalize(name.clone(), shell, &templates, warnings)
                     .with_context(s!("failed to normalize plugin `{}`", name))?,
             );
         }
@@ -754,11 +754,11 @@ impl RawConfig {
 
 impl Config {
     /// Read a `Config` from the given path.
-    pub fn from_path<P>(path: P, mut warnings: &mut Vec<Error>) -> Result<Self>
+    pub fn from_path<P>(path: P, warnings: &mut Vec<Error>) -> Result<Self>
     where
         P: AsRef<Path>,
     {
-        RawConfig::from_path(path)?.normalize(&mut warnings)
+        RawConfig::from_path(path)?.normalize(warnings)
     }
 }
 

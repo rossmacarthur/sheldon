@@ -553,7 +553,8 @@ impl Config {
         }
 
         let matches = &matches.as_ref().unwrap_or_else(|| shell.default_matches());
-        let apply = &apply.as_ref().unwrap_or_else(|| Shell::default_apply());
+        #[allow(clippy::redundant_closure)]
+        let apply = apply.as_ref().unwrap_or_else(|| Shell::default_apply());
         let count = map.len();
         let mut errors = Vec::new();
 
