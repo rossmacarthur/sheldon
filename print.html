@@ -4,36 +4,29 @@
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
         <title>sheldon docs</title>
-                <meta name="robots" content="noindex" />
-                
-
+        <meta name="robots" content="noindex" />
         <!-- Custom HTML head -->
-        
-
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#ffffff" />
 
-                <link rel="icon" href="favicon.svg">
-                        <link rel="shortcut icon" href="favicon.png">
-                <link rel="stylesheet" href="css/variables.css">
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
         <link rel="stylesheet" href="css/general.css">
         <link rel="stylesheet" href="css/chrome.css">
-                <link rel="stylesheet" href="css/print.css" media="print">
-        
+        <link rel="stylesheet" href="css/print.css" media="print">
         <!-- Fonts -->
         <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
-                <link rel="stylesheet" href="fonts/fonts.css">
-        
+        <link rel="stylesheet" href="fonts/fonts.css">
         <!-- Highlight.js Stylesheets -->
         <link rel="stylesheet" href="highlight.css">
         <link rel="stylesheet" href="tomorrow-night.css">
         <link rel="stylesheet" href="ayu-highlight.css">
 
         <!-- Custom theme stylesheets -->
-        
-            </head>
+    </head>
     <body>
         <!-- Provide site root to javascript -->
         <script type="text/javascript">
@@ -83,14 +76,14 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded affix "><a href="Introduction.html">Introduction</a></li><li class="chapter-item expanded "><a href="Installation.html">📦 Installation</a></li><li class="chapter-item expanded "><a href="Getting-started.html">🚀 Getting started</a></li><li class="chapter-item expanded "><a href="Command-line-interface.html">💻 Command line interface</a></li><li class="chapter-item expanded "><a href="Configuration.html">⚙️ Configuration</a></li><li class="chapter-item expanded "><a href="Examples.html">💡 Examples</a></li><li class="chapter-item expanded "><a href="RELEASES.html">📝 Release notes</a></li></ol>            </div>
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="Introduction.html">Introduction</a></li><li class="chapter-item expanded "><a href="Installation.html">📦 Installation</a></li><li class="chapter-item expanded "><a href="Getting-started.html">🚀 Getting started</a></li><li class="chapter-item expanded "><a href="Command-line-interface.html">💻 Command line interface</a></li><li class="chapter-item expanded "><a href="Configuration.html">⚙️ Configuration</a></li><li class="chapter-item expanded "><a href="Examples.html">💡 Examples</a></li><li class="chapter-item expanded "><a href="RELEASES.html">📝 Release notes</a></li></ol>
+            </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
 
         <div id="page-wrapper" class="page-wrapper">
 
             <div class="page">
-                
                 <div id="menu-bar-hover-placeholder"></div>
                 <div id="menu-bar" class="menu-bar sticky bordered">
                     <div class="left-buttons">
@@ -107,25 +100,24 @@
                             <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
                             <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
                         </ul>
-                                                <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
                             <i class="fa fa-search"></i>
                         </button>
-                                            </div>
+                    </div>
 
                     <h1 class="menu-title">sheldon docs</h1>
 
                     <div class="right-buttons">
-                                                <a href="print.html" title="Print this book" aria-label="Print this book">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
                             <i id="print-button" class="fa fa-print"></i>
                         </a>
-                                                                        <a href="https://github.com/rossmacarthur/sheldon" title="Git repository" aria-label="Git repository">
+                        <a href="https://github.com/rossmacarthur/sheldon" title="Git repository" aria-label="Git repository">
                             <i id="git-repository-button" class="fa fa-github"></i>
                         </a>
-                                                
                     </div>
                 </div>
 
-                                <div id="search-wrapper" class="hidden">
+                <div id="search-wrapper" class="hidden">
                     <form id="searchbar-outer" class="searchbar-outer">
                         <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
                     </form>
@@ -135,7 +127,6 @@
                         </ul>
                     </div>
                 </div>
-                
                 <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
                 <script type="text/javascript">
                     document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
@@ -704,6 +695,11 @@ use = [&quot;async.zsh&quot;, &quot;pure.zsh&quot;]
 <pre><code class="language-sh">sheldon add pure --github sindresorhus/pure --use async.zsh pure.zsh
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="-release-notes"><a class="header" href="#-release-notes">📝 Release notes</a></h1>
+<h2 id="065"><a class="header" href="#065">0.6.5</a></h2>
+<p><em>October 27th, 2021</em></p>
+<ul>
+<li><a href="https://github.com/rossmacarthur/sheldon/issues/124">Fix <code>libgit2</code> compatibility issues.</a></li>
+</ul>
 <h2 id="064"><a class="header" href="#064">0.6.4</a></h2>
 <p><em>July 14th, 2021</em></p>
 <ul>
@@ -987,42 +983,31 @@ prior versions.</p>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                        
-                        
                         <div style="clear: both"></div>
                     </nav>
                 </div>
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                
-                            </nav>
+            </nav>
 
         </div>
 
-        
-        
-        
-                <script type="text/javascript">
+        <script type="text/javascript">
             window.playground_copyable = true;
         </script>
-        
-        
-                <script src="elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
         <script src="mark.min.js" type="text/javascript" charset="utf-8"></script>
         <script src="searcher.js" type="text/javascript" charset="utf-8"></script>
-        
         <script src="clipboard.min.js" type="text/javascript" charset="utf-8"></script>
         <script src="highlight.js" type="text/javascript" charset="utf-8"></script>
         <script src="book.js" type="text/javascript" charset="utf-8"></script>
 
         <!-- Custom JS scripts -->
-        
-                        <script type="text/javascript">
+        <script type="text/javascript">
         window.addEventListener('load', function() {
             window.setTimeout(window.print, 100);
         });
         </script>
-                
     </body>
 </html>
