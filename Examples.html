@@ -178,7 +178,7 @@ apply = [&quot;source&quot;, &quot;PATH&quot;]
 </code></pre>
 <p><strong>Note:</strong> this would change the behavior of <strong>PATH</strong> for <em>all</em> plugins using it.</p>
 <h2 id="zsh-frameworks"><a class="header" href="#zsh-frameworks">Zsh frameworks</a></h2>
-<h3 id="a-hrefhttpsgithubcomohmyzshohmyzshohmyzsha"><a class="header" href="#a-hrefhttpsgithubcomohmyzshohmyzshohmyzsha"><a href="https://github.com/ohmyzsh/ohmyzsh">ohmyzsh</a></a></h3>
+<h3 id="ohmyzsh"><a class="header" href="#ohmyzsh"><a href="https://github.com/ohmyzsh/ohmyzsh">ohmyzsh</a></a></h3>
 <p>Add the following to the Sheldon config file.</p>
 <pre><code class="language-toml">[plugins.oh-my-zsh]
 github = &quot;ohmyzsh/ohmyzsh&quot;
@@ -196,7 +196,7 @@ export ZSH=&quot;$HOME/.sheldon/repos/github.com/ohmyzsh/ohmyzsh&quot;
 eval &quot;$(sheldon source)&quot;
 </code></pre>
 <h2 id="zsh-plugins"><a class="header" href="#zsh-plugins">Zsh plugins</a></h2>
-<h3 id="a-hrefhttpsgithubcomzsh-userszsh-autosuggestionsautosuggestionsa"><a class="header" href="#a-hrefhttpsgithubcomzsh-userszsh-autosuggestionsautosuggestionsa"><a href="https://github.com/zsh-users/zsh-autosuggestions">autosuggestions</a></a></h3>
+<h3 id="autosuggestions"><a class="header" href="#autosuggestions"><a href="https://github.com/zsh-users/zsh-autosuggestions">autosuggestions</a></a></h3>
 <p>Add the following to the Sheldon config file.</p>
 <pre><code class="language-toml">[plugins.zsh-autosuggestions]
 github = &quot;zsh-users/zsh-autosuggestions&quot;
@@ -205,7 +205,7 @@ use = [&quot;{{ name }}.zsh&quot;]
 <p>Or run the following to automatically add it.</p>
 <pre><code class="language-sh">sheldon add zsh-autosuggestions --github zsh-users/zsh-autosuggestions --use '{{ name }}.zsh'
 </code></pre>
-<h3 id="a-hrefhttpsgithubcomwtingautojumpautojumpa"><a class="header" href="#a-hrefhttpsgithubcomwtingautojumpautojumpa"><a href="https://github.com/wting/autojump">autojump</a></a></h3>
+<h3 id="autojump"><a class="header" href="#autojump"><a href="https://github.com/wting/autojump">autojump</a></a></h3>
 <p>Add the following to the Sheldon config file.</p>
 <pre><code class="language-toml">[plugins.autojump]
 github = &quot;wting/autojump&quot;
@@ -215,7 +215,7 @@ apply = [&quot;PATH&quot;, &quot;source&quot;]
 <p>Or run the following to automatically add it.</p>
 <pre><code class="language-sh">sheldon add autojump --github wting/autojump --dir bin --apply PATH source
 </code></pre>
-<h3 id="a-hrefhttpsgithubcomzsh-userszsh-syntax-highlightingsyntax-highlightinga"><a class="header" href="#a-hrefhttpsgithubcomzsh-userszsh-syntax-highlightingsyntax-highlightinga"><a href="https://github.com/zsh-users/zsh-syntax-highlighting">syntax-highlighting</a></a></h3>
+<h3 id="syntax-highlighting"><a class="header" href="#syntax-highlighting"><a href="https://github.com/zsh-users/zsh-syntax-highlighting">syntax-highlighting</a></a></h3>
 <p>Add the following to the Sheldon config file.</p>
 <pre><code class="language-toml">[plugins.zsh-syntax-highlighting]
 github = &quot;zsh-users/zsh-syntax-highlighting&quot;
@@ -223,7 +223,7 @@ github = &quot;zsh-users/zsh-syntax-highlighting&quot;
 <p>Or run the following to automatically add it.</p>
 <pre><code class="language-sh">sheldon add zsh-syntax-highlighting --github zsh-users/zsh-syntax-highlighting
 </code></pre>
-<h3 id="a-hrefhttpsgithubcomstackexchangeblackboxblackboxa"><a class="header" href="#a-hrefhttpsgithubcomstackexchangeblackboxblackboxa"><a href="https://github.com/StackExchange/blackbox">blackbox</a></a></h3>
+<h3 id="blackbox"><a class="header" href="#blackbox"><a href="https://github.com/StackExchange/blackbox">blackbox</a></a></h3>
 <p>Add the following to the Sheldon config file.</p>
 <pre><code class="language-toml">[plugins.blackbox]
 github = &quot;StackExchange/blackbox&quot;
@@ -231,7 +231,7 @@ github = &quot;StackExchange/blackbox&quot;
 <p>Or run the following to automatically add it.</p>
 <pre><code class="language-sh">sheldon add blackbox --github StackExchange/blackbox
 </code></pre>
-<h3 id="a-hrefhttpsgithubcomskywind3000zluazluaa"><a class="header" href="#a-hrefhttpsgithubcomskywind3000zluazluaa"><a href="https://github.com/skywind3000/z.lua">z.lua</a></a></h3>
+<h3 id="zlua"><a class="header" href="#zlua"><a href="https://github.com/skywind3000/z.lua">z.lua</a></a></h3>
 <p>Add the following to the Sheldon config file.</p>
 <pre><code class="language-toml">[plugins.&quot;z.lua&quot;]
 github = &quot;skywind3000/z.lua&quot;
@@ -239,7 +239,7 @@ github = &quot;skywind3000/z.lua&quot;
 <p>Or run the following to automatically add it.</p>
 <pre><code class="language-sh">sheldon add z.lua --github skywind3000/z.lua
 </code></pre>
-<h3 id="a-hrefhttpsgithubcomb4b4r07enhancdenhancda"><a class="header" href="#a-hrefhttpsgithubcomb4b4r07enhancdenhancda"><a href="https://github.com/b4b4r07/enhancd">enhancd</a></a></h3>
+<h3 id="enhancd"><a class="header" href="#enhancd"><a href="https://github.com/b4b4r07/enhancd">enhancd</a></a></h3>
 <p>Add the following to the Sheldon config file.</p>
 <pre><code class="language-toml">[plugins.enhancd]
 github = &quot;b4b4r07/enhancd&quot;
@@ -247,7 +247,7 @@ github = &quot;b4b4r07/enhancd&quot;
 <p>Or run the following to automatically add it.</p>
 <pre><code class="language-sh">sheldon add enhancd --github b4b4r07/enhancd
 </code></pre>
-<h3 id="a-hrefhttpsgithubcomchriskempsonbase16-shellbase16a"><a class="header" href="#a-hrefhttpsgithubcomchriskempsonbase16-shellbase16a"><a href="https://github.com/chriskempson/base16-shell">base16</a></a></h3>
+<h3 id="base16"><a class="header" href="#base16"><a href="https://github.com/chriskempson/base16-shell">base16</a></a></h3>
 <p>Add the following to the Sheldon config file.</p>
 <pre><code class="language-toml">[plugins.base16]
 github = &quot;chriskempson/base16-shell&quot;
@@ -256,7 +256,7 @@ github = &quot;chriskempson/base16-shell&quot;
 <pre><code class="language-sh">sheldon add base16 --github chriskempson/base16-shell
 </code></pre>
 <h2 id="zsh-themes"><a class="header" href="#zsh-themes">Zsh themes</a></h2>
-<h3 id="a-hrefhttpsgithubcomromkatvpowerlevel10kpowerlevel10ka"><a class="header" href="#a-hrefhttpsgithubcomromkatvpowerlevel10kpowerlevel10ka"><a href="https://github.com/romkatv/powerlevel10k">powerlevel10k</a></a></h3>
+<h3 id="powerlevel10k"><a class="header" href="#powerlevel10k"><a href="https://github.com/romkatv/powerlevel10k">powerlevel10k</a></a></h3>
 <p>Add the following to the Sheldon config file.</p>
 <pre><code class="language-toml">[plugins.powerlevel10k]
 github = &quot;romkatv/powerlevel10k&quot;
@@ -264,7 +264,7 @@ github = &quot;romkatv/powerlevel10k&quot;
 <p>Or run the following to automatically add it.</p>
 <pre><code>sheldon add powerlevel10k --github romkatv/powerlevel10k
 </code></pre>
-<h3 id="a-hrefhttpsgithubcomspaceship-promptspaceship-promptspaceshipa"><a class="header" href="#a-hrefhttpsgithubcomspaceship-promptspaceship-promptspaceshipa"><a href="https://github.com/spaceship-prompt/spaceship-prompt">spaceship</a></a></h3>
+<h3 id="spaceship"><a class="header" href="#spaceship"><a href="https://github.com/spaceship-prompt/spaceship-prompt">spaceship</a></a></h3>
 <p>Add the following to the Sheldon config file.</p>
 <pre><code class="language-toml">[plugins.spaceship]
 github = &quot;spaceship-prompt/spaceship-prompt&quot;
@@ -272,7 +272,7 @@ github = &quot;spaceship-prompt/spaceship-prompt&quot;
 <p>Or run the following to automatically add it.</p>
 <pre><code class="language-sh">sheldon add spaceship --github spaceship-prompt/spaceship-prompt
 </code></pre>
-<h3 id="a-hrefhttpsgithubcomsindresorhuspurepurea"><a class="header" href="#a-hrefhttpsgithubcomsindresorhuspurepurea"><a href="https://github.com/sindresorhus/pure">pure</a></a></h3>
+<h3 id="pure"><a class="header" href="#pure"><a href="https://github.com/sindresorhus/pure">pure</a></a></h3>
 <p>Add the following to the Sheldon config file.</p>
 <pre><code class="language-toml">[plugins.pure]
 github = &quot;sindresorhus/pure&quot;

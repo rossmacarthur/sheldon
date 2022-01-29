@@ -138,6 +138,11 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="-release-notes"><a class="header" href="#-release-notes">📝 Release notes</a></h1>
+<h2 id="066"><a class="header" href="#066">0.6.6</a></h2>
+<p><em>January 29th, 2022</em></p>
+<ul>
+<li><a href="https://github.com/rossmacarthur/sheldon/issues/129">Support and bundle shell completions</a></li>
+</ul>
 <h2 id="065"><a class="header" href="#065">0.6.5</a></h2>
 <p><em>October 27th, 2021</em></p>
 <ul>
@@ -201,16 +206,16 @@ individual directories for configuration and data: <code>config_dir</code> and
 <a href="https://github.com/tapeinosyne"><strong>@tapeinosyne</strong></a>.)</small></p>
 <p>If you used Sheldon's defaults, everything will just keep working as it did;
 no action needs to be taken. Otherwise, you may refer to this migration table:</p>
-<table><thead><tr><th align="right"></th><th>Old</th><th>New</th></tr></thead><tbody>
-<tr><td align="right">Config paths</td><td><code>&lt;root&gt;/plugins.toml</code></td><td><code>&lt;config_dir&gt;/plugins.toml</code></td></tr>
-<tr><td align="right">Data paths</td><td><code>&lt;root&gt;/plugins.lock</code></td><td><code>&lt;data_dir&gt;/plugins.lock</code></td></tr>
-<tr><td align="right"></td><td><code>&lt;root&gt;/repos</code></td><td><code>&lt;data_dir&gt;/repos</code></td></tr>
-<tr><td align="right"></td><td><code>&lt;root&gt;/downloads</code></td><td><code>&lt;data_dir&gt;/downloads</code></td></tr>
-<tr><td align="right">Env variables</td><td><code>SHELDON_ROOT</code></td><td><code>SHELDON_CONFIG_DIR</code></td></tr>
-<tr><td align="right"></td><td></td><td><code>SHELDON_DATA_DIR</code></td></tr>
-<tr><td align="right">CLI options</td><td><code>--root</code></td><td><code>--config-dir</code></td></tr>
-<tr><td align="right"></td><td></td><td><code>--data-dir</code></td></tr>
-<tr><td align="right">Template variables</td><td><code>{{ root }}</code></td><td><code>{{ data_dir }}</code></td></tr>
+<table><thead><tr><th style="text-align: right"></th><th>Old</th><th>New</th></tr></thead><tbody>
+<tr><td style="text-align: right">Config paths</td><td><code>&lt;root&gt;/plugins.toml</code></td><td><code>&lt;config_dir&gt;/plugins.toml</code></td></tr>
+<tr><td style="text-align: right">Data paths</td><td><code>&lt;root&gt;/plugins.lock</code></td><td><code>&lt;data_dir&gt;/plugins.lock</code></td></tr>
+<tr><td style="text-align: right"></td><td><code>&lt;root&gt;/repos</code></td><td><code>&lt;data_dir&gt;/repos</code></td></tr>
+<tr><td style="text-align: right"></td><td><code>&lt;root&gt;/downloads</code></td><td><code>&lt;data_dir&gt;/downloads</code></td></tr>
+<tr><td style="text-align: right">Env variables</td><td><code>SHELDON_ROOT</code></td><td><code>SHELDON_CONFIG_DIR</code></td></tr>
+<tr><td style="text-align: right"></td><td></td><td><code>SHELDON_DATA_DIR</code></td></tr>
+<tr><td style="text-align: right">CLI options</td><td><code>--root</code></td><td><code>--config-dir</code></td></tr>
+<tr><td style="text-align: right"></td><td></td><td><code>--data-dir</code></td></tr>
+<tr><td style="text-align: right">Template variables</td><td><code>{{ root }}</code></td><td><code>{{ data_dir }}</code></td></tr>
 </tbody></table>
 </li>
 <li>
