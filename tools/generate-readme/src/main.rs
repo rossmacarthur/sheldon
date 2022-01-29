@@ -8,7 +8,7 @@ use std::path::{Path, PathBuf};
 use anyhow::{bail, Context, Result};
 use maplit::hashmap;
 use pulldown_cmark::{CowStr, Event, LinkType, Options, Parser, Tag};
-use pulldown_cmark_to_cmark::cmark_with_options;
+use pulldown_cmark_to_cmark::{cmark_resume_with_options, Options as Options2};
 use pulldown_cmark_toc as toc;
 use regex_macro::regex;
 
@@ -30,23 +30,18 @@ fn read_to_string<P: AsRef<Path>>(path: P) -> Result<String> {
 }
 
 /// Render Markdown events as Markdown.
-fn to_cmark<'a, I, E>(events: I) -> String
+fn to_cmark<'a, I, E>(events: I) -> Result<String>
 where
     I: Iterator<Item = E>,
     E: Borrow<Event<'a>>,
 {
     let mut buf = String::new();
-    cmark_with_options(
-        events,
-        &mut buf,
-        None,
-        pulldown_cmark_to_cmark::Options {
-            code_block_backticks: 3,
-            ..Default::default()
-        },
-    )
-    .unwrap();
-    buf
+    let opts = Options2 {
+        code_block_token_count: 3,
+        ..Default::default()
+    };
+    cmark_resume_with_options(events, &mut buf, None, opts)?.finalize(&mut buf)?;
+    Ok(buf)
 }
 
 /// Returns a list of title and path links contained in the SUMMARY file.
@@ -88,10 +83,13 @@ fn fix_broken_link(dest: CowStr<'_>) -> CowStr<'_> {
 }
 
 /// Reformat a Markdown file and increase the heading level.
-fn fmt_with_increased_heading_level(text: &str) -> String {
+fn fmt_with_increased_heading_level(text: &str) -> Result<String> {
     to_cmark(
         Parser::new_ext(text, Options::all()).map(|event| match event {
-            Event::Start(Tag::Heading(level)) => Event::Start(Tag::Heading(level + 1)),
+            Event::Start(Tag::Heading(level, frag, classes)) => {
+                let level = (level as usize + 1).try_into().unwrap();
+                Event::Start(Tag::Heading(level, frag, classes))
+            }
             Event::Start(Tag::Link(link_type, dest, title)) => {
                 Event::Start(Tag::Link(link_type, fix_broken_link(dest), title))
             }
@@ -115,7 +113,7 @@ fn generate_readme_contents(summary: &[PathBuf]) -> Result<String> {
             contents.push_str("\n\n");
         }
         let text = read_to_string(&path)?;
-        contents.push_str(&fmt_with_increased_heading_level(&text));
+        contents.push_str(&fmt_with_increased_heading_level(&text)?);
     }
     Ok(contents)
 }
