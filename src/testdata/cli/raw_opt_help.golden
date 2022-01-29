@@ -19,10 +19,11 @@ OPTIONS:
     -V, --version                Print version information
 
 SUBCOMMANDS:
-    init       Initialize a new config file
-    add        Add a new plugin to the config file
-    edit       Open up the config file in the default editor
-    remove     Remove a plugin from the config file
-    lock       Install the plugins sources and generate the lock file
-    source     Generate and print out the script
-    version    Prints detailed version information
+    init           Initialize a new config file
+    add            Add a new plugin to the config file
+    edit           Open up the config file in the default editor
+    remove         Remove a plugin from the config file
+    lock           Install the plugins sources and generate the lock file
+    source         Generate and print out the script
+    completions    Generate completions for the given shell
+    version        Prints detailed version information

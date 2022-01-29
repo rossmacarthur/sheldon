@@ -3,6 +3,7 @@ name: build
 on: [push, pull_request]
 
 env:
+  CRATE: sheldon
   CARGO_TERM_COLOR: always
 
 jobs:
@@ -86,3 +87,23 @@ jobs:
 
     - name: Check README
       run: cargo run --package generate-readme -- --check
+
+  completions:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        override: true
+
+    - name: Generate completions (bash)
+      run: cargo run -- completions --shell bash > completions/$CRATE.bash
+
+    - name: Generate completions (zsh)
+      run: cargo run -- completions --shell zsh > completions/$CRATE.zsh
+
+    - name: Check up to date
+      run: git diff --no-ext-diff --exit-code -- completions/

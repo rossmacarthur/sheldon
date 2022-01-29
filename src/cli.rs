@@ -2,12 +2,14 @@
 
 use std::env;
 use std::fmt;
+use std::io;
 use std::path::PathBuf;
 use std::process;
 use std::str::FromStr;
 
 use anyhow::anyhow;
-use clap::{AppSettings, ArgGroup, Parser};
+use clap::{AppSettings, ArgGroup, IntoApp, Parser};
+use clap_complete as complete;
 use thiserror::Error;
 use url::Url;
 
@@ -137,6 +139,13 @@ enum RawCommand {
         reinstall: bool,
     },
 
+    /// Generate completions for the given shell.
+    Completions {
+        /// The type of shell, accepted values are: bash, zsh.
+        #[clap(long, value_name = "SHELL")]
+        shell: Shell,
+    },
+
     /// Prints detailed version information.
     Version,
 }
@@ -240,6 +249,15 @@ impl fmt::Display for ColorChoice {
             Self::Always => f.write_str("always"),
             Self::Auto => f.write_str("auto"),
             Self::Never => f.write_str("never"),
+        }
+    }
+}
+
+impl From<Shell> for complete::Shell {
+    fn from(s: Shell) -> Self {
+        match s {
+            Shell::Bash => complete::Shell::Bash,
+            Shell::Zsh => complete::Shell::Zsh,
         }
     }
 }
@@ -377,6 +395,12 @@ impl Opt {
             } => {
                 let (relock, mode) = LockMode::from_source_flags(relock, update, reinstall);
                 Command::Source { relock, mode }
+            }
+            RawCommand::Completions { shell } => {
+                let mut app = RawOpt::into_app();
+                let shell = complete::Shell::from(shell);
+                clap_complete::generate(shell, &mut app, build::CRATE_NAME, &mut io::stdout());
+                process::exit(0);
             }
             RawCommand::Version => {
                 println!("{} {}", build::CRATE_NAME, &*build::CRATE_VERBOSE_VERSION);

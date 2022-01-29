@@ -129,6 +129,7 @@ jobs:
           cp target/${{ matrix.target }}/release/$CRATE release/$CRATE
           cp LICENSE* release
           cp README.md release
+          cp completions release
           cd release
           tar cfz "../$archive" -- *
           cd ..
