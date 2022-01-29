@@ -999,7 +999,6 @@ dependencies = [
  "rayon",
  "regex-macro",
  "serde",
- "serde_json",
  "tempfile",
  "thiserror",
  "toml",

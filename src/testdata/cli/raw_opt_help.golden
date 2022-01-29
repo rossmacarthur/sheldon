@@ -1,9 +1,9 @@
-{name} {version}
-{authors}
-{description}
+sheldon 0.6.5
+Ross MacArthur <ross@macarthur.io>
+Fast, configurable, shell plugin manager.
 
 USAGE:
-    {name} [OPTIONS] <SUBCOMMAND>
+    sheldon [OPTIONS] <SUBCOMMAND>
 
 OPTIONS:
     -q, --quiet                  Suppress any informational output

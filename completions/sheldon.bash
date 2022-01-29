@@ -89,7 +89,7 @@ _sheldon() {
             return 0
             ;;
         sheldon__add)
-            opts="-h -V --git --gist --github --remote --local --proto --branch --rev --tag --dir --use --apply --help --version <NAME>"
+            opts="-h --git --gist --github --remote --local --proto --branch --rev --tag --dir --use --apply --help <NAME>"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -151,7 +151,7 @@ _sheldon() {
             return 0
             ;;
         sheldon__completions)
-            opts="-h -V --shell --help --version"
+            opts="-h --shell --help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -169,7 +169,7 @@ _sheldon() {
             return 0
             ;;
         sheldon__edit)
-            opts="-h -V --help --version"
+            opts="-h --help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -183,7 +183,7 @@ _sheldon() {
             return 0
             ;;
         sheldon__init)
-            opts="-h -V --shell --help --version"
+            opts="-h --shell --help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -201,7 +201,7 @@ _sheldon() {
             return 0
             ;;
         sheldon__lock)
-            opts="-h -V --update --reinstall --help --version"
+            opts="-h --update --reinstall --help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -215,7 +215,7 @@ _sheldon() {
             return 0
             ;;
         sheldon__remove)
-            opts="-h -V --help --version <NAME>"
+            opts="-h --help <NAME>"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -229,7 +229,7 @@ _sheldon() {
             return 0
             ;;
         sheldon__source)
-            opts="-h -V --relock --update --reinstall --help --version"
+            opts="-h --relock --update --reinstall --help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -243,7 +243,7 @@ _sheldon() {
             return 0
             ;;
         sheldon__version)
-            opts="-h -V --help --version"
+            opts="-h --help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0

@@ -1,6 +1,6 @@
-error: '{name}' requires a subcommand, but one was not provided
+error: 'sheldon' requires a subcommand, but one was not provided
 
 USAGE:
-    {name} [OPTIONS] <SUBCOMMAND>
+    sheldon [OPTIONS] <SUBCOMMAND>
 
 For more information try --help

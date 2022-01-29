@@ -160,7 +160,6 @@ enum RawCommand {
     global_setting = AppSettings::DeriveDisplayOrder,
     global_setting = AppSettings::DisableHelpSubcommand,
     global_setting = AppSettings::DisableColoredHelp,
-    global_setting = AppSettings::PropagateVersion,
     setting = AppSettings::SubcommandRequired,
 )]
 struct RawOpt {
@@ -503,35 +502,25 @@ mod tests {
 
     use std::iter;
 
-    use clap::{crate_authors, crate_description, crate_name};
     use pretty_assertions::assert_eq;
-    use serde_json as json;
-    use serde_json::json;
 
     fn setup() {
         for (k, _) in env::vars() {
-            if k.starts_with(&format!("{}_", crate_name!().to_uppercase())) || k.starts_with("XDG_")
+            if k.starts_with(&format!("{}_", build::CRATE_NAME.to_uppercase()))
+                || k.starts_with("XDG_")
             {
                 env::remove_var(k);
             }
         }
     }
 
-    fn ctx() -> json::Value {
-        json!({
-            "name": build::CRATE_NAME,
-            "version": build::CRATE_RELEASE,
-            "authors": crate_authors!(),
-            "description": crate_description!(),
-        })
-    }
-
     fn raw_opt(args: &[&str]) -> RawOpt {
-        RawOpt::try_parse_from(iter::once(crate_name!()).chain(args.iter().copied())).unwrap()
+        RawOpt::try_parse_from(iter::once(build::CRATE_NAME).chain(args.iter().copied())).unwrap()
     }
 
     fn raw_opt_err(args: &[&str]) -> clap::Error {
-        RawOpt::try_parse_from(iter::once(crate_name!()).chain(args.iter().copied())).unwrap_err()
+        RawOpt::try_parse_from(iter::once(build::CRATE_NAME).chain(args.iter().copied()))
+            .unwrap_err()
     }
 
     #[test]
@@ -561,7 +550,7 @@ mod tests {
         setup();
         for opt in &["-h", "--help"] {
             let err = raw_opt_err(&[opt]);
-            goldie::assert_template!(ctx(), err.to_string());
+            goldie::assert!(err.to_string());
             assert_eq!(err.kind, clap::ErrorKind::DisplayHelp);
         }
     }
@@ -638,7 +627,7 @@ mod tests {
     fn raw_opt_subcommand_required() {
         setup();
         let err = raw_opt_err(&[]);
-        goldie::assert_template!(ctx(), err.to_string());
+        goldie::assert!(err.to_string());
         assert_eq!(err.kind, clap::ErrorKind::MissingSubcommand);
     }
 
@@ -646,7 +635,7 @@ mod tests {
     fn raw_opt_init_help() {
         setup();
         let err = raw_opt_err(&["init", "--help"]);
-        goldie::assert_template!(ctx(), err.to_string());
+        goldie::assert!(err.to_string());
         assert_eq!(err.kind, clap::ErrorKind::DisplayHelp);
     }
 
@@ -663,7 +652,7 @@ mod tests {
     fn raw_opt_add_help() {
         setup();
         let err = raw_opt_err(&["add", "--help"]);
-        goldie::assert_template!(ctx(), err.to_string());
+        goldie::assert!(err.to_string());
         assert_eq!(err.kind, clap::ErrorKind::DisplayHelp);
     }
 
@@ -977,7 +966,7 @@ mod tests {
     fn raw_opt_lock_help() {
         setup();
         let err = raw_opt_err(&["lock", "--help"]);
-        goldie::assert_template!(ctx(), err.to_string());
+        goldie::assert!(err.to_string());
         assert_eq!(err.kind, clap::ErrorKind::DisplayHelp);
     }
 
@@ -994,7 +983,7 @@ mod tests {
     fn raw_opt_source_help() {
         setup();
         let err = raw_opt_err(&["source", "--help"]);
-        goldie::assert_template!(ctx(), err.to_string());
+        goldie::assert!(err.to_string());
         assert_eq!(err.kind, clap::ErrorKind::DisplayHelp);
     }
 

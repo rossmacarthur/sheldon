@@ -45,8 +45,6 @@ _arguments "${_arguments_options[@]}" \
 '--shell=[The type of shell, accepted values are: bash, zsh]:SHELL: ' \
 '-h[Print help information]' \
 '--help[Print help information]' \
-'-V[Print version information]' \
-'--version[Print version information]' \
 && ret=0
 ;;
 (add)
@@ -65,8 +63,6 @@ _arguments "${_arguments_options[@]}" \
 '*--apply=[Templates to apply to this plugin]:TEMPLATE: ' \
 '-h[Print help information]' \
 '--help[Print help information]' \
-'-V[Print version information]' \
-'--version[Print version information]' \
 ':name -- A unique name for this plugin:' \
 && ret=0
 ;;
@@ -74,16 +70,12 @@ _arguments "${_arguments_options[@]}" \
 _arguments "${_arguments_options[@]}" \
 '-h[Print help information]' \
 '--help[Print help information]' \
-'-V[Print version information]' \
-'--version[Print version information]' \
 && ret=0
 ;;
 (remove)
 _arguments "${_arguments_options[@]}" \
 '-h[Print help information]' \
 '--help[Print help information]' \
-'-V[Print version information]' \
-'--version[Print version information]' \
 ':name -- A unique name for this plugin:' \
 && ret=0
 ;;
@@ -93,8 +85,6 @@ _arguments "${_arguments_options[@]}" \
 '(--update)--reinstall[Reinstall all plugin sources]' \
 '-h[Print help information]' \
 '--help[Print help information]' \
-'-V[Print version information]' \
-'--version[Print version information]' \
 && ret=0
 ;;
 (source)
@@ -104,8 +94,6 @@ _arguments "${_arguments_options[@]}" \
 '(--update)--reinstall[Reinstall all plugin sources (implies --relock)]' \
 '-h[Print help information]' \
 '--help[Print help information]' \
-'-V[Print version information]' \
-'--version[Print version information]' \
 && ret=0
 ;;
 (completions)
@@ -113,16 +101,12 @@ _arguments "${_arguments_options[@]}" \
 '--shell=[The type of shell, accepted values are: bash, zsh]:SHELL: ' \
 '-h[Print help information]' \
 '--help[Print help information]' \
-'-V[Print version information]' \
-'--version[Print version information]' \
 && ret=0
 ;;
 (version)
 _arguments "${_arguments_options[@]}" \
 '-h[Print help information]' \
 '--help[Print help information]' \
-'-V[Print version information]' \
-'--version[Print version information]' \
 && ret=0
 ;;
         esac
