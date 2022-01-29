@@ -1,5 +1,13 @@
 # 📝 Release notes
 
+## 0.6.6
+
+*January 29th, 2022*
+
+- [Support and bundle shell completions][#129]
+
+[#129]: https://github.com/rossmacarthur/sheldon/issues/129
+
 ## 0.6.5
 
 *October 27th, 2021*
