@@ -1,5 +1,4 @@
 {name}-add {version}
-
 Add a new plugin to the config file
 
 USAGE:
@@ -7,9 +6,6 @@ USAGE:
 
 ARGS:
     <NAME>    A unique name for this plugin
-
-FLAGS:
-    -h, --help    Print help information
 
 OPTIONS:
         --git <URL>              Add a clonable Git repository
@@ -24,3 +20,5 @@ OPTIONS:
         --dir <PATH>             Which sub directory to use in this plugin
         --use <MATCH>...         Which files to use in this plugin
         --apply <TEMPLATE>...    Templates to apply to this plugin
+    -h, --help                   Print help information
+    -V, --version                Print version information

@@ -7,7 +7,7 @@ use std::process;
 use std::str::FromStr;
 
 use anyhow::anyhow;
-use clap::{AppSettings, ArgGroup, Clap};
+use clap::{AppSettings, ArgGroup, Parser};
 use thiserror::Error;
 use url::Url;
 
@@ -30,7 +30,7 @@ pub enum ColorChoice {
     Never,
 }
 
-#[derive(Debug, PartialEq, Clap)]
+#[derive(Debug, PartialEq, Parser)]
 #[clap(
     group = ArgGroup::new("plugin").required(true),
     group = ArgGroup::new("git-reference").conflicts_with_all(&["remote", "local"]),
@@ -81,15 +81,15 @@ struct Add {
     dir: Option<String>,
 
     /// Which files to use in this plugin.
-    #[clap(long = "use", value_name = "MATCH")]
+    #[clap(long = "use", value_name = "MATCH", multiple_values(true))]
     uses: Option<Vec<String>>,
 
     /// Templates to apply to this plugin.
-    #[clap(long, value_name = "TEMPLATE")]
+    #[clap(long, value_name = "TEMPLATE", multiple_values(true))]
     apply: Option<Vec<String>>,
 }
 
-#[derive(Debug, PartialEq, Clap)]
+#[derive(Debug, PartialEq, Parser)]
 enum RawCommand {
     /// Initialize a new config file.
     Init {
@@ -141,7 +141,7 @@ enum RawCommand {
     Version,
 }
 
-#[derive(Debug, PartialEq, Clap)]
+#[derive(Debug, PartialEq, Parser)]
 #[clap(
     author,
     about,
@@ -150,8 +150,8 @@ enum RawCommand {
     term_width = 120,
     global_setting = AppSettings::DeriveDisplayOrder,
     global_setting = AppSettings::DisableHelpSubcommand,
+    global_setting = AppSettings::DisableColoredHelp,
     global_setting = AppSettings::PropagateVersion,
-    global_setting = AppSettings::DisableVersionForSubcommands,
     setting = AppSettings::SubcommandRequired,
 )]
 struct RawOpt {
@@ -168,7 +168,7 @@ struct RawOpt {
     color: ColorChoice,
 
     /// The home directory.
-    #[clap(long, value_name = "PATH", hidden(true))]
+    #[clap(long, value_name = "PATH", hide(true))]
     home: Option<PathBuf>,
 
     /// The configuration directory.
