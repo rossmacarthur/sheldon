@@ -503,6 +503,7 @@ mod tests {
     use std::iter;
 
     use pretty_assertions::assert_eq;
+    use serde::Serialize;
 
     fn setup() {
         for (k, _) in env::vars() {
@@ -548,9 +549,19 @@ mod tests {
     #[test]
     fn raw_opt_help() {
         setup();
+
+        #[derive(Serialize)]
+        struct Context {
+            version: &'static str,
+        }
+
+        let ctx = Context {
+            version: build::CRATE_RELEASE,
+        };
+
         for opt in &["-h", "--help"] {
             let err = raw_opt_err(&[opt]);
-            goldie::assert!(err.to_string());
+            goldie::assert_template!(&ctx, err.to_string());
             assert_eq!(err.kind, clap::ErrorKind::DisplayHelp);
         }
     }
