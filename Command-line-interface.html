@@ -205,32 +205,70 @@ edit the config file. In the following command we remove the plugin with name
 <code>my-repo</code>.</p>
 <pre><code class="language-sh">sheldon remove my-repo
 </code></pre>
-<h2 id="flags"><a class="header" href="#flags">Flags</a></h2>
-<p>Sheldon accepts the following global command line flags.</p>
-<table><thead><tr><th>Flag</th><th>Description</th></tr></thead><tbody>
-<tr><td><code>-q</code>, <code>--quiet</code></td><td>Suppress any informational output</td></tr>
-<tr><td><code>-v</code>, <code>--verbose</code></td><td>Use verbose output</td></tr>
-<tr><td><code>-h</code>, <code>--help</code></td><td>Show the help message and exit</td></tr>
-<tr><td><code>-V</code>, <code>--version</code></td><td>Show the version and exit</td></tr>
-</tbody></table>
 <h2 id="options"><a class="header" href="#options">Options</a></h2>
-<p>Sheldon accepts the following global command line options.</p>
-<table><thead><tr><th>Option</th><th>Environment variable</th><th>Description</th></tr></thead><tbody>
-<tr><td><code>--color &lt;when&gt;</code></td><td></td><td>Output coloring: <code>always</code>, <code>auto</code>, <code>never</code>. (<em>default:</em> <code>auto</code>)</td></tr>
-<tr><td><code>--home &lt;path&gt;</code></td><td><code>HOME</code></td><td>Set the home directory. (<em>default:</em> auto)</td></tr>
-<tr><td><code>--config-dir &lt;path&gt;</code></td><td><code>SHELDON_CONFIG_DIR</code></td><td>Set the config directory. (<em>default:</em> <code>&lt;home&gt;/.sheldon</code>)</td></tr>
-<tr><td><code>--data-dir &lt;path&gt;</code></td><td><code>SHELDON_DATA_DIR</code></td><td>Set the data directory. (<em>default:</em> <code>&lt;home&gt;/.sheldon</code>)</td></tr>
-<tr><td><code>--config-file &lt;path&gt;</code></td><td><code>SHELDON_CONFIG_FILE</code></td><td>Set the config file. (<em>default:</em> <code>&lt;config_dir&gt;/plugins.toml</code>)</td></tr>
-<tr><td><code>--lock-file &lt;path&gt;</code></td><td><code>SHELDON_LOCK_FILE</code></td><td>Set the lock file. (<em>default:</em> <code>&lt;data_dir&gt;/plugins.lock</code>)</td></tr>
-<tr><td><code>--clone-dir &lt;path&gt;</code></td><td><code>SHELDON_CLONE_DIR</code></td><td>Set the clone directory. (<em>default:</em> <code>&lt;data_dir&gt;/repos</code>)</td></tr>
-<tr><td><code>--download-dir &lt;path&gt;</code></td><td><code>SHELDON_DOWNLOAD_DIR</code></td><td>Set the download directory. (<em>default:</em> <code>&lt;data_dir&gt;/downloads</code>)</td></tr>
-</tbody></table>
-<p>The priority order for setting these values is the following</p>
+<p>Sheldon accepts the following global command line options and environment
+variables. You can also view all options by running Sheldon with <code>-h</code> or
+<code>--help</code>. The value that will be used for the option follows the following
+priority.</p>
 <ol>
 <li>Command line option.</li>
 <li>Environment variable.</li>
 <li>Default value.</li>
 </ol>
+<h4 id="--color-when"><a class="header" href="#--color-when"><code>--color &lt;when&gt;</code></a></h4>
+<p>Set the output coloring.</p>
+<ul>
+<li><code>always</code>: Always use colored output.</li>
+<li><code>auto</code>: Automatically determine whether to use colored output (<em>default</em>).</li>
+<li><code>never</code>: Never use colored output.</li>
+</ul>
+<h4 id="--home-home"><a class="header" href="#--home-home"><code>--home &lt;home&gt;</code></a></h4>
+<p><em>Environment variable:</em> <code>HOME</code></p>
+<p>Set the users home directory. This is usually automatically detected but might
+be required if you are using an obscure operating system.</p>
+<h4 id="--config-dir-path"><a class="header" href="#--config-dir-path"><code>--config-dir &lt;path&gt;</code></a></h4>
+<p><em>Environment variable:</em> <code>SHELDON_CONFIG_DIR</code></p>
+<p>Set the config directory where config will store the configuration file. If
+Sheldon detects an XDG directory structure  (<a href="#xdg-directory-structure">as described
+below</a>) then this will default to
+<code>XDG_CONFIG_HOME/sheldon</code> otherwise it will default to <code>&lt;home&gt;/.sheldon</code> where
+<code>&lt;home&gt;</code> is the users home directory.</p>
+<h4 id="--data-dir-path"><a class="header" href="#--data-dir-path"><code>--data-dir &lt;path&gt;</code></a></h4>
+<p><em>Environment variable:</em> <code>SHELDON_DATA_DIR</code></p>
+<p>Set the data directory where plugins will be downloaded to. If Sheldon detects
+an XDG directory structure (<a href="#xdg-directory-structure">as described below</a>) then
+this will default to <code>XDG_DATA_HOME/sheldon</code> otherwise it will default to
+<code>&lt;home&gt;/.sheldon</code> where <code>&lt;home&gt;</code> is the users home directory.</p>
+<h4 id="--config-file-path"><a class="header" href="#--config-file-path"><code>--config-file &lt;path&gt;</code></a></h4>
+<p><em>Environment variable:</em> <code>SHELDON_CONFIG_FILE</code></p>
+<p>Set the path to the config file. This defaults to <code>&lt;config-dir&gt;/plugins.toml</code>
+where <code>&lt;config-dir&gt;</code> is the config directory.</p>
+<h4 id="--lock-file-path"><a class="header" href="#--lock-file-path"><code>--lock-file &lt;path&gt;</code></a></h4>
+<p><em>Environment variable:</em> <code>SHELDON_LOCK_FILE</code></p>
+<p>Set the path to the lock file. This defaults to <code>&lt;data-dir&gt;/plugins.lock</code> where
+<code>&lt;data-dir&gt;</code> is the data directory.</p>
+<h4 id="--clone-dir-path"><a class="header" href="#--clone-dir-path"><code>--clone-dir &lt;path&gt;</code></a></h4>
+<p><em>Environment variable:</em> <code>SHELDON_CLONE_DIR</code></p>
+<p>Set the path to the directory where Git plugins will be cloned to. This defaults
+to <code>&lt;data-dir&gt;/repos</code> where <code>&lt;data-dir&gt;</code> is the data directory.</p>
+<h4 id="--download-dir-path"><a class="header" href="#--download-dir-path"><code>--download-dir &lt;path&gt;</code></a></h4>
+<p><em>Environment variable:</em> <code>SHELDON_DOWNLOAD_DIR</code></p>
+<p>Set the path to the directory where non-Git plugins will be downloaded to. This
+defaults to <code>&lt;data-dir&gt;/repos</code> where <code>&lt;data-dir&gt;</code> is the data directory.</p>
+<h3 id="xdg-directory-structure"><a class="header" href="#xdg-directory-structure">XDG directory structure</a></h3>
+<p>If any of the following
+<a href="https://wiki.archlinux.org/title/XDG_Base_Directory">XDG</a> environment variables
+are set then the default <a href="#--config-dir-path">config</a> and
+<a href="#--data-dir-path">data</a> directories will change as specified above.</p>
+<ul>
+<li><code>XDG_CONFIG_HOME</code>, defaults to <code>&lt;home&gt;/.config</code> where <code>&lt;home&gt;</code> is the users
+home directory.</li>
+<li><code>XDG_CACHE_HOME</code></li>
+<li><code>XDG_DATA_HOME</code>, defaults to <code>&lt;home&gt;/.local/share</code> where <code>&lt;home&gt;</code> is the users
+home directory.</li>
+<li><code>XDG_DATA_DIRS</code></li>
+<li><code>XDG_CONFIG_DIRS</code></li>
+</ul>
 <h2 id="completions"><a class="header" href="#completions">Completions</a></h2>
 <p>Shell completion scripts for Bash and Zsh are available. If Sheldon was
 installed via Homebrew then the completions should have been installed
