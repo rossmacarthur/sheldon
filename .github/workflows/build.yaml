@@ -1,3 +1,17 @@
+# This is a big workflow and it contains two main processes:
+#
+# 1. Running lints and tests.
+#   - Rustfmt and Clippy checks are run against the Rust code.
+#   - The README is must be up to date.
+#   - The completions must be up to date.
+#   - Tests are run on multiple platforms and targets.
+#
+# 2. Publishing and releasing Sheldon when a tag is pushed.
+#   - Firstly we assert that the tag version matches the package version.
+#   In parallel
+#   - Publish Sheldon to Crates.io
+#   - For each platform build a release artifact and upload to the GitHub release.
+
 name: build
 
 on: [push, pull_request]
@@ -7,6 +21,11 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+
+  # ---------------------------------------------------------------------------
+  # Lint
+  # ---------------------------------------------------------------------------
+
   lint:
     strategy:
       matrix:
@@ -22,11 +41,11 @@ jobs:
       with:
         fetch-depth: 0
 
-    - uses: actions-rs/toolchain@v1
-      with:
-        toolchain: ${{ matrix.toolchain }}
-        components: rustfmt, clippy
-        override: true
+    - name: Setup Rust
+      run: |
+        rustup set profile default
+        rustup toolchain install ${{ matrix.toolchain }}
+        rustup override set ${{ matrix.toolchain }}
 
     - name: Rustfmt
       run: cargo fmt -- --check
@@ -35,26 +54,20 @@ jobs:
       continue-on-error: ${{ matrix.toolchain == 'nightly' }}
       run: cargo clippy --workspace -- -D clippy::items-after-statements -D clippy::if-not-else
 
-  test:
-    needs: lint
+  # ---------------------------------------------------------------------------
+  # Test
+  # ---------------------------------------------------------------------------
 
+  test:
     strategy:
       matrix:
         include:
-        - { os: macos-latest, target: x86_64-apple-darwin, toolchain: stable }
-        - { os: macos-latest, target: x86_64-apple-darwin, toolchain: beta }
-        - { os: macos-latest, target: x86_64-apple-darwin, toolchain: nightly }
-        - { os: ubuntu-latest, target: x86_64-unknown-linux-musl, toolchain: stable }
-        - { os: ubuntu-latest, target: x86_64-unknown-linux-musl, toolchain: beta }
-        - { os: ubuntu-latest, target: x86_64-unknown-linux-musl, toolchain: nightly }
-        - { os: ubuntu-latest, target: aarch64-unknown-linux-musl, toolchain: stable }
-        - { os: ubuntu-latest, target: aarch64-unknown-linux-musl, toolchain: beta }
-        - { os: ubuntu-latest, target: aarch64-unknown-linux-musl, toolchain: nightly }
-        - { os: ubuntu-latest, target: armv7-unknown-linux-musleabihf, toolchain: stable }
-        - { os: ubuntu-latest, target: armv7-unknown-linux-musleabihf, toolchain: beta }
-        - { os: ubuntu-latest, target: armv7-unknown-linux-musleabihf, toolchain: nightly }
+        - { os: macos-latest, target: x86_64-apple-darwin }
+        - { os: ubuntu-latest, target: x86_64-unknown-linux-musl }
+        - { os: ubuntu-latest, target: aarch64-unknown-linux-musl }
+        - { os: ubuntu-latest, target: armv7-unknown-linux-musleabihf }
 
-    name: test (${{ matrix.toolchain }}, ${{ matrix.target }})
+    name: test (${{ matrix.target }})
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -62,11 +75,11 @@ jobs:
       with:
         fetch-depth: 0
 
-    - uses: actions-rs/toolchain@v1
-      with:
-        toolchain: ${{ matrix.toolchain }}
-        profile: minimal
-        override: true
+    - name: Setup Rust
+      run: |
+        rustup set profile minimal
+        rustup toolchain install stable
+        rustup override set stable
 
     - name: Test
       continue-on-error: ${{ matrix.toolchain != 'stable' }}
@@ -74,19 +87,28 @@ jobs:
         cargo install cross
         cross test --locked --target ${{ matrix.target }}
 
+  # ---------------------------------------------------------------------------
+  # Check README
+  # ---------------------------------------------------------------------------
+
   readme:
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v2
 
-    - uses: actions-rs/toolchain@v1
-      with:
-        toolchain: stable
-        override: true
+    - name: Setup Rust
+      run: |
+        rustup set profile minimal
+        rustup toolchain install stable
+        rustup override set stable
 
     - name: Check README
       run: cargo run --package gen-readme -- --check
+
+  # ---------------------------------------------------------------------------
+  # Check completions
+  # ---------------------------------------------------------------------------
 
   completions:
     runs-on: ubuntu-latest
@@ -94,10 +116,11 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - uses: actions-rs/toolchain@v1
-      with:
-        toolchain: stable
-        override: true
+    - name: Setup Rust
+      run: |
+        rustup set profile minimal
+        rustup toolchain install stable
+        rustup override set stable
 
     - name: Generate completions (bash)
       run: cargo run -- completions --shell bash > completions/$CRATE.bash
@@ -107,3 +130,116 @@ jobs:
 
     - name: Check up to date
       run: git diff --no-ext-diff --exit-code -- completions/
+
+  # ---------------------------------------------------------------------------
+  # Check version against tag
+  # ---------------------------------------------------------------------------
+
+  prepare:
+    needs: [lint, test, readme, completions]
+    if: startsWith(github.ref, 'refs/tags/')
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Calculate version from tag
+        id: version
+        run: echo "::set-output name=value::${GITHUB_REF#refs/tags/}"
+
+      - name: Check tag against package version
+        run: grep '^version = "${{ steps.version.outputs.value }}"$' Cargo.toml
+
+  # ---------------------------------------------------------------------------
+  # Publish to Crates.io
+  # ---------------------------------------------------------------------------
+
+  publish:
+    needs: prepare
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Setup Rust
+      run: |
+        rustup set profile minimal
+        rustup toolchain install stable
+        rustup override set stable
+
+    - name: Publish
+      env:
+        CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+      run: cargo publish
+
+  # ---------------------------------------------------------------------------
+  # Release to GitHub
+  # ---------------------------------------------------------------------------
+
+  release:
+    needs: prepare
+
+    strategy:
+      matrix:
+        include:
+        - { os: macos-latest, target: x86_64-apple-darwin }
+        - { os: ubuntu-latest, target: x86_64-unknown-linux-musl, prefix: x86_64-linux-musl }
+        - { os: ubuntu-latest, target: aarch64-unknown-linux-musl, prefix: aarch64-linux-musl }
+        - { os: ubuntu-latest, target: armv7-unknown-linux-musleabihf, prefix: arm-linux-musleabihf }
+
+    name: release (${{ matrix.target }})
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Setup Rust
+        run: |
+          rustup set profile minimal
+          rustup toolchain install stable
+          rustup override set stable
+          rustup target add ${{ matrix.target }} --toolchain stable
+
+      - name: Build
+        run: |
+          cargo install cross
+          cross build --locked --release --target ${{ matrix.target }}
+
+      - name: Strip binary (macOS)
+        if: matrix.target == 'x86_64-apple-darwin'
+        run: strip target/${{ matrix.target }}/release/$CRATE
+
+      - name: Strip binary (Linux)
+        if: matrix.target != 'x86_64-apple-darwin'
+        run: |
+          docker run --rm -v $PWD/target:/target \
+            rossmacarthur/sheldon-cross:${{ matrix.target}}-0.2.1 \
+            ${{ matrix.prefix}}-strip /target/${{ matrix.target }}/release/$CRATE
+
+      - name: Calculate version from tag
+        id: version
+        run: echo "::set-output name=value::${GITHUB_REF#refs/tags/}"
+
+      - name: Archive
+        id: archive
+        run: |
+          mkdir release
+          archive=$CRATE-${{ steps.version.outputs.value }}-${{ matrix.target }}.tar.gz
+          cp target/${{ matrix.target }}/release/$CRATE release/$CRATE
+          cp LICENSE* release
+          cp README.md release
+          cp -R completions release
+          cd release
+          tar cfz "../$archive" -- *
+          cd ..
+          rm -r release
+          echo "::set-output name=path::$archive"
+
+      - uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          files: ${{ steps.archive.outputs.path }}
