@@ -86,7 +86,7 @@ jobs:
         override: true
 
     - name: Check README
-      run: cargo run --package generate-readme -- --check
+      run: cargo run --package gen-readme -- --check
 
   completions:
     runs-on: ubuntu-latest

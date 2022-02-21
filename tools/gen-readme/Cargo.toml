@@ -1,5 +1,5 @@
 [package]
-name = "generate-readme"
+name = "gen-readme"
 version = "0.0.0"
 authors = ["Ross MacArthur <ross@macarthur.io>"]
 edition = "2021"

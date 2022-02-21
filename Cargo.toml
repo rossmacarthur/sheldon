@@ -51,4 +51,4 @@ pretty_assertions = "1.0.0"
 tempfile = "3.3.0"
 
 [workspace]
-members = ["tools/generate-readme"]
+members = ["tools/gen-readme"]
