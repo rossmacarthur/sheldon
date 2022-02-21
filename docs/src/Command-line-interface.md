@@ -110,37 +110,93 @@ edit the config file. In the following command we remove the plugin with name
 sheldon remove my-repo
 ```
 
-## Flags
-
-Sheldon accepts the following global command line flags.
-
-| Flag              | Description                       |
-| ----------------- | --------------------------------- |
-| `-q`, `--quiet`   | Suppress any informational output |
-| `-v`, `--verbose` | Use verbose output                |
-| `-h`, `--help`    | Show the help message and exit    |
-| `-V`, `--version` | Show the version and exit         |
-
 ## Options
 
-Sheldon accepts the following global command line options.
-
-| Option                  | Environment variable   | Description                                                     |
-| ----------------------- | ---------------------- | --------------------------------------------------------------- |
-| `--color <when>`        |                        | Output coloring: `always`, `auto`, `never`. (*default:* `auto`) |
-| `--home <path>`         | `HOME`                 | Set the home directory. (*default:* auto)                       |
-| `--config-dir <path>`   | `SHELDON_CONFIG_DIR`   | Set the config directory. (*default:* `<home>/.sheldon`)        |
-| `--data-dir <path>`     | `SHELDON_DATA_DIR`     | Set the data directory. (*default:* `<home>/.sheldon`)          |
-| `--config-file <path>`  | `SHELDON_CONFIG_FILE`  | Set the config file. (*default:* `<config_dir>/plugins.toml`)   |
-| `--lock-file <path>`    | `SHELDON_LOCK_FILE`    | Set the lock file. (*default:* `<data_dir>/plugins.lock`)       |
-| `--clone-dir <path>`    | `SHELDON_CLONE_DIR`    | Set the clone directory. (*default:* `<data_dir>/repos`)        |
-| `--download-dir <path>` | `SHELDON_DOWNLOAD_DIR` | Set the download directory. (*default:* `<data_dir>/downloads`) |
-
-The priority order for setting these values is the following
+Sheldon accepts the following global command line options and environment
+variables. You can also view all options by running Sheldon with `-h` or
+`--help`. The value that will be used for the option follows the following
+priority.
 
 1. Command line option.
 2. Environment variable.
 3. Default value.
+
+#### `--color <when>`
+
+Set the output coloring.
+
+- `always`: Always use colored output.
+- `auto`: Automatically determine whether to use colored output (*default*).
+- `never`: Never use colored output.
+
+#### `--home <home>`
+
+*Environment variable:* `HOME`
+
+Set the users home directory. This is usually automatically detected but might
+be required if you are using an obscure operating system.
+
+#### `--config-dir <path>`
+
+*Environment variable:* `SHELDON_CONFIG_DIR`
+
+Set the config directory where config will store the configuration file. If
+Sheldon detects an XDG directory structure  ([as described
+below](#xdg-directory-structure)) then this will default to
+`XDG_CONFIG_HOME/sheldon` otherwise it will default to `<home>/.sheldon` where
+`<home>` is the users home directory.
+
+#### `--data-dir <path>`
+
+*Environment variable:* `SHELDON_DATA_DIR`
+
+Set the data directory where plugins will be downloaded to. If Sheldon detects
+an XDG directory structure ([as described below](#xdg-directory-structure)) then
+this will default to `XDG_DATA_HOME/sheldon` otherwise it will default to
+`<home>/.sheldon` where `<home>` is the users home directory.
+
+#### `--config-file <path>`
+
+*Environment variable:* `SHELDON_CONFIG_FILE`
+
+Set the path to the config file. This defaults to `<config-dir>/plugins.toml`
+where `<config-dir>` is the config directory.
+
+#### `--lock-file <path>`
+
+*Environment variable:* `SHELDON_LOCK_FILE`
+
+Set the path to the lock file. This defaults to `<data-dir>/plugins.lock` where
+`<data-dir>` is the data directory.
+
+#### `--clone-dir <path>`
+
+*Environment variable:* `SHELDON_CLONE_DIR`
+
+Set the path to the directory where Git plugins will be cloned to. This defaults
+to `<data-dir>/repos` where `<data-dir>` is the data directory.
+
+#### `--download-dir <path>`
+
+*Environment variable:* `SHELDON_DOWNLOAD_DIR`
+
+Set the path to the directory where non-Git plugins will be downloaded to. This
+defaults to `<data-dir>/repos` where `<data-dir>` is the data directory.
+
+### XDG directory structure
+
+If any of the following
+[XDG](https://wiki.archlinux.org/title/XDG_Base_Directory) environment variables
+are set then the default [config](#--config-dir-path) and
+[data](#--data-dir-path) directories will change as specified above.
+
+- `XDG_CONFIG_HOME`, defaults to `<home>/.config` where `<home>` is the users
+  home directory.
+- `XDG_CACHE_HOME`
+- `XDG_DATA_HOME`, defaults to `<home>/.local/share` where `<home>` is the users
+  home directory.
+- `XDG_DATA_DIRS`
+- `XDG_CONFIG_DIRS`
 
 ## Completions
 
