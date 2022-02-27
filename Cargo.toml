@@ -21,7 +21,7 @@ casual = "0.2.0"
 clap = { version = "3.0.13", features = ["cargo", "env", "derive"] }
 clap_complete = "3.0.5"
 curl = "0.4.42"
-fs2 = "0.4.3"
+fmutex = "0.1.0"
 git2 = { version = "0.13.25", features = ["vendored-libgit2"] }
 globwalk = "0.8.1"
 handlebars = "4.2.1"

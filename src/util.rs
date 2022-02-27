@@ -7,10 +7,7 @@ use std::path::{Path, PathBuf};
 use std::result;
 use std::time;
 
-use anyhow::{Context as ResultExt, Error, Result};
-use fs2::{lock_contended_error, FileExt};
-
-use crate::context::{Context, SettingsExt};
+use anyhow::{Error, Result};
 
 /// Returns the underlying error kind for the given error.
 pub fn underlying_io_error_kind(error: &Error) -> Option<io::ErrorKind> {
@@ -186,49 +183,6 @@ impl Drop for TempPath {
         if let Some(path) = &self.path {
             nuke_path(path).ok();
         }
-    }
-}
-
-////////////////////////////////////////////////////////////////////////////////
-// Mutex type
-////////////////////////////////////////////////////////////////////////////////
-
-#[derive(Debug)]
-pub struct Mutex(File);
-
-impl Mutex {
-    /// Create a new `Mutex` at the given path and attempt to acquire it.
-    pub fn acquire(ctx: &Context<'_>, path: &Path) -> Result<Self> {
-        let file = fs::OpenOptions::new()
-            .read(true)
-            .open(path)
-            .with_context(s!("failed to open `{}`", path.display()))?;
-
-        if let Err(e) = file.try_lock_exclusive() {
-            let msg = s!("failed to acquire file lock `{}`", path.display());
-
-            if e.raw_os_error() == lock_contended_error().raw_os_error() {
-                warning!(
-                    ctx,
-                    "Blocking",
-                    &format!(
-                        "waiting for file lock on {}",
-                        ctx.replace_home(path).display()
-                    )
-                );
-                file.lock_exclusive().with_context(msg)?;
-            } else {
-                return Err(e).with_context(msg);
-            }
-        }
-
-        Ok(Self(file))
-    }
-}
-
-impl Drop for Mutex {
-    fn drop(&mut self) {
-        self.0.unlock().ok();
     }
 }
 

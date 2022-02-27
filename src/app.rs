@@ -12,7 +12,7 @@ use crate::context::{Context, EditContext, LockContext, SettingsExt};
 use crate::edit::{self, Plugin};
 use crate::editor;
 use crate::lock::LockedConfig;
-use crate::util::{underlying_io_error_kind, Mutex, PathExt};
+use crate::util::{underlying_io_error_kind, PathExt};
 
 /// Generic function to initialize the config file.
 fn init_config(ctx: &EditContext, path: &Path, err: Error) -> Result<edit::Config> {
@@ -191,6 +191,23 @@ fn source(ctx: &LockContext, relock: bool, warnings: &mut Vec<Error>) -> Result<
     Ok(())
 }
 
+fn acquire_mutex(ctx: &Context<'_>, path: &Path) -> Result<fmutex::Guard> {
+    match fmutex::try_lock(path).with_context(s!("failed to open `{}`", path.display()))? {
+        Some(g) => Ok(g),
+        None => {
+            warning!(
+                ctx,
+                "Blocking",
+                &format!(
+                    "waiting for file lock on {}",
+                    ctx.replace_home(path).display()
+                )
+            );
+            fmutex::lock(path).with_context(s!("failed to acquire file lock `{}`", path.display()))
+        }
+    }
+}
+
 /// The main entry point to execute the application.
 pub fn run() -> Result<()> {
     let Opt {
@@ -199,12 +216,12 @@ pub fn run() -> Result<()> {
         command,
     } = Opt::from_args();
 
-    let _mutex = {
+    let _guard = {
         let ctx = Context {
             settings: &settings,
             output: &output,
         };
-        Mutex::acquire(&ctx, settings.config_dir())
+        acquire_mutex(&ctx, settings.config_dir())
     };
 
     let mut warnings = Vec::new();
