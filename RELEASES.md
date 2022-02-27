@@ -1,10 +1,18 @@
 # 📝 Release notes
 
+## 0.6.7
+
+*Unreleased*
+
+- [Fix not updating Git source branches after force pushes.](#placeholder)
+  Previously repositories that had a branch that was force pushed to wouldn't
+  be updated by `sheldon lock --update`.
+
 ## 0.6.6
 
 *January 29th, 2022*
 
-- [Support and bundle shell completions][#129]
+- [Support and bundle shell completions.][#129]
 
 [#129]: https://github.com/rossmacarthur/sheldon/issues/129
 

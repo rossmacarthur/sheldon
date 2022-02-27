@@ -242,8 +242,8 @@ pub mod git {
 
     static DEFAULT_REFSPECS: Lazy<Vec<String>> = Lazy::new(|| {
         vec_into![
-            "refs/heads/*:refs/remotes/origin/*",
-            "HEAD:refs/remotes/origin/HEAD"
+            "+refs/heads/*:refs/remotes/origin/*",
+            "+HEAD:refs/remotes/origin/HEAD"
         ]
     });
 
