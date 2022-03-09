@@ -7,15 +7,15 @@ use std::path::Path;
 use anyhow::{bail, Context as ResultExt, Error, Result};
 
 use crate::cli::{Command, Opt};
-use crate::config::Config;
+use crate::config;
+use crate::config::{EditConfig, EditPlugin};
 use crate::context::{Context, EditContext, LockContext, SettingsExt};
-use crate::edit::{self, Plugin};
 use crate::editor;
 use crate::lock::LockedConfig;
 use crate::util::{underlying_io_error_kind, PathExt};
 
 /// Generic function to initialize the config file.
-fn init_config(ctx: &EditContext, path: &Path, err: Error) -> Result<edit::Config> {
+fn init_config(ctx: &EditContext, path: &Path, err: Error) -> Result<EditConfig> {
     if underlying_io_error_kind(&err) == Some(io::ErrorKind::NotFound) {
         if !casual::confirm(format!(
             "Initialize new config file `{}`?",
@@ -29,7 +29,7 @@ fn init_config(ctx: &EditContext, path: &Path, err: Error) -> Result<edit::Confi
                 &ctx.replace_home(parent).display()
             ))?;
         }
-        Ok(edit::Config::default(ctx.shell))
+        Ok(EditConfig::default(ctx.shell))
     } else {
         Err(err)
     }
@@ -58,9 +58,9 @@ fn init(ctx: &EditContext) -> Result<()> {
 /// Executes the `add` subcommand.
 ///
 /// Add a new plugin to the config file.
-fn add(ctx: &EditContext, name: String, plugin: &Plugin) -> Result<()> {
+fn add(ctx: &EditContext, name: String, plugin: &EditPlugin) -> Result<()> {
     let path = ctx.config_file();
-    let mut config = match edit::Config::from_path(path) {
+    let mut config = match EditConfig::from_path(path) {
         Ok(config) => {
             header!(ctx, "Loaded", path);
             config
@@ -83,7 +83,7 @@ fn edit(ctx: &EditContext) -> Result<()> {
         .with_context(s!("failed to read from `{}`", path.display()))
     {
         Ok(contents) => {
-            edit::Config::from_str(&contents)?;
+            EditConfig::from_str(&contents)?;
             header!(ctx, "Loaded", path);
             contents
         }
@@ -107,7 +107,7 @@ fn edit(ctx: &EditContext) -> Result<()> {
 /// Remove a plugin from the config file.
 fn remove(ctx: &EditContext, name: String) -> Result<()> {
     let path = ctx.config_file();
-    let mut config = edit::Config::from_path(path)?;
+    let mut config = EditConfig::from_path(path)?;
     header!(ctx, "Loaded", path);
     config.remove(&name);
     status!(ctx, "Removed", &name);
@@ -120,7 +120,7 @@ fn remove(ctx: &EditContext, name: String) -> Result<()> {
 /// locked config.
 fn locked(ctx: &LockContext, warnings: &mut Vec<Error>) -> Result<LockedConfig> {
     let path = ctx.config_file();
-    let config = Config::from_path(path, warnings).context("failed to load config file")?;
+    let config = config::from_path(path, warnings).context("failed to load config file")?;
     header!(ctx, "Loaded", path);
     config.lock(ctx)
 }

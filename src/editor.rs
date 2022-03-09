@@ -10,7 +10,7 @@ use std::str;
 use anyhow::{anyhow, bail, Context as ResultExt, Result};
 use thiserror::Error;
 
-use crate::edit;
+use crate::config::EditConfig;
 use crate::util::TempPath;
 
 /// Possible environment variables.
@@ -132,7 +132,7 @@ impl Editor {
 
 impl Child {
     /// Wait for the child process to exit and then update the config file.
-    pub fn wait_and_update(self, original_contents: &str) -> Result<edit::Config> {
+    pub fn wait_and_update(self, original_contents: &str) -> Result<EditConfig> {
         let Self { mut child, temp } = self;
         let exit_status = child.wait()?;
         if exit_status.success() {
@@ -141,7 +141,7 @@ impl Child {
             if contents == original_contents {
                 bail!("aborted, no changes!");
             } else {
-                edit::Config::from_str(&contents)
+                EditConfig::from_str(&contents)
                     .context("edited config is invalid, not updating config file")
             }
         } else {

@@ -15,10 +15,9 @@ use url::Url;
 
 use crate::build;
 use crate::config::{
-    GistRepository, GitHubRepository, GitProtocol, GitReference, RawPlugin, Shell,
+    EditPlugin, GistRepository, GitHubRepository, GitProtocol, GitReference, RawPlugin, Shell,
 };
 use crate::context::{LockMode, Settings};
-use crate::edit::Plugin;
 use crate::log::{Output, Verbosity};
 
 /// Whether messages should use color output.
@@ -214,7 +213,10 @@ pub enum Command {
     /// Initialize a new config file.
     Init { shell: Option<Shell> },
     /// Add a new plugin to the config file.
-    Add { name: String, plugin: Box<Plugin> },
+    Add {
+        name: String,
+        plugin: Box<EditPlugin>,
+    },
     /// Open up the config file in the default editor.
     Edit,
     /// Remove a plugin from the config file.
@@ -308,7 +310,7 @@ impl LockMode {
     }
 }
 
-impl Plugin {
+impl EditPlugin {
     fn from_add(add: Add) -> (String, Self) {
         let Add {
             name,
@@ -375,7 +377,7 @@ impl Opt {
         let command = match command {
             RawCommand::Init { shell } => Command::Init { shell },
             RawCommand::Add(add) => {
-                let (name, plugin) = Plugin::from_add(*add);
+                let (name, plugin) = EditPlugin::from_add(*add);
                 Command::Add {
                     name,
                     plugin: Box::new(plugin),

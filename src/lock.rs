@@ -92,6 +92,14 @@ pub struct LockedConfig {
     pub errors: Vec<Error>,
 }
 
+impl Template {
+    /// Set whether this template should be applied to every file.
+    fn each(mut self, each: bool) -> Self {
+        self.each = each;
+        self
+    }
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // Lock implementations.
 ////////////////////////////////////////////////////////////////////////////////

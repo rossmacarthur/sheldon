@@ -10,31 +10,31 @@ use crate::config::{RawPlugin, Shell};
 
 /// An editable plugin.
 #[derive(Debug)]
-pub struct Plugin {
+pub struct EditPlugin {
     inner: RawPlugin,
 }
 
 /// An editable config.
 #[derive(Debug)]
-pub struct Config {
+pub struct EditConfig {
     /// The parsed TOML version of the config.
     doc: toml_edit::Document,
 }
 
-impl From<RawPlugin> for Plugin {
+impl From<RawPlugin> for EditPlugin {
     fn from(raw_plugin: RawPlugin) -> Self {
         Self { inner: raw_plugin }
     }
 }
 
-impl fmt::Display for Config {
+impl fmt::Display for EditConfig {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.doc)
     }
 }
 
-impl Config {
-    /// Returns the default `Config` for the given shell.
+impl EditConfig {
+    /// Returns the default config for the given shell.
     pub fn default(shell: Option<Shell>) -> Self {
         let config = include_str!("plugins.toml");
         match shell {
@@ -51,7 +51,7 @@ impl Config {
         }
     }
 
-    /// Read a `Config` from the given string.
+    /// Read the config from the given string.
     pub fn from_str<S>(s: S) -> Result<Self>
     where
         S: AsRef<str>,
@@ -63,7 +63,7 @@ impl Config {
         Ok(Self { doc })
     }
 
-    /// Read a `Config` from the given path.
+    /// Read the config from the given path.
     pub fn from_path<P>(path: P) -> Result<Self>
     where
         P: AsRef<Path>,
@@ -75,7 +75,7 @@ impl Config {
     }
 
     /// Add a new plugin.
-    pub fn add(&mut self, name: &str, plugin: &Plugin) -> Result<()> {
+    pub fn add(&mut self, name: &str, plugin: &EditPlugin) -> Result<()> {
         let contents =
             toml::to_string_pretty(&plugin.inner).expect("failed to serialize plugin as TOML");
 
@@ -112,7 +112,7 @@ impl Config {
         self.doc["plugins"][name] = toml_edit::Item::None;
     }
 
-    /// Write a `Config` to the given path.
+    /// Write a config to the given path.
     pub fn to_path<P>(&self, path: P) -> Result<()>
     where
         P: AsRef<Path>,
@@ -139,27 +139,27 @@ mod tests {
     use crate::config::GitReference;
 
     #[test]
-    fn config_default() {
-        Config::default(None);
+    fn edit_config_default() {
+        EditConfig::default(None);
     }
 
     #[test]
-    fn config_default_bash() {
-        Config::default(Some(Shell::Bash));
+    fn edit_config_default_bash() {
+        EditConfig::default(Some(Shell::Bash));
     }
 
     #[test]
-    fn config_default_zsh() {
-        Config::default(Some(Shell::Zsh));
+    fn edit_config_default_zsh() {
+        EditConfig::default(Some(Shell::Zsh));
     }
 
     #[test]
-    fn config_from_str_invalid() {
-        Config::from_str("x = \n").unwrap_err();
+    fn edit_config_from_str_invalid() {
+        EditConfig::from_str("x = \n").unwrap_err();
     }
 
     #[test]
-    fn config_from_path() {
+    fn edit_config_from_path() {
         let mut temp = tempfile::NamedTempFile::new().unwrap();
         write!(
             temp,
@@ -173,16 +173,16 @@ tag = "0.1.0"
         )
         .unwrap();
         let path = temp.into_temp_path();
-        Config::from_path(path).unwrap();
+        EditConfig::from_path(path).unwrap();
     }
 
     #[test]
-    fn config_empty_add_git() {
-        let mut config = Config::from_str("").unwrap();
+    fn edit_config_empty_add_git() {
+        let mut config = EditConfig::from_str("").unwrap();
         config
             .add(
                 "sheldon-test",
-                &Plugin::from(RawPlugin {
+                &EditPlugin::from(RawPlugin {
                     git: Some(Url::parse("https://github.com/rossmacarthur/sheldon-test").unwrap()),
                     reference: Some(GitReference::Branch("feature".to_string())),
                     ..Default::default()
@@ -200,12 +200,12 @@ branch = 'feature'
     }
 
     #[test]
-    fn config_empty_add_github() {
-        let mut config = Config::from_str("").unwrap();
+    fn edit_config_empty_add_github() {
+        let mut config = EditConfig::from_str("").unwrap();
         config
             .add(
                 "sheldon-test",
-                &Plugin::from(RawPlugin {
+                &EditPlugin::from(RawPlugin {
                     github: Some("rossmacarthur/sheldon-test".parse().unwrap()),
                     reference: Some(GitReference::Tag("0.1.0".to_string())),
                     ..Default::default()
@@ -223,8 +223,8 @@ tag = '0.1.0'
     }
 
     #[test]
-    fn config_others_add_git() {
-        let mut config = Config::from_str(
+    fn edit_config_others_add_git() {
+        let mut config = EditConfig::from_str(
             r#"
 # test configuration file
 apply = ["PATH", "source"]
@@ -243,7 +243,7 @@ use = ["{{ name }}.zsh"]
         config
             .add(
                 "sheldon-test",
-                &Plugin::from(RawPlugin {
+                &EditPlugin::from(RawPlugin {
                     github: Some("rossmacarthur/sheldon-test".parse().unwrap()),
                     reference: Some(GitReference::Tag("0.1.0".to_string())),
                     ..Default::default()

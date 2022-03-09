@@ -4,7 +4,6 @@ mod build;
 mod cli;
 mod config;
 mod context;
-mod edit;
 mod editor;
 mod lock;
 mod log;
