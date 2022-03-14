@@ -11,6 +11,7 @@ use crate::config;
 use crate::config::{EditConfig, EditPlugin};
 use crate::context::{Context, EditContext, LockContext, SettingsExt};
 use crate::editor;
+use crate::lock;
 use crate::lock::LockedConfig;
 use crate::util::{underlying_io_error_kind, PathExt};
 
@@ -122,7 +123,7 @@ fn locked(ctx: &LockContext, warnings: &mut Vec<Error>) -> Result<LockedConfig> 
     let path = ctx.config_file();
     let config = config::from_path(path, warnings).context("failed to load config file")?;
     header!(ctx, "Loaded", path);
-    config.lock(ctx)
+    lock::config(ctx, config)
 }
 
 /// Execute the `lock` subcommand.
@@ -157,7 +158,7 @@ fn source(ctx: &LockContext, relock: bool, warnings: &mut Vec<Error>) -> Result<
     let locked_config = if relock || config_path.newer_than(lock_path) {
         locked(ctx, warnings)?
     } else {
-        match LockedConfig::from_path(lock_path) {
+        match lock::from_path(lock_path) {
             Ok(locked_config) => {
                 if locked_config.verify(ctx) {
                     to_path = false;
@@ -172,7 +173,7 @@ fn source(ctx: &LockContext, relock: bool, warnings: &mut Vec<Error>) -> Result<
     };
 
     let script = locked_config
-        .source(ctx)
+        .script(ctx)
         .context("failed to render source")?;
 
     if to_path && locked_config.errors.is_empty() {

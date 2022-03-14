@@ -7,8 +7,8 @@ use anyhow::{anyhow, bail, Context as ResultExt, Error, Result};
 use indexmap::IndexMap;
 use url::Url;
 
-use super::{Config, ExternalPlugin, InlinePlugin, Plugin, Shell, Source, Template};
-use crate::config::raw::{GitProtocol, RawConfig, RawPlugin};
+use crate::config::file::{GitProtocol, RawConfig, RawPlugin};
+use crate::config::{Config, ExternalPlugin, InlinePlugin, Plugin, Shell, Source, Template};
 
 /// The Gist domain host.
 const GIST_HOST: &str = "gist.github.com";

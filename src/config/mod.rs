@@ -1,8 +1,8 @@
 //! The user configuration.
 
 mod edit;
+mod file;
 mod normalize;
-mod raw;
 
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -14,8 +14,7 @@ use serde::{Deserialize, Serialize};
 use url::Url;
 
 pub use crate::config::edit::{EditConfig, EditPlugin};
-use crate::config::normalize::normalize;
-pub use crate::config::raw::{GistRepository, GitHubRepository, GitProtocol, RawPlugin};
+pub use crate::config::file::{GistRepository, GitHubRepository, GitProtocol, RawPlugin};
 
 /// The user configuration.
 #[derive(Debug)]
@@ -114,5 +113,5 @@ where
     let bytes = fs::read(&path).with_context(s!("failed to read from `{}`", path.display()))?;
     let contents = String::from_utf8(bytes).context("config file contents are not valid UTF-8")?;
     let raw_config = toml::from_str(&contents).context("failed to deserialize contents as TOML")?;
-    normalize(raw_config, warnings)
+    normalize::normalize(raw_config, warnings)
 }
