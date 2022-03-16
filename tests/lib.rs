@@ -360,6 +360,7 @@ fn lock_and_source_empty() -> io::Result<()> {
 }
 
 #[test]
+#[ignore]
 fn lock_and_source_github_git() -> io::Result<()> {
     let case = TestCase::load("github_git")?;
     case.run()?;

@@ -82,7 +82,6 @@ jobs:
         rustup override set stable
 
     - name: Test
-      continue-on-error: ${{ matrix.toolchain != 'stable' }}
       run: |
         cargo install cross
         cross test --locked --target ${{ matrix.target }}

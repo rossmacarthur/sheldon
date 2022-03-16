@@ -323,7 +323,7 @@ mod tests {
             plugins: vec![Plugin::External(ExternalPlugin {
                 name: "test".to_string(),
                 source: Source::Git {
-                    url: Url::parse("git://github.com/rossmacarthur/sheldon-test").unwrap(),
+                    url: Url::parse("https://github.com/rossmacarthur/sheldon-test").unwrap(),
                     reference: None,
                 },
                 dir: None,

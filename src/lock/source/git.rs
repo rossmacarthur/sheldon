@@ -254,6 +254,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn lock_git_git_with_checkout() {
         let temp = tempfile::tempdir().expect("create temporary directory");
         let dir = temp.path();
