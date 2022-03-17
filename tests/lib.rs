@@ -664,14 +664,21 @@ fn dirs_xdg_from_env() -> io::Result<()> {
 #[test]
 fn version() -> io::Result<()> {
     let dirs = Directories::default()?;
-    let commit_hash = option_env!("GIT_COMMIT_SHORT_HASH").unwrap_or("unknown");
-    let commit_date = option_env!("GIT_COMMIT_DATE").unwrap_or("unknown");
+
+    let maybe_commit_hash = option_env!("GIT_COMMIT_SHORT_HASH");
+    let maybe_commit_date = option_env!("GIT_COMMIT_DATE");
+    let commit_info =
+        if let (Some(commit_hash), Some(commit_date)) = (maybe_commit_hash, maybe_commit_date) {
+            format!(" ({} {})", commit_hash, commit_date)
+        } else {
+            "".to_string()
+        };
+
     let expected = format!(
-        "{} {} ({} {})\n{}\n",
+        "{} {}{}\n{}\n",
         env!("CARGO_PKG_NAME"),
         env!("CARGO_PKG_VERSION"),
-        commit_hash,
-        commit_date,
+        commit_info,
         env!("RUSTC_VERSION_SUMMARY")
     );
     TestCommand::new(&dirs)
