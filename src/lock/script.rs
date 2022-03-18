@@ -1,13 +1,13 @@
 use anyhow::{Context as ResultExt, Result};
 use maplit::hashmap;
 
-use crate::context::{LockContext, SettingsExt};
+use crate::context::Context;
 use crate::lock::file::LockedPlugin;
 use crate::lock::LockedConfig;
 
 impl LockedConfig {
     /// Generate the script.
-    pub fn script(&self, ctx: &LockContext) -> Result<String> {
+    pub fn script(&self, ctx: &Context) -> Result<String> {
         // Compile the templates
         let mut templates = handlebars::Handlebars::new();
         templates.set_strict_mode(true);
@@ -31,7 +31,7 @@ impl LockedConfig {
                         // Data to use in template rendering
                         let mut data = hashmap! {
                             "data_dir" => self
-                                .settings
+                                .ctx
                                 .data_dir()
                                 .to_str()
                                 .context("data directory is not valid UTF-8")?,
@@ -65,7 +65,7 @@ impl LockedConfig {
                 LockedPlugin::Inline(plugin) => {
                     let data = hashmap! {
                         "data_dir" => self
-                            .settings
+                            .ctx
                             .data_dir()
                             .to_str()
                             .context("data directory is not valid UTF-8")?,

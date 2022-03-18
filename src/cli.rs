@@ -17,8 +17,8 @@ use crate::build;
 use crate::config::{
     EditPlugin, GistRepository, GitHubRepository, GitProtocol, GitReference, RawPlugin, Shell,
 };
-use crate::context::{LockMode, Settings};
-use crate::log::{Output, Verbosity};
+use crate::context::{log_error, Color, Context, Output, Verbosity};
+use crate::lock::LockMode;
 
 /// Whether messages should use color output.
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -222,18 +222,16 @@ pub enum Command {
     /// Remove a plugin from the config file.
     Remove { name: String },
     /// Install the plugins sources and generate the lock file.
-    Lock { mode: LockMode },
+    Lock,
     /// Generate and print out the script.
-    Source { relock: bool, mode: LockMode },
+    Source { relock: bool },
 }
 
 /// Resolved command line options with defaults set.
 #[derive(Debug)]
 pub struct Opt {
-    /// Global settings for use across the entire program.
-    pub settings: Settings,
-    /// The output style.
-    pub output: Output,
+    /// Global context for use across the entire program.
+    pub ctx: Context,
     /// The subcommand.
     pub command: Command,
 }
@@ -374,6 +372,8 @@ impl Opt {
             command,
         } = raw_opt;
 
+        let mut lock_mode = LockMode::Normal;
+
         let command = match command {
             RawCommand::Init { shell } => Command::Init { shell },
             RawCommand::Add(add) => {
@@ -386,16 +386,17 @@ impl Opt {
             RawCommand::Edit => Command::Edit,
             RawCommand::Remove { name } => Command::Remove { name },
             RawCommand::Lock { update, reinstall } => {
-                let mode = LockMode::from_lock_flags(update, reinstall);
-                Command::Lock { mode }
+                lock_mode = LockMode::from_lock_flags(update, reinstall);
+                Command::Lock
             }
             RawCommand::Source {
                 relock,
                 update,
                 reinstall,
             } => {
-                let (relock, mode) = LockMode::from_source_flags(relock, update, reinstall);
-                Command::Source { relock, mode }
+                let (relock, lm) = LockMode::from_source_flags(relock, update, reinstall);
+                lock_mode = lm;
+                Command::Source { relock }
             }
             RawCommand::Completions { shell } => {
                 let mut app = RawOpt::into_app();
@@ -430,7 +431,7 @@ impl Opt {
         }) {
             Ok(home) => home,
             Err(err) => {
-                error!(&output, &err);
+                log_error(output.no_color, Color::Red, "error", &err);
                 process::exit(1);
             }
         };
@@ -469,7 +470,7 @@ impl Opt {
         let clone_dir = clone_dir.unwrap_or_else(|| data_dir.join("repos"));
         let download_dir = download_dir.unwrap_or_else(|| data_dir.join("downloads"));
 
-        let settings = Settings {
+        let ctx = Context {
             version: build::CRATE_RELEASE.to_string(),
             home,
             config_dir,
@@ -478,13 +479,11 @@ impl Opt {
             lock_file,
             clone_dir,
             download_dir,
+            output,
+            lock_mode,
         };
 
-        Self {
-            settings,
-            output,
-            command,
-        }
+        Self { ctx, command }
     }
 
     /// Gets the struct from the command line arguments. Print the error message

@@ -1,145 +1,190 @@
 //! Contextual information.
 
+use std::fmt;
 use std::path::{Path, PathBuf};
 
+pub use ansi_term::Color;
+use anyhow::Error;
 use serde::{Deserialize, Serialize};
 
-use crate::config::Shell;
-use crate::log::Output;
+use crate::lock::LockMode;
 use crate::util::PathExt;
 
-/// Settings to use over the entire program.
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
-pub struct Settings {
-    /// The current crate version.
+pub struct Context {
     pub version: String,
-    /// The location of the home directory.
     pub home: PathBuf,
-    /// The location of the configuration directory.
     pub config_dir: PathBuf,
-    /// The location of the data directory.
     pub data_dir: PathBuf,
-    /// The location of the config file.
     pub config_file: PathBuf,
-    /// The location of the lock file.
     pub lock_file: PathBuf,
-    /// The directory to clone git sources to.
     pub clone_dir: PathBuf,
-    /// The directory to download remote plugins sources to.
     pub download_dir: PathBuf,
-}
-
-/// Contextual information to use across the entire program.
-#[derive(Debug)]
-pub struct Context<'a> {
-    /// Common data.
-    pub settings: &'a Settings,
-    /// The output style.
-    pub output: &'a Output,
-}
-
-/// Contextual information to use while running edit tasks (init, add, remove).
-#[derive(Debug)]
-pub struct EditContext {
-    /// Common data.
-    pub settings: Settings,
-    /// The output style.
+    #[serde(skip)]
     pub output: Output,
-    /// The type of shell.
-    pub shell: Option<Shell>,
+    #[serde(skip)]
+    pub lock_mode: LockMode,
 }
 
-/// Behaviour when locking a config file.
-#[derive(Debug)]
-pub enum LockMode {
-    /// Apply any changed configuration.
+/// The output style.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct Output {
+    /// The requested verbosity of output.
+    pub verbosity: Verbosity,
+    /// Whether to not use ANSI color codes.
+    pub no_color: bool,
+}
+
+/// The requested verbosity of output.
+#[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
+pub enum Verbosity {
+    Quiet,
     Normal,
-    /// Apply any changed configuration and update all plugins.
-    Update,
-    /// Apply any changed configuration and reinstall all plugins.
-    Reinstall,
+    Verbose,
 }
 
-/// Contextual information to use while running the main tasks (lock and
-/// source).
-#[derive(Debug)]
-pub struct LockContext {
-    /// Common data.
-    pub settings: Settings,
-    /// The output style.
-    pub output: Output,
-    /// The relock mode.
-    pub mode: LockMode,
+/// A message that can be logged.
+pub enum Message<'a> {
+    /// A reference to something that can be displayed.
+    Borrowed(&'a dyn fmt::Display),
+    /// An owned string.
+    Owned(String),
 }
 
-macro_rules! setting_access {
-    ($name:ident) => {
-        #[inline]
-        fn $name(&self) -> &Path {
-            self.settings().$name.as_path()
-        }
-    };
+/// A trait for converting a reference to something into a `Message`.
+pub trait ToMessage {
+    fn to_message(&self, ctx: &Context) -> Message<'_>;
 }
 
-/// Provides an interface to access `Settings` attributes.
-pub trait SettingsExt {
-    fn settings(&self) -> &Settings;
+impl Default for Verbosity {
+    fn default() -> Self {
+        Self::Normal
+    }
+}
 
-    setting_access!(home);
+impl Context {
+    /// The location of the home directory.
+    pub fn home(&self) -> &Path {
+        &self.home
+    }
 
-    setting_access!(config_dir);
+    /// The location of the configuration directory.
+    pub fn config_dir(&self) -> &Path {
+        &self.config_dir
+    }
 
-    setting_access!(data_dir);
+    /// The location of the data directory.
+    pub fn data_dir(&self) -> &Path {
+        &self.data_dir
+    }
 
-    setting_access!(config_file);
+    /// The location of the config file.
+    pub fn config_file(&self) -> &Path {
+        &self.config_file
+    }
 
-    setting_access!(lock_file);
+    /// The location of the lock file.
+    pub fn lock_file(&self) -> &Path {
+        &self.lock_file
+    }
 
-    setting_access!(clone_dir);
+    /// The directory to clone git sources to.
+    pub fn clone_dir(&self) -> &Path {
+        &self.clone_dir
+    }
 
-    setting_access!(download_dir);
+    /// The directory to download remote plugins sources to.
+    pub fn download_dir(&self) -> &Path {
+        &self.download_dir
+    }
 
     /// Expands the tilde in the given path to the configured user's home
     /// directory.
-    #[inline]
-    fn expand_tilde(&self, path: PathBuf) -> PathBuf {
+    pub fn expand_tilde(&self, path: PathBuf) -> PathBuf {
         path.expand_tilde(self.home())
     }
 
     /// Replaces the home directory in the given path with a tilde.
-    #[inline]
-    fn replace_home<P>(&self, path: P) -> PathBuf
+    pub fn replace_home<P>(&self, path: P) -> PathBuf
     where
         P: AsRef<Path>,
     {
         path.as_ref().replace_home(self.home())
     }
-}
 
-impl SettingsExt for Settings {
-    #[inline]
-    fn settings(&self) -> &Settings {
-        self
+    pub fn lock_mode(&self) -> LockMode {
+        self.lock_mode
+    }
+
+    pub fn verbosity(&self) -> Verbosity {
+        self.output.verbosity
+    }
+
+    pub fn log_header(&self, prefix: &str, msg: impl ToMessage) {
+        let msg = msg.to_message(self);
+        if self.output.no_color {
+            eprintln!("[{}] {}", prefix.to_uppercase(), msg);
+        } else {
+            eprintln!("{} {}", Color::Purple.bold().paint(prefix), msg);
+        }
+    }
+
+    pub fn log_status(&self, color: Color, prefix: &str, msg: impl ToMessage) {
+        let msg = msg.to_message(self);
+        if self.output.no_color {
+            eprintln!("{: >12} {}", format!("[{}]", prefix.to_uppercase()), msg);
+        } else {
+            eprintln!("{} {}", color.bold().paint(format!("{: >10}", prefix)), msg);
+        }
+    }
+
+    pub fn log_error(&self, color: Color, prefix: &str, err: &Error) {
+        log_error(self.output.no_color, color, prefix, err);
     }
 }
 
-impl SettingsExt for Context<'_> {
-    #[inline]
-    fn settings(&self) -> &Settings {
-        self.settings
+impl<'a> fmt::Display for Message<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match &*self {
+            Message::Borrowed(b) => fmt::Display::fmt(b, f),
+            Message::Owned(o) => fmt::Display::fmt(o, f),
+        }
     }
 }
 
-impl SettingsExt for EditContext {
-    #[inline]
-    fn settings(&self) -> &Settings {
-        &self.settings
+impl<T> ToMessage for &T
+where
+    T: fmt::Display,
+{
+    /// Anything that implements `Display` can be easily converted into a
+    /// `Message` without copying any data.
+    fn to_message(&self, _: &Context) -> Message<'_> {
+        Message::Borrowed(self)
     }
 }
 
-impl SettingsExt for LockContext {
-    #[inline]
-    fn settings(&self) -> &Settings {
-        &self.settings
+impl ToMessage for &Path {
+    /// A reference to a path is converted into a `Message` by replacing a home
+    /// path with a tilde. This implementation allocates a new `String` with the
+    /// resultant data.
+    fn to_message(&self, ctx: &Context) -> Message<'_> {
+        Message::Owned(ctx.replace_home(self).display().to_string())
+    }
+}
+
+pub fn log_error(no_color: bool, color: Color, prefix: &str, err: &Error) {
+    let pretty = err
+        .chain()
+        .map(|c| c.to_string().replace("Template error: ", ""))
+        .collect::<Vec<_>>()
+        .join("\n  due to: ");
+    if no_color {
+        eprintln!("\n[{}] {}", prefix.to_uppercase(), pretty);
+    } else {
+        eprintln!(
+            "\n{} {}",
+            color.bold().paint(format!("{}:", prefix)),
+            pretty
+        );
     }
 }

@@ -14,9 +14,26 @@ use once_cell::sync::Lazy;
 use rayon::prelude::*;
 
 use crate::config::{Config, Plugin, Shell, Template};
-use crate::context::{LockContext, SettingsExt};
+use crate::context::Context;
 pub use crate::lock::file::LockedConfig;
 use crate::lock::file::{LockedExternalPlugin, LockedPlugin};
+
+/// Behaviour when locking a config file.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum LockMode {
+    /// Apply any changed configuration.
+    Normal,
+    /// Apply any changed configuration and update all plugins.
+    Update,
+    /// Apply any changed configuration and reinstall all plugins.
+    Reinstall,
+}
+
+impl Default for LockMode {
+    fn default() -> Self {
+        Self::Normal
+    }
+}
 
 /// Read a [`LockedConfig`] from the given path.
 pub fn from_path<P>(path: P) -> Result<LockedConfig>
@@ -37,7 +54,7 @@ where
 /// This method installs all necessary remote dependencies of plugins,
 /// validates that local plugins are present, and checks that templates
 /// can compile.
-pub fn config(ctx: &LockContext, config: Config) -> Result<LockedConfig> {
+pub fn config(ctx: &Context, config: Config) -> Result<LockedConfig> {
     let Config {
         shell,
         matches,
@@ -139,7 +156,7 @@ pub fn config(ctx: &LockContext, config: Config) -> Result<LockedConfig> {
     };
 
     Ok(LockedConfig {
-        settings: ctx.settings().clone(),
+        ctx: ctx.clone(),
         templates,
         errors,
         plugins,
@@ -218,8 +235,8 @@ impl Template {
 
 impl LockedConfig {
     /// Verify that the `LockedConfig` is okay.
-    pub fn verify(&self, ctx: &LockContext) -> bool {
-        if &self.settings != ctx.settings() {
+    pub fn verify(&self, ctx: &Context) -> bool {
+        if !is_context_equal(&self.ctx, ctx) {
             return false;
         }
         for plugin in &self.plugins {
@@ -239,6 +256,17 @@ impl LockedConfig {
         }
         true
     }
+}
+
+fn is_context_equal(left: &Context, right: &Context) -> bool {
+    left.version == right.version
+        && left.home == right.home
+        && left.config_dir == right.config_dir
+        && left.data_dir == right.data_dir
+        && left.config_file == right.config_file
+        && left.lock_file == right.lock_file
+        && left.clone_dir == right.clone_dir
+        && left.download_dir == right.download_dir
 }
 
 impl LockedExternalPlugin {
@@ -262,27 +290,24 @@ mod tests {
     use std::io::prelude::*;
 
     use crate::config::{ExternalPlugin, Source};
-    use crate::context::{LockMode, Settings};
-    use crate::log::Output;
+    use crate::context::Output;
 
-    impl LockContext {
+    impl Context {
         pub fn testing(root: &Path) -> Self {
             Self {
-                settings: Settings {
-                    version: crate::build::CRATE_RELEASE.to_string(),
-                    home: "/".into(),
-                    config_file: root.join("config.toml"),
-                    lock_file: root.join("config.lock"),
-                    clone_dir: root.join("repos"),
-                    download_dir: root.join("downloads"),
-                    data_dir: root.to_path_buf(),
-                    config_dir: root.to_path_buf(),
-                },
+                version: crate::build::CRATE_RELEASE.to_string(),
+                home: "/".into(),
+                config_file: root.join("config.toml"),
+                lock_file: root.join("config.lock"),
+                clone_dir: root.join("repos"),
+                download_dir: root.join("downloads"),
+                data_dir: root.to_path_buf(),
+                config_dir: root.to_path_buf(),
                 output: Output {
-                    verbosity: crate::log::Verbosity::Quiet,
+                    verbosity: crate::context::Verbosity::Quiet,
                     no_color: true,
                 },
-                mode: LockMode::Normal,
+                lock_mode: LockMode::default(),
             }
         }
     }
@@ -291,7 +316,7 @@ mod tests {
     fn lock_config_empty() {
         let temp = tempfile::tempdir().expect("create temporary directory");
         let dir = temp.path();
-        let ctx = LockContext::testing(dir);
+        let ctx = Context::testing(dir);
         let cfg = Config {
             shell: Shell::Zsh,
             matches: None,
@@ -302,7 +327,7 @@ mod tests {
 
         let locked = config(&ctx, cfg).unwrap();
 
-        assert_eq!(&locked.settings, ctx.settings());
+        assert_eq!(locked.ctx, ctx);
         assert_eq!(locked.plugins, Vec::new());
         assert_eq!(
             locked.templates,
@@ -314,7 +339,7 @@ mod tests {
     #[test]
     fn locked_config_clean() {
         let temp = tempfile::tempdir().expect("create temporary directory");
-        let ctx = LockContext::testing(temp.path());
+        let ctx = Context::testing(temp.path());
         let cfg = Config {
             shell: Shell::Zsh,
             matches: None,

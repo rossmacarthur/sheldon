@@ -2,11 +2,11 @@ use std::path::PathBuf;
 
 use anyhow::{anyhow, Result};
 
-use crate::context::{LockContext, SettingsExt};
+use crate::context::Context;
 use crate::lock::source::LockedSource;
 
 /// Checks that a Local source directory exists.
-pub fn lock(ctx: &LockContext, dir: PathBuf) -> Result<LockedSource> {
+pub fn lock(ctx: &Context, dir: PathBuf) -> Result<LockedSource> {
     let dir = ctx.expand_tilde(dir);
 
     if dir.exists() && dir.is_dir() {
@@ -48,7 +48,7 @@ mod tests {
         let dir = temp.path();
         let _ = git_clone_sheldon_test(&temp);
 
-        let locked = lock(&LockContext::testing(dir), dir.to_path_buf()).unwrap();
+        let locked = lock(&Context::testing(dir), dir.to_path_buf()).unwrap();
 
         assert_eq!(locked.dir, dir);
         assert_eq!(locked.file, None);

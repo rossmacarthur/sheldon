@@ -5,21 +5,15 @@ use std::{fs, result};
 use anyhow::{Context as ResultExt, Error, Result};
 use walkdir::WalkDir;
 
-use crate::context::{LockContext, SettingsExt};
+use crate::context::Context;
 use crate::lock::file::LockedPlugin;
 use crate::lock::LockedConfig;
 
 impl LockedConfig {
     /// Clean the clone and download directories.
-    pub fn clean(&self, ctx: &LockContext, warnings: &mut Vec<Error>) {
-        let clean_clone_dir = self
-            .settings
-            .clone_dir()
-            .starts_with(self.settings.data_dir());
-        let clean_download_dir = self
-            .settings
-            .download_dir()
-            .starts_with(self.settings.data_dir());
+    pub fn clean(&self, ctx: &Context, warnings: &mut Vec<Error>) {
+        let clean_clone_dir = self.ctx.clone_dir().starts_with(self.ctx.data_dir());
+        let clean_download_dir = self.ctx.download_dir().starts_with(self.ctx.data_dir());
 
         if !clean_clone_dir && !clean_download_dir {
             return;
@@ -36,7 +30,7 @@ impl LockedConfig {
                 parent_dirs.extend(locked.dir().ancestors());
                 files.extend(locked.files.iter().filter_map(|f| {
                     // `files` is only used when filtering the download directory
-                    if f.starts_with(self.settings.download_dir()) {
+                    if f.starts_with(self.ctx.download_dir()) {
                         Some(f.as_path())
                     } else {
                         None
@@ -44,11 +38,11 @@ impl LockedConfig {
                 }));
             }
         }
-        parent_dirs.insert(self.settings.clone_dir());
-        parent_dirs.insert(self.settings.download_dir());
+        parent_dirs.insert(self.ctx.clone_dir());
+        parent_dirs.insert(self.ctx.download_dir());
 
         if clean_clone_dir {
-            for entry in WalkDir::new(self.settings.clone_dir())
+            for entry in WalkDir::new(self.ctx.clone_dir())
                 .into_iter()
                 .filter_entry(|e| !source_dirs.contains(e.path()))
                 .filter_map(result::Result::ok)
@@ -61,7 +55,7 @@ impl LockedConfig {
         }
 
         if clean_download_dir {
-            for entry in WalkDir::new(self.settings.download_dir())
+            for entry in WalkDir::new(self.ctx.download_dir())
                 .into_iter()
                 .filter_map(result::Result::ok)
                 .filter(|e| {
@@ -77,7 +71,7 @@ impl LockedConfig {
     }
 }
 
-fn remove_path(ctx: &LockContext, path: &Path) -> Result<()> {
+fn remove_path(ctx: &Context, path: &Path) -> Result<()> {
     let path_replace_home = ctx.replace_home(path);
     let path_display = &path_replace_home.display();
     if path

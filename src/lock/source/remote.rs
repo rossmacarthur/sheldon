@@ -4,13 +4,14 @@ use std::path::PathBuf;
 use anyhow::{Context as ResultExt, Result};
 use url::Url;
 
-use crate::context::{LockContext, LockMode};
+use crate::context::Context;
 use crate::lock::source::LockedSource;
+use crate::lock::LockMode;
 use crate::util;
 use crate::util::TempPath;
 
-pub fn lock(ctx: &LockContext, dir: PathBuf, file: PathBuf, url: &Url) -> Result<LockedSource> {
-    if matches!(ctx.mode, LockMode::Normal) && file.exists() {
+pub fn lock(ctx: &Context, dir: PathBuf, file: PathBuf, url: &Url) -> Result<LockedSource> {
+    if matches!(ctx.lock_mode(), LockMode::Normal) && file.exists() {
         status!(ctx, "Checked", &url);
         return Ok(LockedSource {
             dir,
@@ -52,7 +53,7 @@ mod tests {
         let temp = tempfile::tempdir().expect("create temporary directory");
         let dir = temp.path();
         let file = dir.join("test.txt");
-        let mut ctx = LockContext::testing(dir);
+        let mut ctx = Context::testing(dir);
         let url =
             Url::parse("https://github.com/rossmacarthur/sheldon/raw/0.3.0/LICENSE-MIT").unwrap();
 
@@ -67,7 +68,7 @@ mod tests {
 
         let modified = fs::metadata(&file).unwrap().modified().unwrap();
         thread::sleep(time::Duration::from_secs(1));
-        ctx.mode = LockMode::Reinstall;
+        ctx.lock_mode = LockMode::Reinstall;
         let locked = lock(&ctx, dir.to_path_buf(), file.clone(), &url).unwrap();
 
         assert_eq!(locked.dir, dir);

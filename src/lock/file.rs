@@ -8,14 +8,14 @@ use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 
 use crate::config::{InlinePlugin, Template};
-use crate::context::Settings;
+use crate::context::Context;
 
 /// A locked `Config`.
 #[derive(Debug, Deserialize, Serialize)]
 pub struct LockedConfig {
     /// The global context that was used to generated this `LockedConfig`.
     #[serde(flatten)]
-    pub settings: Settings,
+    pub ctx: Context,
     /// Each locked plugin.
     pub plugins: Vec<LockedPlugin>,
     /// A map of name to template.

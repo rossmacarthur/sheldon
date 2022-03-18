@@ -5,8 +5,9 @@ use anyhow::{Context as ResultExt, Result};
 use url::Url;
 
 use crate::config::GitReference;
-use crate::context::{LockContext, LockMode};
+use crate::context::Context;
 use crate::lock::source::LockedSource;
+use crate::lock::LockMode;
 use crate::util::git;
 use crate::util::TempPath;
 
@@ -23,8 +24,8 @@ pub enum GitCheckout {
 }
 
 /// Clones a Git repository and checks it out at a particular revision.
-pub fn lock(ctx: &LockContext, dir: PathBuf, url: &Url, c: GitCheckout) -> Result<LockedSource> {
-    match ctx.mode {
+pub fn lock(ctx: &Context, dir: PathBuf, url: &Url, c: GitCheckout) -> Result<LockedSource> {
+    match ctx.lock_mode() {
         LockMode::Normal => match git::open(&dir) {
             Ok(repo) => {
                 if checkout(ctx, &repo, url, c.clone()).is_err() {
@@ -49,7 +50,7 @@ pub fn lock(ctx: &LockContext, dir: PathBuf, url: &Url, c: GitCheckout) -> Resul
 
 /// Checks if a repository is correctly checked out, if not checks it out.
 fn checkout(
-    ctx: &LockContext,
+    ctx: &Context,
     repo: &git2::Repository,
     url: &Url,
     checkout: GitCheckout,
@@ -76,12 +77,7 @@ fn checkout(
     Ok(())
 }
 
-fn install(
-    ctx: &LockContext,
-    dir: PathBuf,
-    url: &Url,
-    checkout: GitCheckout,
-) -> Result<LockedSource> {
+fn install(ctx: &Context, dir: PathBuf, url: &Url, checkout: GitCheckout) -> Result<LockedSource> {
     let temp_dir =
         TempPath::new_force(&dir).context("failed to prepare temporary clone directory")?;
     let repo = git::clone(url, temp_dir.path())?;
@@ -203,7 +199,7 @@ mod tests {
     fn lock_git_and_reinstall() {
         let temp = tempfile::tempdir().expect("create temporary directory");
         let dir = temp.path();
-        let mut ctx = LockContext::testing(dir);
+        let mut ctx = Context::testing(dir);
         let url = Url::parse("https://github.com/rossmacarthur/sheldon-test").unwrap();
 
         let locked = lock(&ctx, dir.to_path_buf(), &url, GitCheckout::DefaultBranch).unwrap();
@@ -218,7 +214,7 @@ mod tests {
 
         let modified = fs::metadata(&dir).unwrap().modified().unwrap();
         thread::sleep(time::Duration::from_secs(1));
-        ctx.mode = LockMode::Reinstall;
+        ctx.lock_mode = LockMode::Reinstall;
         let locked = lock(&ctx, dir.to_path_buf(), &url, GitCheckout::DefaultBranch).unwrap();
         assert_eq!(locked.dir, dir);
         assert_eq!(locked.file, None);
@@ -236,7 +232,7 @@ mod tests {
         let dir = temp.path();
 
         let locked = lock(
-            &LockContext::testing(dir),
+            &Context::testing(dir),
             dir.to_path_buf(),
             &Url::parse("https://github.com/rossmacarthur/sheldon-test").unwrap(),
             GitCheckout::Rev("ad149784a1538291f2477fb774eeeed4f4d29e45".to_string()),
@@ -260,7 +256,7 @@ mod tests {
         let dir = temp.path();
 
         let locked = lock(
-            &LockContext::testing(dir),
+            &Context::testing(dir),
             dir.to_path_buf(),
             &Url::parse("git://github.com/rossmacarthur/sheldon-test").unwrap(),
             GitCheckout::Rev("ad149784a1538291f2477fb774eeeed4f4d29e45".to_string()),

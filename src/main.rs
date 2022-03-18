@@ -6,7 +6,6 @@ mod config;
 mod context;
 mod editor;
 mod lock;
-mod log;
 mod util;
 
 use std::panic;

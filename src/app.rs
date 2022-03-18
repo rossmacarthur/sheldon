@@ -8,15 +8,15 @@ use anyhow::{bail, Context as ResultExt, Error, Result};
 
 use crate::cli::{Command, Opt};
 use crate::config;
-use crate::config::{EditConfig, EditPlugin};
-use crate::context::{Context, EditContext, LockContext, SettingsExt};
+use crate::config::{EditConfig, EditPlugin, Shell};
+use crate::context::Context;
 use crate::editor;
 use crate::lock;
 use crate::lock::LockedConfig;
 use crate::util::{underlying_io_error_kind, PathExt};
 
 /// Generic function to initialize the config file.
-fn init_config(ctx: &EditContext, path: &Path, err: Error) -> Result<EditConfig> {
+fn init_config(ctx: &Context, shell: Option<Shell>, path: &Path, err: Error) -> Result<EditConfig> {
     if underlying_io_error_kind(&err) == Some(io::ErrorKind::NotFound) {
         if !casual::confirm(format!(
             "Initialize new config file `{}`?",
@@ -30,7 +30,7 @@ fn init_config(ctx: &EditContext, path: &Path, err: Error) -> Result<EditConfig>
                 &ctx.replace_home(parent).display()
             ))?;
         }
-        Ok(EditConfig::default(ctx.shell))
+        Ok(EditConfig::default(shell))
     } else {
         Err(err)
     }
@@ -39,7 +39,7 @@ fn init_config(ctx: &EditContext, path: &Path, err: Error) -> Result<EditConfig>
 /// Executes the `init` subcommand.
 ///
 /// Initialize a new config file.
-fn init(ctx: &EditContext) -> Result<()> {
+fn init(ctx: &Context, shell: Option<Shell>) -> Result<()> {
     let path = ctx.config_file();
     match path
         .metadata()
@@ -49,7 +49,7 @@ fn init(ctx: &EditContext) -> Result<()> {
             header!(ctx, "Already initialized", path);
         }
         Err(err) => {
-            init_config(ctx, path, err)?.to_path(path)?;
+            init_config(ctx, shell, path, err)?.to_path(path)?;
             header!(ctx, "Initialized", path);
         }
     }
@@ -59,14 +59,14 @@ fn init(ctx: &EditContext) -> Result<()> {
 /// Executes the `add` subcommand.
 ///
 /// Add a new plugin to the config file.
-fn add(ctx: &EditContext, name: String, plugin: &EditPlugin) -> Result<()> {
+fn add(ctx: &Context, name: String, plugin: &EditPlugin) -> Result<()> {
     let path = ctx.config_file();
     let mut config = match EditConfig::from_path(path) {
         Ok(config) => {
             header!(ctx, "Loaded", path);
             config
         }
-        Err(err) => init_config(ctx, path, err)?,
+        Err(err) => init_config(ctx, None, path, err)?,
     };
     config.add(&name, plugin)?;
     status!(ctx, "Added", &name);
@@ -78,7 +78,7 @@ fn add(ctx: &EditContext, name: String, plugin: &EditPlugin) -> Result<()> {
 /// Executes the `edit` subcommand.
 ///
 /// Open up the config file in the default editor.
-fn edit(ctx: &EditContext) -> Result<()> {
+fn edit(ctx: &Context) -> Result<()> {
     let path = ctx.config_file();
     let original_contents = match fs::read_to_string(path)
         .with_context(s!("failed to read from `{}`", path.display()))
@@ -89,7 +89,7 @@ fn edit(ctx: &EditContext) -> Result<()> {
             contents
         }
         Err(err) => {
-            let config = init_config(ctx, path, err)?;
+            let config = init_config(ctx, None, path, err)?;
             config.to_path(path)?;
             header!(ctx, "Initialized", path);
             config.to_string()
@@ -106,7 +106,7 @@ fn edit(ctx: &EditContext) -> Result<()> {
 /// Executes the `remove` subcommand.
 ///
 /// Remove a plugin from the config file.
-fn remove(ctx: &EditContext, name: String) -> Result<()> {
+fn remove(ctx: &Context, name: String) -> Result<()> {
     let path = ctx.config_file();
     let mut config = EditConfig::from_path(path)?;
     header!(ctx, "Loaded", path);
@@ -119,7 +119,7 @@ fn remove(ctx: &EditContext, name: String) -> Result<()> {
 
 /// Reads the config from the config file path, locks it, and returns the
 /// locked config.
-fn locked(ctx: &LockContext, warnings: &mut Vec<Error>) -> Result<LockedConfig> {
+fn locked(ctx: &Context, warnings: &mut Vec<Error>) -> Result<LockedConfig> {
     let path = ctx.config_file();
     let config = config::from_path(path, warnings).context("failed to load config file")?;
     header!(ctx, "Loaded", path);
@@ -129,7 +129,7 @@ fn locked(ctx: &LockContext, warnings: &mut Vec<Error>) -> Result<LockedConfig> 
 /// Execute the `lock` subcommand.
 ///
 /// Install the plugins sources and generate the lock file.
-fn lock(ctx: &LockContext, warnings: &mut Vec<Error>) -> Result<()> {
+fn lock(ctx: &Context, warnings: &mut Vec<Error>) -> Result<()> {
     let mut locked = locked(ctx, warnings)?;
 
     if let Some(last) = locked.errors.pop() {
@@ -149,7 +149,7 @@ fn lock(ctx: &LockContext, warnings: &mut Vec<Error>) -> Result<()> {
 /// Execute the `source` subcommand.
 ///
 /// Generate and print out the shell script.
-fn source(ctx: &LockContext, relock: bool, warnings: &mut Vec<Error>) -> Result<()> {
+fn source(ctx: &Context, warnings: &mut Vec<Error>, relock: bool) -> Result<()> {
     let config_path = ctx.config_file();
     let lock_path = ctx.lock_file();
 
@@ -192,7 +192,7 @@ fn source(ctx: &LockContext, relock: bool, warnings: &mut Vec<Error>) -> Result<
     Ok(())
 }
 
-fn acquire_mutex(ctx: &Context<'_>, path: &Path) -> Result<fmutex::Guard> {
+fn acquire_mutex(ctx: &Context, path: &Path) -> Result<fmutex::Guard> {
     match fmutex::try_lock(path).with_context(s!("failed to open `{}`", path.display()))? {
         Some(g) => Ok(g),
         None => {
@@ -211,82 +211,24 @@ fn acquire_mutex(ctx: &Context<'_>, path: &Path) -> Result<fmutex::Guard> {
 
 /// The main entry point to execute the application.
 pub fn run() -> Result<()> {
-    let Opt {
-        settings,
-        output,
-        command,
-    } = Opt::from_args();
+    let Opt { ctx, command } = Opt::from_args();
 
-    let _guard = {
-        let ctx = Context {
-            settings: &settings,
-            output: &output,
-        };
-        acquire_mutex(&ctx, settings.config_dir())
-    };
+    let _guard = { acquire_mutex(&ctx, ctx.config_dir())? };
 
     let mut warnings = Vec::new();
-
-    match command {
-        Command::Init { shell } => {
-            let ctx = EditContext {
-                settings,
-                output,
-                shell,
-            };
-            init(&ctx)
-        }
-        Command::Add { name, plugin } => {
-            let ctx = EditContext {
-                settings,
-                output,
-                shell: None,
-            };
-            add(&ctx, name, &plugin)
-        }
-        Command::Edit => {
-            let ctx = EditContext {
-                settings,
-                output,
-                shell: None,
-            };
-            edit(&ctx)
-        }
-        Command::Remove { name } => {
-            let ctx = EditContext {
-                settings,
-                output,
-                shell: None,
-            };
-            remove(&ctx, name)
-        }
-        Command::Lock { mode } => {
-            let ctx = LockContext {
-                settings,
-                output,
-                mode,
-            };
-            lock(&ctx, &mut warnings)
-        }
-        Command::Source { relock, mode } => {
-            let ctx = LockContext {
-                settings,
-                output,
-                mode,
-            };
-            source(&ctx, relock, &mut warnings)
-        }
+    let result = match command {
+        Command::Init { shell } => init(&ctx, shell),
+        Command::Add { name, plugin } => add(&ctx, name, &plugin),
+        Command::Edit => edit(&ctx),
+        Command::Remove { name } => remove(&ctx, name),
+        Command::Lock => lock(&ctx, &mut warnings),
+        Command::Source { relock } => source(&ctx, &mut warnings, relock),
+    };
+    for err in &warnings {
+        error_w!(ctx, err);
     }
-    .map(|()| {
-        for warning in &warnings {
-            error_w!(&output, warning)
-        }
-    })
-    .map_err(|err| {
-        for warning in &warnings {
-            error_w!(&output, warning)
-        }
-        error!(&output, &err);
+    result.map_err(|err| {
+        error!(ctx, &err);
         err
     })
 }

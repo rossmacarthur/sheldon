@@ -8,7 +8,7 @@ use std::path::PathBuf;
 use anyhow::{Context as ResultExt, Result};
 
 use crate::config::Source;
-use crate::context::{LockContext, SettingsExt};
+use crate::context::Context;
 use crate::lock::source::git::GitCheckout;
 
 /// A locked `Source`.
@@ -21,7 +21,7 @@ pub struct LockedSource {
 }
 
 // Install a source.
-pub fn lock(ctx: &LockContext, src: Source) -> Result<LockedSource> {
+pub fn lock(ctx: &Context, src: Source) -> Result<LockedSource> {
     match src {
         Source::Git { url, reference } => {
             let mut dir = ctx.clone_dir().to_path_buf();
@@ -120,7 +120,7 @@ mod tests {
     fn lock_with_git() {
         let temp = tempfile::tempdir().expect("create temporary directory");
         let dir = temp.path();
-        let ctx = LockContext::testing(dir);
+        let ctx = Context::testing(dir);
 
         let source = Source::Git {
             url: Url::parse("https://github.com/rossmacarthur/sheldon-test").unwrap(),
@@ -141,7 +141,7 @@ mod tests {
     fn lock_with_remote() {
         let temp = tempfile::tempdir().expect("create temporary directory");
         let dir = temp.path();
-        let ctx = LockContext::testing(dir);
+        let ctx = Context::testing(dir);
 
         let source = Source::Remote {
             url: Url::parse("https://github.com/rossmacarthur/sheldon/raw/0.3.0/LICENSE-MIT")

@@ -5,13 +5,13 @@ use indexmap::IndexMap;
 use maplit::hashmap;
 
 use crate::config::{ExternalPlugin, Source, Template};
-use crate::context::{LockContext, SettingsExt};
+use crate::context::Context;
 use crate::lock::file::LockedExternalPlugin;
 use crate::lock::source::LockedSource;
 
 /// Consume the [`ExternalPlugin`] and convert it to a [`LockedExternalPlugin`].
 pub fn lock(
-    ctx: &LockContext,
+    ctx: &Context,
     templates: &IndexMap<String, Template>,
     locked_source: LockedSource,
     global_matches: &[String],
@@ -154,7 +154,7 @@ mod tests {
     fn external_plugin_lock_git_with_uses() {
         let temp = tempfile::tempdir().expect("create temporary directory");
         let dir = temp.path();
-        let ctx = LockContext::testing(dir);
+        let ctx = Context::testing(dir);
         let plugin = ExternalPlugin {
             name: "test".to_string(),
             source: Source::Git {
@@ -194,7 +194,7 @@ mod tests {
     fn external_plugin_lock_git_with_matches() {
         let temp = tempfile::tempdir().expect("create temporary directory");
         let dir = temp.path();
-        let ctx = LockContext::testing(dir);
+        let ctx = Context::testing(dir);
         let plugin = ExternalPlugin {
             name: "test".to_string(),
             source: Source::Git {
@@ -228,7 +228,7 @@ mod tests {
     fn external_plugin_lock_git_with_matches_error() {
         let temp = tempfile::tempdir().expect("create temporary directory");
         let dir = temp.path();
-        let ctx = LockContext::testing(dir);
+        let ctx = Context::testing(dir);
         let plugin = ExternalPlugin {
             name: "test".to_string(),
             source: Source::Git {
@@ -256,7 +256,7 @@ mod tests {
     fn external_plugin_lock_git_with_matches_not_each() {
         let temp = tempfile::tempdir().expect("create temporary directory");
         let dir = temp.path();
-        let ctx = LockContext::testing(dir);
+        let ctx = Context::testing(dir);
         let plugin = ExternalPlugin {
             name: "test".to_string(),
             source: Source::Git {
@@ -290,7 +290,7 @@ mod tests {
     fn external_plugin_lock_remote() {
         let temp = tempfile::tempdir().expect("create temporary directory");
         let dir = temp.path();
-        let ctx = LockContext::testing(dir);
+        let ctx = Context::testing(dir);
         let plugin = ExternalPlugin {
             name: "test".to_string(),
             source: Source::Remote {
