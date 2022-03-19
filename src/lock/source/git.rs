@@ -214,7 +214,7 @@ mod tests {
 
         let modified = fs::metadata(&dir).unwrap().modified().unwrap();
         thread::sleep(time::Duration::from_secs(1));
-        ctx.lock_mode = LockMode::Reinstall;
+        ctx.lock_mode = Some(LockMode::Reinstall);
         let locked = lock(&ctx, dir.to_path_buf(), &url, GitCheckout::DefaultBranch).unwrap();
         assert_eq!(locked.dir, dir);
         assert_eq!(locked.file, None);

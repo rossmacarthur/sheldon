@@ -29,12 +29,6 @@ pub enum LockMode {
     Reinstall,
 }
 
-impl Default for LockMode {
-    fn default() -> Self {
-        Self::Normal
-    }
-}
-
 /// Read a [`LockedConfig`] from the given path.
 pub fn from_path<P>(path: P) -> Result<LockedConfig>
 where
@@ -308,7 +302,7 @@ mod tests {
                     verbosity: crate::context::Verbosity::Quiet,
                     no_color: true,
                 },
-                lock_mode: LockMode::default(),
+                lock_mode: None,
             }
         }
     }

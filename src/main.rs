@@ -44,7 +44,7 @@ pub fn run_command(ctx: &Context, command: Command) -> Result<()> {
     // the lock and source commands.
     let _guard = match acquire_mutex(ctx, ctx.config_dir()) {
         Ok(g) => Some(g),
-        Err(_) if !matches!(command, Command::Lock | Command::Source { .. }) => None,
+        Err(_) if !matches!(command, Command::Lock | Command::Source) => None,
         Err(err) => {
             return Err(err).context("failed to acquire lock on config directory");
         }
@@ -56,7 +56,7 @@ pub fn run_command(ctx: &Context, command: Command) -> Result<()> {
         Command::Edit => edit(ctx),
         Command::Remove { name } => remove(ctx, name),
         Command::Lock => lock(ctx, &mut warnings),
-        Command::Source { relock } => source(ctx, &mut warnings, relock),
+        Command::Source => source(ctx, &mut warnings),
     };
     for err in &warnings {
         error_w!(ctx, err);
@@ -206,13 +206,13 @@ fn lock(ctx: &Context, warnings: &mut Vec<Error>) -> Result<()> {
 /// Execute the `source` subcommand.
 ///
 /// Generate and print out the shell script.
-fn source(ctx: &Context, warnings: &mut Vec<Error>, relock: bool) -> Result<()> {
+fn source(ctx: &Context, warnings: &mut Vec<Error>) -> Result<()> {
     let config_path = ctx.config_file();
     let lock_path = ctx.lock_file();
 
     let mut to_path = true;
 
-    let locked_config = if relock || config_path.newer_than(lock_path) {
+    let locked_config = if ctx.lock_mode.is_some() || config_path.newer_than(lock_path) {
         locked(ctx, warnings)?
     } else {
         match lock::from_path(lock_path) {

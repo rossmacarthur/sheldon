@@ -55,7 +55,7 @@ pub enum Command {
     /// Install the plugins sources and generate the lock file.
     Lock,
     /// Generate and print out the script.
-    Source { relock: bool },
+    Source,
 }
 
 impl Opt {
@@ -74,7 +74,7 @@ impl Opt {
             command,
         } = raw_opt;
 
-        let mut lock_mode = LockMode::Normal;
+        let mut lock_mode = None;
 
         let command = match command {
             RawCommand::Init { shell } => Command::Init { shell },
@@ -96,9 +96,8 @@ impl Opt {
                 update,
                 reinstall,
             } => {
-                let (relock, lm) = LockMode::from_source_flags(relock, update, reinstall);
-                lock_mode = lm;
-                Command::Source { relock }
+                lock_mode = LockMode::from_source_flags(relock, update, reinstall);
+                Command::Source
             }
             RawCommand::Completions { shell } => {
                 let mut app = RawOpt::into_app();
@@ -238,20 +237,21 @@ impl EditPlugin {
 }
 
 impl LockMode {
-    fn from_lock_flags(update: bool, reinstall: bool) -> Self {
+    fn from_lock_flags(update: bool, reinstall: bool) -> Option<Self> {
         match (update, reinstall) {
-            (false, false) => Self::Normal,
-            (true, false) => Self::Update,
-            (false, true) => Self::Reinstall,
+            (false, false) => Some(Self::Normal),
+            (true, false) => Some(Self::Update),
+            (false, true) => Some(Self::Reinstall),
             (true, true) => unreachable!(),
         }
     }
 
-    fn from_source_flags(relock: bool, update: bool, reinstall: bool) -> (bool, Self) {
+    fn from_source_flags(relock: bool, update: bool, reinstall: bool) -> Option<Self> {
         match (relock, update, reinstall) {
-            (relock, false, false) => (relock, Self::Normal),
-            (_, true, false) => (true, Self::Update),
-            (_, false, true) => (true, Self::Reinstall),
+            (false, false, false) => None,
+            (true, false, false) => Some(Self::Normal),
+            (_, true, false) => Some(Self::Update),
+            (_, false, true) => Some(Self::Reinstall),
             (_, true, true) => unreachable!(),
         }
     }

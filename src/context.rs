@@ -23,7 +23,7 @@ pub struct Context {
     #[serde(skip)]
     pub output: Output,
     #[serde(skip)]
-    pub lock_mode: LockMode,
+    pub lock_mode: Option<LockMode>,
 }
 
 /// The output style.
@@ -113,7 +113,7 @@ impl Context {
     }
 
     pub fn lock_mode(&self) -> LockMode {
-        self.lock_mode
+        self.lock_mode.unwrap_or(LockMode::Normal)
     }
 
     pub fn verbosity(&self) -> Verbosity {
