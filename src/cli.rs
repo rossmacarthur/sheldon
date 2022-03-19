@@ -13,12 +13,12 @@ use clap_complete as complete;
 use thiserror::Error;
 use url::Url;
 
-use crate::build;
 use crate::config::{
     EditPlugin, GistRepository, GitHubRepository, GitProtocol, GitReference, RawPlugin, Shell,
 };
 use crate::context::{log_error, Color, Context, Output, Verbosity};
 use crate::lock::LockMode;
+use crate::util::build;
 
 /// Whether messages should use color output.
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -154,7 +154,7 @@ enum RawCommand {
     author,
     about,
     version = build::CRATE_RELEASE,
-    long_version = build::CRATE_LONG_VERSION.as_str(),
+    long_version = build::CRATE_LONG_VERSION,
     term_width = 120,
     global_setting = AppSettings::DeriveDisplayOrder,
     global_setting = AppSettings::DisableHelpSubcommand,

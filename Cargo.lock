@@ -168,6 +168,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "constcat"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "225aad0019c46b7aadfb7f4b16848160ecd8b0e8f34f90662a34434222b81ea9"
+
+[[package]]
 name = "crossbeam-channel"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -982,6 +988,7 @@ dependencies = [
  "casual",
  "clap",
  "clap_complete",
+ "constcat",
  "curl",
  "fmutex",
  "git2",

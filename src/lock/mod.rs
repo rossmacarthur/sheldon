@@ -291,11 +291,12 @@ mod tests {
 
     use crate::config::{ExternalPlugin, Source};
     use crate::context::Output;
+    use crate::util::build;
 
     impl Context {
         pub fn testing(root: &Path) -> Self {
             Self {
-                version: crate::build::CRATE_RELEASE.to_string(),
+                version: build::CRATE_RELEASE.to_string(),
                 home: "/".into(),
                 config_file: root.join("config.toml"),
                 lock_file: root.join("config.lock"),

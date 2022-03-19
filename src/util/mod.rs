@@ -1,3 +1,4 @@
+pub mod build;
 pub mod git;
 mod path_ext;
 mod temp;
