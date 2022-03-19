@@ -6,6 +6,7 @@ use std::path::Path;
 
 use anyhow::{bail, Context as ResultExt, Error, Result};
 
+use crate::cli;
 use crate::cli::{Command, Opt};
 use crate::config;
 use crate::config::{EditConfig, EditPlugin, Shell};
@@ -211,7 +212,7 @@ fn acquire_mutex(ctx: &Context, path: &Path) -> Result<fmutex::Guard> {
 
 /// The main entry point to execute the application.
 pub fn run() -> Result<()> {
-    let Opt { ctx, command } = Opt::from_args();
+    let Opt { ctx, command } = cli::from_args();
 
     let _guard = { acquire_mutex(&ctx, ctx.config_dir())? };
 
