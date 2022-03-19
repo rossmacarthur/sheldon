@@ -1,5 +1,4 @@
 //! General purpose macros.
-#![macro_use]
 
 /// Generate a lazy format!.
 macro_rules! s {
