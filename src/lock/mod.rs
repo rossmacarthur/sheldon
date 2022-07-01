@@ -83,8 +83,8 @@ pub fn config(ctx: &Context, config: Config) -> Result<LockedConfig> {
             None => true,
             Some(ref profiles) => match profile {
                 Err(_) => false,
-                Ok(ref profile) => profiles.contains(profile)
-            }
+                Ok(ref profile) => profiles.contains(profile),
+            },
         };
         if profile_matches {
             map.entry(plugin.source.clone())
