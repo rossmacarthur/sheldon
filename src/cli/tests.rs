@@ -215,6 +215,7 @@ fn raw_opt_add_git_with_options() {
             dir: Some("missing".into()),
             uses: Some(vec_into!["{name}.sh", "*.zsh"]),
             apply: Some(vec_into!["something", "another-thing"]),
+            profiles: None,
         }))
     );
 }
@@ -256,6 +257,7 @@ fn raw_opt_add_gist_options() {
             dir: Some("missing".into()),
             uses: Some(vec_into!["{name}.sh", "*.zsh"]),
             apply: Some(vec_into!["something", "another-thing"]),
+            profiles: None,
         }))
     );
 }
@@ -297,6 +299,7 @@ fn raw_opt_add_github_options() {
             dir: Some("missing".into()),
             uses: Some(vec_into!["{name}.sh", "*.zsh"]),
             apply: Some(vec_into!["something", "another-thing"]),
+            profiles: None,
         }))
     );
 }
@@ -332,6 +335,7 @@ fn raw_opt_add_remote_options() {
             dir: None,
             uses: Some(vec_into!["{name}.sh", "*.zsh"]),
             apply: Some(vec_into!["something", "another-thing"]),
+            profiles: None,
         }))
     );
 }
@@ -367,6 +371,7 @@ fn raw_opt_add_local_options() {
             dir: None,
             uses: Some(vec_into!["{name}.sh", "*.zsh"]),
             apply: Some(vec_into!["something", "another-thing"]),
+            profiles: None,
         }))
     );
 }

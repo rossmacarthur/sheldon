@@ -204,6 +204,7 @@ impl EditPlugin {
             dir,
             uses,
             apply,
+            profiles,
         } = add;
 
         let reference = match (branch, rev, tag) {
@@ -230,6 +231,7 @@ impl EditPlugin {
                 dir,
                 uses,
                 apply,
+                profiles,
                 rest: None,
             }),
         )

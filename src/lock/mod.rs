@@ -77,10 +77,20 @@ pub fn config(ctx: &Context, config: Config) -> Result<LockedConfig> {
 
     // Create a map of unique `Source` to `Vec<Plugin>`
     let mut map = IndexMap::new();
+    let profile = std::env::var("SHELDON_PROFILE");
     for (index, plugin) in externals {
-        map.entry(plugin.source.clone())
-            .or_insert_with(|| Vec::with_capacity(1))
-            .push((index, plugin));
+        let profile_matches = match plugin.profiles {
+            None => true,
+            Some(ref profiles) => match profile {
+                Err(_) => false,
+                Ok(ref profile) => profiles.contains(profile)
+            }
+        };
+        if profile_matches {
+            map.entry(plugin.source.clone())
+                .or_insert_with(|| Vec::with_capacity(1))
+                .push((index, plugin));
+        }
     }
 
     let matches = &matches.as_ref().unwrap_or_else(|| shell.default_matches());
@@ -349,6 +359,7 @@ mod tests {
                 dir: None,
                 uses: None,
                 apply: None,
+                profiles: None,
             })],
         };
         let locked = config(&ctx, cfg).unwrap();

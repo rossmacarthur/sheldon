@@ -88,6 +88,7 @@ fn normalize_plugin(
         dir,
         uses,
         apply,
+        profiles,
         mut rest,
     } = raw_plugin;
 
@@ -171,6 +172,7 @@ fn normalize_plugin(
                 dir,
                 uses,
                 apply,
+                profiles,
             }))
         }
         TempSource::Inline(raw) => {
@@ -309,6 +311,7 @@ mod tests {
             dir: None,
             uses: None,
             apply: None,
+            profiles: None,
         });
         let raw_plugin = RawPlugin {
             git: Some(url),
@@ -340,6 +343,7 @@ mod tests {
             dir: None,
             uses: None,
             apply: None,
+            profiles: None,
         });
         let raw_plugin = RawPlugin {
             gist: Some(
@@ -374,6 +378,7 @@ mod tests {
             dir: None,
             uses: None,
             apply: None,
+            profiles: None,
         });
         let raw_plugin = RawPlugin {
             gist: Some("579d02802b1cc17baed07753d09f5009".parse().unwrap()),
@@ -405,6 +410,7 @@ mod tests {
             dir: None,
             uses: None,
             apply: None,
+            profiles: None,
         });
         let raw_plugin = RawPlugin {
             gist: Some(
@@ -438,6 +444,7 @@ mod tests {
             dir: None,
             uses: None,
             apply: None,
+            profiles: None,
         });
         let raw_plugin = RawPlugin {
             github: Some(GitHubRepository {
@@ -470,6 +477,7 @@ mod tests {
             dir: None,
             uses: None,
             apply: None,
+            profiles: None,
         });
         let raw_plugin = RawPlugin {
             github: Some(GitHubRepository {
@@ -501,6 +509,7 @@ mod tests {
             dir: None,
             uses: None,
             apply: None,
+            profiles: None,
         });
         let raw_plugin = RawPlugin {
             github: Some(GitHubRepository {
@@ -533,6 +542,7 @@ mod tests {
             dir: None,
             uses: None,
             apply: None,
+            profiles: None,
         });
         let raw_plugin = RawPlugin {
             remote: Some(url),
@@ -612,6 +622,7 @@ mod tests {
             dir: None,
             uses: None,
             apply: None,
+            profiles: None,
         });
         let raw_plugin = RawPlugin {
             local: Some("/home/temp".into()),

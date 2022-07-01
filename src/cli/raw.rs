@@ -182,6 +182,11 @@ pub struct Add {
     /// Templates to apply to this plugin.
     #[clap(long, value_name = "TEMPLATE", multiple_values(true))]
     pub apply: Option<Vec<String>>,
+
+    /// Only use this plugin if one of the given profiles matches
+    /// the SHELDON_PROFILE environment variable.
+    #[clap(long, value_name = "PROFILES", multiple_values(true))]
+    pub profiles: Option<Vec<String>>,
 }
 
 impl From<Shell> for complete::Shell {

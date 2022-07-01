@@ -70,6 +70,9 @@ pub struct RawPlugin {
     /// What templates to apply to each matched file. If this is `None` then the
     /// default templates will be applied.
     pub apply: Option<Vec<String>>,
+    /// If configured, only installs this plugin if one of the given profiles is
+    /// set in the SHELDON_PROFILE environment variable.
+    pub profiles: Option<Vec<String>>,
     /// Any extra keys,
     #[serde(flatten, deserialize_with = "deserialize_rest_toml_value")]
     pub rest: Option<toml::Value>,

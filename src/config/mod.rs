@@ -67,6 +67,9 @@ pub struct ExternalPlugin {
     pub uses: Option<Vec<String>>,
     /// What templates to apply to each matched file.
     pub apply: Option<Vec<String>>,
+    /// If configured, only installs this plugin if one of the given profiles is
+    /// set in the SHELDON_PROFILE environment variable.
+    pub profiles: Option<Vec<String>>,
 }
 
 /// The source for a [`Plugin`].
