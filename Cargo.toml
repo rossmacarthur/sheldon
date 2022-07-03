@@ -13,6 +13,9 @@ categories = ["command-line-utilities"]
 build = "build.rs"
 include = ["src/**/*", "LICENSE-*", "README.md", "build.rs"]
 
+[package.metadata.binstall]
+pkg-url = "{ repo }/releases/download/{ version }/sheldon-{ version }-{ target }.tar.gz"
+
 [dependencies]
 ansi_term = "0.12.1"
 anyhow = "1.0.53"
