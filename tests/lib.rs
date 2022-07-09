@@ -688,3 +688,28 @@ fn version() -> io::Result<()> {
         .run()?;
     Ok(())
 }
+
+#[test]
+fn lock_and_source_profiles() -> io::Result<()> {
+    let case = TestCase::load("profiles")?;
+    case.write_config_file("plugins.toml")?;
+    TestCommand::new(&case.dirs)
+        .expect_exit_code(0)
+        .expect_stdout(case.get(format!("{}.stdout", "lock")))
+        .expect_stderr(case.get(format!("{}.stderr", "lock")))
+        .arg("--profile")
+        .arg("p1")
+        .arg("lock")
+        .run()?;
+    case.assert_contents("plugins.lock")?;
+    TestCommand::new(&case.dirs)
+        .expect_exit_code(0)
+        .expect_stdout(case.get(format!("{}.stdout", "source")))
+        .expect_stderr(case.get(format!("{}.stderr", "source")))
+        .arg("--profile")
+        .arg("p1")
+        .arg("source")
+        .run()?;
+    check_sheldon_test(&case.dirs.data).unwrap();
+    Ok(())
+}

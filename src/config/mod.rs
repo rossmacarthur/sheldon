@@ -3,6 +3,7 @@
 mod edit;
 mod file;
 mod normalize;
+mod profile;
 
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -15,6 +16,7 @@ use url::Url;
 
 pub use crate::config::edit::{EditConfig, EditPlugin};
 pub use crate::config::file::{GistRepository, GitHubRepository, GitProtocol, RawPlugin};
+pub use crate::config::profile::MatchesProfile;
 
 /// The user configuration.
 #[derive(Debug)]
@@ -67,8 +69,7 @@ pub struct ExternalPlugin {
     pub uses: Option<Vec<String>>,
     /// What templates to apply to each matched file.
     pub apply: Option<Vec<String>>,
-    /// If configured, only installs this plugin if one of the given profiles is
-    /// set in the SHELDON_PROFILE environment variable.
+    /// Only use this plugin under one of the given profiles
     pub profiles: Option<Vec<String>>,
 }
 
@@ -105,6 +106,8 @@ pub struct InlinePlugin {
     pub name: String,
     /// The actual source.
     pub raw: String,
+    /// Only use this plugin under one of the given profiles
+    pub profiles: Option<Vec<String>>,
 }
 
 /// Load a [`Config`] from the given path.

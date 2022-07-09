@@ -13,7 +13,7 @@ use itertools::{Either, Itertools};
 use once_cell::sync::Lazy;
 use rayon::prelude::*;
 
-use crate::config::{Config, Plugin, Shell, Template};
+use crate::config::{Config, MatchesProfile, Plugin, Shell, Template};
 use crate::context::Context;
 pub use crate::lock::file::LockedConfig;
 use crate::lock::file::{LockedExternalPlugin, LockedPlugin};
@@ -74,23 +74,20 @@ pub fn config(ctx: &Context, config: Config) -> Result<LockedConfig> {
                 Plugin::External(plugin) => Either::Left((index, plugin)),
                 Plugin::Inline(plugin) => Either::Right((index, LockedPlugin::Inline(plugin))),
             });
+    let inlines: Vec<_> = inlines
+        .into_iter()
+        .filter(|(_, p)| match p {
+            LockedPlugin::External(_) => true,
+            LockedPlugin::Inline(p) => p.matches_profile(ctx),
+        })
+        .collect();
 
     // Create a map of unique `Source` to `Vec<Plugin>`
     let mut map = IndexMap::new();
-    let profile = std::env::var("SHELDON_PROFILE");
     for (index, plugin) in externals {
-        let profile_matches = match plugin.profiles {
-            None => true,
-            Some(ref profiles) => match profile {
-                Err(_) => false,
-                Ok(ref profile) => profiles.contains(profile),
-            },
-        };
-        if profile_matches {
-            map.entry(plugin.source.clone())
-                .or_insert_with(|| Vec::with_capacity(1))
-                .push((index, plugin));
-        }
+        map.entry(plugin.source.clone())
+            .or_insert_with(|| Vec::with_capacity(1))
+            .push((index, plugin));
     }
 
     let matches = &matches.as_ref().unwrap_or_else(|| shell.default_matches());
@@ -109,19 +106,28 @@ pub fn config(ctx: &Context, config: Config) -> Result<LockedConfig> {
         map.into_par_iter()
             .map(|(source, plugins)| {
                 let source_name = source.to_string();
+                let plugins: Vec<_> = plugins
+                    .into_iter()
+                    .filter(|(_, p)| p.matches_profile(ctx))
+                    .collect();
 
-                let source = source::lock(ctx, source)
-                    .with_context(s!("failed to install source `{}`", source_name))?;
+                if plugins.is_empty() {
+                    status!(ctx, "Skipped", &source_name);
+                    Ok(vec![])
+                } else {
+                    let source = source::lock(ctx, source)
+                        .with_context(s!("failed to install source `{}`", source_name))?;
 
-                let mut locked = Vec::with_capacity(plugins.len());
-                for (index, plugin) in plugins {
-                    let name = plugin.name.clone();
-                    let plugin =
-                        plugin::lock(ctx, &templates, source.clone(), matches, apply, plugin)
-                            .with_context(s!("failed to install plugin `{}`", name));
-                    locked.push((index, plugin));
+                    let mut locked = Vec::with_capacity(plugins.len());
+                    for (index, plugin) in plugins {
+                        let name = plugin.name.clone();
+                        let plugin =
+                            plugin::lock(ctx, &templates, source.clone(), matches, apply, plugin)
+                                .with_context(s!("failed to install plugin `{}`", name));
+                        locked.push((index, plugin));
+                    }
+                    Ok(locked)
                 }
-                Ok(locked)
             })
             // The result of this is basically an `Iter<Result<Vec<(usize, Result)>, _>>`
             // The first thing we need to do is to filter out the failures and record the
@@ -271,6 +277,7 @@ fn is_context_equal(left: &Context, right: &Context) -> bool {
         && left.lock_file == right.lock_file
         && left.clone_dir == right.clone_dir
         && left.download_dir == right.download_dir
+        && left.profile == right.profile
 }
 
 impl LockedExternalPlugin {
@@ -308,6 +315,7 @@ mod tests {
                 download_dir: root.join("downloads"),
                 data_dir: root.to_path_buf(),
                 config_dir: root.to_path_buf(),
+                profile: Some("profile".into()),
                 output: Output {
                     verbosity: crate::context::Verbosity::Quiet,
                     no_color: true,

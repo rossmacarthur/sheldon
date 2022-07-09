@@ -82,6 +82,7 @@ fn raw_opt_no_options() {
             lock_file: None,
             clone_dir: None,
             download_dir: None,
+            profile: None,
             command: RawCommand::Lock {
                 update: false,
                 reinstall: false
@@ -113,6 +114,8 @@ fn raw_opt_options() {
             "/repos",
             "--download-dir",
             "/downloads",
+            "--profile",
+            "profile",
             "lock",
         ]),
         RawOpt {
@@ -126,6 +129,7 @@ fn raw_opt_options() {
             lock_file: Some("/test/plugins.lock".into()),
             clone_dir: Some("/repos".into()),
             download_dir: Some("/downloads".into()),
+            profile: Some("profile".into()),
             command: RawCommand::Lock {
                 update: false,
                 reinstall: false

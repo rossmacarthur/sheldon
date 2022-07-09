@@ -61,6 +61,10 @@ pub struct RawOpt {
     #[clap(long, value_name = "PATH", env = "SHELDON_DOWNLOAD_DIR")]
     pub download_dir: Option<PathBuf>,
 
+    /// The profile used for conditional plugins.
+    #[clap(long, value_name = "PROFILE", env = "SHELDON_PROFILE")]
+    pub profile: Option<String>,
+
     /// The subcommand to run.
     #[clap(subcommand)]
     pub command: RawCommand,
@@ -183,8 +187,7 @@ pub struct Add {
     #[clap(long, value_name = "TEMPLATE", multiple_values(true))]
     pub apply: Option<Vec<String>>,
 
-    /// Only use this plugin if one of the given profiles matches
-    /// the SHELDON_PROFILE environment variable.
+    /// Only use this plugin under one of the given profiles
     #[clap(long, value_name = "PROFILES", multiple_values(true))]
     pub profiles: Option<Vec<String>>,
 }

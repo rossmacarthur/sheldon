@@ -15,6 +15,7 @@ OPTIONS:
         --lock-file <PATH>       The lock file [env: SHELDON_LOCK_FILE=]
         --clone-dir <PATH>       The directory where git sources are cloned to [env: SHELDON_CLONE_DIR=]
         --download-dir <PATH>    The directory where remote sources are downloaded to [env: SHELDON_DOWNLOAD_DIR=]
+        --profile <PROFILE>      The profile used for conditional plugins [env: SHELDON_PROFILE=]
     -h, --help                   Print help information
     -V, --version                Print version information
 

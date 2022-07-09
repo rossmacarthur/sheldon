@@ -604,4 +604,14 @@ mod tests {
         let plugin: RawPlugin = toml::from_str("github = 'rossmacarthur/sheldon-test'").unwrap();
         assert_eq!(plugin, expected);
     }
+
+    #[test]
+    fn raw_plugin_deserialize_profiles() {
+        let expected = RawPlugin {
+            profiles: Some(vec!["p1".into(), "p2".into()]),
+            ..Default::default()
+        };
+        let plugin: RawPlugin = toml::from_str("profiles = ['p1', 'p2']").unwrap();
+        assert_eq!(plugin, expected);
+    }
 }

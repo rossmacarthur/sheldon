@@ -20,6 +20,5 @@ OPTIONS:
         --dir <PATH>                Which sub directory to use in this plugin
         --use <MATCH>...            Which files to use in this plugin
         --apply <TEMPLATE>...       Templates to apply to this plugin
-        --profiles <PROFILES>...    Only use this plugin if one of the given profiles matches the SHELDON_PROFILE
-                                    environment variable
+        --profiles <PROFILES>...    Only use this plugin under one of the given profiles
     -h, --help                      Print help information

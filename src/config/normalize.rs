@@ -188,7 +188,11 @@ fn normalize_plugin(
                     bail!("the {} not supported by inline plugins", field);
                 }
             }
-            Ok(Plugin::Inline(InlinePlugin { name, raw }))
+            Ok(Plugin::Inline(InlinePlugin {
+                name,
+                raw,
+                profiles,
+            }))
         }
     }
 }
@@ -645,6 +649,7 @@ mod tests {
         let expected = Plugin::Inline(InlinePlugin {
             name: name.clone(),
             raw: "echo 'this is a test'\n".to_string(),
+            profiles: None,
         });
         let raw_plugin = RawPlugin {
             inline: Some("echo 'this is a test'\n".to_string()),
