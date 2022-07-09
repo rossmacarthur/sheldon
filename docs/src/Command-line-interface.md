@@ -183,6 +183,14 @@ to `<data-dir>/repos` where `<data-dir>` is the data directory.
 Set the path to the directory where non-Git plugins will be downloaded to. This
 defaults to `<data-dir>/repos` where `<data-dir>` is the data directory.
 
+#### `--profile <profile>`
+
+Environment variable:* `SHELDON_PROFILE`
+
+Specify the profile to match plugins against. Plugins which have
+[profiles](Configuration.md#profiles) configured will only get loaded if one of
+the given profiles matches the profile.
+
 ### XDG directory structure
 
 If any of the following
