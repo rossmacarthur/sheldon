@@ -9,9 +9,9 @@ pub trait MatchesProfile {
     fn matches_profile(&self, ctx: &Context) -> bool {
         match self.profiles() {
             None => true,
-            Some(ref profiles) => match ctx.profile {
+            Some(profiles) => match &ctx.profile {
                 None => false,
-                Some(ref profile) => profiles.contains(profile),
+                Some(profile) => profiles.contains(profile),
             },
         }
     }

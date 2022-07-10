@@ -74,7 +74,10 @@ pub fn config(ctx: &Context, config: Config) -> Result<LockedConfig> {
                 Plugin::External(plugin) => Either::Left((index, plugin)),
                 Plugin::Inline(plugin) => Either::Right((index, plugin)),
             });
-    let inlines = inlines.into_iter().filter_map(|p| p.matches_profile(ctx).then(LockedPlugin::Inline));
+    let inlines = inlines
+        .into_iter()
+        .filter(|(_, p)| p.matches_profile(ctx))
+        .map(|(i, p)| (i, LockedPlugin::Inline(p)));
 
     // Create a map of unique `Source` to `Vec<Plugin>`
     let mut map = IndexMap::new();
