@@ -4,7 +4,7 @@ use crate::config::{ExternalPlugin, InlinePlugin};
 use crate::Context;
 
 pub trait MatchesProfile {
-    fn profiles(&self) -> &Option<Vec<String>>;
+    fn profiles(&self) -> Option<&[String]>;
 
     fn matches_profile(&self, ctx: &Context) -> bool {
         match self.profiles() {
@@ -18,13 +18,13 @@ pub trait MatchesProfile {
 }
 
 impl MatchesProfile for &ExternalPlugin {
-    fn profiles(&self) -> &Option<Vec<String>> {
-        &self.profiles
+    fn profiles(&self) -> Option<&[String]> {
+        self.profiles.as_deref()
     }
 }
 
 impl MatchesProfile for &InlinePlugin {
-    fn profiles(&self) -> &Option<Vec<String>> {
-        &self.profiles
+    fn profiles(&self) -> Option<&[String]> {
+        self.profiles.as_deref()
     }
 }

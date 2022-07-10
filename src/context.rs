@@ -100,8 +100,8 @@ impl Context {
     }
 
     /// The profile used for conditional plugins.
-    pub fn profile(&self) -> &Option<String> {
-        &self.profile
+    pub fn profile(&self) -> Option<&str> {
+        self.profile.as_deref()
     }
 
     /// Expands the tilde in the given path to the configured user's home
