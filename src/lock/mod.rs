@@ -72,7 +72,7 @@ pub fn config(ctx: &Context, config: Config) -> Result<LockedConfig> {
             .enumerate()
             .partition_map(|(index, plugin)| match plugin {
                 Plugin::External(plugin) => Either::Left((index, plugin)),
-                Plugin::Inline(plugin) => Either::Right((index, LockedPlugin::Inline(plugin))),
+                Plugin::Inline(plugin) => Either::Right((index, plugin)),
             });
     let inlines: Vec<_> = inlines
         .into_iter()
