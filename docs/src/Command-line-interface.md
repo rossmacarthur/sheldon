@@ -185,7 +185,7 @@ defaults to `<data-dir>/repos` where `<data-dir>` is the data directory.
 
 #### `--profile <profile>`
 
-Environment variable:* `SHELDON_PROFILE`
+*Environment variable:* `SHELDON_PROFILE`
 
 Specify the profile to match plugins against. Plugins which have
 [profiles](Configuration.md#profiles) configured will only get loaded if one of
