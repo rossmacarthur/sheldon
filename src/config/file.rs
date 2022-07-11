@@ -70,6 +70,9 @@ pub struct RawPlugin {
     /// What templates to apply to each matched file. If this is `None` then the
     /// default templates will be applied.
     pub apply: Option<Vec<String>>,
+    /// If configured, only installs this plugin if one of the given profiles is
+    /// set in the SHELDON_PROFILE environment variable.
+    pub profiles: Option<Vec<String>>,
     /// Any extra keys,
     #[serde(flatten, deserialize_with = "deserialize_rest_toml_value")]
     pub rest: Option<toml::Value>,
@@ -599,6 +602,16 @@ mod tests {
             ..Default::default()
         };
         let plugin: RawPlugin = toml::from_str("github = 'rossmacarthur/sheldon-test'").unwrap();
+        assert_eq!(plugin, expected);
+    }
+
+    #[test]
+    fn raw_plugin_deserialize_profiles() {
+        let expected = RawPlugin {
+            profiles: Some(vec!["p1".into(), "p2".into()]),
+            ..Default::default()
+        };
+        let plugin: RawPlugin = toml::from_str("profiles = ['p1', 'p2']").unwrap();
         assert_eq!(plugin, expected);
     }
 }

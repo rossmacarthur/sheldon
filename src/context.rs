@@ -20,6 +20,7 @@ pub struct Context {
     pub lock_file: PathBuf,
     pub clone_dir: PathBuf,
     pub download_dir: PathBuf,
+    pub profile: Option<String>,
     #[serde(skip)]
     pub output: Output,
     #[serde(skip)]
@@ -96,6 +97,11 @@ impl Context {
     /// The directory to download remote plugins sources to.
     pub fn download_dir(&self) -> &Path {
         &self.download_dir
+    }
+
+    /// The profile used for conditional plugins.
+    pub fn profile(&self) -> Option<&str> {
+        self.profile.as_deref()
     }
 
     /// Expands the tilde in the given path to the configured user's home

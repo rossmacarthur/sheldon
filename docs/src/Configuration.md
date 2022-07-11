@@ -195,6 +195,14 @@ sheldon add example --github owner/repo --apply source PATH
 You can define your own [custom templates](#custom-templates) to apply to your
 plugins.
 
+### `profiles`
+
+A list of profiles this plugin should be used in. If this field is not given
+the plugin will be used regardless of the profile. Otherwise, the plugin is
+only used if the specified
+[profile](Command-line-interface.md#--profile-profile) is included in the
+configured list of profiles.
+
 ## Inline plugins
 
 For convenience it also possible to define Inline plugins. An Inline plugin must

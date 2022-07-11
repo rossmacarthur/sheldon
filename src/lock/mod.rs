@@ -13,7 +13,7 @@ use itertools::{Either, Itertools};
 use once_cell::sync::Lazy;
 use rayon::prelude::*;
 
-use crate::config::{Config, Plugin, Shell, Template};
+use crate::config::{Config, MatchesProfile, Plugin, Shell, Template};
 use crate::context::Context;
 pub use crate::lock::file::LockedConfig;
 use crate::lock::file::{LockedExternalPlugin, LockedPlugin};
@@ -72,8 +72,12 @@ pub fn config(ctx: &Context, config: Config) -> Result<LockedConfig> {
             .enumerate()
             .partition_map(|(index, plugin)| match plugin {
                 Plugin::External(plugin) => Either::Left((index, plugin)),
-                Plugin::Inline(plugin) => Either::Right((index, LockedPlugin::Inline(plugin))),
+                Plugin::Inline(plugin) => Either::Right((index, plugin)),
             });
+    let inlines = inlines
+        .into_iter()
+        .filter(|(_, p)| p.matches_profile(ctx))
+        .map(|(i, p)| (i, LockedPlugin::Inline(p)));
 
     // Create a map of unique `Source` to `Vec<Plugin>`
     let mut map = IndexMap::new();
@@ -99,19 +103,28 @@ pub fn config(ctx: &Context, config: Config) -> Result<LockedConfig> {
         map.into_par_iter()
             .map(|(source, plugins)| {
                 let source_name = source.to_string();
+                let plugins: Vec<_> = plugins
+                    .into_iter()
+                    .filter(|(_, p)| p.matches_profile(ctx))
+                    .collect();
 
-                let source = source::lock(ctx, source)
-                    .with_context(s!("failed to install source `{}`", source_name))?;
+                if plugins.is_empty() {
+                    status!(ctx, "Skipped", &source_name);
+                    Ok(vec![])
+                } else {
+                    let source = source::lock(ctx, source)
+                        .with_context(s!("failed to install source `{}`", source_name))?;
 
-                let mut locked = Vec::with_capacity(plugins.len());
-                for (index, plugin) in plugins {
-                    let name = plugin.name.clone();
-                    let plugin =
-                        plugin::lock(ctx, &templates, source.clone(), matches, apply, plugin)
-                            .with_context(s!("failed to install plugin `{}`", name));
-                    locked.push((index, plugin));
+                    let mut locked = Vec::with_capacity(plugins.len());
+                    for (index, plugin) in plugins {
+                        let name = plugin.name.clone();
+                        let plugin =
+                            plugin::lock(ctx, &templates, source.clone(), matches, apply, plugin)
+                                .with_context(s!("failed to install plugin `{}`", name));
+                        locked.push((index, plugin));
+                    }
+                    Ok(locked)
                 }
-                Ok(locked)
             })
             // The result of this is basically an `Iter<Result<Vec<(usize, Result)>, _>>`
             // The first thing we need to do is to filter out the failures and record the
@@ -261,6 +274,7 @@ fn is_context_equal(left: &Context, right: &Context) -> bool {
         && left.lock_file == right.lock_file
         && left.clone_dir == right.clone_dir
         && left.download_dir == right.download_dir
+        && left.profile == right.profile
 }
 
 impl LockedExternalPlugin {
@@ -298,6 +312,7 @@ mod tests {
                 download_dir: root.join("downloads"),
                 data_dir: root.to_path_buf(),
                 config_dir: root.to_path_buf(),
+                profile: Some("profile".into()),
                 output: Output {
                     verbosity: crate::context::Verbosity::Quiet,
                     no_color: true,
@@ -349,6 +364,7 @@ mod tests {
                 dir: None,
                 uses: None,
                 apply: None,
+                profiles: None,
             })],
         };
         let locked = config(&ctx, cfg).unwrap();

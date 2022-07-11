@@ -43,7 +43,7 @@ _sheldon() {
 
     case "${cmd}" in
         sheldon)
-            opts="-h -V -q -v --help --version --quiet --verbose --color --home --config-dir --data-dir --config-file --lock-file --clone-dir --download-dir init add edit remove lock source completions version"
+            opts="-h -V -q -v --help --version --quiet --verbose --color --home --config-dir --data-dir --config-file --lock-file --clone-dir --download-dir --profile init add edit remove lock source completions version"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 1 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -81,6 +81,10 @@ _sheldon() {
                     COMPREPLY=($(compgen -f "${cur}"))
                     return 0
                     ;;
+                --profile)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
                 *)
                     COMPREPLY=()
                     ;;
@@ -89,7 +93,7 @@ _sheldon() {
             return 0
             ;;
         sheldon__add)
-            opts="-h --git --gist --github --remote --local --proto --branch --rev --tag --dir --use --apply --help <NAME>"
+            opts="-h --git --gist --github --remote --local --proto --branch --rev --tag --dir --use --apply --profiles --help <NAME>"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -140,6 +144,10 @@ _sheldon() {
                     return 0
                     ;;
                 --apply)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                --profiles)
                     COMPREPLY=($(compgen -f "${cur}"))
                     return 0
                     ;;

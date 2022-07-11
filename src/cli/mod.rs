@@ -71,6 +71,7 @@ impl Opt {
             lock_file,
             clone_dir,
             download_dir,
+            profile,
             command,
         } = raw_opt;
 
@@ -180,6 +181,7 @@ impl Opt {
             lock_file,
             clone_dir,
             download_dir,
+            profile,
             output,
             lock_mode,
         };
@@ -204,6 +206,7 @@ impl EditPlugin {
             dir,
             uses,
             apply,
+            profiles,
         } = add;
 
         let reference = match (branch, rev, tag) {
@@ -230,6 +233,7 @@ impl EditPlugin {
                 dir,
                 uses,
                 apply,
+                profiles,
                 rest: None,
             }),
         )

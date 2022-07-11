@@ -54,6 +54,7 @@
       - [`--lock-file <path>`](#--lock-file-path)
       - [`--clone-dir <path>`](#--clone-dir-path)
       - [`--download-dir <path>`](#--download-dir-path)
+      - [`--profile <profile>`](#--profile-profile)
     - [XDG directory structure](#xdg-directory-structure)
   - [Completions](#completions)
 - [⚙️ Configuration](#️-configuration)
@@ -70,6 +71,7 @@
   - [Plugin options](#plugin-options)
     - [`use`](#use)
     - [`apply`](#apply)
+    - [`profiles`](#profiles)
   - [Inline plugins](#inline-plugins)
   - [Templates](#templates)
     - [Custom templates](#custom-templates)
@@ -369,6 +371,14 @@ to `<data-dir>/repos` where `<data-dir>` is the data directory.
 Set the path to the directory where non-Git plugins will be downloaded to. This
 defaults to `<data-dir>/repos` where `<data-dir>` is the data directory.
 
+##### `--profile <profile>`
+
+*Environment variable:* `SHELDON_PROFILE`
+
+Specify the profile to match plugins against. Plugins which have
+[profiles](https://sheldon.cli.rs/Configuration.html#profiles) configured will only get loaded if one of
+the given profiles matches the profile.
+
 #### XDG directory structure
 
 If any of the following
@@ -600,6 +610,14 @@ sheldon add example --github owner/repo --apply source PATH
 
 You can define your own [custom templates](#custom-templates) to apply to your
 plugins.
+
+#### `profiles`
+
+A list of profiles this plugin should be used in. If this field is not given
+the plugin will be used regardless of the profile. Otherwise, the plugin is
+only used if the specified
+[profile](https://sheldon.cli.rs/Command-line-interface.html#--profile-profile) is included in the
+configured list of profiles.
 
 ### Inline plugins
 

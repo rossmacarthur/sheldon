@@ -23,6 +23,7 @@ _sheldon() {
 '--lock-file=[The lock file]:PATH: ' \
 '--clone-dir=[The directory where git sources are cloned to]:PATH: ' \
 '--download-dir=[The directory where remote sources are downloaded to]:PATH: ' \
+'--profile=[The profile used for conditional plugins]:PROFILE: ' \
 '-h[Print help information]' \
 '--help[Print help information]' \
 '-V[Print version information]' \
@@ -61,6 +62,7 @@ _arguments "${_arguments_options[@]}" \
 '--dir=[Which sub directory to use in this plugin]:PATH: ' \
 '*--use=[Which files to use in this plugin]:MATCH: ' \
 '*--apply=[Templates to apply to this plugin]:TEMPLATE: ' \
+'*--profiles=[Only use this plugin under one of the given profiles]:PROFILES: ' \
 '-h[Print help information]' \
 '--help[Print help information]' \
 ':name -- A unique name for this plugin:' \

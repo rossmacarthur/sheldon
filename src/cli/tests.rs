@@ -82,6 +82,7 @@ fn raw_opt_no_options() {
             lock_file: None,
             clone_dir: None,
             download_dir: None,
+            profile: None,
             command: RawCommand::Lock {
                 update: false,
                 reinstall: false
@@ -113,6 +114,8 @@ fn raw_opt_options() {
             "/repos",
             "--download-dir",
             "/downloads",
+            "--profile",
+            "profile",
             "lock",
         ]),
         RawOpt {
@@ -126,6 +129,7 @@ fn raw_opt_options() {
             lock_file: Some("/test/plugins.lock".into()),
             clone_dir: Some("/repos".into()),
             download_dir: Some("/downloads".into()),
+            profile: Some("profile".into()),
             command: RawCommand::Lock {
                 update: false,
                 reinstall: false
@@ -215,6 +219,7 @@ fn raw_opt_add_git_with_options() {
             dir: Some("missing".into()),
             uses: Some(vec_into!["{name}.sh", "*.zsh"]),
             apply: Some(vec_into!["something", "another-thing"]),
+            profiles: None,
         }))
     );
 }
@@ -256,6 +261,7 @@ fn raw_opt_add_gist_options() {
             dir: Some("missing".into()),
             uses: Some(vec_into!["{name}.sh", "*.zsh"]),
             apply: Some(vec_into!["something", "another-thing"]),
+            profiles: None,
         }))
     );
 }
@@ -297,6 +303,7 @@ fn raw_opt_add_github_options() {
             dir: Some("missing".into()),
             uses: Some(vec_into!["{name}.sh", "*.zsh"]),
             apply: Some(vec_into!["something", "another-thing"]),
+            profiles: None,
         }))
     );
 }
@@ -332,6 +339,7 @@ fn raw_opt_add_remote_options() {
             dir: None,
             uses: Some(vec_into!["{name}.sh", "*.zsh"]),
             apply: Some(vec_into!["something", "another-thing"]),
+            profiles: None,
         }))
     );
 }
@@ -367,6 +375,7 @@ fn raw_opt_add_local_options() {
             dir: None,
             uses: Some(vec_into!["{name}.sh", "*.zsh"]),
             apply: Some(vec_into!["something", "another-thing"]),
+            profiles: None,
         }))
     );
 }

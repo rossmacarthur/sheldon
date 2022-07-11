@@ -24,6 +24,7 @@ pub fn lock(
         dir,
         uses,
         apply,
+        profiles: _,
     } = plugin;
 
     let apply = apply.unwrap_or_else(|| global_apply.to_vec());
@@ -164,6 +165,7 @@ mod tests {
             dir: None,
             uses: Some(vec!["*.md".into(), "{{ name }}.plugin.zsh".into()]),
             apply: None,
+            profiles: None,
         };
         let locked_source = source::lock(&ctx, plugin.source.clone()).unwrap();
         let clone_dir = dir.join("repos/github.com/rossmacarthur/sheldon-test");
@@ -204,6 +206,7 @@ mod tests {
             dir: None,
             uses: None,
             apply: None,
+            profiles: None,
         };
         let locked_source = source::lock(&ctx, plugin.source.clone()).unwrap();
         let clone_dir = dir.join("repos/github.com/rossmacarthur/sheldon-test");
@@ -238,6 +241,7 @@ mod tests {
             dir: None,
             uses: None,
             apply: None,
+            profiles: None,
         };
         let locked_source = source::lock(&ctx, plugin.source.clone()).unwrap();
 
@@ -266,6 +270,7 @@ mod tests {
             dir: None,
             uses: None,
             apply: None,
+            profiles: None,
         };
         let locked_source = source::lock(&ctx, plugin.source.clone()).unwrap();
         let clone_dir = dir.join("repos/github.com/rossmacarthur/sheldon-test");
@@ -302,6 +307,7 @@ mod tests {
             dir: None,
             uses: None,
             apply: None,
+            profiles: None,
         };
         let locked_source = source::lock(&ctx, plugin.source.clone()).unwrap();
         let download_dir = dir.join("downloads/github.com/rossmacarthur/sheldon-test/raw/master");

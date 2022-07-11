@@ -88,6 +88,7 @@ fn normalize_plugin(
         dir,
         uses,
         apply,
+        profiles,
         mut rest,
     } = raw_plugin;
 
@@ -171,6 +172,7 @@ fn normalize_plugin(
                 dir,
                 uses,
                 apply,
+                profiles,
             }))
         }
         TempSource::Inline(raw) => {
@@ -186,7 +188,11 @@ fn normalize_plugin(
                     bail!("the {} not supported by inline plugins", field);
                 }
             }
-            Ok(Plugin::Inline(InlinePlugin { name, raw }))
+            Ok(Plugin::Inline(InlinePlugin {
+                name,
+                raw,
+                profiles,
+            }))
         }
     }
 }
@@ -309,6 +315,7 @@ mod tests {
             dir: None,
             uses: None,
             apply: None,
+            profiles: None,
         });
         let raw_plugin = RawPlugin {
             git: Some(url),
@@ -340,6 +347,7 @@ mod tests {
             dir: None,
             uses: None,
             apply: None,
+            profiles: None,
         });
         let raw_plugin = RawPlugin {
             gist: Some(
@@ -374,6 +382,7 @@ mod tests {
             dir: None,
             uses: None,
             apply: None,
+            profiles: None,
         });
         let raw_plugin = RawPlugin {
             gist: Some("579d02802b1cc17baed07753d09f5009".parse().unwrap()),
@@ -405,6 +414,7 @@ mod tests {
             dir: None,
             uses: None,
             apply: None,
+            profiles: None,
         });
         let raw_plugin = RawPlugin {
             gist: Some(
@@ -438,6 +448,7 @@ mod tests {
             dir: None,
             uses: None,
             apply: None,
+            profiles: None,
         });
         let raw_plugin = RawPlugin {
             github: Some(GitHubRepository {
@@ -470,6 +481,7 @@ mod tests {
             dir: None,
             uses: None,
             apply: None,
+            profiles: None,
         });
         let raw_plugin = RawPlugin {
             github: Some(GitHubRepository {
@@ -501,6 +513,7 @@ mod tests {
             dir: None,
             uses: None,
             apply: None,
+            profiles: None,
         });
         let raw_plugin = RawPlugin {
             github: Some(GitHubRepository {
@@ -533,6 +546,7 @@ mod tests {
             dir: None,
             uses: None,
             apply: None,
+            profiles: None,
         });
         let raw_plugin = RawPlugin {
             remote: Some(url),
@@ -612,6 +626,7 @@ mod tests {
             dir: None,
             uses: None,
             apply: None,
+            profiles: None,
         });
         let raw_plugin = RawPlugin {
             local: Some("/home/temp".into()),
@@ -634,6 +649,7 @@ mod tests {
         let expected = Plugin::Inline(InlinePlugin {
             name: name.clone(),
             raw: "echo 'this is a test'\n".to_string(),
+            profiles: None,
         });
         let raw_plugin = RawPlugin {
             inline: Some("echo 'this is a test'\n".to_string()),
