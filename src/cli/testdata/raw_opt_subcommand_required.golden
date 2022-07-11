@@ -1,4 +1,4 @@
-error: 'sheldon' requires a subcommand, but one was not provided
+error: 'sheldon' requires a subcommand but one was not provided
 
 USAGE:
     sheldon [OPTIONS] <SUBCOMMAND>

@@ -107,7 +107,7 @@ impl Opt {
                 process::exit(0);
             }
             RawCommand::Version => {
-                println!("{} {}", build::CRATE_NAME, &*build::CRATE_VERBOSE_VERSION);
+                println!("{} {}", build::CRATE_NAME, build::CRATE_VERBOSE_VERSION);
                 process::exit(0);
             }
         };

@@ -29,7 +29,7 @@ pub struct LockedConfig {
 }
 
 /// A locked `Plugin`.
-#[derive(Debug, Deserialize, PartialEq, Serialize)]
+#[derive(Debug, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(untagged)]
 pub enum LockedPlugin {
     External(LockedExternalPlugin),
@@ -37,7 +37,7 @@ pub enum LockedPlugin {
 }
 
 /// A locked `ExternalPlugin`.
-#[derive(Debug, Deserialize, PartialEq, Serialize)]
+#[derive(Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub struct LockedExternalPlugin {
     /// The name of this plugin.
     pub name: String,

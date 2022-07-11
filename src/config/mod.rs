@@ -41,7 +41,7 @@ pub enum Shell {
 }
 
 /// A wrapper around a template string.
-#[derive(Clone, Debug, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 pub struct Template {
     /// The actual template string.
     pub value: String,
@@ -50,14 +50,14 @@ pub struct Template {
 }
 
 /// A configured plugin.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Plugin {
     External(ExternalPlugin),
     Inline(InlinePlugin),
 }
 
 /// An external configured plugin.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct ExternalPlugin {
     /// The name of this plugin.
     pub name: String,
@@ -100,7 +100,7 @@ pub enum GitReference {
 }
 
 /// An inline configured plugin.
-#[derive(Debug, Deserialize, PartialEq, Serialize)]
+#[derive(Debug, Deserialize, PartialEq, Eq, Serialize)]
 pub struct InlinePlugin {
     /// The name of this plugin.
     pub name: String,

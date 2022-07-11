@@ -12,7 +12,7 @@ use crate::context::Context;
 use crate::lock::source::git::GitCheckout;
 
 /// A locked `Source`.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LockedSource {
     /// The clone or download directory.
     pub dir: PathBuf,

@@ -79,7 +79,7 @@ pub struct RawPlugin {
 }
 
 /// A Gist repository identifier.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct GistRepository {
     /// The GitHub username / organization.
     pub owner: Option<String>,
@@ -88,7 +88,7 @@ pub struct GistRepository {
 }
 
 /// A GitHub repository identifier.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct GitHubRepository {
     /// The GitHub username / organization.
     pub owner: String,
@@ -97,7 +97,7 @@ pub struct GitHubRepository {
 }
 
 /// The Git protocol.
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum GitProtocol {
     Git,
     Https,

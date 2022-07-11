@@ -4,7 +4,7 @@ use std::str::FromStr;
 use thiserror::Error;
 
 /// Whether messages should use color output.
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ColorChoice {
     /// Force color output.
     Always,

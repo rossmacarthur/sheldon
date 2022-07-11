@@ -63,7 +63,7 @@ impl TestCommand {
 
         if let Ok(runner) = env::var(format!(
             "CARGO_TARGET_{}_RUNNER",
-            env!("TARGET").replace("-", "_").to_ascii_uppercase()
+            env!("TARGET").replace('-', "_").to_ascii_uppercase()
         )) {
             let mut split = runner.splitn(2, char::is_whitespace);
             let runner_bin = split.next().unwrap();

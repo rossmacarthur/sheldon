@@ -108,9 +108,7 @@ fn print_rustc_envs() -> Result<()> {
         lines.next().unwrap()
     );
     for line in lines {
-        let mut split = line.splitn(2, ": ");
-        let key = split.next().unwrap();
-        let value = split.next().unwrap();
+        let (key, value) = line.split_once(": ").unwrap();
         println!(
             "cargo:rustc-env=RUSTC_VERSION_{}={}",
             key.replace('-', "_").replace(' ', "_").to_uppercase(),

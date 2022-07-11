@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 use crate::lock::LockMode;
 use crate::util::PathExt;
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 pub struct Context {
     pub version: String,
     pub home: PathBuf,
@@ -28,7 +28,7 @@ pub struct Context {
 }
 
 /// The output style.
-#[derive(Clone, Copy, Debug, Default, PartialEq)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct Output {
     /// The requested verbosity of output.
     pub verbosity: Verbosity,
@@ -37,7 +37,7 @@ pub struct Output {
 }
 
 /// The requested verbosity of output.
-#[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd)]
 pub enum Verbosity {
     Quiet,
     Normal,
@@ -151,7 +151,7 @@ impl Context {
 
 impl<'a> fmt::Display for Message<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match &*self {
+        match self {
             Message::Borrowed(b) => fmt::Display::fmt(b, f),
             Message::Owned(o) => fmt::Display::fmt(o, f),
         }

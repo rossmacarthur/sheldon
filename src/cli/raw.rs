@@ -8,7 +8,7 @@ use crate::cli::color_choice::ColorChoice;
 use crate::config::{GistRepository, GitHubRepository, GitProtocol, Shell};
 use crate::util::build;
 
-#[derive(Debug, PartialEq, Parser)]
+#[derive(Debug, PartialEq, Eq, Parser)]
 #[clap(
     author,
     about,
@@ -70,7 +70,7 @@ pub struct RawOpt {
     pub command: RawCommand,
 }
 
-#[derive(Debug, PartialEq, Parser)]
+#[derive(Debug, PartialEq, Eq, Parser)]
 pub enum RawCommand {
     /// Initialize a new config file.
     Init {
@@ -129,7 +129,7 @@ pub enum RawCommand {
     Version,
 }
 
-#[derive(Debug, PartialEq, Parser)]
+#[derive(Debug, PartialEq, Eq, Parser)]
 #[clap(
     group = ArgGroup::new("plugin").required(true),
     group = ArgGroup::new("git-reference").conflicts_with_all(&["remote", "local"]),

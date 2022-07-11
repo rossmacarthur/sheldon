@@ -30,7 +30,7 @@ fn raw_opt_version() {
     let err = raw_opt_err(&["-V"]);
     assert_eq!(
         err.to_string(),
-        format!("sheldon {}\n", &*build::CRATE_RELEASE)
+        format!("sheldon {}\n", build::CRATE_RELEASE)
     );
     assert_eq!(err.kind, clap::ErrorKind::DisplayVersion);
 }
@@ -41,7 +41,7 @@ fn raw_opt_long_version() {
     let err = raw_opt_err(&["--version"]);
     assert_eq!(
         err.to_string(),
-        format!("sheldon {}\n", &*build::CRATE_LONG_VERSION)
+        format!("sheldon {}\n", build::CRATE_LONG_VERSION)
     );
     assert_eq!(err.kind, clap::ErrorKind::DisplayVersion);
 }
