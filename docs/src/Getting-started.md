@@ -16,16 +16,17 @@ or
 sheldon init --shell zsh
 ```
 
-This will create `plugins.toml` under `~/.sheldon` or, if defined,
-`$XDG_CONFIG_HOME/sheldon`. You can either edit this file directly or use the
-provided command line interface to add or remove plugins.
+This will create `plugins.toml` in the appropriate config home of your
+platform. On most Linux systems this will be `~/.config/sheldon/`. You can
+either edit this file directly or use the provided command line interface to
+add or remove plugins.
 
 ## Adding a plugin
 
 To add your first plugin append the following to the Sheldon config file.
 
 ```toml
-# ~/.sheldon/plugins.toml
+# ~/.config/sheldon/plugins.toml
 
 [plugins.base16]
 github = "chriskempson/base16-shell"

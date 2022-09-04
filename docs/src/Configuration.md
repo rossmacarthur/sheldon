@@ -9,7 +9,7 @@ location of the source. There are three types of sources, each kind is described
 in this section. A plugin may only specify *one* source type.
 
 ```toml
-# ~/.sheldon/plugins.toml
+# ~/.config/sheldon/plugins.toml
 
 #           ┌─ Unique name for the plugin
 #        ┌──┴─┐

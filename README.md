@@ -148,16 +148,17 @@ or
 sheldon init --shell zsh
 ```
 
-This will create `plugins.toml` under `~/.sheldon` or, if defined,
-`$XDG_CONFIG_HOME/sheldon`. You can either edit this file directly or use the
-provided command line interface to add or remove plugins.
+This will create `plugins.toml` in the appropriate config home of your
+platform. On most Linux systems this will be `~/.config/sheldon/`. You can
+either edit this file directly or use the provided command line interface to
+add or remove plugins.
 
 ### Adding a plugin
 
 To add your first plugin append the following to the Sheldon config file.
 
 ```toml
-# ~/.sheldon/plugins.toml
+# ~/.config/sheldon/plugins.toml
 
 [plugins.base16]
 github = "chriskempson/base16-shell"
@@ -222,7 +223,7 @@ sheldon init --shell zsh
 ### `lock`
 
 The `lock` command installs the plugins sources and generates the lock file
-(`~/.sheldon/plugins.lock`). Rerunning this command without any extra options
+(`~/.local/share/sheldon/plugins.lock`). Rerunning this command without any extra options
 will not reinstall plugin sources, just verify that they are correctly
 installed. It will always regenerate the lock file.
 
@@ -328,20 +329,15 @@ be required if you are using an obscure operating system.
 
 *Environment variable:* `SHELDON_CONFIG_DIR`
 
-Set the config directory where config will store the configuration file. If
-Sheldon detects an XDG directory structure  ([as described
-below](#xdg-directory-structure)) then this will default to
-`XDG_CONFIG_HOME/sheldon` otherwise it will default to `<home>/.sheldon` where
-`<home>` is the users home directory.
+Set the config directory where config will store the configuration file. Will
+default to the appropriate path for the platform it’s running on.
 
 ##### `--data-dir <path>`
 
 *Environment variable:* `SHELDON_DATA_DIR`
 
-Set the data directory where plugins will be downloaded to. If Sheldon detects
-an XDG directory structure ([as described below](#xdg-directory-structure)) then
-this will default to `XDG_DATA_HOME/sheldon` otherwise it will default to
-`<home>/.sheldon` where `<home>` is the users home directory.
+Set the data directory where plugins will be downloaded to. Will default to the
+appropriate path for the platform it’s running on.
 
 ##### `--config-file <path>`
 
@@ -425,7 +421,7 @@ location of the source. There are three types of sources, each kind is described
 in this section. A plugin may only specify *one* source type.
 
 ```toml
-# ~/.sheldon/plugins.toml
+# ~/.config/sheldon/plugins.toml
 
 #           ┌─ Unique name for the plugin
 #        ┌──┴─┐

@@ -6,9 +6,9 @@ mod raw;
 #[cfg(test)]
 mod tests;
 
-use std::env;
 use std::io;
-use std::path::PathBuf;
+
+use std::path::{Path, PathBuf};
 use std::process;
 
 use anyhow::anyhow;
@@ -125,52 +125,53 @@ impl Opt {
             no_color: color.is_no_color(),
         };
 
-        let home = match home.or_else(home::home_dir).ok_or_else(|| {
-            anyhow!(
-                "failed to determine the current user's home directory, try using the `--home` \
-                 option"
-            )
-        }) {
-            Ok(home) => home,
-            Err(err) => {
-                log_error(output.no_color, Color::Red, "error", &err);
+        let log_no_home = || {
+            let err = anyhow!(
+                "failed to determine the current user's home directory, try setting the $HOME \
+                 environment variable"
+            );
+            log_error(output.no_color, Color::Red, "error", &err);
+        };
+
+        let base_dirs = match directories::BaseDirs::new() {
+            Some(base_dirs) => base_dirs,
+            None => {
+                log_no_home();
                 process::exit(1);
             }
         };
 
-        let xdg_config_user = env::var_os("XDG_CONFIG_HOME").map(PathBuf::from);
-        let xdg_data_user = env::var_os("XDG_DATA_HOME").map(PathBuf::from);
-
-        // Note: `XDG_RUNTIME_DIR` is not checked as it can be set by the system rather
-        // than the user, and cannot be relied upon to indicate a preference for XDG
-        // directory layout.
-        let using_xdg = any!(
-            xdg_data_user,
-            xdg_config_user,
-            env::var_os("XDG_CACHE_HOME"),
-            env::var_os("XDG_DATA_DIRS"),
-            env::var_os("XDG_CONFIG_DIRS")
-        );
-
-        let (config_pre, data_pre) = if using_xdg {
-            (
-                xdg_config_user
-                    .unwrap_or_else(|| home.join(".config"))
-                    .join("sheldon"),
-                xdg_data_user
-                    .unwrap_or_else(|| home.join(".local/share"))
-                    .join("sheldon"),
-            )
-        } else {
-            (home.join(".sheldon"), home.join(".sheldon"))
+        let project_dirs = match directories::ProjectDirs::from("rs.cli", "", "sheldon") {
+            Some(project_dirs) => project_dirs,
+            None => {
+                log_no_home();
+                process::exit(1);
+            }
         };
 
-        let config_dir = config_dir.unwrap_or(config_pre);
-        let data_dir = data_dir.unwrap_or(data_pre);
-        let config_file = config_file.unwrap_or_else(|| config_dir.join("plugins.toml"));
-        let lock_file = lock_file.unwrap_or_else(|| data_dir.join("plugins.lock"));
-        let clone_dir = clone_dir.unwrap_or_else(|| data_dir.join("repos"));
-        let download_dir = download_dir.unwrap_or_else(|| data_dir.join("downloads"));
+        let home = home.unwrap_or_else(|| base_dirs.home_dir().to_path_buf());
+
+        let (config_dir, old_config_dir) = (
+            config_dir
+                .clone()
+                .unwrap_or_else(|| project_dirs.config_dir().to_path_buf()),
+            config_dir.unwrap_or_else(|| home.join(".sheldon")),
+        );
+        let (data_dir, old_data_dir) = (
+            data_dir
+                .clone()
+                .unwrap_or_else(|| project_dirs.data_dir().to_path_buf()),
+            data_dir.unwrap_or_else(|| home.join(".sheldon")),
+        );
+
+        let config_file = config_file
+            .unwrap_or_else(|| get_and_migrate_dir(&old_config_dir, &config_dir, "plugins.toml"));
+        let lock_file = lock_file
+            .unwrap_or_else(|| get_and_migrate_dir(&old_data_dir, &data_dir, "plugins.lock"));
+        let clone_dir =
+            clone_dir.unwrap_or_else(|| get_and_migrate_dir(&old_data_dir, &data_dir, "repos"));
+        let download_dir = download_dir
+            .unwrap_or_else(|| get_and_migrate_dir(&old_data_dir, &data_dir, "downloads"));
 
         let ctx = Context {
             version: build::CRATE_RELEASE.to_string(),
@@ -187,6 +188,30 @@ impl Opt {
         };
 
         Self { ctx, command }
+    }
+}
+
+fn get_and_migrate_dir<P: AsRef<Path> + PartialEq>(
+    old_parent: P,
+    new_parent: P,
+    child: &str,
+) -> PathBuf {
+    if old_parent == new_parent {
+        return new_parent.as_ref().join(child);
+    }
+
+    let old = old_parent.as_ref().join(child);
+    let new = new_parent.as_ref().join(child);
+
+    match (old.exists(), new.exists()) {
+        (true, false) => {
+            // TODO: log warning if this fails
+            std::fs::rename(&old, &new);
+            new
+        }
+        // TODO: log warning here
+        (true, true) => new,
+        (false, _) => new,
     }
 }
 
