@@ -203,6 +203,19 @@ only used if the specified
 [profile](Command-line-interface.md#--profile-profile) is included in the
 configured list of profiles.
 
+### `hooks`
+
+Statements executed around plugin installation.
+
+```toml
+[plugins.example]
+github = "owner/repo"
+
+[plugins.example.hooks]
+pre = "export TEST=test"
+post = "unset TEST"
+```
+
 ## Inline plugins
 
 For convenience it also possible to define Inline plugins. An Inline plugin must
@@ -236,7 +249,7 @@ following.
 
 ```toml
 [templates]
-source = { value = 'source "{{ file }}"', each = true }
+source = { value = '{{ #if hooks.pre }}{{ hooks.pre }}\n{{ /if }}source \"{{ file }}\"{{ #if hooks.post }}\n{{ hooks.post }}{{ /if }}', each = true }
 PATH = 'export PATH="{{ dir }}:$PATH"'
 path = 'path=( "{{ dir }}" $path )'
 fpath = 'fpath=( "{{ dir }}" $fpath )'
@@ -277,6 +290,9 @@ Plugins all have the following information that can be used in templates.
   information only makes sense in templates with `each` set to `true`.
 
 * **The Sheldon data directory.** This directory can be used as `{{ data_dir }}`.
+
+* **Hooks** Hooks are taken directly from the configuration and can be used as
+  `{{ hooks.[KEY] }}`.
 
 To add or update a template add a new key to the `[templates]` table in the
 config file. Take a look at the [examples](Examples.md) for some interesting

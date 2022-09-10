@@ -21,4 +21,5 @@ OPTIONS:
         --use <MATCH>...            Which files to use in this plugin
         --apply <TEMPLATE>...       Templates to apply to this plugin
         --profiles <PROFILES>...    Only use this plugin under one of the given profiles
+        --hooks <SCRIPT>...         Hooks executed during template evaluation
     -h, --help                      Print help information

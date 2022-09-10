@@ -1,6 +1,17 @@
 # plugins.toml
 [plugins.test]
 github = "rossmacarthur/sheldon-test"
+[plugins.test.hooks]
+pre = "pre"
+
+[plugins.inline-test]
+inline = """
+{{ #if hooks.pre }}{{ hooks.pre }}{{ /if }}
+echo 'testing...'
+{{ #if hooks.post }}{{ hooks.post }}{{ /if }}
+"""
+[plugins.inline-test.hooks]
+post = "post"
 
 # plugins.lock
 version = "<version>"
@@ -17,6 +28,16 @@ name = "test"
 source_dir = "<data>/repos/github.com/rossmacarthur/sheldon-test"
 files = ["<data>/repos/github.com/rossmacarthur/sheldon-test/test.plugin.zsh"]
 apply = ["source"]
+
+[plugins.hooks]
+pre = "pre"
+
+[[plugins]]
+name = "inline-test"
+raw = "{{ #if hooks.pre }}{{ hooks.pre }}{{ /if }}\necho 'testing...'\n{{ #if hooks.post }}{{ hooks.post }}{{ /if }}\n"
+
+[plugins.hooks]
+post = "post"
 [templates.PATH]
 value = "export PATH=\"{{ dir }}:$PATH\""
 each = false
@@ -41,10 +62,16 @@ each = true
 [LOCKED] ~/<data_sub>/plugins.lock
 
 # source.stdout
+pre
 source "<data>/repos/github.com/rossmacarthur/sheldon-test/test.plugin.zsh"
+
+echo 'testing...'
+post
+
 
 # source.stderr
 [UNLOCKED] ~/<data_sub>/plugins.lock
   [RENDERED] test
+   [INLINED] inline-test
 
 # end

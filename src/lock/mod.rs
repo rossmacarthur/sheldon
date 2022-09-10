@@ -208,7 +208,7 @@ impl Shell {
         static DEFAULT_TEMPLATES_BASH: Lazy<IndexMap<String, Template>> = Lazy::new(|| {
             indexmap_into! {
                 "PATH" => "export PATH=\"{{ dir }}:$PATH\"",
-                "source" => Template::from("source \"{{ file }}\"").each(true)
+                "source" => Template::from("{{ #if hooks.pre }}{{ hooks.pre }}\n{{ /if }}source \"{{ file }}\"{{ #if hooks.post }}\n{{ hooks.post }}{{ /if }}").each(true)
             }
         });
         static DEFAULT_TEMPLATES_ZSH: Lazy<IndexMap<String, Template>> = Lazy::new(|| {
@@ -216,7 +216,7 @@ impl Shell {
                 "PATH" => "export PATH=\"{{ dir }}:$PATH\"",
                 "path" => "path=( \"{{ dir }}\" $path )",
                 "fpath" => "fpath=( \"{{ dir }}\" $fpath )",
-                "source" => Template::from("source \"{{ file }}\"").each(true)
+                "source" => Template::from("{{ #if hooks.pre }}{{ hooks.pre }}\n{{ /if }}source \"{{ file }}\"{{ #if hooks.post }}\n{{ hooks.post }}{{ /if }}").each(true)
             }
         });
         match self {
@@ -290,7 +290,6 @@ impl LockedExternalPlugin {
 
 #[cfg(test)]
 mod tests {
-
     use url::Url;
 
     use super::*;
@@ -365,6 +364,7 @@ mod tests {
                 uses: None,
                 apply: None,
                 profiles: None,
+                hooks: None,
             })],
         };
         let locked = config(&ctx, cfg).unwrap();

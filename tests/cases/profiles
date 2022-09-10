@@ -53,7 +53,7 @@ value = "fpath=( \"{{ dir }}\" $fpath )"
 each = false
 
 [templates.source]
-value = "source \"{{ file }}\""
+value = "{{ #if hooks.pre }}{{ hooks.pre }}\n{{ /if }}source \"{{ file }}\"{{ #if hooks.post }}\n{{ hooks.post }}{{ /if }}"
 each = true
 
 # lock.stdout

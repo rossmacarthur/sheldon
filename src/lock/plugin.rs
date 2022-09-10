@@ -24,6 +24,7 @@ pub fn lock(
         dir,
         uses,
         apply,
+        hooks,
         profiles: _,
     } = plugin;
 
@@ -37,6 +38,7 @@ pub fn lock(
             plugin_dir: None,
             files: vec![file.unwrap()],
             apply,
+            hooks,
         }
     } else {
         // Handlebars instance to do the rendering
@@ -106,6 +108,7 @@ pub fn lock(
             plugin_dir,
             files,
             apply,
+            hooks,
         }
     })
 }
@@ -165,6 +168,7 @@ mod tests {
             dir: None,
             uses: Some(vec!["*.md".into(), "{{ name }}.plugin.zsh".into()]),
             apply: None,
+            hooks: None,
             profiles: None,
         };
         let locked_source = source::lock(&ctx, plugin.source.clone()).unwrap();
@@ -206,6 +210,7 @@ mod tests {
             dir: None,
             uses: None,
             apply: None,
+            hooks: None,
             profiles: None,
         };
         let locked_source = source::lock(&ctx, plugin.source.clone()).unwrap();
@@ -241,6 +246,7 @@ mod tests {
             dir: None,
             uses: None,
             apply: None,
+            hooks: None,
             profiles: None,
         };
         let locked_source = source::lock(&ctx, plugin.source.clone()).unwrap();
@@ -270,6 +276,7 @@ mod tests {
             dir: None,
             uses: None,
             apply: None,
+            hooks: None,
             profiles: None,
         };
         let locked_source = source::lock(&ctx, plugin.source.clone()).unwrap();
@@ -307,6 +314,7 @@ mod tests {
             dir: None,
             uses: None,
             apply: None,
+            hooks: None,
             profiles: None,
         };
         let locked_source = source::lock(&ctx, plugin.source.clone()).unwrap();

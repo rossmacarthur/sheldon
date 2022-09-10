@@ -1,9 +1,19 @@
 use anyhow::{Context as ResultExt, Result};
-use maplit::hashmap;
+use serde::Serialize;
+use std::collections::BTreeMap;
 
 use crate::context::Context;
 use crate::lock::file::LockedPlugin;
 use crate::lock::LockedConfig;
+
+#[derive(Serialize)]
+struct Data<'a> {
+    data_dir: &'a str,
+    name: &'a str,
+    dir: Option<&'a str>,
+    file: Option<&'a str>,
+    hooks: Option<&'a BTreeMap<String, String>>,
+}
 
 impl LockedConfig {
     /// Generate the script.
@@ -11,6 +21,7 @@ impl LockedConfig {
         // Compile the templates
         let mut templates = handlebars::Handlebars::new();
         templates.set_strict_mode(true);
+        templates.register_escape_fn(handlebars::no_escape);
         for (name, template) in &self.templates {
             templates
                 .register_template_string(name, &template.value)
@@ -29,21 +40,23 @@ impl LockedConfig {
                             .context("plugin directory is not valid UTF-8")?;
 
                         // Data to use in template rendering
-                        let mut data = hashmap! {
-                            "data_dir" => self
+                        let mut data = Data {
+                            data_dir: self
                                 .ctx
                                 .data_dir()
                                 .to_str()
                                 .context("data directory is not valid UTF-8")?,
-                            "name" => &plugin.name,
-                            "dir" => dir_as_str,
+                            name: &plugin.name,
+                            dir: Some(dir_as_str),
+                            file: None,
+                            hooks: plugin.hooks.as_ref(),
                         };
 
                         if self.templates.get(name.as_str()).unwrap().each {
                             for file in &plugin.files {
                                 let as_str =
                                     file.to_str().context("plugin file is not valid UTF-8")?;
-                                data.insert("file", as_str);
+                                data.file = Some(as_str);
                                 script.push_str(
                                     &templates
                                         .render(name, &data)
@@ -63,13 +76,16 @@ impl LockedConfig {
                     status_v!(ctx, "Rendered", &plugin.name);
                 }
                 LockedPlugin::Inline(plugin) => {
-                    let data = hashmap! {
-                        "data_dir" => self
+                    let data = Data {
+                        data_dir: self
                             .ctx
                             .data_dir()
                             .to_str()
                             .context("data directory is not valid UTF-8")?,
-                        "name" => &plugin.name,
+                        name: &plugin.name,
+                        dir: None,
+                        file: None,
+                        hooks: plugin.hooks.as_ref(),
                     };
                     script.push_str(
                         &templates

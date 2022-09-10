@@ -713,3 +713,11 @@ fn lock_and_source_profiles() -> io::Result<()> {
     check_sheldon_test(&case.dirs.data).unwrap();
     Ok(())
 }
+
+#[test]
+fn lock_and_source_hooks() -> io::Result<()> {
+    let case = TestCase::load("hooks")?;
+    case.run()?;
+    check_sheldon_test(&case.dirs.data).unwrap();
+    Ok(())
+}
