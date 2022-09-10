@@ -666,7 +666,7 @@ following.
 
 ```toml
 [templates]
-source = { value = '{{ #if hooks.pre }}{{ hooks.pre }}\n{{ /if }}source \"{{ file }}\"{{ #if hooks.post }}\n{{ hooks.post }}{{ /if }}', each = true }
+source = { value = '{{ #if hooks.pre }}{{ hooks.pre }}\n{{ /if }}source "{{ file }}"{{ #if hooks.post }}\n{{ hooks.post }}{{ /if }}', each = true }
 PATH = 'export PATH="{{ dir }}:$PATH"'
 path = 'path=( "{{ dir }}" $path )'
 fpath = 'fpath=( "{{ dir }}" $fpath )'
