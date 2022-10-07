@@ -702,7 +702,7 @@ fn lock_and_source_profiles() -> io::Result<()> {
         .arg("p1")
         .arg("lock")
         .run()?;
-    case.assert_contents("plugins.lock")?;
+    case.assert_contents("plugins.p1.lock")?;
     TestCommand::new(&case.dirs)
         .expect_exit_code(0)
         .expect_stdout(case.get(format!("{}.stdout", "source")))

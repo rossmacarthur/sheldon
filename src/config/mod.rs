@@ -1,5 +1,6 @@
 //! The user configuration.
 
+mod clean;
 mod edit;
 mod file;
 mod normalize;
@@ -14,6 +15,7 @@ use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 use url::Url;
 
+pub use crate::config::clean::clean;
 pub use crate::config::edit::{EditConfig, EditPlugin};
 pub use crate::config::file::{GistRepository, GitHubRepository, GitProtocol, RawPlugin};
 pub use crate::config::profile::MatchesProfile;
@@ -69,7 +71,7 @@ pub struct ExternalPlugin {
     pub uses: Option<Vec<String>>,
     /// What templates to apply to each matched file.
     pub apply: Option<Vec<String>>,
-    /// Only use this plugin under one of the given profiles
+    /// Only use this plugin under one of the given profiles.
     pub profiles: Option<Vec<String>>,
 }
 
@@ -106,7 +108,7 @@ pub struct InlinePlugin {
     pub name: String,
     /// The actual source.
     pub raw: String,
-    /// Only use this plugin under one of the given profiles
+    /// Only use this plugin under one of the given profiles.
     pub profiles: Option<Vec<String>>,
 }
 

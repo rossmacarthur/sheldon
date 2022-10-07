@@ -6,6 +6,7 @@ use std::fmt;
 use std::path::PathBuf;
 
 use anyhow::{Context as ResultExt, Result};
+use url::Url;
 
 use crate::config::Source;
 use crate::context::Context;
@@ -24,31 +25,12 @@ pub struct LockedSource {
 pub fn lock(ctx: &Context, src: Source) -> Result<LockedSource> {
     match src {
         Source::Git { url, reference } => {
-            let mut dir = ctx.clone_dir().to_path_buf();
-            dir.push(
-                url.host_str()
-                    .with_context(s!("URL `{}` has no host", url))?,
-            );
-            dir.push(url.path().trim_start_matches('/'));
+            let dir = git_dir(ctx, &url)?;
             git::lock(ctx, dir, &url, reference.into())
         }
 
         Source::Remote { url } => {
-            let mut dir = ctx.download_dir().to_path_buf();
-            dir.push(
-                url.host_str()
-                    .with_context(s!("URL `{}` has no host", url))?,
-            );
-
-            let segments: Vec<_> = url
-                .path_segments()
-                .with_context(s!("URL `{}` is cannot-be-a-base", url))?
-                .collect();
-            let (base, rest) = segments.split_last().unwrap();
-            let base = if base.is_empty() { "index" } else { *base };
-            dir.push(rest.iter().collect::<PathBuf>());
-            let file = dir.join(base);
-
+            let (dir, file) = remote_dir_and_file(ctx, &url)?;
             remote::lock(ctx, dir, file, &url)
         }
 
@@ -67,6 +49,34 @@ impl fmt::Display for Source {
             Self::Local { dir } => write!(f, "{}", dir.display()),
         }
     }
+}
+
+pub fn git_dir(ctx: &Context, url: &Url) -> Result<PathBuf> {
+    let mut dir = ctx.clone_dir().to_path_buf();
+    dir.push(
+        url.host_str()
+            .with_context(s!("URL `{}` has no host", url))?,
+    );
+    dir.push(url.path().trim_start_matches('/'));
+    Ok(dir)
+}
+
+pub fn remote_dir_and_file(ctx: &Context, url: &Url) -> Result<(PathBuf, PathBuf)> {
+    let mut dir = ctx.download_dir().to_path_buf();
+    dir.push(
+        url.host_str()
+            .with_context(s!("URL `{}` has no host", url))?,
+    );
+
+    let segments: Vec<_> = url
+        .path_segments()
+        .with_context(s!("URL `{}` is cannot-be-a-base", url))?
+        .collect();
+    let (base, rest) = segments.split_last().unwrap();
+    let base = if base.is_empty() { "index" } else { *base };
+    dir.push(rest.iter().collect::<PathBuf>());
+    let file = dir.join(base);
+    Ok((dir, file))
 }
 
 ////////////////////////////////////////////////////////////////////////////////

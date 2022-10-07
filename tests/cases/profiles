@@ -19,7 +19,7 @@ echo 'testing...'
 """
 profiles = ["p2"]
 
-# plugins.lock
+# plugins.p1.lock
 version = "<version>"
 home = "<home>"
 config_dir = "<config>"
@@ -59,7 +59,7 @@ each = true
 [LOADED] ~/<config_sub>/plugins.toml
    [SKIPPED] https://github.com/rossmacarthur/sheldon-test2
     [CLONED] https://github.com/rossmacarthur/sheldon-test
-[LOCKED] ~/<data_sub>/plugins.lock
+[LOCKED] ~/<data_sub>/plugins.p1.lock
 
 # source.stdout
 source "<data>/repos/github.com/rossmacarthur/sheldon-test/test.plugin.zsh"
@@ -67,7 +67,7 @@ echo 'testing...'
 
 
 # source.stderr
-[UNLOCKED] ~/<data_sub>/plugins.lock
+[UNLOCKED] ~/<data_sub>/plugins.p1.lock
   [RENDERED] test
    [INLINED] inline-test
 

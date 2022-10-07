@@ -1,8 +1,7 @@
-mod clean;
 mod file;
 mod plugin;
 mod script;
-mod source;
+pub mod source;
 
 use std::fs;
 use std::path::Path;
@@ -364,7 +363,6 @@ mod tests {
                 profiles: None,
             })],
         };
-        let locked = config(&ctx, cfg).unwrap();
         let test_dir = ctx.clone_dir().join("github.com/rossmacarthur/another-dir");
         let test_file = test_dir.join("test.txt");
         fs::create_dir_all(&test_dir).unwrap();
@@ -375,10 +373,12 @@ mod tests {
                 .open(&test_file)
                 .unwrap();
         }
-
         let mut warnings = Vec::new();
-        locked.clean(&ctx, &mut warnings);
+        crate::config::clean(&ctx, &mut warnings, &cfg).unwrap();
         assert!(warnings.is_empty());
+        assert!(!test_file.exists());
+        assert!(!test_dir.exists());
+        let _ = config(&ctx, cfg).unwrap();
         assert!(ctx
             .clone_dir()
             .join("github.com/rossmacarthur/sheldon-test")
@@ -387,8 +387,6 @@ mod tests {
             .clone_dir()
             .join("github.com/rossmacarthur/sheldon-test/test.plugin.zsh")
             .exists());
-        assert!(!test_file.exists());
-        assert!(!test_dir.exists());
     }
 
     #[test]

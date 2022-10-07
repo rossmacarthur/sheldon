@@ -165,7 +165,10 @@ impl Opt {
         let config_dir = config_dir.unwrap_or(config_pre);
         let data_dir = data_dir.unwrap_or(data_pre);
         let config_file = config_file.unwrap_or_else(|| config_dir.join("plugins.toml"));
-        let lock_file = data_dir.join("plugins.lock");
+        let lock_file = match profile.as_deref() {
+            Some("") | None => data_dir.join("plugins.lock"),
+            Some(p) => data_dir.join(&format!("plugins.{}.lock", p)),
+        };
         let clone_dir = data_dir.join("repos");
         let download_dir = data_dir.join("downloads");
 
