@@ -3,7 +3,6 @@ use super::*;
 use std::iter;
 
 use pretty_assertions::assert_eq;
-use serde::Serialize;
 
 use crate::cli::color_choice::ColorChoice;
 
@@ -49,16 +48,7 @@ fn raw_opt_long_version() {
 #[test]
 fn raw_opt_help() {
     setup();
-
-    #[derive(Serialize)]
-    struct Context {
-        version: &'static str,
-    }
-
-    let ctx = Context {
-        version: build::CRATE_RELEASE,
-    };
-
+    let ctx = upon::value! { version: build::CRATE_RELEASE };
     for opt in &["-h", "--help"] {
         let err = raw_opt_err(&[opt]);
         goldie::assert_template!(&ctx, err.to_string());

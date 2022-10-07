@@ -9,9 +9,12 @@ use std::io::Write;
 use std::result;
 
 use anyhow::Error;
+use once_cell::sync::Lazy;
 
 pub use crate::util::path_ext::PathExt;
 pub use crate::util::temp::TempPath;
+
+pub static TEMPLATE_ENGINE: Lazy<upon::Engine> = Lazy::new(upon::Engine::new);
 
 /// Returns the underlying error kind for the given error.
 pub fn underlying_io_error_kind(error: &Error) -> Option<io::ErrorKind> {

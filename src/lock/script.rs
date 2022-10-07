@@ -9,12 +9,21 @@ impl LockedConfig {
     /// Generate the script.
     pub fn script(&self, ctx: &Context) -> Result<String> {
         // Compile the templates
-        let mut templates = handlebars::Handlebars::new();
-        templates.set_strict_mode(true);
+        let mut engine = upon::Engine::new();
         for (name, template) in &self.templates {
-            templates
-                .register_template_string(name, &template.value)
+            engine
+                .add_template(name, &template.value)
                 .with_context(s!("failed to compile template `{}`", name))?;
+        }
+
+        macro_rules! render {
+            ($name:expr, $data:expr) => {
+                &engine
+                    .get_template($name)
+                    .unwrap()
+                    .render($data)
+                    .with_context(s!("failed to render template `{}`", $name))?
+            };
         }
 
         let mut script = String::new();
@@ -44,19 +53,11 @@ impl LockedConfig {
                                 let as_str =
                                     file.to_str().context("plugin file is not valid UTF-8")?;
                                 data.insert("file", as_str);
-                                script.push_str(
-                                    &templates
-                                        .render(name, &data)
-                                        .with_context(s!("failed to render template `{}`", name))?,
-                                );
+                                script.push_str(render!(name, &data));
                                 script.push('\n');
                             }
                         } else {
-                            script.push_str(
-                                &templates
-                                    .render(name, &data)
-                                    .with_context(s!("failed to render template `{}`", name))?,
-                            );
+                            script.push_str(render!(name, &data));
                             script.push('\n');
                         }
                     }
@@ -72,8 +73,10 @@ impl LockedConfig {
                         "name" => &plugin.name,
                     };
                     script.push_str(
-                        &templates
-                            .render_template(&plugin.raw, &data)
+                        &engine
+                            .compile(&plugin.raw)
+                            .with_context(s!("failed to compile inline plugin `{}`", &plugin.name))?
+                            .render(&data)
                             .with_context(s!(
                                 "failed to render inline plugin `{}`",
                                 &plugin.name

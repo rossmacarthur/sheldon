@@ -5,8 +5,7 @@ Sheldon is a fast, configurable, command-line tool to manage your shell plugins.
 ## How does it work?
 
 Plugins are specified in a [TOML](https://toml.io) configuration file and
-Sheldon renders an install script using user configurable
-[handlebars](http://handlebarsjs.com) templates.
+Sheldon renders an install script using user configurable templates.
 
 A `~/.zshrc` or `~/.bashrc` that uses Sheldon simply contains the following.
 

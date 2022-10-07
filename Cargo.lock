@@ -333,12 +333,11 @@ name = "gen-readme"
 version = "0.0.0"
 dependencies = [
  "anyhow",
- "handlebars",
- "maplit",
  "pulldown-cmark 0.9.1",
  "pulldown-cmark-to-cmark",
  "pulldown-cmark-toc",
  "regex-macro",
+ "upon",
 ]
 
 [[package]]
@@ -400,31 +399,17 @@ dependencies = [
 
 [[package]]
 name = "goldie"
-version = "0.3.0"
+version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "81b13cf51127777a6901bee511f57d94ccd84b624fc37318681889f7ba06b230"
+checksum = "5c68b794c78f0138015514ad826c06fc1163f73d6bc4b487ea1fac40ac7d9599"
 dependencies = [
- "ansi_term",
  "anyhow",
  "once_cell",
  "pretty_assertions",
  "serde",
  "serde_json",
- "tinytemplate",
-]
-
-[[package]]
-name = "handlebars"
-version = "4.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b66d0c1b6e3abfd1e72818798925e16e02ed77e1b47f6c25a95a23b377ee4299"
-dependencies = [
- "log",
- "pest",
- "pest_derive",
- "serde",
- "serde_json",
- "thiserror",
+ "upon",
+ "yansi",
 ]
 
 [[package]]
@@ -732,14 +717,14 @@ checksum = "1df8c4ec4b0627e53bdf214615ad287367e482558cf84b109250b37464dc03ae"
 
 [[package]]
 name = "pretty_assertions"
-version = "1.2.1"
+version = "1.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c89f989ac94207d048d92db058e4f6ec7342b0971fc58d1271ca148b799b3563"
+checksum = "a25e9bcb20aa780fd0bb16b72403a9064d6b3f22f026946029acb941a50af755"
 dependencies = [
- "ansi_term",
  "ctor",
  "diff",
  "output_vt100",
+ "yansi",
 ]
 
 [[package]]
@@ -987,7 +972,6 @@ dependencies = [
  "git2",
  "globwalk",
  "goldie",
- "handlebars",
  "home",
  "indexmap",
  "itertools",
@@ -1003,6 +987,7 @@ dependencies = [
  "thiserror",
  "toml",
  "toml_edit",
+ "upon",
  "url",
  "walkdir",
  "which",
@@ -1094,16 +1079,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "tinytemplate"
-version = "1.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "be4d6b5f19ff7664e8c98d03e2139cb510db9b0a60b55f8e8709b689d939b6bc"
-dependencies = [
- "serde",
- "serde_json",
-]
-
-[[package]]
 name = "tinyvec"
 version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1186,6 +1161,16 @@ name = "unicode-width"
 version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3ed742d4ea2bd1176e236172c8429aaf54486e7ac098db29ffe6529e0ce50973"
+
+[[package]]
+name = "upon"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e2b14182f4b5f0394580626668f0da50a2cbb9ad2dc1213e92f893cfb8c164c2"
+dependencies = [
+ "serde",
+ "unicode-width",
+]
 
 [[package]]
 name = "url"
@@ -1307,3 +1292,9 @@ name = "windows_x86_64_msvc"
 version = "0.36.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c811ca4a8c853ef420abd8592ba53ddbbac90410fab6903b3e79972a631f7680"
+
+[[package]]
+name = "yansi"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "09041cd90cf85f7f8b2df60c646f853b7f535ce68f85244eb6731cf89fa498ec"

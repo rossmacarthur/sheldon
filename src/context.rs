@@ -185,7 +185,7 @@ impl ToMessage for &Path {
 pub fn log_error(no_color: bool, color: Color, prefix: &str, err: &Error) {
     let pretty = err
         .chain()
-        .map(|c| c.to_string().replace("Template error: ", ""))
+        .map(|c| c.to_string())
         .collect::<Vec<_>>()
         .join("\n  due to: ");
     if no_color {

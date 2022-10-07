@@ -18,8 +18,7 @@
 - Arbitrary remote scripts or binary plugins.
 - Local plugins.
 - Inline plugins.
-- Highly configurable install methods using
-  [handlebars](http://handlebarsjs.com) templating.
+- Highly configurable install methods using templates.
 - Shell agnostic, with sensible defaults for Zsh.
 - Super-fast plugin loading and parallel installation. See [benchmarks].
 - Config file using [TOML](https://toml.io) syntax.
