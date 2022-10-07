@@ -116,7 +116,7 @@ where
     P: AsRef<Path>,
 {
     let path = path.as_ref();
-    let bytes = fs::read(&path).with_context(s!("failed to read from `{}`", path.display()))?;
+    let bytes = fs::read(path).with_context(s!("failed to read from `{}`", path.display()))?;
     let contents = String::from_utf8(bytes).context("config file contents are not valid UTF-8")?;
     let raw_config = toml::from_str(&contents).context("failed to deserialize contents as TOML")?;
     normalize::normalize(raw_config, warnings)

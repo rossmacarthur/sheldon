@@ -143,7 +143,7 @@ fn edit(ctx: &Context) -> Result<()> {
     let handle = editor::Editor::default()?.edit(path, &original_contents)?;
     status!(ctx, "Opened", &"config in temporary file for editing");
     let config = handle.wait_and_update(&original_contents)?;
-    config.to_path(&path)?;
+    config.to_path(path)?;
     header!(ctx, "Updated", path);
     Ok(())
 }

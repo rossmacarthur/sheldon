@@ -112,7 +112,7 @@ fn generate_readme_contents(summary: &[PathBuf]) -> Result<String> {
         if i != 0 {
             contents.push_str("\n\n");
         }
-        let text = read_to_string(&path)?;
+        let text = read_to_string(path)?;
         contents.push_str(&fmt_with_increased_heading_level(&text)?);
     }
     Ok(contents)

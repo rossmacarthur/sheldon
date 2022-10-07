@@ -36,7 +36,7 @@ where
 {
     let path = path.as_ref();
     let locked: LockedConfig = toml::from_str(&String::from_utf8_lossy(
-        &fs::read(&path)
+        &fs::read(path)
             .with_context(s!("failed to read locked config from `{}`", path.display()))?,
     ))
     .context("failed to deserialize locked config")?;

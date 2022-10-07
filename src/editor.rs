@@ -119,7 +119,7 @@ impl Editor {
         };
         let Self { bin, args } = self;
         if overwrite {
-            fs::write(temp.path(), &contents).context("failed to write to temporary file")?;
+            fs::write(temp.path(), contents).context("failed to write to temporary file")?;
         }
         let child = Command::new(bin)
             .args(args)
