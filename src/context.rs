@@ -17,10 +17,14 @@ pub struct Context {
     pub config_dir: PathBuf,
     pub data_dir: PathBuf,
     pub config_file: PathBuf,
-    pub lock_file: PathBuf,
-    pub clone_dir: PathBuf,
-    pub download_dir: PathBuf,
     pub profile: Option<String>,
+
+    #[serde(skip)]
+    pub lock_file: PathBuf,
+    #[serde(skip)]
+    pub clone_dir: PathBuf,
+    #[serde(skip)]
+    pub download_dir: PathBuf,
     #[serde(skip)]
     pub output: Output,
     #[serde(skip)]

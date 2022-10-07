@@ -58,6 +58,12 @@ impl LockedConfig {
         P: AsRef<Path>,
     {
         let path = path.as_ref();
+        if let Some(parent) = path.parent() {
+            fs::create_dir_all(parent).with_context(s!(
+                "failed to create parent directory `{}`",
+                parent.display()
+            ))?;
+        }
         fs::write(
             path,
             &toml::to_string(&self).context("failed to serialize locked config")?,

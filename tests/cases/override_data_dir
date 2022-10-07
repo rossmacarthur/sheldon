@@ -1,14 +1,11 @@
 # plugins.toml
 
-# test.lock
+# plugins.lock
 version = "<version>"
 home = "<home>"
 config_dir = "<config>"
-data_dir = "<data>"
+data_dir = "<home>/test"
 config_file = "<config>/plugins.toml"
-lock_file = "<data>/test.lock"
-clone_dir = "<data>/repos"
-download_dir = "<data>/downloads"
 plugins = []
 [templates.PATH]
 value = "export PATH=\"{{ dir }}:$PATH\""
@@ -30,11 +27,11 @@ each = true
 
 # lock.stderr
 [LOADED] ~/<config_sub>/plugins.toml
-[LOCKED] ~/<data_sub>/test.lock
+[LOCKED] ~/test/plugins.lock
 
 # source.stdout
 
 # source.stderr
-[UNLOCKED] ~/<data_sub>/test.lock
+[UNLOCKED] ~/test/plugins.lock
 
 # end

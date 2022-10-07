@@ -49,18 +49,6 @@ pub struct RawOpt {
     #[clap(long, value_name = "PATH", env = "SHELDON_CONFIG_FILE")]
     pub config_file: Option<PathBuf>,
 
-    /// The lock file.
-    #[clap(long, value_name = "PATH", env = "SHELDON_LOCK_FILE")]
-    pub lock_file: Option<PathBuf>,
-
-    /// The directory where git sources are cloned to.
-    #[clap(long, value_name = "PATH", env = "SHELDON_CLONE_DIR")]
-    pub clone_dir: Option<PathBuf>,
-
-    /// The directory where remote sources are downloaded to.
-    #[clap(long, value_name = "PATH", env = "SHELDON_DOWNLOAD_DIR")]
-    pub download_dir: Option<PathBuf>,
-
     /// The profile used for conditional plugins.
     #[clap(long, value_name = "PROFILE", env = "SHELDON_PROFILE")]
     pub profile: Option<String>,

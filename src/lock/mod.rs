@@ -271,9 +271,6 @@ fn is_context_equal(left: &Context, right: &Context) -> bool {
         && left.config_dir == right.config_dir
         && left.data_dir == right.data_dir
         && left.config_file == right.config_file
-        && left.lock_file == right.lock_file
-        && left.clone_dir == right.clone_dir
-        && left.download_dir == right.download_dir
         && left.profile == right.profile
 }
 
@@ -402,9 +399,6 @@ home = "<home>"
 config_dir = "<config>"
 data_dir = "<data>"
 config_file = "<config>/plugins.toml"
-lock_file = "<data>/plugins.lock"
-clone_dir = "<data>/repos"
-download_dir = "<data>/downloads"
 plugins = []
 
 [templates]

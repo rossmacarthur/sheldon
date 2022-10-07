@@ -224,10 +224,11 @@ impl TestCase {
     }
 
     fn assert_contents(&self, name: &str) -> io::Result<()> {
-        assert_eq!(
-            &fs::read_to_string(self.dirs.data.join(name))?,
-            &self.get(name)
-        );
+        self.assert_contents_path(name, &self.dirs.data.join(name))
+    }
+
+    fn assert_contents_path(&self, name: &str, path: &Path) -> io::Result<()> {
+        assert_eq!(&fs::read_to_string(path)?, &self.get(name));
         Ok(())
     }
 
@@ -565,10 +566,10 @@ fn lock_and_source_override_config_file_missing() -> io::Result<()> {
 }
 
 #[test]
-fn lock_and_source_override_lock_file() -> io::Result<()> {
-    let case = TestCase::load("override_lock_file")?;
-    let lock_file = case.dirs.data.join("test.lock");
-    let args = ["--lock-file", lock_file.to_str().unwrap()];
+fn lock_and_source_override_data_dir() -> io::Result<()> {
+    let case = TestCase::load("override_data_dir")?;
+    let data_dir = case.dirs.home.path().join("test");
+    let args = ["--data-dir", data_dir.to_str().unwrap()];
 
     case.write_config_file("plugins.toml")?;
 
@@ -580,7 +581,7 @@ fn lock_and_source_override_lock_file() -> io::Result<()> {
         .arg("lock")
         .run()?;
 
-    case.assert_contents("test.lock")?;
+    case.assert_contents_path("plugins.lock", &data_dir.join("plugins.lock"))?;
 
     TestCommand::new(&case.dirs)
         .expect_exit_code(0)

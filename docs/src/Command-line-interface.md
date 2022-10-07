@@ -162,27 +162,6 @@ this will default to `XDG_DATA_HOME/sheldon` otherwise it will default to
 Set the path to the config file. This defaults to `<config-dir>/plugins.toml`
 where `<config-dir>` is the config directory.
 
-#### `--lock-file <path>`
-
-*Environment variable:* `SHELDON_LOCK_FILE`
-
-Set the path to the lock file. This defaults to `<data-dir>/plugins.lock` where
-`<data-dir>` is the data directory.
-
-#### `--clone-dir <path>`
-
-*Environment variable:* `SHELDON_CLONE_DIR`
-
-Set the path to the directory where Git plugins will be cloned to. This defaults
-to `<data-dir>/repos` where `<data-dir>` is the data directory.
-
-#### `--download-dir <path>`
-
-*Environment variable:* `SHELDON_DOWNLOAD_DIR`
-
-Set the path to the directory where non-Git plugins will be downloaded to. This
-defaults to `<data-dir>/repos` where `<data-dir>` is the data directory.
-
 #### `--profile <profile>`
 
 *Environment variable:* `SHELDON_PROFILE`

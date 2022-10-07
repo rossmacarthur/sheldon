@@ -25,9 +25,6 @@ home = "<home>"
 config_dir = "<config>"
 data_dir = "<data>"
 config_file = "<config>/plugins.toml"
-lock_file = "<data>/plugins.lock"
-clone_dir = "<data>/repos"
-download_dir = "<data>/downloads"
 profile = "p1"
 
 [[plugins]]

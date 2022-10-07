@@ -12,13 +12,6 @@ use crate::lock::LockedConfig;
 impl LockedConfig {
     /// Clean the clone and download directories.
     pub fn clean(&self, ctx: &Context, warnings: &mut Vec<Error>) {
-        let clean_clone_dir = self.ctx.clone_dir().starts_with(self.ctx.data_dir());
-        let clean_download_dir = self.ctx.download_dir().starts_with(self.ctx.data_dir());
-
-        if !clean_clone_dir && !clean_download_dir {
-            return;
-        }
-
         // Track the source directories, all the plugin directory parents, and all the
         // plugin files.
         let mut source_dirs = HashSet::new();
@@ -41,31 +34,27 @@ impl LockedConfig {
         parent_dirs.insert(self.ctx.clone_dir());
         parent_dirs.insert(self.ctx.download_dir());
 
-        if clean_clone_dir {
-            for entry in WalkDir::new(self.ctx.clone_dir())
-                .into_iter()
-                .filter_entry(|e| !source_dirs.contains(e.path()))
-                .filter_map(result::Result::ok)
-                .filter(|e| !parent_dirs.contains(e.path()))
-            {
-                if let Err(err) = remove_path(ctx, entry.path()) {
-                    warnings.push(err);
-                }
+        for entry in WalkDir::new(self.ctx.clone_dir())
+            .into_iter()
+            .filter_entry(|e| !source_dirs.contains(e.path()))
+            .filter_map(result::Result::ok)
+            .filter(|e| !parent_dirs.contains(e.path()))
+        {
+            if let Err(err) = remove_path(ctx, entry.path()) {
+                warnings.push(err);
             }
         }
 
-        if clean_download_dir {
-            for entry in WalkDir::new(self.ctx.download_dir())
-                .into_iter()
-                .filter_map(result::Result::ok)
-                .filter(|e| {
-                    let p = e.path();
-                    !files.contains(p) && !parent_dirs.contains(p)
-                })
-            {
-                if let Err(err) = remove_path(ctx, entry.path()) {
-                    warnings.push(err);
-                }
+        for entry in WalkDir::new(self.ctx.download_dir())
+            .into_iter()
+            .filter_map(result::Result::ok)
+            .filter(|e| {
+                let p = e.path();
+                !files.contains(p) && !parent_dirs.contains(p)
+            })
+        {
+            if let Err(err) = remove_path(ctx, entry.path()) {
+                warnings.push(err);
             }
         }
     }

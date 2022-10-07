@@ -20,9 +20,6 @@ _sheldon() {
 '--config-dir=[The configuration directory]:PATH: ' \
 '--data-dir=[The data directory]:PATH: ' \
 '--config-file=[The config file]:PATH: ' \
-'--lock-file=[The lock file]:PATH: ' \
-'--clone-dir=[The directory where git sources are cloned to]:PATH: ' \
-'--download-dir=[The directory where remote sources are downloaded to]:PATH: ' \
 '--profile=[The profile used for conditional plugins]:PROFILE: ' \
 '-h[Print help information]' \
 '--help[Print help information]' \
