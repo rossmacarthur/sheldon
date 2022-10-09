@@ -5,9 +5,15 @@ data_dir = "<data>"
 config_file = "<config>/plugins.toml"
 
 [[plugins]]
-name = "test_downloads"
+name = "testa"
 source_dir = "<data>/downloads/raw.githubusercontent.com/rossmacarthur/sheldon-test/master"
 files = ["<data>/downloads/raw.githubusercontent.com/rossmacarthur/sheldon-test/master/test.plugin.zsh"]
+apply = ["source"]
+
+[[plugins]]
+name = "testb"
+source_dir = "<data>/repos/github.com/rossmacarthur/sheldon-test"
+files = ["<data>/repos/github.com/rossmacarthur/sheldon-test/test.plugin.zsh"]
 apply = ["source"]
 [templates.PATH]
 value = "export PATH=\"{{ dir }}:$PATH\""

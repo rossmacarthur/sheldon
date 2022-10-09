@@ -1,174 +1,34 @@
+mod helpers;
+
 use std::collections::HashMap;
 use std::env;
-use std::ffi;
 use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
-use std::process::Command;
-use std::rc::Rc;
 
 use once_cell::sync::Lazy;
 use pretty_assertions::assert_eq;
+
+use crate::helpers::{TestCommand, TestDirs};
 
 ////////////////////////////////////////////////////////////////////////////////
 // Utilities
 ////////////////////////////////////////////////////////////////////////////////
 
-struct TestCommand {
-    command: Command,
-    expect_exit_code: Option<i32>,
-    expect_stdout: Option<String>,
-    expect_stderr: Option<String>,
-}
-
 struct TestCase {
-    dirs: Directories,
+    dirs: TestDirs,
     data: HashMap<String, String>,
-}
-
-/// Temporary test directories and their layout.
-#[derive(Clone)]
-struct Directories {
-    home: Rc<tempfile::TempDir>,
-    config: PathBuf,
-    data: PathBuf,
-}
-
-impl TestCommand {
-    fn new(dirs: &Directories) -> Self {
-        // https://github.com/rust-lang/cargo/blob/2af662e22177a839763ac8fb70d245a680b15214/crates/cargo-test-support/src/lib.rs#L427-L441
-        let bin = env::var_os("CARGO_BIN_PATH")
-            .map(PathBuf::from)
-            .or_else(|| {
-                env::current_exe().ok().map(|mut path| {
-                    path.pop();
-                    if path.ends_with("deps") {
-                        path.pop();
-                    }
-                    path
-                })
-            })
-            .unwrap()
-            .join("sheldon");
-
-        let mut command = Command::new(&bin);
-        let mut params = Vec::new();
-
-        if let Ok(runner) = env::var(format!(
-            "CARGO_TARGET_{}_RUNNER",
-            env!("TARGET").replace('-', "_").to_ascii_uppercase()
-        )) {
-            let mut split = runner.splitn(2, char::is_whitespace);
-            let runner_bin = split.next().unwrap();
-            if let Some(runner_args) = split.next() {
-                params = runner_args.split_whitespace().map(String::from).collect();
-            }
-            params.push(bin.as_path().to_string_lossy().to_string());
-            command = Command::new(runner_bin);
-        }
-
-        command
-            .env_clear()
-            .env("HOME", &dirs.home.path())
-            .env("SHELDON_CONFIG_DIR", &dirs.config)
-            .env("SHELDON_DATA_DIR", &dirs.data)
-            .args(&params)
-            .arg("--verbose");
-
-        Self {
-            command,
-            expect_exit_code: None,
-            expect_stdout: None,
-            expect_stderr: None,
-        }
-    }
-
-    fn expect_exit_code(mut self, exit_code: i32) -> Self {
-        self.expect_exit_code = Some(exit_code);
-        self
-    }
-
-    fn expect_stdout(mut self, stdout: String) -> Self {
-        self.expect_stdout = Some(stdout);
-        self
-    }
-
-    fn expect_stderr(mut self, stderr: String) -> Self {
-        self.expect_stderr = Some(stderr);
-        self
-    }
-
-    fn expect_success(self, case: &TestCase, arg: &str) -> Self {
-        self.expect_exit_code(0)
-            .expect_stdout(case.get(format!("{}.stdout", arg)))
-            .expect_stderr(case.get(format!("{}.stderr", arg)))
-            .arg(arg)
-    }
-
-    fn envs<'v, I>(mut self, vars: I) -> Self
-    where
-        I: IntoIterator<Item = (&'v str, PathBuf)>,
-    {
-        self.command.envs(vars);
-        self
-    }
-
-    fn args<I, S>(mut self, args: I) -> Self
-    where
-        I: IntoIterator<Item = S>,
-        S: AsRef<ffi::OsStr>,
-    {
-        self.command.args(args);
-        self
-    }
-
-    fn arg<S>(mut self, arg: S) -> Self
-    where
-        S: AsRef<ffi::OsStr>,
-    {
-        self.command.arg(arg);
-        self
-    }
-
-    fn run(mut self) -> io::Result<()> {
-        let result = self.command.output()?;
-        let result_exit_code = result.status.code().unwrap();
-        let result_stdout = String::from_utf8_lossy(&result.stdout);
-        let result_stderr = String::from_utf8_lossy(&result.stderr);
-        if let Some(exit_code) = self.expect_exit_code {
-            assert_eq!(
-                result_exit_code, exit_code,
-                "\nexit code: {}\nstdout:\n{}\nstderr:\n{}\n",
-                result_exit_code, result_stdout, result_stderr
-            );
-        }
-        if let Some(stdout) = self.expect_stdout {
-            assert_eq!(
-                result_stdout, stdout,
-                "\nexit code: {}\nstdout:\n{}\nstderr:\n{}\n",
-                result_exit_code, result_stdout, result_stderr
-            );
-        }
-        if let Some(stderr) = self.expect_stderr {
-            assert_eq!(
-                result_stderr, stderr,
-                "\nexit code: {}\nstdout:\n{}\nstderr:\n{}\n",
-                result_exit_code, result_stdout, result_stderr
-            );
-        }
-        Ok(())
-    }
 }
 
 impl TestCase {
     /// Load the test case with the given name.
     fn load(name: &str) -> io::Result<Self> {
-        let dirs = Directories::default()?;
+        let dirs = TestDirs::default()?;
         Self::load_with_dirs(name, dirs)
     }
 
     /// Load the test case in the given directories.
-    fn load_with_dirs(name: &str, dirs: Directories) -> io::Result<Self> {
+    fn load_with_dirs(name: &str, dirs: TestDirs) -> io::Result<Self> {
         static ENGINE: Lazy<upon::Engine> = Lazy::new(|| {
             let syntax = upon::Syntax::builder().expr("<", ">").build();
             upon::Engine::with_syntax(syntax)
@@ -216,13 +76,12 @@ impl TestCase {
             .unwrap_or_else(|| String::new())
     }
 
-    fn run_command(&self, command: &str) -> io::Result<()> {
+    fn command(&self, command: &str) -> TestCommand {
         TestCommand::new(&self.dirs)
             .expect_exit_code(0)
             .expect_stdout(self.get(format!("{}.stdout", command)))
             .expect_stderr(self.get(format!("{}.stderr", command)))
             .arg(command)
-            .run()
     }
 
     fn write_config_file(&self, name: &str) -> io::Result<()> {
@@ -240,43 +99,10 @@ impl TestCase {
 
     fn run(&self) -> io::Result<()> {
         self.write_config_file("plugins.toml")?;
-        self.run_command("lock")?;
+        self.command("lock").run()?;
         self.assert_contents("plugins.lock")?;
-        self.run_command("source")
-    }
-}
-
-impl Directories {
-    fn conforms(&self) -> bool {
-        self.config.join("plugins.toml").exists()
-            && self.data.join("plugins.lock").exists()
-            && self.data.join("repos").exists()
-            && self.data.join("downloads").exists()
-    }
-
-    fn init(self) -> io::Result<Self> {
-        fs::create_dir_all(&self.data)?;
-        fs::create_dir_all(&self.config)?;
-        Ok(self)
-    }
-
-    fn default_xdg() -> io::Result<Self> {
-        let home = Rc::new(tempfile::tempdir()?);
-        let config = home.path().join(".config").join("sheldon");
-        let data = home.path().join(".local/share").join("sheldon");
-        Self { home, config, data }.init()
-    }
-
-    fn default() -> io::Result<Self> {
-        let home = Rc::new(tempfile::tempdir()?);
-        let data = home.path().join(".sheldon");
-        fs::create_dir(&data)?;
-
-        Ok(Self {
-            home,
-            config: data.clone(),
-            data,
-        })
+        self.command("source").run()?;
+        Ok(())
     }
 }
 
@@ -474,20 +300,10 @@ fn lock_and_source_github_tag() -> io::Result<()> {
 fn lock_and_source_github_bad_url() -> io::Result<()> {
     let case = TestCase::load("github_bad_url")?;
     case.write_config_file("plugins.toml")?;
-
-    TestCommand::new(&case.dirs)
-        .expect_exit_code(2)
-        .expect_stdout(case.get("lock.stdout"))
-        .expect_stderr(case.get("lock.stderr"))
-        .arg("lock")
-        .run()?;
-
+    case.command("lock").expect_exit_code(2).run()?;
     assert!(!case.dirs.data.join("plugins.lock").exists());
-
-    case.run_command("source")?;
-
+    case.command("source").run()?;
     assert!(!case.dirs.data.join("plugins.lock").exists());
-
     Ok(())
 }
 
@@ -501,11 +317,8 @@ fn lock_and_source_github_bad_reinstall() -> io::Result<()> {
     // Now use a bad URL and try reinstall
     let case = TestCase::load_with_dirs("github_bad_reinstall", case.dirs)?;
     case.write_config_file("plugins.toml")?;
-    TestCommand::new(&case.dirs)
+    case.command("lock")
         .expect_exit_code(2)
-        .expect_stdout(case.get("lock.stdout"))
-        .expect_stderr(case.get("lock.stderr"))
-        .arg("lock")
         .arg("--reinstall")
         .run()?;
 
@@ -525,152 +338,102 @@ fn lock_and_source_inline() -> io::Result<()> {
 fn lock_and_source_override_config_file() -> io::Result<()> {
     let case = TestCase::load("override_config_file")?;
     let config_file = case.dirs.config.join("test.toml");
-    let args = ["--config-file", config_file.to_str().unwrap()];
-
     case.write_config_file("test.toml")?;
-
-    TestCommand::new(&case.dirs)
-        .expect_exit_code(0)
-        .expect_stdout(case.get("lock.stdout"))
-        .expect_stderr(case.get("lock.stderr"))
-        .args(&args)
-        .arg("lock")
+    case.command("lock")
+        .env("SHELDON_CONFIG_FILE", &config_file)
         .run()?;
-
-    TestCommand::new(&case.dirs)
-        .expect_exit_code(0)
-        .expect_stdout(case.get("source.stdout"))
-        .expect_stderr(case.get("source.stderr"))
-        .args(&args)
-        .arg("source")
+    case.assert_contents("plugins.lock")?;
+    case.command("source")
+        .env("SHELDON_CONFIG_FILE", &config_file)
         .run()?;
-
-    case.assert_contents("plugins.lock")
+    Ok(())
 }
 
 #[test]
 fn lock_and_source_override_config_file_missing() -> io::Result<()> {
     let case = TestCase::load("override_config_file_missing")?;
     let config_file = case.dirs.config.join("test.toml");
-    let args = ["--config-file", config_file.to_str().unwrap()];
-
-    TestCommand::new(&case.dirs)
+    case.command("lock")
         .expect_exit_code(2)
-        .expect_stdout(case.get("stdout"))
-        .expect_stderr(case.get("stderr"))
-        .args(&args)
-        .arg("lock")
+        .env("SHELDON_CONFIG_FILE", &config_file)
         .run()?;
-
-    TestCommand::new(&case.dirs)
+    case.command("source")
         .expect_exit_code(2)
-        .expect_stdout(case.get("stdout"))
-        .expect_stderr(case.get("stderr"))
-        .args(&args)
-        .arg("source")
-        .run()
+        .env("SHELDON_CONFIG_FILE", &config_file)
+        .run()?;
+    Ok(())
 }
 
 #[test]
 fn lock_and_source_override_data_dir() -> io::Result<()> {
     let case = TestCase::load("override_data_dir")?;
     let data_dir = case.dirs.home.path().join("test");
-    let args = ["--data-dir", data_dir.to_str().unwrap()];
-
     case.write_config_file("plugins.toml")?;
-
-    TestCommand::new(&case.dirs)
-        .expect_exit_code(0)
-        .expect_stdout(case.get("lock.stdout"))
-        .expect_stderr(case.get("lock.stderr"))
-        .args(&args)
-        .arg("lock")
+    case.command("lock")
+        .env("SHELDON_DATA_DIR", &data_dir)
         .run()?;
-
     case.assert_contents_path("plugins.lock", &data_dir.join("plugins.lock"))?;
-
-    TestCommand::new(&case.dirs)
-        .expect_exit_code(0)
-        .expect_stdout(case.get("source.stdout"))
-        .expect_stderr(case.get("source.stderr"))
-        .args(&args)
-        .arg("source")
-        .run()
+    case.command("source")
+        .env("SHELDON_DATA_DIR", &data_dir)
+        .run()?;
+    Ok(())
 }
 
 #[test]
-fn dirs_default() -> io::Result<()> {
-    let dirs = Directories::default()?;
-    let case = TestCase::load_with_dirs("directories", dirs.clone())?.run();
-    let case_incremental = TestCase::load_with_dirs("directories_incremental", dirs.clone())?.run();
-
-    assert!(dirs.conforms());
-    assert_eq!(&dirs.data, &dirs.config);
-    case.unwrap();
-    case_incremental
-}
-
-#[test]
-fn dirs_xdg_default() -> io::Result<()> {
-    let dirs = Directories::default_xdg()?;
-    let case = TestCase::load_with_dirs("directories", dirs.clone())?;
-    let case_incremental = TestCase::load_with_dirs("directories_incremental", dirs.clone())?;
-
-    let env_vars = &[("XDG_CACHE_HOME", dirs.home.path().join(".cache"))];
-    let cmd = |case: &TestCase, cmd: &str| {
-        TestCommand::new(&case.dirs)
-            .expect_success(case, cmd)
-            .envs(env_vars.iter().cloned())
-    };
-
+fn lock_and_source_profiles() -> io::Result<()> {
+    let case = TestCase::load("profiles")?;
     case.write_config_file("plugins.toml")?;
-    cmd(&case, "lock").run()?;
-    cmd(&case, "source").run()?;
+    case.command("lock").env("SHELDON_PROFILE", "p1").run()?;
+    case.assert_contents("plugins.p1.lock")?;
+    case.command("source").env("SHELDON_PROFILE", "p1").run()?;
+    check_sheldon_test(&case.dirs.data).unwrap();
+    Ok(())
+}
 
-    case_incremental.write_config_file("plugins.toml")?;
-    cmd(&case_incremental, "lock").run()?;
-    cmd(&case_incremental, "source").run()?;
+#[test]
+fn directories_default() -> io::Result<()> {
+    let case = TestCase::load("directories")?;
+    case.run()?;
+    case.dirs.assert_conforms();
+    assert_eq!(&case.dirs.data, &case.dirs.config);
+    Ok(())
+}
 
-    assert!(dirs.conforms());
+#[test]
+fn directories_xdg_default() -> io::Result<()> {
+    let dirs = TestDirs::default_xdg()?;
+    let case = TestCase::load_with_dirs("directories", dirs)?;
+    let xdg_cache = case.dirs.home.path().join(".cache");
+    let envs = [("XDG_CACHE_HOME", &xdg_cache)];
+    case.write_config_file("plugins.toml")?;
+    case.command("lock").envs(envs).run()?;
+    case.assert_contents("plugins.lock")?;
+    case.command("source").envs(envs).run()?;
+    case.dirs.assert_conforms();
     Ok(())
 }
 
 #[test]
 fn dirs_xdg_from_env() -> io::Result<()> {
-    let home = Rc::new(tempfile::tempdir()?);
-    let xdg_config = home.path().join("config_custom");
-    let xdg_data = home.path().join(".local/custom");
-    let dirs = Directories {
-        home,
-        config: xdg_config.join("sheldon"),
-        data: xdg_data.join("sheldon"),
-    }
-    .init()?;
-
-    let case = TestCase::load_with_dirs("directories", dirs.clone())?;
-    let case_incremental = TestCase::load_with_dirs("directories_incremental", dirs.clone())?;
-
-    let env_vars = &[("XDG_CONFIG_HOME", xdg_config), ("XDG_DATA_HOME", xdg_data)];
-    let cmd = |case: &TestCase, cmd: &str| {
-        TestCommand::new(&case.dirs)
-            .expect_success(case, cmd)
-            .envs(env_vars.iter().cloned())
-    };
-
+    let dirs = TestDirs::new("config_custom/sheldon", ".local/custom/sheldon")?;
+    let case = TestCase::load_with_dirs("directories", dirs)?;
+    let xdg_config = case.dirs.home.path().join("config_custom");
+    let xdg_data = case.dirs.home.path().join(".local/custom");
+    let envs = [
+        ("XDG_CONFIG_HOME", &xdg_config),
+        ("XDG_DATA_HOME", &xdg_data),
+    ];
     case.write_config_file("plugins.toml")?;
-    cmd(&case, "lock").run()?;
-    cmd(&case, "source").run()?;
-    case_incremental.write_config_file("plugins.toml")?;
-    cmd(&case_incremental, "lock").run()?;
-    cmd(&case_incremental, "source").run()?;
-
-    assert!(dirs.conforms());
+    case.command("lock").envs(envs).run()?;
+    case.assert_contents("plugins.lock")?;
+    case.command("source").envs(envs).run()?;
+    case.dirs.assert_conforms();
     Ok(())
 }
 
 #[test]
 fn version() -> io::Result<()> {
-    let dirs = Directories::default()?;
+    let dirs = TestDirs::default()?;
 
     let maybe_commit_hash = option_env!("GIT_COMMIT_SHORT_HASH");
     let maybe_commit_date = option_env!("GIT_COMMIT_DATE");
@@ -693,30 +456,5 @@ fn version() -> io::Result<()> {
         .expect_exit_code(0)
         .expect_stdout(expected)
         .run()?;
-    Ok(())
-}
-
-#[test]
-fn lock_and_source_profiles() -> io::Result<()> {
-    let case = TestCase::load("profiles")?;
-    case.write_config_file("plugins.toml")?;
-    TestCommand::new(&case.dirs)
-        .expect_exit_code(0)
-        .expect_stdout(case.get(format!("{}.stdout", "lock")))
-        .expect_stderr(case.get(format!("{}.stderr", "lock")))
-        .arg("--profile")
-        .arg("p1")
-        .arg("lock")
-        .run()?;
-    case.assert_contents("plugins.p1.lock")?;
-    TestCommand::new(&case.dirs)
-        .expect_exit_code(0)
-        .expect_stdout(case.get(format!("{}.stdout", "source")))
-        .expect_stderr(case.get(format!("{}.stderr", "source")))
-        .arg("--profile")
-        .arg("p1")
-        .arg("source")
-        .run()?;
-    check_sheldon_test(&case.dirs.data).unwrap();
     Ok(())
 }
