@@ -1,0 +1,19 @@
+[plugins.test]
+github = "rossmacarthur/sheldon-test"
+profiles = ["p1", "p2"]
+
+[plugins.test2]
+github = "rossmacarthur/sheldon-test2"
+profiles = ["p2"]
+
+[plugins.inline-test]
+inline = """
+echo 'testing...'
+"""
+profiles = ["p1", "p2"]
+
+[plugins.inline-test2]
+inline = """
+echo 'testing...'
+"""
+profiles = ["p2"]

@@ -1,0 +1,7 @@
+[LOADED] ~/<xconfig>/plugins.toml
+   [CHECKED] https://github.com/rossmacarthur/sheldon-test
+  [RENDERED] test
+
+[ERROR] failed to install source `https://github.com/rossmacarthur/sheldon-bad-url`
+  due to: failed to git clone `https://github.com/rossmacarthur/sheldon-bad-url`
+  due to: remote authentication required but none available

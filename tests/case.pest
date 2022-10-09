@@ -1,8 +1,0 @@
-case = _{ SOI ~ prefix ~ ((!delimiter ~ element) ~ delimiter)* }
-
-  prefix = _{ "# " }
-  delimiter = _{ NEWLINE ~ (prefix | (NEWLINE ~ EOI)) }
-
-  element = { key ~ NEWLINE ~ value}
-    key = { (ASCII_ALPHANUMERIC | ".")+  }
-    value = { (!delimiter ~ ANY)* }

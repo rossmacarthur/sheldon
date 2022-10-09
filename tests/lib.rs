@@ -1,25 +1,18 @@
 use std::collections::HashMap;
 use std::env;
 use std::ffi;
-use std::fmt;
 use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::rc::Rc;
 
-use itertools::Itertools;
-use pest::Parser;
-use pest_derive::Parser;
+use once_cell::sync::Lazy;
 use pretty_assertions::assert_eq;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Utilities
 ////////////////////////////////////////////////////////////////////////////////
-
-#[derive(Parser)]
-#[grammar = "../tests/case.pest"]
-struct TestCaseParser;
 
 struct TestCommand {
     command: Command,
@@ -139,14 +132,29 @@ impl TestCommand {
 
     fn run(mut self) -> io::Result<()> {
         let result = self.command.output()?;
+        let result_exit_code = result.status.code().unwrap();
+        let result_stdout = String::from_utf8_lossy(&result.stdout);
+        let result_stderr = String::from_utf8_lossy(&result.stderr);
         if let Some(exit_code) = self.expect_exit_code {
-            assert_eq!(result.status.code().unwrap(), exit_code);
+            assert_eq!(
+                result_exit_code, exit_code,
+                "\nexit code: {}\nstdout:\n{}\nstderr:\n{}\n",
+                result_exit_code, result_stdout, result_stderr
+            );
         }
         if let Some(stdout) = self.expect_stdout {
-            assert_eq!(String::from_utf8_lossy(&result.stdout), stdout);
+            assert_eq!(
+                result_stdout, stdout,
+                "\nexit code: {}\nstdout:\n{}\nstderr:\n{}\n",
+                result_exit_code, result_stdout, result_stderr
+            );
         }
         if let Some(stderr) = self.expect_stderr {
-            assert_eq!(String::from_utf8_lossy(&result.stderr), stderr);
+            assert_eq!(
+                result_stderr, stderr,
+                "\nexit code: {}\nstdout:\n{}\nstderr:\n{}\n",
+                result_exit_code, result_stdout, result_stderr
+            );
         }
         Ok(())
     }
@@ -161,53 +169,51 @@ impl TestCase {
 
     /// Load the test case in the given directories.
     fn load_with_dirs(name: &str, dirs: Directories) -> io::Result<Self> {
-        let path = Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("tests/cases")
-            .join(name);
-        let case = &fs::read_to_string(path)?;
-        let parsed = TestCaseParser::parse(Rule::case, case).expect("failed to parse case");
+        static ENGINE: Lazy<upon::Engine> = Lazy::new(|| {
+            let syntax = upon::Syntax::builder().expr("<", ">").build();
+            upon::Engine::with_syntax(syntax)
+        });
 
-        let config_sub = dirs.config.strip_prefix(dirs.home.path()).unwrap();
-        let data_sub = dirs.data.strip_prefix(dirs.home.path()).unwrap();
-        let substitute = |v: String| {
-            [
-                ("<home>", dirs.home.path()),
-                ("<config>", &dirs.config),
-                ("<data>", &dirs.data),
-                ("<config_sub>", config_sub),
-                ("<data>", &dirs.data),
-                ("<data_sub>", data_sub),
-            ]
-            .iter()
-            .map(|(el, dir)| (el, dir.to_str().unwrap()))
-            .fold(v, |acc, (el, dir)| acc.replace(el, dir))
-            .replace("<version>", env!("CARGO_PKG_VERSION"))
+        let dir = {
+            let mut p = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+            p.push("tests/testdata");
+            p.push(name);
+            p
         };
 
-        let data: HashMap<String, String> = parsed
-            .filter_map(|pair| {
-                if pair.as_rule() == Rule::element {
-                    pair.into_inner()
-                        .map(|p| p.as_str().to_string())
-                        .collect_tuple()
-                        .map(|(k, v)| (k, substitute(v)))
-                } else {
-                    None
-                }
-            })
-            .collect();
+        let xconfig = dirs.config.strip_prefix(dirs.home.path()).unwrap();
+        let xdata = dirs.data.strip_prefix(dirs.home.path()).unwrap();
+
+        let subs = upon::value! {
+            version: env!("CARGO_PKG_VERSION"),
+            home: dirs.home.path(),
+            config: &dirs.config,
+            xconfig: xconfig,
+            data: &dirs.data,
+            xdata: xdata,
+        };
+
+        let mut data = HashMap::new();
+        for entry in fs::read_dir(&dir)? {
+            let path = entry?.path();
+            let name = path.file_name().unwrap().to_str().unwrap().to_owned();
+            let raw = fs::read_to_string(&path)?;
+            let value = ENGINE.compile(&raw).unwrap().render(&subs).unwrap();
+            data.insert(name, value);
+        }
+
         Ok(Self { dirs, data })
     }
 
     /// Get the value of the given key in this test case.
     fn get<S>(&self, key: S) -> String
     where
-        S: fmt::Display,
+        S: AsRef<str>,
     {
         self.data
-            .get(&key.to_string())
-            .unwrap_or_else(|| panic!("expected `{}` to be present", key))
-            .clone()
+            .get(key.as_ref())
+            .cloned()
+            .unwrap_or_else(|| String::new())
     }
 
     fn run_command(&self, command: &str) -> io::Result<()> {

@@ -1,0 +1,21 @@
+version = "<version>"
+home = "<home>"
+config_dir = "<config>"
+data_dir = "<home>/test"
+config_file = "<config>/plugins.toml"
+plugins = []
+[templates.PATH]
+value = "export PATH=\"{{ dir }}:$PATH\""
+each = false
+
+[templates.path]
+value = "path=( \"{{ dir }}\" $path )"
+each = false
+
+[templates.fpath]
+value = "fpath=( \"{{ dir }}\" $fpath )"
+each = false
+
+[templates.source]
+value = "source \"{{ file }}\""
+each = true

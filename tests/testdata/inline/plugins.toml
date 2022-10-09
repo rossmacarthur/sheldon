@@ -1,0 +1,7 @@
+[plugins.test]
+github = "rossmacarthur/sheldon-test"
+
+[plugins.inline-test]
+inline = """
+echo 'testing...'
+"""

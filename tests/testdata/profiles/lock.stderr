@@ -1,0 +1,4 @@
+[LOADED] ~/<xconfig>/plugins.toml
+   [SKIPPED] https://github.com/rossmacarthur/sheldon-test2
+    [CLONED] https://github.com/rossmacarthur/sheldon-test
+[LOCKED] ~/<xdata>/plugins.p1.lock

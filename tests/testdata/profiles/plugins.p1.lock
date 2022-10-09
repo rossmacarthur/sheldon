@@ -1,0 +1,32 @@
+version = "<version>"
+home = "<home>"
+config_dir = "<config>"
+data_dir = "<data>"
+config_file = "<config>/plugins.toml"
+profile = "p1"
+
+[[plugins]]
+name = "test"
+source_dir = "<data>/repos/github.com/rossmacarthur/sheldon-test"
+files = ["<data>/repos/github.com/rossmacarthur/sheldon-test/test.plugin.zsh"]
+apply = ["source"]
+
+[[plugins]]
+name = "inline-test"
+raw = "echo 'testing...'\n"
+profiles = ["p1", "p2"]
+[templates.PATH]
+value = "export PATH=\"{{ dir }}:$PATH\""
+each = false
+
+[templates.path]
+value = "path=( \"{{ dir }}\" $path )"
+each = false
+
+[templates.fpath]
+value = "fpath=( \"{{ dir }}\" $fpath )"
+each = false
+
+[templates.source]
+value = "source \"{{ file }}\""
+each = true
