@@ -41,16 +41,11 @@ impl TestCase {
             p
         };
 
-        let xconfig = dirs.config.strip_prefix(dirs.home.path()).unwrap();
-        let xdata = dirs.data.strip_prefix(dirs.home.path()).unwrap();
-
         let subs = upon::value! {
             version: env!("CARGO_PKG_VERSION"),
             home: dirs.home.path(),
             config: &dirs.config,
-            xconfig: xconfig,
             data: &dirs.data,
-            xdata: xdata,
         };
 
         let mut data = HashMap::new();
@@ -402,7 +397,7 @@ fn directories_default() -> io::Result<()> {
 #[test]
 fn directories_xdg_default() -> io::Result<()> {
     let dirs = TestDirs::default_xdg()?;
-    let case = TestCase::load_with_dirs("directories", dirs)?;
+    let case = TestCase::load_with_dirs("directories_xdg_default", dirs)?;
     let xdg_cache = case.dirs.home.path().join(".cache");
     let envs = [("XDG_CACHE_HOME", &xdg_cache)];
     case.write_config_file("plugins.toml")?;
@@ -414,9 +409,9 @@ fn directories_xdg_default() -> io::Result<()> {
 }
 
 #[test]
-fn dirs_xdg_from_env() -> io::Result<()> {
+fn directories_xdg_from_env() -> io::Result<()> {
     let dirs = TestDirs::new("config_custom/sheldon", ".local/custom/sheldon")?;
-    let case = TestCase::load_with_dirs("directories", dirs)?;
+    let case = TestCase::load_with_dirs("directories_xdg_from_env", dirs)?;
     let xdg_config = case.dirs.home.path().join("config_custom");
     let xdg_data = case.dirs.home.path().join(".local/custom");
     let envs = [

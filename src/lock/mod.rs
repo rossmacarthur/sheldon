@@ -12,7 +12,7 @@ use itertools::{Either, Itertools};
 use once_cell::sync::Lazy;
 use rayon::prelude::*;
 
-use crate::config::{Config, MatchesProfile, Plugin, Shell, Template};
+use crate::config::{Config, MatchesProfile, Plugin, Shell};
 use crate::context::Context;
 pub use crate::lock::file::LockedConfig;
 use crate::lock::file::{LockedExternalPlugin, LockedPlugin};
@@ -86,8 +86,9 @@ pub fn config(ctx: &Context, config: Config) -> Result<LockedConfig> {
             .push((index, plugin));
     }
 
-    let matches = &matches.as_ref().unwrap_or_else(|| shell.default_matches());
-    #[allow(clippy::redundant_closure)]
+    let matches = matches
+        .as_deref()
+        .unwrap_or_else(|| shell.default_matches());
     let apply = apply.as_ref().unwrap_or_else(|| Shell::default_apply());
     let count = map.len();
     let mut errors = Vec::new();
@@ -117,9 +118,8 @@ pub fn config(ctx: &Context, config: Config) -> Result<LockedConfig> {
                     let mut locked = Vec::with_capacity(plugins.len());
                     for (index, plugin) in plugins {
                         let name = plugin.name.clone();
-                        let plugin =
-                            plugin::lock(ctx, &templates, source.clone(), matches, apply, plugin)
-                                .with_context(s!("failed to install plugin `{}`", name));
+                        let plugin = plugin::lock(ctx, source.clone(), matches, apply, plugin)
+                            .with_context(s!("failed to install plugin `{}`", name));
                         locked.push((index, plugin));
                     }
                     Ok(locked)
@@ -171,7 +171,7 @@ pub fn config(ctx: &Context, config: Config) -> Result<LockedConfig> {
 
 impl Shell {
     /// The default files to match on for this shell.
-    fn default_matches(&self) -> &Vec<String> {
+    fn default_matches(&self) -> &[String] {
         static DEFAULT_MATCHES_BASH: Lazy<Vec<String>> = Lazy::new(|| {
             vec_into![
                 "{{ name }}.plugin.bash",
@@ -203,19 +203,19 @@ impl Shell {
     }
 
     /// The default templates for this shell.
-    pub fn default_templates(&self) -> &IndexMap<String, Template> {
-        static DEFAULT_TEMPLATES_BASH: Lazy<IndexMap<String, Template>> = Lazy::new(|| {
+    pub fn default_templates(&self) -> &IndexMap<String, String> {
+        static DEFAULT_TEMPLATES_BASH: Lazy<IndexMap<String, String>> = Lazy::new(|| {
             indexmap_into! {
                 "PATH" => "export PATH=\"{{ dir }}:$PATH\"",
-                "source" => Template::from("source \"{{ file }}\"").each(true)
+                "source" => "{% for file in files %}source \"{{ file }}\"\n{% endfor %}"
             }
         });
-        static DEFAULT_TEMPLATES_ZSH: Lazy<IndexMap<String, Template>> = Lazy::new(|| {
+        static DEFAULT_TEMPLATES_ZSH: Lazy<IndexMap<String, String>> = Lazy::new(|| {
             indexmap_into! {
                 "PATH" => "export PATH=\"{{ dir }}:$PATH\"",
                 "path" => "path=( \"{{ dir }}\" $path )",
                 "fpath" => "fpath=( \"{{ dir }}\" $fpath )",
-                "source" => Template::from("source \"{{ file }}\"").each(true)
+                "source" => "{% for file in files %}source \"{{ file }}\"\n{% endfor %}"
             }
         });
         match self {
@@ -228,14 +228,6 @@ impl Shell {
     fn default_apply() -> &'static Vec<String> {
         static DEFAULT_APPLY: Lazy<Vec<String>> = Lazy::new(|| vec_into!["source"]);
         &DEFAULT_APPLY
-    }
-}
-
-impl Template {
-    /// Set whether this template should be applied to every file.
-    fn each(mut self, each: bool) -> Self {
-        self.each = each;
-        self
     }
 }
 

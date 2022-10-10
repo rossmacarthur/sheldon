@@ -1,5 +1,5 @@
-[LOADED] ~/<xconfig>/plugins.toml
-[LOCKED] ~/<xdata>/plugins.lock
+[LOADED] ~/.sheldon/plugins.toml
+[LOCKED] ~/.sheldon/plugins.lock
 
 [WARNING] failed to remove directory `~/.sheldon/repos/test.com`
   due to: Permission denied (os error 13)

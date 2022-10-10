@@ -14,7 +14,7 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use thiserror::Error;
 use url::Url;
 
-use crate::config::{GitReference, Shell, Template};
+use crate::config::{GitReference, Shell};
 
 /// The contents of the configuration file.
 #[derive(Debug, Default, Deserialize)]
@@ -28,7 +28,7 @@ pub struct RawConfig {
     /// The default list of template names to apply to each matched file.
     pub apply: Option<Vec<String>>,
     /// A map of name to template string.
-    pub templates: IndexMap<String, Template>,
+    pub templates: IndexMap<String, String>,
     /// A map of name to plugin.
     pub plugins: IndexMap<String, RawPlugin>,
     /// Any extra keys,
@@ -191,75 +191,6 @@ impl FromStr for Shell {
             "bash" => Ok(Self::Bash),
             "zsh" => Ok(Self::Zsh),
             s => Err(ParseShellError(s.to_string())),
-        }
-    }
-}
-
-mod template {
-    use super::*;
-
-    struct Visitor;
-
-    /// The same as a [`Template`]. It is used to prevent recursion when
-    /// deserializing.
-    #[derive(Deserialize)]
-    struct TemplateAux {
-        value: String,
-        each: bool,
-    }
-
-    impl From<TemplateAux> for Template {
-        fn from(aux: TemplateAux) -> Self {
-            let TemplateAux { value, each } = aux;
-            Self { value, each }
-        }
-    }
-
-    impl From<&str> for Template {
-        fn from(s: &str) -> Self {
-            Self {
-                value: s.to_string(),
-                each: false,
-            }
-        }
-    }
-
-    impl<'de> de::Visitor<'de> for Visitor {
-        type Value = Template;
-
-        fn expecting(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            f.write_str("string or map")
-        }
-
-        fn visit_str<E>(self, value: &str) -> result::Result<Self::Value, E>
-        where
-            E: de::Error,
-        {
-            Ok(From::from(value))
-        }
-
-        fn visit_map<M>(self, visitor: M) -> result::Result<Self::Value, M::Error>
-        where
-            M: de::MapAccess<'de>,
-        {
-            let aux: TemplateAux =
-                Deserialize::deserialize(de::value::MapAccessDeserializer::new(visitor))?;
-            Ok(aux.into())
-        }
-    }
-
-    /// Manually implement `Deserialize` for a `Template`.
-    ///
-    /// Unfortunately we can not use [the recommended method][string-or-struct],
-    /// because we are storing `Template`s in a map.
-    ///
-    /// [string-or-struct](https://serde.rs/string-or-struct.html)
-    impl<'de> Deserialize<'de> for Template {
-        fn deserialize<D>(deserializer: D) -> result::Result<Self, D::Error>
-        where
-            D: Deserializer<'de>,
-        {
-            deserializer.deserialize_any(Visitor)
         }
     }
 }
@@ -436,44 +367,6 @@ mod tests {
             error.to_string(),
             "expected one of `bash` or `zsh`, got `ksh` for key `s` at line 1 column 5"
         )
-    }
-
-    #[derive(Debug, Deserialize)]
-    struct TemplateTest {
-        t: Template,
-    }
-
-    #[test]
-    fn template_deserialize_as_str() {
-        let test: TemplateTest = toml::from_str("t = 'test'").unwrap();
-        assert_eq!(
-            test.t,
-            Template {
-                value: "test".to_string(),
-                each: false
-            }
-        );
-    }
-
-    #[test]
-    fn template_deserialize_as_map() {
-        let test: TemplateTest = toml::from_str("t = { value = 'test', each = true }").unwrap();
-        assert_eq!(
-            test.t,
-            Template {
-                value: "test".to_string(),
-                each: true
-            }
-        );
-    }
-
-    #[test]
-    fn template_deserialize_invalid() {
-        let error = toml::from_str::<TemplateTest>("t = 0").unwrap_err();
-        assert_eq!(
-            error.to_string(),
-            "invalid type: integer `0`, expected string or map for key `t` at line 1 column 5"
-        );
     }
 
     #[derive(Debug, Deserialize)]

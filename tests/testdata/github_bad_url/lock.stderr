@@ -1,4 +1,4 @@
-[LOADED] ~/<xconfig>/plugins.toml
+[LOADED] ~/.sheldon/plugins.toml
     [CLONED] https://github.com/rossmacarthur/sheldon-test
 
 [ERROR] failed to install source `https://github.com/rossmacarthur/sheldon-bad-url`

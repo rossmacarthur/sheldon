@@ -7,7 +7,7 @@ use anyhow::{Context as ResultExt, Error, Result};
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 
-use crate::config::{InlinePlugin, Template};
+use crate::config::InlinePlugin;
 use crate::context::Context;
 
 /// A locked `Config`.
@@ -22,7 +22,7 @@ pub struct LockedConfig {
     ///
     /// Note: this field must come last in the struct for it to serialize
     /// properly.
-    pub templates: IndexMap<String, Template>,
+    pub templates: IndexMap<String, String>,
     /// Any errors that occurred while generating this `LockedConfig`.
     #[serde(skip)]
     pub errors: Vec<Error>,

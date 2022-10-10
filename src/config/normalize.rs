@@ -8,7 +8,7 @@ use indexmap::IndexMap;
 use url::Url;
 
 use crate::config::file::{GitProtocol, RawConfig, RawPlugin};
-use crate::config::{Config, ExternalPlugin, InlinePlugin, Plugin, Shell, Source, Template};
+use crate::config::{Config, ExternalPlugin, InlinePlugin, Plugin, Shell, Source};
 use crate::util::TEMPLATE_ENGINE;
 
 /// The Gist domain host.
@@ -35,7 +35,7 @@ pub fn normalize(raw_config: RawConfig, warnings: &mut Vec<Error>) -> Result<Con
     // Check that the templates can be compiled.
     for (name, template) in &templates {
         TEMPLATE_ENGINE
-            .compile(&template.value)
+            .compile(template)
             .with_context(s!("failed to compile template `{}`", name))?;
     }
 
@@ -70,7 +70,7 @@ fn normalize_plugin(
     raw_plugin: RawPlugin,
     name: String,
     shell: Shell,
-    templates: &IndexMap<String, Template>,
+    templates: &IndexMap<String, String>,
     warnings: &mut Vec<Error>,
 ) -> Result<Plugin> {
     enum TempSource {
@@ -249,7 +249,7 @@ where
 fn validate_template_names(
     shell: Shell,
     apply: &Option<Vec<String>>,
-    templates: &IndexMap<String, Template>,
+    templates: &IndexMap<String, String>,
 ) -> Result<()> {
     if let Some(apply) = apply {
         for name in apply {

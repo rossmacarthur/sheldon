@@ -30,7 +30,7 @@ pub struct Config {
     /// The default list of template names to apply to each matched file.
     pub apply: Option<Vec<String>>,
     /// A map of name to template string.
-    pub templates: IndexMap<String, Template>,
+    pub templates: IndexMap<String, String>,
     /// Each configured plugin.
     pub plugins: Vec<Plugin>,
 }
@@ -40,15 +40,6 @@ pub struct Config {
 pub enum Shell {
     Bash,
     Zsh,
-}
-
-/// A wrapper around a template string.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
-pub struct Template {
-    /// The actual template string.
-    pub value: String,
-    /// Whether this template should be applied to each file.
-    pub each: bool,
 }
 
 /// A configured plugin.

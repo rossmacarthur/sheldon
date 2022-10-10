@@ -7,13 +7,9 @@ github = "rossmacarthur/sheldon-test2"
 profiles = ["p2"]
 
 [plugins.inline-test]
-inline = """
-echo 'testing...'
-"""
+inline = "echo 'testing...'"
 profiles = ["p1", "p2"]
 
 [plugins.inline-test2]
-inline = """
-echo 'testing...'
-"""
+inline = "echo 'testing...'"
 profiles = ["p2"]

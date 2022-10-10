@@ -236,7 +236,7 @@ following.
 
 ```toml
 [templates]
-source = { value = 'source "{{ file }}"', each = true }
+source = '{% for file in files %}source "{{ file }}"\n{% endfor %}'
 PATH = 'export PATH="{{ dir }}:$PATH"'
 path = 'path=( "{{ dir }}" $path )'
 fpath = 'fpath=( "{{ dir }}" $fpath )'
