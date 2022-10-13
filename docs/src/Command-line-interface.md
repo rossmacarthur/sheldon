@@ -129,13 +129,6 @@ Set the output coloring.
 - `auto`: Automatically determine whether to use colored output (*default*).
 - `never`: Never use colored output.
 
-#### `--home <home>`
-
-*Environment variable:* `HOME`
-
-Set the users home directory. This is usually automatically detected but might
-be required if you are using an obscure operating system.
-
 #### `--config-dir <path>`
 
 *Environment variable:* `SHELDON_CONFIG_DIR`
@@ -164,21 +157,6 @@ where `<config-dir>` is the config directory.
 Specify the profile to match plugins against. Plugins which have
 [profiles](Configuration.md#profiles) configured will only get loaded if one of
 the given profiles matches the profile.
-
-### XDG directory structure
-
-If any of the following
-[XDG](https://wiki.archlinux.org/title/XDG_Base_Directory) environment variables
-are set then the default [config](#--config-dir-path) and
-[data](#--data-dir-path) directories will change as specified above.
-
-- `XDG_CONFIG_HOME`, defaults to `<home>/.config` where `<home>` is the users
-  home directory.
-- `XDG_CACHE_HOME`
-- `XDG_DATA_HOME`, defaults to `<home>/.local/share` where `<home>` is the users
-  home directory.
-- `XDG_DATA_DIRS`
-- `XDG_CONFIG_DIRS`
 
 ## Completions
 

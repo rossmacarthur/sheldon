@@ -64,7 +64,6 @@ impl Opt {
             quiet,
             verbose,
             color,
-            home,
             data_dir,
             config_dir,
             config_file,
@@ -122,14 +121,10 @@ impl Opt {
             no_color: color.is_no_color(),
         };
 
-        let home = match home.or_else(home::home_dir).ok_or_else(|| {
-            anyhow!(
-                "failed to determine the current user's home directory, try using the `--home` \
-                 option"
-            )
-        }) {
-            Ok(home) => home,
-            Err(err) => {
+        let home = match home::home_dir() {
+            Some(home) => home,
+            None => {
+                let err = anyhow!("failed to determine the current user's home directory");
                 log_error(output.no_color, Color::Red, "error", &err);
                 process::exit(1);
             }

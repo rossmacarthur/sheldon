@@ -33,10 +33,6 @@ pub struct RawOpt {
     #[clap(long, value_name = "WHEN", default_value_t)]
     pub color: ColorChoice,
 
-    /// The home directory.
-    #[clap(long, value_name = "PATH", hide(true))]
-    pub home: Option<PathBuf>,
-
     /// The configuration directory.
     #[clap(long, value_name = "PATH", env = "SHELDON_CONFIG_DIR")]
     pub config_dir: Option<PathBuf>,
