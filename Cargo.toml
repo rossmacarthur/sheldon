@@ -17,7 +17,6 @@ include = ["src/**/*", "LICENSE-*", "README.md", "build.rs"]
 pkg-url = "{ repo }/releases/download/{ version }/sheldon-{ version }-{ target }.tar.gz"
 
 [dependencies]
-ansi_term = "0.12.1"
 anyhow = "1.0.58"
 atty = "0.2.14"
 casual = "0.2.0"
@@ -43,6 +42,7 @@ upon = { version = "0.4.0", default-features = false, features = ["serde"] }
 url = { version = "2.2.2", features = ["serde"] }
 walkdir = "2.3.2"
 which = { version = "4.2.5", default-features = false }
+yansi = "0.5.1"
 
 [build-dependencies]
 anyhow = "1.0.58"

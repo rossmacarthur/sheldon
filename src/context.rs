@@ -3,9 +3,10 @@
 use std::fmt;
 use std::path::{Path, PathBuf};
 
-pub use ansi_term::Color;
 use anyhow::Error;
 use serde::{Deserialize, Serialize};
+pub use yansi::Color;
+use yansi::Paint;
 
 use crate::lock::LockMode;
 use crate::util::PathExt;
@@ -135,7 +136,7 @@ impl Context {
         if self.output.no_color {
             eprintln!("[{}] {}", prefix.to_uppercase(), msg);
         } else {
-            eprintln!("{} {}", Color::Purple.bold().paint(prefix), msg);
+            eprintln!("{} {}", Paint::magenta(prefix).bold(), msg);
         }
     }
 
@@ -144,7 +145,11 @@ impl Context {
         if self.output.no_color {
             eprintln!("{: >12} {}", format!("[{}]", prefix.to_uppercase()), msg);
         } else {
-            eprintln!("{} {}", color.bold().paint(format!("{: >10}", prefix)), msg);
+            eprintln!(
+                "{} {}",
+                Paint::new(format!("{: >10}", prefix)).fg(color).bold(),
+                msg
+            );
         }
     }
 
@@ -193,7 +198,7 @@ pub fn log_error(no_color: bool, color: Color, prefix: &str, err: &Error) {
     } else {
         eprintln!(
             "\n{} {}",
-            color.bold().paint(format!("{}:", prefix)),
+            Paint::new(format!("{}:", prefix)).fg(color).bold(),
             pretty
         );
     }
