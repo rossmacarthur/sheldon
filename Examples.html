@@ -156,7 +156,7 @@ that will use the <code>defer</code> template. Sheldon always processes plugins 
 order they are defined in the config file.</p>
 <p>Then add a template that calls <code>zsh-defer source</code> instead of just <code>source</code>.</p>
 <pre><code class="language-toml">[templates]
-defer = { value = 'zsh-defer source &quot;{{ file }}&quot;', each = true }
+defer = &quot;{% for file in files %}zsh-defer source \&quot;{{ file }}\&quot;\n{% endfor %}&quot;
 </code></pre>
 <p>Now any plugin that you want to defer you can apply the <code>defer</code> template. For
 example if you wanted to defer loading of <code>zsh-syntax-highlighting</code>.</p>
@@ -189,7 +189,7 @@ github = &quot;ohmyzsh/ohmyzsh&quot;
 <p>Add the following to your <code>~/.zshrc</code> file.</p>
 <pre><code class="language-sh"># ~/.zshrc
 
-export ZSH=&quot;$HOME/.sheldon/repos/github.com/ohmyzsh/ohmyzsh&quot;
+export ZSH=&quot;$HOME/.local/share/sheldon/repos/github.com/ohmyzsh/ohmyzsh&quot;
 
 # Oh My Zsh settings here
 

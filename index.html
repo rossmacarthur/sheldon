@@ -75,7 +75,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded affix "><a href="Introduction.html">Introduction</a></li><li class="chapter-item expanded "><a href="Installation.html">📦 Installation</a></li><li class="chapter-item expanded "><a href="Getting-started.html">🚀 Getting started</a></li><li class="chapter-item expanded "><a href="Command-line-interface.html">💻 Command line interface</a></li><li class="chapter-item expanded "><a href="Configuration.html">⚙️ Configuration</a></li><li class="chapter-item expanded "><a href="Examples.html">💡 Examples</a></li><li class="chapter-item expanded "><a href="RELEASES.html">📝 Release notes</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="Introduction.html" class="active">Introduction</a></li><li class="chapter-item expanded "><a href="Installation.html">📦 Installation</a></li><li class="chapter-item expanded "><a href="Getting-started.html">🚀 Getting started</a></li><li class="chapter-item expanded "><a href="Command-line-interface.html">💻 Command line interface</a></li><li class="chapter-item expanded "><a href="Configuration.html">⚙️ Configuration</a></li><li class="chapter-item expanded "><a href="Examples.html">💡 Examples</a></li><li class="chapter-item expanded "><a href="RELEASES.html">📝 Release notes</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -141,8 +141,7 @@
 <p>Sheldon is a fast, configurable, command-line tool to manage your shell plugins.</p>
 <h2 id="how-does-it-work"><a class="header" href="#how-does-it-work">How does it work?</a></h2>
 <p>Plugins are specified in a <a href="https://toml.io">TOML</a> configuration file and
-Sheldon renders an install script using user configurable
-<a href="http://handlebarsjs.com">handlebars</a> templates.</p>
+Sheldon renders an install script using user configurable templates.</p>
 <p>A <code>~/.zshrc</code> or <code>~/.bashrc</code> that uses Sheldon simply contains the following.</p>
 <pre><code class="language-sh">eval &quot;$(sheldon source)&quot;
 </code></pre>

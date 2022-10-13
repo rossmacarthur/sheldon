@@ -142,8 +142,7 @@
 <p>Sheldon is a fast, configurable, command-line tool to manage your shell plugins.</p>
 <h2 id="how-does-it-work"><a class="header" href="#how-does-it-work">How does it work?</a></h2>
 <p>Plugins are specified in a <a href="https://toml.io">TOML</a> configuration file and
-Sheldon renders an install script using user configurable
-<a href="http://handlebarsjs.com">handlebars</a> templates.</p>
+Sheldon renders an install script using user configurable templates.</p>
 <p>A <code>~/.zshrc</code> or <code>~/.bashrc</code> that uses Sheldon simply contains the following.</p>
 <pre><code class="language-sh">eval &quot;$(sheldon source)&quot;
 </code></pre>
@@ -161,16 +160,6 @@ updated in parallel and as a result Sheldon is blazingly fast.</p>
 </ul>
 <p>at your option.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="-installation"><a class="header" href="#-installation">📦 Installation</a></h1>
-<h2 id="pre-built-binaries"><a class="header" href="#pre-built-binaries">Pre-built binaries</a></h2>
-<p>Pre-built binaries for Linux (x86-64, aarch64, armv7) and macOS (x86-64) are
-provided. The following script can be used to automatically detect your host
-system, download the required artefact, and extract the <code>sheldon</code> binary to the
-given directory.</p>
-<pre><code class="language-sh">curl --proto '=https' -fLsS https://rossmacarthur.github.io/install/crate.sh \
-    | bash -s -- --repo rossmacarthur/sheldon --to ~/.local/bin
-</code></pre>
-<p>Alternatively, you can download an artifact directly from the <a href="https://github.com/rossmacarthur/sheldon/releases">the releases
-page</a>.</p>
 <h2 id="homebrew"><a class="header" href="#homebrew">Homebrew</a></h2>
 <p>Sheldon can be installed using Homebrew.</p>
 <pre><code class="language-sh">brew install sheldon
@@ -179,6 +168,22 @@ page</a>.</p>
 <p>Sheldon can be installed from <a href="https://crates.io/crates/sheldon">Crates.io</a>
 using <a href="https://doc.rust-lang.org/cargo/">Cargo</a>, the Rust package manager.</p>
 <pre><code class="language-sh">cargo install sheldon
+</code></pre>
+<h2 id="cargo-binstall"><a class="header" href="#cargo-binstall">Cargo BInstall</a></h2>
+<p>Sheldon can be installed using
+<a href="https://github.com/cargo-bins/cargo-binstall"><code>cargo-binstall</code></a>, which will
+download the release artifacts directly from the GitHub release.</p>
+<pre><code class="language-sh">cargo binstall sheldon
+</code></pre>
+<h2 id="pre-built-binaries"><a class="header" href="#pre-built-binaries">Pre-built binaries</a></h2>
+<p>Pre-built binaries for Linux (x86-64, aarch64, armv7) and macOS (x86-64) are
+provided. These can be downloaded directly from the <a href="https://github.com/rossmacarthur/sheldon/releases">the releases
+page</a>.</p>
+<p>Alternatively, the following script can be used to automatically detect your host
+system, download the required artifact, and extract the <code>sheldon</code> binary to the
+given directory.</p>
+<pre><code class="language-sh">curl --proto '=https' -fLsS https://rossmacarthur.github.io/install/crate.sh \
+    | bash -s -- --repo rossmacarthur/sheldon --to ~/.local/bin
 </code></pre>
 <h2 id="building-from-source"><a class="header" href="#building-from-source">Building from source</a></h2>
 <p>Sheldon is written in Rust, so to install it from source you will first need to
@@ -199,12 +204,13 @@ configuration file, <code>plugins.toml</code>. You can initialize this file by r
 <p>or</p>
 <pre><code class="language-sh">sheldon init --shell zsh
 </code></pre>
-<p>This will create <code>plugins.toml</code> under <code>~/.sheldon</code> or, if defined,
-<code>$XDG_CONFIG_HOME/sheldon</code>. You can either edit this file directly or use the
-provided command line interface to add or remove plugins.</p>
+<p>This will create <code>plugins.toml</code> under <code>$XDG_CONFIG_HOME/sheldon</code>, on most
+systems this will be <code>~/.config/sheldon/plugins.toml</code>. You can either edit this
+file directly or use the provided command line interface to add or remove
+plugins.</p>
 <h2 id="adding-a-plugin"><a class="header" href="#adding-a-plugin">Adding a plugin</a></h2>
 <p>To add your first plugin append the following to the Sheldon config file.</p>
-<pre><code class="language-toml"># ~/.sheldon/plugins.toml
+<pre><code class="language-toml"># ~/.config/sheldon/plugins.toml
 
 [plugins.base16]
 github = &quot;chriskempson/base16-shell&quot;
@@ -246,10 +252,10 @@ command does nothing.</p>
 <pre><code class="language-sh">sheldon init --shell zsh
 </code></pre>
 <h2 id="lock"><a class="header" href="#lock"><code>lock</code></a></h2>
-<p>The <code>lock</code> command installs the plugins sources and generates the lock file
-(<code>~/.sheldon/plugins.lock</code>). Rerunning this command without any extra options
-will not reinstall plugin sources, just verify that they are correctly
-installed. It will always regenerate the lock file.</p>
+<p>The <code>lock</code> command installs the plugins sources and generates the lock file.
+Rerunning this command without any extra options will not reinstall plugin
+sources, just verify that they are correctly installed. It will always
+regenerate the lock file.</p>
 <pre><code class="language-sh">sheldon lock
 </code></pre>
 <p>To update all plugin sources you can use the <code>--update</code> flag.</p>
@@ -309,53 +315,23 @@ priority.</p>
 <li><code>auto</code>: Automatically determine whether to use colored output (<em>default</em>).</li>
 <li><code>never</code>: Never use colored output.</li>
 </ul>
-<h4 id="--home-home"><a class="header" href="#--home-home"><code>--home &lt;home&gt;</code></a></h4>
-<p><em>Environment variable:</em> <code>HOME</code></p>
-<p>Set the users home directory. This is usually automatically detected but might
-be required if you are using an obscure operating system.</p>
 <h4 id="--config-dir-path"><a class="header" href="#--config-dir-path"><code>--config-dir &lt;path&gt;</code></a></h4>
 <p><em>Environment variable:</em> <code>SHELDON_CONFIG_DIR</code></p>
-<p>Set the config directory where config will store the configuration file. If
-Sheldon detects an XDG directory structure  (<a href="Command-line-interface.html#xdg-directory-structure">as described
-below</a>) then this will default to
-<code>XDG_CONFIG_HOME/sheldon</code> otherwise it will default to <code>&lt;home&gt;/.sheldon</code> where
-<code>&lt;home&gt;</code> is the users home directory.</p>
+<p>Set the config directory where the configuration file will be stored. This
+defaults to <code>$XDG_CONFIG_HOME/sheldon</code> or <code>~/.config/sheldon</code>.</p>
 <h4 id="--data-dir-path"><a class="header" href="#--data-dir-path"><code>--data-dir &lt;path&gt;</code></a></h4>
 <p><em>Environment variable:</em> <code>SHELDON_DATA_DIR</code></p>
-<p>Set the data directory where plugins will be downloaded to. If Sheldon detects
-an XDG directory structure (<a href="Command-line-interface.html#xdg-directory-structure">as described below</a>) then
-this will default to <code>XDG_DATA_HOME/sheldon</code> otherwise it will default to
-<code>&lt;home&gt;/.sheldon</code> where <code>&lt;home&gt;</code> is the users home directory.</p>
+<p>Set the data directory where plugins will be downloaded to. This defaults to
+<code>$XDG_DATA_HOME/sheldon</code> or <code>~/.local/share/sheldon</code>.</p>
 <h4 id="--config-file-path"><a class="header" href="#--config-file-path"><code>--config-file &lt;path&gt;</code></a></h4>
 <p><em>Environment variable:</em> <code>SHELDON_CONFIG_FILE</code></p>
 <p>Set the path to the config file. This defaults to <code>&lt;config-dir&gt;/plugins.toml</code>
 where <code>&lt;config-dir&gt;</code> is the config directory.</p>
-<h4 id="--lock-file-path"><a class="header" href="#--lock-file-path"><code>--lock-file &lt;path&gt;</code></a></h4>
-<p><em>Environment variable:</em> <code>SHELDON_LOCK_FILE</code></p>
-<p>Set the path to the lock file. This defaults to <code>&lt;data-dir&gt;/plugins.lock</code> where
-<code>&lt;data-dir&gt;</code> is the data directory.</p>
-<h4 id="--clone-dir-path"><a class="header" href="#--clone-dir-path"><code>--clone-dir &lt;path&gt;</code></a></h4>
-<p><em>Environment variable:</em> <code>SHELDON_CLONE_DIR</code></p>
-<p>Set the path to the directory where Git plugins will be cloned to. This defaults
-to <code>&lt;data-dir&gt;/repos</code> where <code>&lt;data-dir&gt;</code> is the data directory.</p>
-<h4 id="--download-dir-path"><a class="header" href="#--download-dir-path"><code>--download-dir &lt;path&gt;</code></a></h4>
-<p><em>Environment variable:</em> <code>SHELDON_DOWNLOAD_DIR</code></p>
-<p>Set the path to the directory where non-Git plugins will be downloaded to. This
-defaults to <code>&lt;data-dir&gt;/repos</code> where <code>&lt;data-dir&gt;</code> is the data directory.</p>
-<h3 id="xdg-directory-structure"><a class="header" href="#xdg-directory-structure">XDG directory structure</a></h3>
-<p>If any of the following
-<a href="https://wiki.archlinux.org/title/XDG_Base_Directory">XDG</a> environment variables
-are set then the default <a href="Command-line-interface.html#--config-dir-path">config</a> and
-<a href="Command-line-interface.html#--data-dir-path">data</a> directories will change as specified above.</p>
-<ul>
-<li><code>XDG_CONFIG_HOME</code>, defaults to <code>&lt;home&gt;/.config</code> where <code>&lt;home&gt;</code> is the users
-home directory.</li>
-<li><code>XDG_CACHE_HOME</code></li>
-<li><code>XDG_DATA_HOME</code>, defaults to <code>&lt;home&gt;/.local/share</code> where <code>&lt;home&gt;</code> is the users
-home directory.</li>
-<li><code>XDG_DATA_DIRS</code></li>
-<li><code>XDG_CONFIG_DIRS</code></li>
-</ul>
+<h4 id="--profile-profile"><a class="header" href="#--profile-profile"><code>--profile &lt;profile&gt;</code></a></h4>
+<p><em>Environment variable:</em> <code>SHELDON_PROFILE</code></p>
+<p>Specify the profile to match plugins against. Plugins which have
+<a href="Configuration.html#profiles">profiles</a> configured will only get loaded if one of
+the given profiles matches the profile.</p>
 <h2 id="completions"><a class="header" href="#completions">Completions</a></h2>
 <p>Shell completion scripts for Bash and Zsh are available. If Sheldon was
 installed via Homebrew then the completions should have been installed
@@ -375,7 +351,7 @@ documentation for more details on how to install these.</p>
 directly or using the provided Sheldon commands. A plugin must provide the
 location of the source. There are three types of sources, each kind is described
 in this section. A plugin may only specify <em>one</em> source type.</p>
-<pre><code class="language-toml"># ~/.sheldon/plugins.toml
+<pre><code class="language-toml"># ~/.config/sheldon/plugins.toml
 
 #           ┌─ Unique name for the plugin
 #        ┌──┴─┐
@@ -490,6 +466,11 @@ apply = [&quot;source&quot;, &quot;PATH&quot;]
 </code></pre>
 <p>You can define your own <a href="Configuration.html#custom-templates">custom templates</a> to apply to your
 plugins.</p>
+<h3 id="profiles"><a class="header" href="#profiles"><code>profiles</code></a></h3>
+<p>A list of profiles this plugin should be used in. If this field is not given the
+plugin will be used regardless of the profile. Otherwise, the plugin is only
+used if the specified <a href="Command-line-interface.html#--profile-profile">profile</a> is
+included in the configured list of profiles.</p>
 <h2 id="inline-plugins"><a class="header" href="#inline-plugins">Inline plugins</a></h2>
 <p>For convenience it also possible to define Inline plugins. An Inline plugin must
 set the <code>inline</code> field and specify the raw source.</p>
@@ -515,7 +496,7 @@ using. The following are available for both Bash and Zsh.</p>
 <p>As template strings in the config file they could be represented like the
 following.</p>
 <pre><code class="language-toml">[templates]
-source = { value = 'source &quot;{{ file }}&quot;', each = true }
+source = &quot;{% for file in files %}source \&quot;{{ file }}\&quot;\n{% endfor %}&quot;
 PATH = 'export PATH=&quot;{{ dir }}:$PATH&quot;'
 path = 'path=( &quot;{{ dir }}&quot; $path )'
 fpath = 'fpath=( &quot;{{ dir }}&quot; $fpath )'
@@ -527,9 +508,6 @@ will not be sourced.</p>
 github = &quot;owner/repo&quot;
 apply = [&quot;PATH&quot;, &quot;fpath&quot;]
 </code></pre>
-<p>The <code>each</code> value, as used in the <code>source</code> template above, specifies that the
-template should be applied to each matched file for the plugin. This defaults to
-<code>false</code>.</p>
 <h3 id="custom-templates"><a class="header" href="#custom-templates">Custom templates</a></h3>
 <p>It is possible to create your own custom templates, and you can even override
 the built-in ones.</p>
@@ -548,11 +526,8 @@ can be used in templates with <code>{{ dir }}</code>.</p>
 <li>
 <p><strong>One or more files.</strong> These are the matched files in the plugin directory
 either discovered using the the global <code>match</code> field or specified as a plugin
-option with <code>use</code>. These can be used in templates using <code>{{ file }}</code>. This
-information only makes sense in templates with <code>each</code> set to <code>true</code>.</p>
-</li>
-<li>
-<p><strong>The Sheldon data directory.</strong> This directory can be used as <code>{{ data_dir }}</code>.</p>
+option with <code>use</code>. These can be used in templates by iterating over the files.
+For example: <code>{% for file in  files %} ... {{ file }} ... {% endfor %}</code>.</p>
 </li>
 </ul>
 <p>To add or update a template add a new key to the <code>[templates]</code> table in the
@@ -619,7 +594,7 @@ that will use the <code>defer</code> template. Sheldon always processes plugins 
 order they are defined in the config file.</p>
 <p>Then add a template that calls <code>zsh-defer source</code> instead of just <code>source</code>.</p>
 <pre><code class="language-toml">[templates]
-defer = { value = 'zsh-defer source &quot;{{ file }}&quot;', each = true }
+defer = &quot;{% for file in files %}zsh-defer source \&quot;{{ file }}\&quot;\n{% endfor %}&quot;
 </code></pre>
 <p>Now any plugin that you want to defer you can apply the <code>defer</code> template. For
 example if you wanted to defer loading of <code>zsh-syntax-highlighting</code>.</p>
@@ -652,7 +627,7 @@ github = &quot;ohmyzsh/ohmyzsh&quot;
 <p>Add the following to your <code>~/.zshrc</code> file.</p>
 <pre><code class="language-sh"># ~/.zshrc
 
-export ZSH=&quot;$HOME/.sheldon/repos/github.com/ohmyzsh/ohmyzsh&quot;
+export ZSH=&quot;$HOME/.local/share/sheldon/repos/github.com/ohmyzsh/ohmyzsh&quot;
 
 # Oh My Zsh settings here
 
@@ -745,10 +720,80 @@ use = [&quot;async.zsh&quot;, &quot;pure.zsh&quot;]
 <pre><code class="language-sh">sheldon add pure --github sindresorhus/pure --use async.zsh pure.zsh
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="-release-notes"><a class="header" href="#-release-notes">📝 Release notes</a></h1>
+<h2 id="070"><a class="header" href="#070">0.7.0</a></h2>
+<p><em>October 13th, 2022</em></p>
+<h3 id="breaking-changes"><a class="header" href="#breaking-changes">Breaking changes</a></h3>
+<ul>
+<li>
+<p><a href="https://github.com/rossmacarthur/sheldon/commit/c3f87dde3017e98845378148acc4cd2268572a7a">Use XDG directories by default.</a> Previously Sheldon tried to
+automatically detect whether the user wanted to use XDG. This proved difficult
+and Sheldon now follows the <a href="https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html">XDG directory structure</a> by default. Sheldon will
+log a warning if the old directory <code>~/.sheldon</code> is still used as the config
+directory.</p>
+<p>To use the new location you should move the config file from
+<code>~/.sheldon/plugins.toml</code> to <code>$XDG_CONFIG_HOME/sheldon/plugins.toml</code>, which
+will be <code>~/.config/sheldon/plugins.toml</code> if the XDG variable is unset. You can
+then safely delete the old <code>~/.sheldon</code> directory.</p>
+<p>If you wish to preserve the existing behaviour you can simply set the
+following environment variables.</p>
+<pre><code class="language-sh">SHELDON_CONFIG_DIR=&quot;$HOME/.sheldon&quot;
+SHELDON_DATA_DIR=&quot;$HOME/.sheldon&quot;
+</code></pre>
+</li>
+<li>
+<p><a href="https://github.com/rossmacarthur/sheldon/commit/c2127c39f4d131f255f45dda289f496c07272bec">Update template engine.</a> Stop using Handlebars in favour of
+<a href="https://github.com/rossmacarthur/upon">Jinja-like templating</a>. This will only
+affect you if you were using custom templates.</p>
+</li>
+<li>
+<p><a href="https://github.com/rossmacarthur/sheldon/commit/708bd9e3337f107410f977618dc47d6824191a16">Only apply templates per plugin.</a> This effectively removes the
+<code>each</code> field from the template configuration. Any templates that are applied
+to each file in a plugin need to now use a for loop. For example:</p>
+<pre><code>{% for file in files %}
+source &quot;{{ file }}&quot;
+{% endfor %}
+</code></pre>
+</li>
+<li>
+<p><a href="https://github.com/rossmacarthur/sheldon/commit/4bbbff4a423002498e028a56f62897e4425be6a6">Remove clone, download dir and lock file options.</a> These paths are
+no longer configurable, only the data directory is configurable.</p>
+</li>
+</ul>
+<h3 id="features"><a class="header" href="#features">Features</a></h3>
+<ul>
+<li>
+<p><a href="https://github.com/rossmacarthur/sheldon/pull/143">Conditional sourcing of plugins using profiles.</a> This allows you to
+specify a profile that a plugin is applicable to. The plugin will only be
+included when Sheldon is run with that profile. A separate lock file will be
+used for each profile.</p>
+<p>Plugins can specify the profiles using the <code>profiles</code> key.</p>
+<pre><code class="language-toml">[plugins.example]
+github = &quot;owner/repo&quot;
+profiles = [&quot;&lt;name&gt;&quot;]
+</code></pre>
+<p>You can specify the profile in two ways:</p>
+<ul>
+<li>Command line flag: <code>--profile &lt;name&gt;</code></li>
+<li>Environment variable: <code>SHELDON_PROFILE=&lt;name&gt;</code>.</li>
+</ul>
+</li>
+<li>
+<p><a href="https://github.com/rossmacarthur/sheldon/pull/144">Support cargo-binstall.</a> This allows Sheldon to be installed using
+<code>cargo binstall sheldon</code> which will fetch the release artifact for Sheldon
+from the GitHub release.</p>
+</li>
+</ul>
+<h3 id="fixes"><a class="header" href="#fixes">Fixes</a></h3>
+<ul>
+<li><a href="https://github.com/rossmacarthur/sheldon/commit/d254a6aea79ffddc84aa849002328ed017f33bf2">Fix not updating Git source branches after force pushes.</a> Previously
+repositories with a branch that was force pushed wouldn't be updated by
+<code>sheldon lock --update</code>.</li>
+<li>Many other fixes and internal improvements.</li>
+</ul>
 <h2 id="066"><a class="header" href="#066">0.6.6</a></h2>
 <p><em>January 29th, 2022</em></p>
 <ul>
-<li><a href="https://github.com/rossmacarthur/sheldon/issues/129">Support and bundle shell completions</a></li>
+<li><a href="https://github.com/rossmacarthur/sheldon/issues/129">Support and bundle shell completions.</a></li>
 </ul>
 <h2 id="065"><a class="header" href="#065">0.6.5</a></h2>
 <p><em>October 27th, 2021</em></p>
@@ -789,7 +834,7 @@ re-open it or overwrite.</li>
 </ul>
 <h2 id="060"><a class="header" href="#060">0.6.0</a></h2>
 <p><em>October 16th, 2020</em></p>
-<h3 id="breaking-changes"><a class="header" href="#breaking-changes">Breaking changes</a></h3>
+<h3 id="breaking-changes-1"><a class="header" href="#breaking-changes-1">Breaking changes</a></h3>
 <ul>
 <li>
 <p><a href="https://github.com/rossmacarthur/sheldon/pull/110">Support XDG directory structure.</a> If any XDG environment variable is
@@ -813,7 +858,7 @@ individual directories for configuration and data: <code>config_dir</code> and
 <a href="https://github.com/tapeinosyne"><strong>@tapeinosyne</strong></a>.)</small></p>
 <p>If you used Sheldon's defaults, everything will just keep working as it did;
 no action needs to be taken. Otherwise, you may refer to this migration table:</p>
-<table><thead><tr><th style="text-align: right"></th><th>Old</th><th>New</th></tr></thead><tbody>
+<div class="table-wrapper"><table><thead><tr><th style="text-align: right"></th><th>Old</th><th>New</th></tr></thead><tbody>
 <tr><td style="text-align: right">Config paths</td><td><code>&lt;root&gt;/plugins.toml</code></td><td><code>&lt;config_dir&gt;/plugins.toml</code></td></tr>
 <tr><td style="text-align: right">Data paths</td><td><code>&lt;root&gt;/plugins.lock</code></td><td><code>&lt;data_dir&gt;/plugins.lock</code></td></tr>
 <tr><td style="text-align: right"></td><td><code>&lt;root&gt;/repos</code></td><td><code>&lt;data_dir&gt;/repos</code></td></tr>
@@ -824,7 +869,7 @@ no action needs to be taken. Otherwise, you may refer to this migration table:</
 <tr><td style="text-align: right"></td><td></td><td><code>--data-dir</code></td></tr>
 <tr><td style="text-align: right">Template variables</td><td><code>{{ root }}</code></td><td><code>{{ data_dir }}</code></td></tr>
 </tbody></table>
-</li>
+</div></li>
 <li>
 <p><a href="https://github.com/rossmacarthur/sheldon/commit/2be1da71076247518d1f5c78c190d488bb8743cf">Auto-detect whether to use colored output.</a> A new <code>--color</code> option
 was added with three values <code>always</code>, <code>auto</code>, or <code>never</code>. By default Sheldon
@@ -834,7 +879,7 @@ can still force Sheldon to always use color or never use color with the
 has been removed.</p>
 </li>
 </ul>
-<h3 id="fixes"><a class="header" href="#fixes">Fixes</a></h3>
+<h3 id="fixes-1"><a class="header" href="#fixes-1">Fixes</a></h3>
 <ul>
 <li><a href="https://github.com/rossmacarthur/sheldon/commit/abf202737fa30b30465fbed6c47a034d4d0e9911">Fix performance bug introduced in version 0.5.4.</a> A significant drop
 in performance was introduced by switching to the Rust <code>rayon</code> package. This
@@ -845,7 +890,7 @@ where passing <code>--update</code> or <code>--reinstall</code> to the <code>sou
 </ul>
 <h2 id="054"><a class="header" href="#054">0.5.4</a></h2>
 <p><em>August 14th, 2020</em></p>
-<h3 id="features"><a class="header" href="#features">Features</a></h3>
+<h3 id="features-1"><a class="header" href="#features-1">Features</a></h3>
 <ul>
 <li>
 <p><a href="https://github.com/rossmacarthur/sheldon/commit/a972c3543d3c5ed339028ab316b1c48f733aed7">Support extended glob syntax.</a> This means that <code>{a,b}</code> and <code>!</code> glob
@@ -857,7 +902,7 @@ use = [&quot;{!git,!nvm,*}.zsh]
 </code></pre>
 </li>
 </ul>
-<h3 id="fixes-1"><a class="header" href="#fixes-1">Fixes</a></h3>
+<h3 id="fixes-2"><a class="header" href="#fixes-2">Fixes</a></h3>
 <ul>
 <li><a href="https://github.com/rossmacarthur/sheldon/commit/aa69e0c6c6ae56e98c9d19de3be191e9ce9a974b">Fix not erroring out when no files matched for plugin.</a> This fixes
 cases where no files would be matched for a plugin and Sheldon would silently
@@ -867,7 +912,7 @@ removed.</a> These templates were meaningless in a Bash context.</li>
 </ul>
 <h2 id="053"><a class="header" href="#053">0.5.3</a></h2>
 <p><em>July 28th, 2020</em></p>
-<h3 id="features-1"><a class="header" href="#features-1">Features</a></h3>
+<h3 id="features-2"><a class="header" href="#features-2">Features</a></h3>
 <ul>
 <li><a href="https://github.com/rossmacarthur/sheldon/commit/131576dfddc53ec76e87ce6ee64326ae119a383c">Add <code>init</code> command.</a> Adds a new command to Sheldon which initializes
 a config file. Simply run <code>sheldon init</code>.</li>
@@ -879,7 +924,7 @@ value is set.</li>
 </ul>
 <h2 id="052"><a class="header" href="#052">0.5.2</a></h2>
 <p><em>June 4th, 2020</em></p>
-<h3 id="fixes-2"><a class="header" href="#fixes-2">Fixes</a></h3>
+<h3 id="fixes-3"><a class="header" href="#fixes-3">Fixes</a></h3>
 <ul>
 <li><a href="https://github.com/rossmacarthur/sheldon/commit/4ae64325fd8239dfb6e35f9efc05067c9c4a24d4">Fix not erroring out on a bad HTTP status code.</a> This fixes remote
 sources from silently not being downloaded correctly.</li>
@@ -902,7 +947,7 @@ shipped musl binaries which statically bundle OpenSSL.</li>
 </ul>
 <h2 id="050"><a class="header" href="#050">0.5.0</a></h2>
 <p><em>May 2nd, 2020</em></p>
-<h3 id="features-2"><a class="header" href="#features-2">Features</a></h3>
+<h3 id="features-3"><a class="header" href="#features-3">Features</a></h3>
 <ul>
 <li>
 <p><a href="https://github.com/rossmacarthur/sheldon/commit/140d17142d5be2b0653f559612aebffbd3c39ce1">Add <code>add</code> and <code>remove</code> commands to edit config.</a> These commands will
@@ -933,7 +978,7 @@ file it will log warnings when there are unused config keys. Great for
 catching typos!</p>
 </li>
 </ul>
-<h3 id="breaking-changes-1"><a class="header" href="#breaking-changes-1">Breaking changes</a></h3>
+<h3 id="breaking-changes-2"><a class="header" href="#breaking-changes-2">Breaking changes</a></h3>
 <ul>
 <li>
 <p><a href="https://github.com/rossmacarthur/sheldon/commit/18454834cb6f1b2b1ebf2ef52617449b58917f28">Update default root directory and clone directory.</a> The root
@@ -949,7 +994,7 @@ export SHELDON_CLONE_DIR=&quot;$SHELDON_ROOT/repositories&quot;
 </code></pre>
 </li>
 </ul>
-<h3 id="fixes-3"><a class="header" href="#fixes-3">Fixes</a></h3>
+<h3 id="fixes-4"><a class="header" href="#fixes-4">Fixes</a></h3>
 <ul>
 <li>
 <p><a href="https://github.com/rossmacarthur/sheldon/commit/7293cbf61240a40333ef139b6ac6e7ab173f0f97">Download/clone sources to a temporary path first.</a></p>

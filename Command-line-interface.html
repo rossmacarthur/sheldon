@@ -159,10 +159,10 @@ command does nothing.</p>
 <pre><code class="language-sh">sheldon init --shell zsh
 </code></pre>
 <h2 id="lock"><a class="header" href="#lock"><code>lock</code></a></h2>
-<p>The <code>lock</code> command installs the plugins sources and generates the lock file
-(<code>~/.sheldon/plugins.lock</code>). Rerunning this command without any extra options
-will not reinstall plugin sources, just verify that they are correctly
-installed. It will always regenerate the lock file.</p>
+<p>The <code>lock</code> command installs the plugins sources and generates the lock file.
+Rerunning this command without any extra options will not reinstall plugin
+sources, just verify that they are correctly installed. It will always
+regenerate the lock file.</p>
 <pre><code class="language-sh">sheldon lock
 </code></pre>
 <p>To update all plugin sources you can use the <code>--update</code> flag.</p>
@@ -222,53 +222,23 @@ priority.</p>
 <li><code>auto</code>: Automatically determine whether to use colored output (<em>default</em>).</li>
 <li><code>never</code>: Never use colored output.</li>
 </ul>
-<h4 id="--home-home"><a class="header" href="#--home-home"><code>--home &lt;home&gt;</code></a></h4>
-<p><em>Environment variable:</em> <code>HOME</code></p>
-<p>Set the users home directory. This is usually automatically detected but might
-be required if you are using an obscure operating system.</p>
 <h4 id="--config-dir-path"><a class="header" href="#--config-dir-path"><code>--config-dir &lt;path&gt;</code></a></h4>
 <p><em>Environment variable:</em> <code>SHELDON_CONFIG_DIR</code></p>
-<p>Set the config directory where config will store the configuration file. If
-Sheldon detects an XDG directory structure  (<a href="#xdg-directory-structure">as described
-below</a>) then this will default to
-<code>XDG_CONFIG_HOME/sheldon</code> otherwise it will default to <code>&lt;home&gt;/.sheldon</code> where
-<code>&lt;home&gt;</code> is the users home directory.</p>
+<p>Set the config directory where the configuration file will be stored. This
+defaults to <code>$XDG_CONFIG_HOME/sheldon</code> or <code>~/.config/sheldon</code>.</p>
 <h4 id="--data-dir-path"><a class="header" href="#--data-dir-path"><code>--data-dir &lt;path&gt;</code></a></h4>
 <p><em>Environment variable:</em> <code>SHELDON_DATA_DIR</code></p>
-<p>Set the data directory where plugins will be downloaded to. If Sheldon detects
-an XDG directory structure (<a href="#xdg-directory-structure">as described below</a>) then
-this will default to <code>XDG_DATA_HOME/sheldon</code> otherwise it will default to
-<code>&lt;home&gt;/.sheldon</code> where <code>&lt;home&gt;</code> is the users home directory.</p>
+<p>Set the data directory where plugins will be downloaded to. This defaults to
+<code>$XDG_DATA_HOME/sheldon</code> or <code>~/.local/share/sheldon</code>.</p>
 <h4 id="--config-file-path"><a class="header" href="#--config-file-path"><code>--config-file &lt;path&gt;</code></a></h4>
 <p><em>Environment variable:</em> <code>SHELDON_CONFIG_FILE</code></p>
 <p>Set the path to the config file. This defaults to <code>&lt;config-dir&gt;/plugins.toml</code>
 where <code>&lt;config-dir&gt;</code> is the config directory.</p>
-<h4 id="--lock-file-path"><a class="header" href="#--lock-file-path"><code>--lock-file &lt;path&gt;</code></a></h4>
-<p><em>Environment variable:</em> <code>SHELDON_LOCK_FILE</code></p>
-<p>Set the path to the lock file. This defaults to <code>&lt;data-dir&gt;/plugins.lock</code> where
-<code>&lt;data-dir&gt;</code> is the data directory.</p>
-<h4 id="--clone-dir-path"><a class="header" href="#--clone-dir-path"><code>--clone-dir &lt;path&gt;</code></a></h4>
-<p><em>Environment variable:</em> <code>SHELDON_CLONE_DIR</code></p>
-<p>Set the path to the directory where Git plugins will be cloned to. This defaults
-to <code>&lt;data-dir&gt;/repos</code> where <code>&lt;data-dir&gt;</code> is the data directory.</p>
-<h4 id="--download-dir-path"><a class="header" href="#--download-dir-path"><code>--download-dir &lt;path&gt;</code></a></h4>
-<p><em>Environment variable:</em> <code>SHELDON_DOWNLOAD_DIR</code></p>
-<p>Set the path to the directory where non-Git plugins will be downloaded to. This
-defaults to <code>&lt;data-dir&gt;/repos</code> where <code>&lt;data-dir&gt;</code> is the data directory.</p>
-<h3 id="xdg-directory-structure"><a class="header" href="#xdg-directory-structure">XDG directory structure</a></h3>
-<p>If any of the following
-<a href="https://wiki.archlinux.org/title/XDG_Base_Directory">XDG</a> environment variables
-are set then the default <a href="#--config-dir-path">config</a> and
-<a href="#--data-dir-path">data</a> directories will change as specified above.</p>
-<ul>
-<li><code>XDG_CONFIG_HOME</code>, defaults to <code>&lt;home&gt;/.config</code> where <code>&lt;home&gt;</code> is the users
-home directory.</li>
-<li><code>XDG_CACHE_HOME</code></li>
-<li><code>XDG_DATA_HOME</code>, defaults to <code>&lt;home&gt;/.local/share</code> where <code>&lt;home&gt;</code> is the users
-home directory.</li>
-<li><code>XDG_DATA_DIRS</code></li>
-<li><code>XDG_CONFIG_DIRS</code></li>
-</ul>
+<h4 id="--profile-profile"><a class="header" href="#--profile-profile"><code>--profile &lt;profile&gt;</code></a></h4>
+<p><em>Environment variable:</em> <code>SHELDON_PROFILE</code></p>
+<p>Specify the profile to match plugins against. Plugins which have
+<a href="Configuration.html#profiles">profiles</a> configured will only get loaded if one of
+the given profiles matches the profile.</p>
 <h2 id="completions"><a class="header" href="#completions">Completions</a></h2>
 <p>Shell completion scripts for Bash and Zsh are available. If Sheldon was
 installed via Homebrew then the completions should have been installed

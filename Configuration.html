@@ -144,7 +144,7 @@
 directly or using the provided Sheldon commands. A plugin must provide the
 location of the source. There are three types of sources, each kind is described
 in this section. A plugin may only specify <em>one</em> source type.</p>
-<pre><code class="language-toml"># ~/.sheldon/plugins.toml
+<pre><code class="language-toml"># ~/.config/sheldon/plugins.toml
 
 #           ┌─ Unique name for the plugin
 #        ┌──┴─┐
@@ -259,6 +259,11 @@ apply = [&quot;source&quot;, &quot;PATH&quot;]
 </code></pre>
 <p>You can define your own <a href="#custom-templates">custom templates</a> to apply to your
 plugins.</p>
+<h3 id="profiles"><a class="header" href="#profiles"><code>profiles</code></a></h3>
+<p>A list of profiles this plugin should be used in. If this field is not given the
+plugin will be used regardless of the profile. Otherwise, the plugin is only
+used if the specified <a href="Command-line-interface.html#--profile-profile">profile</a> is
+included in the configured list of profiles.</p>
 <h2 id="inline-plugins"><a class="header" href="#inline-plugins">Inline plugins</a></h2>
 <p>For convenience it also possible to define Inline plugins. An Inline plugin must
 set the <code>inline</code> field and specify the raw source.</p>
@@ -284,7 +289,7 @@ using. The following are available for both Bash and Zsh.</p>
 <p>As template strings in the config file they could be represented like the
 following.</p>
 <pre><code class="language-toml">[templates]
-source = { value = 'source &quot;{{ file }}&quot;', each = true }
+source = &quot;{% for file in files %}source \&quot;{{ file }}\&quot;\n{% endfor %}&quot;
 PATH = 'export PATH=&quot;{{ dir }}:$PATH&quot;'
 path = 'path=( &quot;{{ dir }}&quot; $path )'
 fpath = 'fpath=( &quot;{{ dir }}&quot; $fpath )'
@@ -296,9 +301,6 @@ will not be sourced.</p>
 github = &quot;owner/repo&quot;
 apply = [&quot;PATH&quot;, &quot;fpath&quot;]
 </code></pre>
-<p>The <code>each</code> value, as used in the <code>source</code> template above, specifies that the
-template should be applied to each matched file for the plugin. This defaults to
-<code>false</code>.</p>
 <h3 id="custom-templates"><a class="header" href="#custom-templates">Custom templates</a></h3>
 <p>It is possible to create your own custom templates, and you can even override
 the built-in ones.</p>
@@ -317,11 +319,8 @@ can be used in templates with <code>{{ dir }}</code>.</p>
 <li>
 <p><strong>One or more files.</strong> These are the matched files in the plugin directory
 either discovered using the the global <code>match</code> field or specified as a plugin
-option with <code>use</code>. These can be used in templates using <code>{{ file }}</code>. This
-information only makes sense in templates with <code>each</code> set to <code>true</code>.</p>
-</li>
-<li>
-<p><strong>The Sheldon data directory.</strong> This directory can be used as <code>{{ data_dir }}</code>.</p>
+option with <code>use</code>. These can be used in templates by iterating over the files.
+For example: <code>{% for file in  files %} ... {{ file }} ... {% endfor %}</code>.</p>
 </li>
 </ul>
 <p>To add or update a template add a new key to the <code>[templates]</code> table in the

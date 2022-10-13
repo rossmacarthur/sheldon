@@ -138,16 +138,6 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="-installation"><a class="header" href="#-installation">📦 Installation</a></h1>
-<h2 id="pre-built-binaries"><a class="header" href="#pre-built-binaries">Pre-built binaries</a></h2>
-<p>Pre-built binaries for Linux (x86-64, aarch64, armv7) and macOS (x86-64) are
-provided. The following script can be used to automatically detect your host
-system, download the required artefact, and extract the <code>sheldon</code> binary to the
-given directory.</p>
-<pre><code class="language-sh">curl --proto '=https' -fLsS https://rossmacarthur.github.io/install/crate.sh \
-    | bash -s -- --repo rossmacarthur/sheldon --to ~/.local/bin
-</code></pre>
-<p>Alternatively, you can download an artifact directly from the <a href="https://github.com/rossmacarthur/sheldon/releases">the releases
-page</a>.</p>
 <h2 id="homebrew"><a class="header" href="#homebrew">Homebrew</a></h2>
 <p>Sheldon can be installed using Homebrew.</p>
 <pre><code class="language-sh">brew install sheldon
@@ -156,6 +146,22 @@ page</a>.</p>
 <p>Sheldon can be installed from <a href="https://crates.io/crates/sheldon">Crates.io</a>
 using <a href="https://doc.rust-lang.org/cargo/">Cargo</a>, the Rust package manager.</p>
 <pre><code class="language-sh">cargo install sheldon
+</code></pre>
+<h2 id="cargo-binstall"><a class="header" href="#cargo-binstall">Cargo BInstall</a></h2>
+<p>Sheldon can be installed using
+<a href="https://github.com/cargo-bins/cargo-binstall"><code>cargo-binstall</code></a>, which will
+download the release artifacts directly from the GitHub release.</p>
+<pre><code class="language-sh">cargo binstall sheldon
+</code></pre>
+<h2 id="pre-built-binaries"><a class="header" href="#pre-built-binaries">Pre-built binaries</a></h2>
+<p>Pre-built binaries for Linux (x86-64, aarch64, armv7) and macOS (x86-64) are
+provided. These can be downloaded directly from the <a href="https://github.com/rossmacarthur/sheldon/releases">the releases
+page</a>.</p>
+<p>Alternatively, the following script can be used to automatically detect your host
+system, download the required artifact, and extract the <code>sheldon</code> binary to the
+given directory.</p>
+<pre><code class="language-sh">curl --proto '=https' -fLsS https://rossmacarthur.github.io/install/crate.sh \
+    | bash -s -- --repo rossmacarthur/sheldon --to ~/.local/bin
 </code></pre>
 <h2 id="building-from-source"><a class="header" href="#building-from-source">Building from source</a></h2>
 <p>Sheldon is written in Rust, so to install it from source you will first need to
