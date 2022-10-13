@@ -2,7 +2,7 @@
 
 ## 0.7.0
 
-*Unreleased*
+*October 13th, 2022*
 
 ### Breaking changes
 
