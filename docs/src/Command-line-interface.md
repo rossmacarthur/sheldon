@@ -33,10 +33,10 @@ sheldon init --shell zsh
 
 ## `lock`
 
-The `lock` command installs the plugins sources and generates the lock file
-(`~/.sheldon/plugins.lock`). Rerunning this command without any extra options
-will not reinstall plugin sources, just verify that they are correctly
-installed. It will always regenerate the lock file.
+The `lock` command installs the plugins sources and generates the lock file.
+Rerunning this command without any extra options will not reinstall plugin
+sources, just verify that they are correctly installed. It will always
+regenerate the lock file.
 
 ```sh
 sheldon lock
@@ -140,20 +140,15 @@ be required if you are using an obscure operating system.
 
 *Environment variable:* `SHELDON_CONFIG_DIR`
 
-Set the config directory where config will store the configuration file. If
-Sheldon detects an XDG directory structure  ([as described
-below](#xdg-directory-structure)) then this will default to
-`XDG_CONFIG_HOME/sheldon` otherwise it will default to `<home>/.sheldon` where
-`<home>` is the users home directory.
+Set the config directory where the configuration file will be stored. This
+defaults to `$XDG_CONFIG_HOME/sheldon` or `~/.config/sheldon`.
 
 #### `--data-dir <path>`
 
 *Environment variable:* `SHELDON_DATA_DIR`
 
-Set the data directory where plugins will be downloaded to. If Sheldon detects
-an XDG directory structure ([as described below](#xdg-directory-structure)) then
-this will default to `XDG_DATA_HOME/sheldon` otherwise it will default to
-`<home>/.sheldon` where `<home>` is the users home directory.
+Set the data directory where plugins will be downloaded to. This defaults to
+`$XDG_DATA_HOME/sheldon` or `~/.local/share/sheldon`.
 
 #### `--config-file <path>`
 

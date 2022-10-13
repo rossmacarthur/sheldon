@@ -9,7 +9,7 @@ location of the source. There are three types of sources, each kind is described
 in this section. A plugin may only specify *one* source type.
 
 ```toml
-# ~/.sheldon/plugins.toml
+# ~/.config/sheldon/plugins.toml
 
 #           ┌─ Unique name for the plugin
 #        ┌──┴─┐
@@ -197,11 +197,10 @@ plugins.
 
 ### `profiles`
 
-A list of profiles this plugin should be used in. If this field is not given
-the plugin will be used regardless of the profile. Otherwise, the plugin is
-only used if the specified
-[profile](Command-line-interface.md#--profile-profile) is included in the
-configured list of profiles.
+A list of profiles this plugin should be used in. If this field is not given the
+plugin will be used regardless of the profile. Otherwise, the plugin is only
+used if the specified [profile](Command-line-interface.md#--profile-profile) is
+included in the configured list of profiles.
 
 ## Inline plugins
 
@@ -252,10 +251,6 @@ github = "owner/repo"
 apply = ["PATH", "fpath"]
 ```
 
-The `each` value, as used in the `source` template above, specifies that the
-template should be applied to each matched file for the plugin. This defaults to
-`false`.
-
 ### Custom templates
 
 It is possible to create your own custom templates, and you can even override
@@ -273,10 +268,8 @@ Plugins all have the following information that can be used in templates.
 
 * **One or more files.** These are the matched files in the plugin directory
   either discovered using the the global `match` field or specified as a plugin
-  option with `use`. These can be used in templates using `{{ file }}`. This
-  information only makes sense in templates with `each` set to `true`.
-
-* **The Sheldon data directory.** This directory can be used as `{{ data_dir }}`.
+  option with `use`. These can be used in templates by iterating over the files.
+  For example: `{% for file in  files %} ... {{ file }} ... {% endfor %}`.
 
 To add or update a template add a new key to the `[templates]` table in the
 config file. Take a look at the [examples](Examples.md) for some interesting

@@ -88,6 +88,14 @@ impl TestCommand {
         self
     }
 
+    pub fn env_remove<K>(mut self, key: K) -> Self
+    where
+        K: AsRef<OsStr>,
+    {
+        self.command.env_remove(key);
+        self
+    }
+
     pub fn envs<I, K, V>(mut self, vars: I) -> Self
     where
         I: IntoIterator<Item = (K, V)>,

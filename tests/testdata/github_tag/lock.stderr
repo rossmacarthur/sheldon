@@ -1,3 +1,3 @@
-[LOADED] ~/.sheldon/plugins.toml
+[LOADED] ~/.config/sheldon/plugins.toml
     [CLONED] https://github.com/rossmacarthur/sheldon-test@v0.1.0
-[LOCKED] ~/.sheldon/plugins.lock
+[LOCKED] ~/.local/share/sheldon/plugins.lock

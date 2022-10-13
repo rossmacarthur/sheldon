@@ -1,2 +1,2 @@
-[LOADED] ~/.sheldon/test.toml
-[LOCKED] ~/.sheldon/plugins.lock
+[LOADED] ~/.config/sheldon/test.toml
+[LOCKED] ~/.local/share/sheldon/plugins.lock

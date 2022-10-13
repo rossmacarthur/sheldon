@@ -1,4 +1,4 @@
-[LOADED] ~/.sheldon/plugins.toml
+[LOADED] ~/.config/sheldon/plugins.toml
 
 [ERROR] failed to install source `https://github.com/rossmacarthur/sheldon-test@bad-tag`
   due to: failed to find tag `bad-tag`

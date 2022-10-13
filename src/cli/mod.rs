@@ -8,7 +8,7 @@ mod tests;
 
 use std::env;
 use std::io;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process;
 
 use anyhow::anyhow;
@@ -135,35 +135,7 @@ impl Opt {
             }
         };
 
-        let xdg_config_user = env::var_os("XDG_CONFIG_HOME").map(PathBuf::from);
-        let xdg_data_user = env::var_os("XDG_DATA_HOME").map(PathBuf::from);
-
-        // Note: `XDG_RUNTIME_DIR` is not checked as it can be set by the system rather
-        // than the user, and cannot be relied upon to indicate a preference for XDG
-        // directory layout.
-        let using_xdg = any!(
-            xdg_data_user,
-            xdg_config_user,
-            env::var_os("XDG_CACHE_HOME"),
-            env::var_os("XDG_DATA_DIRS"),
-            env::var_os("XDG_CONFIG_DIRS")
-        );
-
-        let (config_pre, data_pre) = if using_xdg {
-            (
-                xdg_config_user
-                    .unwrap_or_else(|| home.join(".config"))
-                    .join("sheldon"),
-                xdg_data_user
-                    .unwrap_or_else(|| home.join(".local/share"))
-                    .join("sheldon"),
-            )
-        } else {
-            (home.join(".sheldon"), home.join(".sheldon"))
-        };
-
-        let config_dir = config_dir.unwrap_or(config_pre);
-        let data_dir = data_dir.unwrap_or(data_pre);
+        let (config_dir, data_dir) = resolve_dirs(&home, config_dir, data_dir, output.no_color);
         let config_file = config_file.unwrap_or_else(|| config_dir.join("plugins.toml"));
         let lock_file = match profile.as_deref() {
             Some("") | None => data_dir.join("plugins.lock"),
@@ -259,4 +231,63 @@ impl LockMode {
             (_, true, true) => unreachable!(),
         }
     }
+}
+
+fn resolve_dirs(
+    home: &Path,
+    config_dir: Option<PathBuf>,
+    data_dir: Option<PathBuf>,
+    no_color: bool,
+) -> (PathBuf, PathBuf) {
+    // TODO: Remove this warning in a later release and stop falling back to
+    // the old directory.
+    let err = anyhow!(
+        r#"using deprecated config file location ~/.sheldon/plugins.toml.
+
+To use the new location move the config file to
+~/.config/sheldon/plugins.toml ($XDG_CONFIG_HOME/sheldon/plugins.toml),
+~/.sheldon can then be safely deleted.
+
+Or to instead preserve the old behaviour set the following environment variables:
+  SHELDON_CONFIG_DIR="$HOME/.sheldon"
+  SHELDON_DATA_DIR="$HOME/.sheldon"
+
+See the release notes at https://github.com/rossmacarthur/sheldon for more information.
+"#,
+    );
+    let mut using_old = false;
+    let config_dir = config_dir.unwrap_or_else(|| {
+        let default = default_config_dir(home);
+        let old = home.join(".sheldon");
+        if old.exists() && !default.exists() {
+            log_error(no_color, Color::Yellow, "warning", &err);
+            using_old = true;
+            return old;
+        }
+        default
+    });
+    let data_dir = data_dir.unwrap_or_else(|| {
+        let default = default_data_dir(home);
+        if using_old && !default.exists() {
+            return config_dir.clone();
+        }
+        default
+    });
+    (config_dir, data_dir)
+}
+
+fn default_config_dir(home: &Path) -> PathBuf {
+    let mut p = env::var_os("XDG_CONFIG_HOME")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| home.join(".config"));
+    p.push("sheldon");
+    p
+}
+
+fn default_data_dir(home: &Path) -> PathBuf {
+    let mut p = env::var_os("XDG_DATA_HOME")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| home.join(".local/share"));
+    p.push("sheldon");
+    p
 }

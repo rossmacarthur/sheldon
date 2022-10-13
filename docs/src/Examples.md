@@ -82,7 +82,7 @@ Add the following to your `~/.zshrc` file.
 ```sh
 # ~/.zshrc
 
-export ZSH="$HOME/.sheldon/repos/github.com/ohmyzsh/ohmyzsh"
+export ZSH="$HOME/.local/share/sheldon/repos/github.com/ohmyzsh/ohmyzsh"
 
 # Oh My Zsh settings here
 
