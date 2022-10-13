@@ -29,9 +29,10 @@
 ## Table of Contents
 
 - [📦 Installation](#-installation)
-  - [Pre-built binaries](#pre-built-binaries)
   - [Homebrew](#homebrew)
   - [Cargo](#cargo)
+  - [Cargo BInstall](#cargo-binstall)
+  - [Pre-built binaries](#pre-built-binaries)
   - [Building from source](#building-from-source)
 - [🚀 Getting started](#-getting-started)
   - [Initializing](#initializing)
@@ -78,21 +79,6 @@
 
 ## 📦 Installation
 
-### Pre-built binaries
-
-Pre-built binaries for Linux (x86-64, aarch64, armv7) and macOS (x86-64) are
-provided. The following script can be used to automatically detect your host
-system, download the required artefact, and extract the `sheldon` binary to the
-given directory.
-
-```sh
-curl --proto '=https' -fLsS https://rossmacarthur.github.io/install/crate.sh \
-    | bash -s -- --repo rossmacarthur/sheldon --to ~/.local/bin
-```
-
-Alternatively, you can download an artifact directly from the [the releases
-page](https://github.com/rossmacarthur/sheldon/releases).
-
 ### Homebrew
 
 Sheldon can be installed using Homebrew.
@@ -108,6 +94,31 @@ using [Cargo](https://doc.rust-lang.org/cargo/), the Rust package manager.
 
 ```sh
 cargo install sheldon
+```
+
+### Cargo BInstall
+
+Sheldon can be installed using
+[`cargo-binstall`](https://github.com/cargo-bins/cargo-binstall), which will
+download the release artifacts directly from the GitHub release.
+
+```sh
+cargo binstall sheldon
+```
+
+### Pre-built binaries
+
+Pre-built binaries for Linux (x86-64, aarch64, armv7) and macOS (x86-64) are
+provided. These can be downloaded directly from the [the releases
+page](https://github.com/rossmacarthur/sheldon/releases).
+
+Alternatively, the following script can be used to automatically detect your host
+system, download the required artifact, and extract the `sheldon` binary to the
+given directory.
+
+```sh
+curl --proto '=https' -fLsS https://rossmacarthur.github.io/install/crate.sh \
+    | bash -s -- --repo rossmacarthur/sheldon --to ~/.local/bin
 ```
 
 ### Building from source
