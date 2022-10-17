@@ -19,7 +19,7 @@ use crate::cli::{Command, Opt};
 use crate::config::{EditConfig, EditPlugin, Shell};
 use crate::context::Context;
 use crate::lock::LockedConfig;
-use crate::util::{underlying_io_error_kind, PathExt};
+use crate::util::underlying_io_error_kind;
 
 fn main() {
     let res = panic::catch_unwind(|| {
@@ -211,7 +211,7 @@ fn source(ctx: &Context, warnings: &mut Vec<Error>) -> Result<()> {
 
     let mut to_path = true;
 
-    let locked_config = if ctx.lock_mode.is_some() || config_path.newer_than(lock_path) {
+    let locked_config = if ctx.lock_mode.is_some() || newer_than(config_path, lock_path) {
         locked(ctx, warnings)?
     } else {
         match lock::from_path(lock_path) {
@@ -245,6 +245,15 @@ fn source(ctx: &Context, warnings: &mut Vec<Error>) -> Result<()> {
 
     print!("{}", script);
     Ok(())
+}
+
+/// Returns `true` if the left path is newer than the right.
+fn newer_than(left: &Path, right: &Path) -> bool {
+    let modified = |p| fs::metadata(p).and_then(|m| m.modified()).ok();
+    match (modified(left), modified(right)) {
+        (Some(ltime), Some(rtime)) => ltime > rtime,
+        _ => false,
+    }
 }
 
 /// Reads the config from the config file path, locks it, and returns the

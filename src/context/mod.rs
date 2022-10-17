@@ -1,6 +1,9 @@
 //! Contextual information.
 
-use std::fmt;
+mod message;
+#[cfg(test)]
+mod tests;
+
 use std::path::{Path, PathBuf};
 
 use anyhow::Error;
@@ -8,10 +11,10 @@ use serde::{Deserialize, Serialize};
 pub use yansi::Color;
 use yansi::Paint;
 
+use crate::context::message::ToMessage;
 use crate::lock::LockMode;
-use crate::util::PathExt;
 
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Deserialize, Serialize)]
 pub struct Context {
     pub version: String,
     pub home: PathBuf,
@@ -47,19 +50,6 @@ pub enum Verbosity {
     Quiet,
     Normal,
     Verbose,
-}
-
-/// A message that can be logged.
-pub enum Message<'a> {
-    /// A reference to something that can be displayed.
-    Borrowed(&'a dyn fmt::Display),
-    /// An owned string.
-    Owned(String),
-}
-
-/// A trait for converting a reference to something into a `Message`.
-pub trait ToMessage {
-    fn to_message(&self, ctx: &Context) -> Message<'_>;
 }
 
 impl Default for Verbosity {
@@ -112,7 +102,11 @@ impl Context {
     /// Expands the tilde in the given path to the configured user's home
     /// directory.
     pub fn expand_tilde(&self, path: PathBuf) -> PathBuf {
-        path.expand_tilde(self.home())
+        if let Ok(p) = path.strip_prefix("~") {
+            self.home.join(p)
+        } else {
+            path
+        }
     }
 
     /// Replaces the home directory in the given path with a tilde.
@@ -120,7 +114,12 @@ impl Context {
     where
         P: AsRef<Path>,
     {
-        path.as_ref().replace_home(self.home())
+        let path = path.as_ref();
+        if let Ok(p) = path.strip_prefix(&self.home) {
+            Path::new("~").join(p)
+        } else {
+            path.to_path_buf()
+        }
     }
 
     pub fn lock_mode(&self) -> LockMode {
@@ -155,35 +154,6 @@ impl Context {
 
     pub fn log_error(&self, color: Color, prefix: &str, err: &Error) {
         log_error(self.output.no_color, color, prefix, err);
-    }
-}
-
-impl<'a> fmt::Display for Message<'a> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Message::Borrowed(b) => fmt::Display::fmt(b, f),
-            Message::Owned(o) => fmt::Display::fmt(o, f),
-        }
-    }
-}
-
-impl<T> ToMessage for &T
-where
-    T: fmt::Display,
-{
-    /// Anything that implements `Display` can be easily converted into a
-    /// `Message` without copying any data.
-    fn to_message(&self, _: &Context) -> Message<'_> {
-        Message::Borrowed(self)
-    }
-}
-
-impl ToMessage for &Path {
-    /// A reference to a path is converted into a `Message` by replacing a home
-    /// path with a tilde. This implementation allocates a new `String` with the
-    /// resultant data.
-    fn to_message(&self, ctx: &Context) -> Message<'_> {
-        Message::Owned(ctx.replace_home(self).display().to_string())
     }
 }
 
