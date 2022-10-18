@@ -65,10 +65,7 @@ impl TestCase {
     where
         S: AsRef<str>,
     {
-        self.data
-            .get(key.as_ref())
-            .cloned()
-            .unwrap_or_else(|| String::new())
+        self.data.get(key.as_ref()).cloned().unwrap_or_default()
     }
 
     fn command(&self, command: &str) -> TestCommand {

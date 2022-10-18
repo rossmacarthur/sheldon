@@ -188,7 +188,7 @@ mod tests {
         Command::new("git")
             .arg("clone")
             .arg("https://github.com/rossmacarthur/sheldon-test")
-            .arg(&dir)
+            .arg(dir)
             .output()
             .expect("git clone rossmacarthur/sheldon-test");
         git2::Repository::open(dir).expect("open sheldon-test git repository")
@@ -205,24 +205,24 @@ mod tests {
 
         assert_eq!(locked.dir, dir);
         assert_eq!(locked.file, None);
-        let repo = git2::Repository::open(&dir).unwrap();
+        let repo = git2::Repository::open(dir).unwrap();
         assert_eq!(
             repo.head().unwrap().target().unwrap().to_string(),
             "be8fde277e76f35efbe46848fb352cee68549962"
         );
 
-        let modified = fs::metadata(&dir).unwrap().modified().unwrap();
+        let modified = fs::metadata(dir).unwrap().modified().unwrap();
         thread::sleep(time::Duration::from_secs(1));
         ctx.lock_mode = Some(LockMode::Reinstall);
         let locked = lock(&ctx, dir.to_path_buf(), &url, GitCheckout::DefaultBranch).unwrap();
         assert_eq!(locked.dir, dir);
         assert_eq!(locked.file, None);
-        let repo = git2::Repository::open(&dir).unwrap();
+        let repo = git2::Repository::open(dir).unwrap();
         assert_eq!(
             repo.head().unwrap().target().unwrap().to_string(),
             "be8fde277e76f35efbe46848fb352cee68549962"
         );
-        assert!(fs::metadata(&dir).unwrap().modified().unwrap() > modified);
+        assert!(fs::metadata(dir).unwrap().modified().unwrap() > modified);
     }
 
     #[test]
@@ -240,7 +240,7 @@ mod tests {
 
         assert_eq!(locked.dir, dir);
         assert_eq!(locked.file, None);
-        let repo = git2::Repository::open(&dir).unwrap();
+        let repo = git2::Repository::open(dir).unwrap();
         let head = repo.head().unwrap();
         assert_eq!(
             head.target().unwrap().to_string(),
@@ -264,7 +264,7 @@ mod tests {
 
         assert_eq!(locked.dir, dir);
         assert_eq!(locked.file, None);
-        let repo = git2::Repository::open(&dir).unwrap();
+        let repo = git2::Repository::open(dir).unwrap();
         let head = repo.head().unwrap();
         assert_eq!(
             head.target().unwrap().to_string(),

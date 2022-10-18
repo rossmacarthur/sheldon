@@ -59,7 +59,7 @@ mod tests {
         Command::new("git")
             .arg("clone")
             .arg("https://github.com/rossmacarthur/sheldon-test")
-            .arg(&dir)
+            .arg(dir)
             .output()
             .expect("git clone rossmacarthur/sheldon-test");
         git2::Repository::open(dir).expect("open sheldon-test git repository")
