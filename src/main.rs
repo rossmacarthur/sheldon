@@ -68,13 +68,12 @@ fn acquire_mutex(ctx: &Context, path: &Path) -> Result<fmutex::Guard> {
     match fmutex::try_lock(path).with_context(|| format!("failed to open `{}`", path.display()))? {
         Some(g) => Ok(g),
         None => {
-            warning!(
-                ctx,
+            ctx.log_warning(
                 "Blocking",
                 &format!(
                     "waiting for file lock on {}",
                     ctx.replace_home(path).display()
-                )
+                ),
             );
             fmutex::lock(path)
                 .with_context(|| format!("failed to acquire file lock `{}`", path.display()))
@@ -92,11 +91,11 @@ fn init(ctx: &Context, shell: Option<Shell>) -> Result<()> {
         .with_context(|| format!("failed to check `{}`", path.display()))
     {
         Ok(_) => {
-            header!(ctx, "Unchanged", path);
+            ctx.log_header("Unchanged", path);
         }
         Err(err) => {
             init_config(ctx, shell, path, err)?.to_path(path)?;
-            header!(ctx, "Initialized", path);
+            ctx.log_header("Initialized", path);
         }
     }
     Ok(())
@@ -109,15 +108,15 @@ fn add(ctx: &Context, name: String, plugin: &EditPlugin) -> Result<()> {
     let path = ctx.config_file();
     let mut config = match EditConfig::from_path(path) {
         Ok(config) => {
-            header!(ctx, "Loaded", path);
+            ctx.log_header("Loaded", path);
             config
         }
         Err(err) => init_config(ctx, None, path, err)?,
     };
     config.add(&name, plugin)?;
-    status!(ctx, "Added", &name);
+    ctx.log_status("Added", &name);
     config.to_path(ctx.config_file())?;
-    header!(ctx, "Updated", path);
+    ctx.log_header("Updated", path);
     Ok(())
 }
 
@@ -131,21 +130,21 @@ fn edit(ctx: &Context) -> Result<()> {
     {
         Ok(contents) => {
             EditConfig::from_str(&contents)?;
-            header!(ctx, "Loaded", path);
+            ctx.log_header("Loaded", path);
             contents
         }
         Err(err) => {
             let config = init_config(ctx, None, path, err)?;
             config.to_path(path)?;
-            header!(ctx, "Initialized", path);
+            ctx.log_header("Initialized", path);
             config.to_string()
         }
     };
     let handle = editor::Editor::default()?.edit(path, &original_contents)?;
-    status!(ctx, "Opened", &"config in temporary file for editing");
+    ctx.log_status("Opened", &"config in temporary file for editing");
     let config = handle.wait_and_update(&original_contents)?;
     config.to_path(path)?;
-    header!(ctx, "Updated", path);
+    ctx.log_header("Updated", path);
     Ok(())
 }
 
@@ -155,11 +154,11 @@ fn edit(ctx: &Context) -> Result<()> {
 fn remove(ctx: &Context, name: String) -> Result<()> {
     let path = ctx.config_file();
     let mut config = EditConfig::from_path(path)?;
-    header!(ctx, "Loaded", path);
+    ctx.log_header("Loaded", path);
     config.remove(&name);
-    status!(ctx, "Removed", &name);
+    ctx.log_status("Removed", &name);
     config.to_path(ctx.config_file())?;
-    header!(ctx, "Updated", path);
+    ctx.log_header("Updated", path);
     Ok(())
 }
 
@@ -200,7 +199,7 @@ fn lock(ctx: &Context, warnings: &mut Vec<Error>) -> Result<()> {
     } else {
         let path = ctx.lock_file();
         locked.to_path(path).context("failed to write lock file")?;
-        header!(ctx, "Locked", path);
+        ctx.log_header("Locked", path);
         Ok(())
     }
 }
@@ -221,7 +220,7 @@ fn source(ctx: &Context, warnings: &mut Vec<Error>) -> Result<()> {
             Ok(locked_config) => {
                 if locked_config.verify(ctx) {
                     to_path = false;
-                    header_v!(ctx, "Unlocked", lock_path);
+                    ctx.log_verbose_header("Unlocked", lock_path);
                     locked_config
                 } else {
                     locked(ctx, warnings)?
@@ -239,7 +238,7 @@ fn source(ctx: &Context, warnings: &mut Vec<Error>) -> Result<()> {
         locked_config
             .to_path(lock_path)
             .context("failed to write lock file")?;
-        header!(ctx, "Locked", lock_path);
+        ctx.log_header("Locked", lock_path);
     } else {
         for err in &locked_config.errors {
             ctx.log_error(err);
@@ -264,7 +263,7 @@ fn newer_than(left: &Path, right: &Path) -> bool {
 fn locked(ctx: &Context, warnings: &mut Vec<Error>) -> Result<LockedConfig> {
     let path = ctx.config_file();
     let config = config::from_path(path, warnings).context("failed to load config file")?;
-    header!(ctx, "Loaded", path);
+    ctx.log_header("Loaded", path);
     config::clean(ctx, warnings, &config)?;
     lock::config(ctx, config)
 }

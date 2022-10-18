@@ -11,6 +11,6 @@ Or to instead preserve the old behaviour set the following environment variables
 
 See the release notes at https://github.com/rossmacarthur/sheldon for more information.
 
-[UNLOCKED] ~/.sheldon/plugins.lock
-  [RENDERED] testa
-  [RENDERED] testb
+UNLOCKED ~/.sheldon/plugins.lock
+  RENDERED testa
+  RENDERED testb

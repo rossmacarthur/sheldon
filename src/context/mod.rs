@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 pub use yansi::Color;
 use yansi::Paint;
 
-use crate::context::message::ToMessage;
+use crate::context::message::{Message, ToMessage};
 use crate::lock::LockMode;
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, Deserialize, Serialize)]
@@ -126,18 +126,52 @@ impl Context {
     }
 
     pub fn log_header(&self, prefix: &str, msg: impl ToMessage) {
-        let msg = msg.to_message(self);
+        if self.verbosity() >= Verbosity::Normal {
+            self.log_header_impl(prefix, msg.to_message(self))
+        }
+    }
+
+    pub fn log_verbose_header(&self, prefix: &str, msg: impl ToMessage) {
+        if self.verbosity() >= Verbosity::Verbose {
+            self.log_header_impl(prefix, msg.to_message(self))
+        }
+    }
+
+    fn log_header_impl(&self, prefix: &str, msg: Message<'_>) {
         if self.output.no_color {
-            eprintln!("[{}] {}", prefix.to_uppercase(), msg);
+            eprintln!("{} {}", prefix.to_uppercase(), msg);
         } else {
             eprintln!("{} {}", Paint::magenta(prefix).bold(), msg);
         }
     }
 
-    pub fn log_status(&self, color: Color, prefix: &str, msg: impl ToMessage) {
-        let msg = msg.to_message(self);
+    pub fn log_status(&self, prefix: &str, msg: impl ToMessage) {
+        if self.verbosity() >= Verbosity::Normal {
+            self.log_impl(Color::Cyan, prefix, msg.to_message(self));
+        }
+    }
+
+    pub fn log_verbose_status(&self, prefix: &str, msg: impl ToMessage) {
+        if self.verbosity() >= Verbosity::Verbose {
+            self.log_impl(Color::Cyan, prefix, msg.to_message(self));
+        }
+    }
+
+    pub fn log_warning(&self, prefix: &str, msg: impl ToMessage) {
+        if self.verbosity() >= Verbosity::Normal {
+            self.log_impl(Color::Yellow, prefix, msg.to_message(self));
+        }
+    }
+
+    pub fn log_verbose_warning(&self, prefix: &str, msg: impl ToMessage) {
+        if self.verbosity() >= Verbosity::Verbose {
+            self.log_impl(Color::Yellow, prefix, msg.to_message(self));
+        }
+    }
+
+    fn log_impl(&self, color: Color, prefix: &str, msg: Message<'_>) {
         if self.output.no_color {
-            eprintln!("{: >12} {}", format!("[{}]", prefix.to_uppercase()), msg);
+            eprintln!("{: >10} {}", prefix.to_uppercase(), msg);
         } else {
             eprintln!(
                 "{} {}",

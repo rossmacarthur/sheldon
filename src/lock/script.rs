@@ -53,7 +53,7 @@ impl LockedConfig {
                             script.push('\n');
                         }
                     }
-                    status_v!(ctx, "Rendered", &plugin.name);
+                    ctx.log_verbose_status("Rendered", &plugin.name);
                 }
                 LockedPlugin::Inline(plugin) => {
                     // Data to use in template rendering
@@ -71,7 +71,7 @@ impl LockedConfig {
                     if !out.ends_with('\n') {
                         script.push('\n');
                     }
-                    status_v!(ctx, "Inlined", &plugin.name);
+                    ctx.log_verbose_status("Inlined", &plugin.name);
                 }
             }
         }

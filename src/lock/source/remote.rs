@@ -12,7 +12,7 @@ use crate::util::TempPath;
 
 pub fn lock(ctx: &Context, dir: PathBuf, file: PathBuf, url: &Url) -> Result<LockedSource> {
     if matches!(ctx.lock_mode(), LockMode::Normal) && file.exists() {
-        status!(ctx, "Checked", &url);
+        ctx.log_status("Checked", &url);
         return Ok(LockedSource {
             dir,
             file: Some(file),
@@ -33,7 +33,7 @@ pub fn lock(ctx: &Context, dir: PathBuf, file: PathBuf, url: &Url) -> Result<Loc
     temp_file
         .rename(&file)
         .context("failed to rename temporary download file")?;
-    status!(ctx, "Fetched", &url);
+    ctx.log_status("Fetched", &url);
 
     Ok(LockedSource {
         dir,

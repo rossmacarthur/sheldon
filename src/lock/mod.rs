@@ -109,7 +109,7 @@ pub fn config(ctx: &Context, config: Config) -> Result<LockedConfig> {
                     .collect();
 
                 if plugins.is_empty() {
-                    status!(ctx, "Skipped", &source_name);
+                    ctx.log_status("Skipped", &source_name);
                     Ok(vec![])
                 } else {
                     let source = source::lock(ctx, source)

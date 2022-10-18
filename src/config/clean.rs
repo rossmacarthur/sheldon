@@ -79,6 +79,6 @@ fn remove_path(ctx: &Context, path: &Path) -> Result<()> {
         fs::remove_file(path)
             .with_context(|| format!("failed to remove file `{}`", path_display))?;
     }
-    warning_v!(ctx, "Removed", path_display);
+    ctx.log_verbose_warning("Removed", path_display);
     Ok(())
 }

@@ -1,4 +1,4 @@
-[LOADED] ~/.config/sheldon/plugins.toml
-   [SKIPPED] https://github.com/rossmacarthur/sheldon-test2
-    [CLONED] https://github.com/rossmacarthur/sheldon-test
-[LOCKED] ~/.local/share/sheldon/plugins.p1.lock
+LOADED ~/.config/sheldon/plugins.toml
+   SKIPPED https://github.com/rossmacarthur/sheldon-test2
+    CLONED https://github.com/rossmacarthur/sheldon-test
+LOCKED ~/.local/share/sheldon/plugins.p1.lock

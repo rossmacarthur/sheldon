@@ -58,12 +58,11 @@ fn checkout(
     let current_oid = repo.head()?.target().context("current HEAD as no target")?;
     let expected_oid = checkout.resolve(repo)?;
     if current_oid == expected_oid {
-        status!(ctx, "Checked", &format!("{}{}", url, checkout))
+        ctx.log_status("Checked", &format!("{}{}", url, checkout))
     } else {
         git::checkout(repo, expected_oid)?;
         git::submodule_update(repo).context("failed to recursively update")?;
-        status!(
-            ctx,
+        ctx.log_status(
             "Updated",
             &format!(
                 "{}{} ({} to {})",
@@ -71,7 +70,7 @@ fn checkout(
                 checkout,
                 &current_oid.to_string()[..7],
                 &expected_oid.to_string()[..7]
-            )
+            ),
         );
     }
     Ok(())
@@ -86,7 +85,7 @@ fn install(ctx: &Context, dir: PathBuf, url: &Url, checkout: GitCheckout) -> Res
     temp_dir
         .rename(&dir)
         .context("failed to rename temporary clone directory")?;
-    status!(ctx, "Cloned", &format!("{}{}", url, checkout));
+    ctx.log_status("Cloned", &format!("{}{}", url, checkout));
     Ok(LockedSource { dir, file: None })
 }
 

@@ -10,7 +10,7 @@ pub fn lock(ctx: &Context, dir: PathBuf) -> Result<LockedSource> {
     let dir = ctx.expand_tilde(dir);
 
     if dir.exists() && dir.is_dir() {
-        status!(ctx, "Checked", dir.as_path());
+        ctx.log_status("Checked", dir.as_path());
         Ok(LockedSource { dir, file: None })
     } else if let Ok(walker) = globwalk::glob(dir.to_string_lossy()) {
         let mut directories: Vec<_> = walker
@@ -22,7 +22,7 @@ pub fn lock(ctx: &Context, dir: PathBuf) -> Result<LockedSource> {
 
         if directories.len() == 1 {
             let dir = directories.remove(0);
-            status!(ctx, "Checked", dir.as_path());
+            ctx.log_status("Checked", dir.as_path());
             Ok(LockedSource { dir, file: None })
         } else {
             Err(anyhow!(
