@@ -59,11 +59,6 @@ impl Default for Verbosity {
 }
 
 impl Context {
-    /// The location of the home directory.
-    pub fn home(&self) -> &Path {
-        &self.home
-    }
-
     /// The location of the configuration directory.
     pub fn config_dir(&self) -> &Path {
         &self.config_dir
@@ -152,24 +147,36 @@ impl Context {
         }
     }
 
-    pub fn log_error(&self, color: Color, prefix: &str, err: &Error) {
-        log_error(self.output.no_color, color, prefix, err);
+    pub fn log_error(&self, err: &Error) {
+        log_error(self.output.no_color, err)
+    }
+
+    pub fn log_error_as_warning(&self, err: &Error) {
+        log_error_as_warning(self.output.no_color, err)
     }
 }
 
-pub fn log_error(no_color: bool, color: Color, prefix: &str, err: &Error) {
-    let pretty = err
-        .chain()
+pub fn log_error(no_color: bool, err: &Error) {
+    let pretty = prettyify_error(err);
+    if no_color {
+        eprintln!("\nERROR: {}", pretty);
+    } else {
+        eprintln!("\n{} {}", Paint::red("error:").bold(), pretty);
+    }
+}
+
+pub fn log_error_as_warning(no_color: bool, err: &Error) {
+    let pretty = prettyify_error(err);
+    if no_color {
+        eprintln!("\nWARNING: {}", pretty);
+    } else {
+        eprintln!("\n{} {}", Paint::yellow("warning:").bold(), pretty);
+    }
+}
+
+fn prettyify_error(err: &Error) -> String {
+    err.chain()
         .map(|c| c.to_string())
         .collect::<Vec<_>>()
-        .join("\n  due to: ");
-    if no_color {
-        eprintln!("\n[{}] {}", prefix.to_uppercase(), pretty);
-    } else {
-        eprintln!(
-            "\n{} {}",
-            Paint::new(format!("{}:", prefix)).fg(color).bold(),
-            pretty
-        );
-    }
+        .join("\n  due to: ")
 }

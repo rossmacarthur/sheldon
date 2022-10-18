@@ -1,5 +1,5 @@
 
-[WARNING] using deprecated config file location ~/.sheldon/plugins.toml.
+WARNING: using deprecated config file location ~/.sheldon/plugins.toml.
 
 To use the new location move the config file to
 ~/.config/sheldon/plugins.toml ($XDG_CONFIG_HOME/sheldon/plugins.toml),

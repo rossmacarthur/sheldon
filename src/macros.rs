@@ -54,17 +54,3 @@ macro_rules! warning {
 macro_rules! warning_v {
     ($($arg:tt)*) => { _status!(crate::context::Verbosity::Verbose, crate::context::Color::Yellow, $($arg)*) }
 }
-
-/// Log an error.
-macro_rules! error {
-    ($ctx:expr, $err:expr) => {
-        $ctx.log_error(crate::context::Color::Red, "error", $err);
-    };
-}
-
-/// Log an error but as a warning.
-macro_rules! error_w {
-    ($ctx:expr, $err:expr) => {
-        $ctx.log_error(crate::context::Color::Yellow, "warning", $err);
-    };
-}

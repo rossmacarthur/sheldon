@@ -25,7 +25,7 @@ fn main() {
     let res = panic::catch_unwind(|| {
         let Opt { ctx, command } = cli::from_args();
         if let Err(err) = run_command(&ctx, command) {
-            error!(&ctx, &err);
+            ctx.log_error(&err);
             process::exit(2);
         }
     });
@@ -59,7 +59,7 @@ pub fn run_command(ctx: &Context, command: Command) -> Result<()> {
         Command::Source => source(ctx, &mut warnings),
     };
     for err in &warnings {
-        error_w!(ctx, err);
+        ctx.log_error_as_warning(err);
     }
     result
 }
@@ -191,7 +191,7 @@ fn lock(ctx: &Context, warnings: &mut Vec<Error>) -> Result<()> {
 
     if let Some(last) = locked.errors.pop() {
         for err in locked.errors {
-            error!(ctx, &err);
+            ctx.log_error(&err);
         }
         Err(last)
     } else {
@@ -239,7 +239,7 @@ fn source(ctx: &Context, warnings: &mut Vec<Error>) -> Result<()> {
         header!(ctx, "Locked", lock_path);
     } else {
         for err in &locked_config.errors {
-            error!(ctx, err);
+            ctx.log_error(err);
         }
     }
 

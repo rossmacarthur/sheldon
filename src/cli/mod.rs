@@ -17,7 +17,7 @@ use clap_complete as complete;
 
 use crate::cli::raw::{Add, RawCommand, RawOpt};
 use crate::config::{EditPlugin, GitReference, RawPlugin, Shell};
-use crate::context::{log_error, Color, Context, Output, Verbosity};
+use crate::context::{log_error, log_error_as_warning, Context, Output, Verbosity};
 use crate::lock::LockMode;
 use crate::util::build;
 
@@ -125,7 +125,7 @@ impl Opt {
             Some(home) => home,
             None => {
                 let err = anyhow!("failed to determine the current user's home directory");
-                log_error(output.no_color, Color::Red, "error", &err);
+                log_error(output.no_color, &err);
                 process::exit(1);
             }
         };
@@ -255,7 +255,7 @@ See the release notes at https://github.com/rossmacarthur/sheldon for more infor
         let default = default_config_dir(home);
         let old = home.join(".sheldon");
         if old.exists() && !default.exists() {
-            log_error(no_color, Color::Yellow, "warning", &err);
+            log_error_as_warning(no_color, &err);
             using_old = true;
             return old;
         }
