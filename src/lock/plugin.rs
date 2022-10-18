@@ -98,9 +98,9 @@ where
 {
     TEMPLATE_ENGINE
         .compile(template)
-        .with_context(s!("failed to compile template `{}`", template))?
+        .with_context(|| format!("failed to compile template `{}`", template))?
         .render(ctx)
-        .with_context(s!("failed to render template `{}`", template))
+        .with_context(|| format!("failed to render template `{}`", template))
 }
 
 fn match_globs(dir: &Path, patterns: &[String], files: &mut Vec<PathBuf>) -> Result<bool> {
@@ -115,15 +115,15 @@ fn match_globs(dir: &Path, patterns: &[String], files: &mut Vec<PathBuf>) -> Res
     for entry in globwalk::GlobWalkerBuilder::from_patterns(dir, patterns)
         .sort_by(|a, b| a.file_name().cmp(b.file_name()))
         .build()
-        .with_context(s!("failed to parse glob patterns: {}", debug()))?
+        .with_context(|| format!("failed to parse glob patterns: {}", debug()))?
     {
-        let entry = entry.with_context(s!("failed to match patterns: {}", debug()))?;
+        let entry = entry.with_context(|| format!("failed to match patterns: {}", debug()))?;
         if entry.metadata()?.file_type().is_symlink() {
             entry
                 .path()
                 .metadata()
-                .with_context(s!("failed to read symlink `{}`", entry.path().display()))
-                .with_context(s!("failed to match patterns: {}", debug()))?;
+                .with_context(|| format!("failed to read symlink `{}`", entry.path().display()))
+                .with_context(|| format!("failed to match patterns: {}", debug()))?;
         }
         files.push(entry.into_path());
         matched = true;

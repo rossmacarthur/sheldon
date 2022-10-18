@@ -45,7 +45,7 @@ where
 /// Open a Git repository.
 pub fn open(dir: &Path) -> anyhow::Result<Repository> {
     let repo = Repository::open(dir)
-        .with_context(s!("failed to open repository at `{}`", dir.display()))?;
+        .with_context(|| format!("failed to open repository at `{}`", dir.display()))?;
     Ok(repo)
 }
 
@@ -64,7 +64,7 @@ pub fn clone(url: &Url, dir: &Path) -> anyhow::Result<Repository> {
             .fetch(&DEFAULT_REFSPECS, Some(&mut opts), None)?;
         Ok(repo)
     })
-    .with_context(s!("failed to git clone `{}`", url))
+    .with_context(|| format!("failed to git clone `{}`", url))
 }
 
 /// Fetch a Git repository.
@@ -82,11 +82,11 @@ pub fn fetch(repo: &Repository) -> anyhow::Result<()> {
 pub fn checkout(repo: &Repository, oid: Oid) -> anyhow::Result<()> {
     let obj = repo
         .find_object(oid, None)
-        .with_context(s!("failed to find `{}`", oid))?;
+        .with_context(|| format!("failed to find `{}`", oid))?;
     repo.reset(&obj, ResetType::Hard, None)
-        .with_context(s!("failed to set HEAD to `{}`", oid))?;
+        .with_context(|| format!("failed to set HEAD to `{}`", oid))?;
     repo.checkout_tree(&obj, None)
-        .with_context(s!("failed to checkout `{}`", oid))
+        .with_context(|| format!("failed to checkout `{}`", oid))
 }
 
 /// Recursively update Git submodules.
@@ -121,17 +121,17 @@ pub fn resolve_head(repo: &Repository) -> anyhow::Result<Oid> {
 /// Resolve a branch to a object identifier.
 pub fn resolve_branch(repo: &Repository, branch: &str) -> anyhow::Result<Oid> {
     repo.find_branch(&format!("origin/{}", branch), BranchType::Remote)
-        .with_context(s!("failed to find branch `{}`", branch))?
+        .with_context(|| format!("failed to find branch `{}`", branch))?
         .get()
         .target()
-        .with_context(s!("branch `{}` does not have a target", branch))
+        .with_context(|| format!("branch `{}` does not have a target", branch))
 }
 
 /// Resolve a revision to a object identifier.
 pub fn resolve_rev(repo: &Repository, rev: &str) -> anyhow::Result<Oid> {
     let obj = repo
         .revparse_single(rev)
-        .with_context(s!("failed to find revision `{}`", rev))?;
+        .with_context(|| format!("failed to find revision `{}`", rev))?;
     Ok(match obj.as_tag() {
         Some(tag) => tag.target_id(),
         None => obj.id(),
@@ -146,5 +146,5 @@ pub fn resolve_tag(repo: &Repository, tag: &str) -> anyhow::Result<Oid> {
         let obj = obj.peel(git2::ObjectType::Commit)?;
         Ok(obj.id())
     }
-    _resolve_tag(repo, tag).with_context(s!("failed to find tag `{}`", tag))
+    _resolve_tag(repo, tag).with_context(|| format!("failed to find tag `{}`", tag))
 }

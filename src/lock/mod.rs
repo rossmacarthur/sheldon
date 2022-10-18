@@ -36,7 +36,7 @@ where
     let path = path.as_ref();
     let locked: LockedConfig = toml::from_str(&String::from_utf8_lossy(
         &fs::read(path)
-            .with_context(s!("failed to read locked config from `{}`", path.display()))?,
+            .with_context(|| format!("failed to read locked config from `{}`", path.display()))?,
     ))
     .context("failed to deserialize locked config")?;
     Ok(locked)
@@ -113,13 +113,13 @@ pub fn config(ctx: &Context, config: Config) -> Result<LockedConfig> {
                     Ok(vec![])
                 } else {
                     let source = source::lock(ctx, source)
-                        .with_context(s!("failed to install source `{}`", source_name))?;
+                        .with_context(|| format!("failed to install source `{}`", source_name))?;
 
                     let mut locked = Vec::with_capacity(plugins.len());
                     for (index, plugin) in plugins {
                         let name = plugin.name.clone();
                         let plugin = plugin::lock(ctx, source.clone(), matches, apply, plugin)
-                            .with_context(s!("failed to install plugin `{}`", name));
+                            .with_context(|| format!("failed to install plugin `{}`", name));
                         locked.push((index, plugin));
                     }
                     Ok(locked)

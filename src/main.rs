@@ -65,7 +65,7 @@ pub fn run_command(ctx: &Context, command: Command) -> Result<()> {
 }
 
 fn acquire_mutex(ctx: &Context, path: &Path) -> Result<fmutex::Guard> {
-    match fmutex::try_lock(path).with_context(s!("failed to open `{}`", path.display()))? {
+    match fmutex::try_lock(path).with_context(|| format!("failed to open `{}`", path.display()))? {
         Some(g) => Ok(g),
         None => {
             warning!(
@@ -76,7 +76,8 @@ fn acquire_mutex(ctx: &Context, path: &Path) -> Result<fmutex::Guard> {
                     ctx.replace_home(path).display()
                 )
             );
-            fmutex::lock(path).with_context(s!("failed to acquire file lock `{}`", path.display()))
+            fmutex::lock(path)
+                .with_context(|| format!("failed to acquire file lock `{}`", path.display()))
         }
     }
 }
@@ -88,7 +89,7 @@ fn init(ctx: &Context, shell: Option<Shell>) -> Result<()> {
     let path = ctx.config_file();
     match path
         .metadata()
-        .with_context(s!("failed to check `{}`", path.display()))
+        .with_context(|| format!("failed to check `{}`", path.display()))
     {
         Ok(_) => {
             header!(ctx, "Unchanged", path);
@@ -126,7 +127,7 @@ fn add(ctx: &Context, name: String, plugin: &EditPlugin) -> Result<()> {
 fn edit(ctx: &Context) -> Result<()> {
     let path = ctx.config_file();
     let original_contents = match fs::read_to_string(path)
-        .with_context(s!("failed to read from `{}`", path.display()))
+        .with_context(|| format!("failed to read from `{}`", path.display()))
     {
         Ok(contents) => {
             EditConfig::from_str(&contents)?;
@@ -172,10 +173,12 @@ fn init_config(ctx: &Context, shell: Option<Shell>, path: &Path, err: Error) -> 
             bail!("aborted initialization!");
         };
         if let Some(parent) = path.parent() {
-            fs::create_dir_all(parent).with_context(s!(
-                "failed to create directory `{}`",
-                &ctx.replace_home(parent).display()
-            ))?;
+            fs::create_dir_all(parent).with_context(|| {
+                format!(
+                    "failed to create directory `{}`",
+                    &ctx.replace_home(parent).display()
+                )
+            })?;
         }
         Ok(EditConfig::default(shell))
     } else {

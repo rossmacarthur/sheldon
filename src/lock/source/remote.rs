@@ -23,11 +23,12 @@ pub fn lock(ctx: &Context, dir: PathBuf, file: PathBuf, url: &Url) -> Result<Loc
         TempPath::new_force(&file).context("failed to prepare temporary download directory")?;
     {
         let path = temp_file.path();
-        fs::create_dir_all(&dir).with_context(s!("failed to create dir `{}`", dir.display()))?;
-        let temp_file_handle =
-            fs::File::create(path).with_context(s!("failed to create `{}`", path.display()))?;
+        fs::create_dir_all(&dir)
+            .with_context(|| format!("failed to create dir `{}`", dir.display()))?;
+        let temp_file_handle = fs::File::create(path)
+            .with_context(|| format!("failed to create `{}`", path.display()))?;
         util::download(url.as_ref(), temp_file_handle)
-            .with_context(s!("failed to download `{}`", url))?;
+            .with_context(|| format!("failed to download `{}`", url))?;
     }
     temp_file
         .rename(&file)

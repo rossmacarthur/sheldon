@@ -1,10 +1,5 @@
 //! General purpose macros.
 
-/// Generate a lazy format!.
-macro_rules! s {
-    ($fmt:expr, $($arg:tt)+) => (|| format!($fmt, $($arg)+))
-}
-
 /// Call .into() on each element in a vec! initialization.
 macro_rules! vec_into {
     ($($i:expr),*) => (vec![$($i.into()),*]);

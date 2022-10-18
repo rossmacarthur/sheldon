@@ -36,7 +36,7 @@ pub fn normalize(raw_config: RawConfig, warnings: &mut Vec<Error>) -> Result<Con
     for (name, template) in &templates {
         TEMPLATE_ENGINE
             .compile(template)
-            .with_context(s!("failed to compile template `{}`", name))?;
+            .with_context(|| format!("failed to compile template `{}`", name))?;
     }
 
     let shell = shell.unwrap_or_default();
@@ -49,7 +49,7 @@ pub fn normalize(raw_config: RawConfig, warnings: &mut Vec<Error>) -> Result<Con
     for (name, plugin) in plugins {
         normalized_plugins.push(
             normalize_plugin(plugin, name.clone(), shell, &templates, warnings)
-                .with_context(s!("failed to normalize plugin `{}`", name))?,
+                .with_context(|| format!("failed to normalize plugin `{}`", name))?,
         );
     }
 
@@ -127,7 +127,7 @@ fn normalize_plugin(
                 repository
             );
             let url = Url::parse(&url_str)
-                .with_context(s!("failed to construct Gist URL using `{}`", repository))?;
+                .with_context(|| format!("failed to construct Gist URL using `{}`", repository))?;
             TempSource::External(Source::Git { url, reference })
         }
         // `github` type
@@ -138,8 +138,9 @@ fn normalize_plugin(
                 GITHUB_HOST,
                 repository
             );
-            let url = Url::parse(&url_str)
-                .with_context(s!("failed to construct GitHub URL using `{}`", repository))?;
+            let url = Url::parse(&url_str).with_context(|| {
+                format!("failed to construct GitHub URL using `{}`", repository)
+            })?;
             TempSource::External(Source::Git { url, reference })
         }
         // `remote` type

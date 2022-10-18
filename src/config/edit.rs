@@ -70,7 +70,7 @@ impl EditConfig {
     {
         let path = path.as_ref();
         let contents = fs::read_to_string(path)
-            .with_context(s!("failed to read from `{}`", path.display()))?;
+            .with_context(|| format!("failed to read from `{}`", path.display()))?;
         Self::from_str(contents)
     }
 
@@ -119,7 +119,7 @@ impl EditConfig {
     {
         let path = path.as_ref();
         fs::write(path, self.to_string())
-            .with_context(s!("failed to write config to `{}`", path.display()))
+            .with_context(|| format!("failed to write config to `{}`", path.display()))
     }
 }
 
