@@ -22,10 +22,6 @@ impl TestDirs {
     }
 
     pub fn default() -> io::Result<Self> {
-        Self::new(".sheldon", ".sheldon")
-    }
-
-    pub fn default_xdg() -> io::Result<Self> {
         Self::new(".config/sheldon", ".local/share/sheldon")
     }
 

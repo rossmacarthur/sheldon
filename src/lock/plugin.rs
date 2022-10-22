@@ -1,11 +1,10 @@
 use std::path::{Path, PathBuf};
 
 use anyhow::{bail, Context as ResultExt, Result};
-use indexmap::IndexMap;
 use maplit::hashmap;
 use serde::Serialize;
 
-use crate::config::{ExternalPlugin, Source, Template};
+use crate::config::{ExternalPlugin, Source};
 use crate::context::Context;
 use crate::lock::file::LockedExternalPlugin;
 use crate::lock::source::LockedSource;
@@ -14,7 +13,6 @@ use crate::util::TEMPLATE_ENGINE;
 /// Consume the [`ExternalPlugin`] and convert it to a [`LockedExternalPlugin`].
 pub fn lock(
     ctx: &Context,
-    templates: &IndexMap<String, Template>,
     locked_source: LockedSource,
     global_matches: &[String],
     global_apply: &[String],
@@ -84,13 +82,6 @@ pub fn lock(
                     break;
                 }
             }
-            if files.is_empty()
-                && templates
-                    .iter()
-                    .any(|(key, value)| apply.contains(key) && value.each)
-            {
-                bail!("no files matched for `{}`", &name);
-            }
         }
 
         LockedExternalPlugin {
@@ -110,9 +101,9 @@ where
 {
     TEMPLATE_ENGINE
         .compile(template)
-        .with_context(s!("failed to compile template `{}`", template))?
+        .with_context(|| format!("failed to compile template `{}`", template))?
         .render(ctx)
-        .with_context(s!("failed to render template `{}`", template))
+        .with_context(|| format!("failed to render template `{}`", template))
 }
 
 fn match_globs(dir: &Path, patterns: &[String], files: &mut Vec<PathBuf>) -> Result<bool> {
@@ -127,15 +118,15 @@ fn match_globs(dir: &Path, patterns: &[String], files: &mut Vec<PathBuf>) -> Res
     for entry in globwalk::GlobWalkerBuilder::from_patterns(dir, patterns)
         .sort_by(|a, b| a.file_name().cmp(b.file_name()))
         .build()
-        .with_context(s!("failed to parse glob patterns: {}", debug()))?
+        .with_context(|| format!("failed to parse glob patterns: {}", debug()))?
     {
-        let entry = entry.with_context(s!("failed to match patterns: {}", debug()))?;
+        let entry = entry.with_context(|| format!("failed to match patterns: {}", debug()))?;
         if entry.metadata()?.file_type().is_symlink() {
             entry
                 .path()
                 .metadata()
-                .with_context(s!("failed to read symlink `{}`", entry.path().display()))
-                .with_context(s!("failed to match patterns: {}", debug()))?;
+                .with_context(|| format!("failed to read symlink `{}`", entry.path().display()))
+                .with_context(|| format!("failed to match patterns: {}", debug()))?;
         }
         files.push(entry.into_path());
         matched = true;
@@ -153,7 +144,7 @@ mod tests {
 
     use url::Url;
 
-    use crate::config::{GitReference, Shell};
+    use crate::config::GitReference;
     use crate::lock::source;
 
     #[test]
@@ -176,15 +167,7 @@ mod tests {
         let locked_source = source::lock(&ctx, plugin.source.clone()).unwrap();
         let clone_dir = dir.join("repos/github.com/rossmacarthur/sheldon-test");
 
-        let locked = lock(
-            &ctx,
-            &Shell::default().default_templates().clone(),
-            locked_source,
-            &[],
-            &["hello".into()],
-            plugin,
-        )
-        .unwrap();
+        let locked = lock(&ctx, locked_source, &[], &["hello".into()], plugin).unwrap();
 
         assert_eq!(locked.name, String::from("test"));
         assert_eq!(locked.dir(), clone_dir);
@@ -220,7 +203,6 @@ mod tests {
 
         let locked = lock(
             &ctx,
-            &Shell::default().default_templates().clone(),
             locked_source,
             &["*.plugin.zsh".to_string()],
             &["hello".to_string()],
@@ -232,36 +214,6 @@ mod tests {
         assert_eq!(locked.dir(), clone_dir);
         assert_eq!(locked.files, vec![clone_dir.join("test.plugin.zsh")]);
         assert_eq!(locked.apply, vec![String::from("hello")]);
-    }
-
-    #[test]
-    fn external_plugin_lock_git_with_matches_error() {
-        let temp = tempfile::tempdir().expect("create temporary directory");
-        let dir = temp.path();
-        let ctx = Context::testing(dir);
-        let plugin = ExternalPlugin {
-            name: "test".to_string(),
-            source: Source::Git {
-                url: Url::parse("https://github.com/rossmacarthur/sheldon-test").unwrap(),
-                reference: Some(GitReference::Tag("v0.1.0".to_string())),
-            },
-            dir: None,
-            uses: None,
-            apply: None,
-            hooks: None,
-            profiles: None,
-        };
-        let locked_source = source::lock(&ctx, plugin.source.clone()).unwrap();
-
-        lock(
-            &ctx,
-            &Shell::default().default_templates().clone(),
-            locked_source,
-            &["*doesnotexist*".to_string()],
-            &["source".to_string()],
-            plugin,
-        )
-        .unwrap_err();
     }
 
     #[test]
@@ -286,7 +238,6 @@ mod tests {
 
         let locked = lock(
             &ctx,
-            &Shell::default().default_templates().clone(),
             locked_source,
             &["*doesnotexist*".to_string()],
             &["PATH".to_string()],
@@ -322,15 +273,7 @@ mod tests {
         let locked_source = source::lock(&ctx, plugin.source.clone()).unwrap();
         let download_dir = dir.join("downloads/github.com/rossmacarthur/sheldon-test/raw/master");
 
-        let locked = lock(
-            &ctx,
-            &Shell::default().default_templates().clone(),
-            locked_source,
-            &[],
-            &["hello".to_string()],
-            plugin,
-        )
-        .unwrap();
+        let locked = lock(&ctx, locked_source, &[], &["hello".to_string()], plugin).unwrap();
 
         assert_eq!(locked.name, String::from("test"));
         assert_eq!(locked.dir(), download_dir);

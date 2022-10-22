@@ -8,7 +8,7 @@ use anyhow::{Context as ResultExt, Error, Result};
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 
-use crate::config::{InlinePlugin, Template};
+use crate::config::InlinePlugin;
 use crate::context::Context;
 
 /// A locked `Config`.
@@ -23,7 +23,7 @@ pub struct LockedConfig {
     ///
     /// Note: this field must come last in the struct for it to serialize
     /// properly.
-    pub templates: IndexMap<String, Template>,
+    pub templates: IndexMap<String, String>,
     /// Any errors that occurred while generating this `LockedConfig`.
     #[serde(skip)]
     pub errors: Vec<Error>,
@@ -62,16 +62,15 @@ impl LockedConfig {
     {
         let path = path.as_ref();
         if let Some(parent) = path.parent() {
-            fs::create_dir_all(parent).with_context(s!(
-                "failed to create parent directory `{}`",
-                parent.display()
-            ))?;
+            fs::create_dir_all(parent).with_context(|| {
+                format!("failed to create parent directory `{}`", parent.display())
+            })?;
         }
         fs::write(
             path,
             &toml::to_string(&self).context("failed to serialize locked config")?,
         )
-        .with_context(s!("failed to write locked config to `{}`", path.display()))?;
+        .with_context(|| format!("failed to write locked config to `{}`", path.display()))?;
         Ok(())
     }
 }

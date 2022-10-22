@@ -29,9 +29,10 @@
 ## Table of Contents
 
 - [📦 Installation](#-installation)
-  - [Pre-built binaries](#pre-built-binaries)
   - [Homebrew](#homebrew)
   - [Cargo](#cargo)
+  - [Cargo BInstall](#cargo-binstall)
+  - [Pre-built binaries](#pre-built-binaries)
   - [Building from source](#building-from-source)
 - [🚀 Getting started](#-getting-started)
   - [Initializing](#initializing)
@@ -46,12 +47,10 @@
   - [`remove`](#remove)
   - [Options](#options)
       - [`--color <when>`](#--color-when)
-      - [`--home <home>`](#--home-home)
       - [`--config-dir <path>`](#--config-dir-path)
       - [`--data-dir <path>`](#--data-dir-path)
       - [`--config-file <path>`](#--config-file-path)
       - [`--profile <profile>`](#--profile-profile)
-    - [XDG directory structure](#xdg-directory-structure)
   - [Completions](#completions)
 - [⚙️ Configuration](#️-configuration)
   - [Plugin sources](#plugin-sources)
@@ -81,21 +80,6 @@
 
 ## 📦 Installation
 
-### Pre-built binaries
-
-Pre-built binaries for Linux (x86-64, aarch64, armv7) and macOS (x86-64) are
-provided. The following script can be used to automatically detect your host
-system, download the required artefact, and extract the `sheldon` binary to the
-given directory.
-
-```sh
-curl --proto '=https' -fLsS https://rossmacarthur.github.io/install/crate.sh \
-    | bash -s -- --repo rossmacarthur/sheldon --to ~/.local/bin
-```
-
-Alternatively, you can download an artifact directly from the [the releases
-page](https://github.com/rossmacarthur/sheldon/releases).
-
 ### Homebrew
 
 Sheldon can be installed using Homebrew.
@@ -111,6 +95,31 @@ using [Cargo](https://doc.rust-lang.org/cargo/), the Rust package manager.
 
 ```sh
 cargo install sheldon
+```
+
+### Cargo BInstall
+
+Sheldon can be installed using
+[`cargo-binstall`](https://github.com/cargo-bins/cargo-binstall), which will
+download the release artifacts directly from the GitHub release.
+
+```sh
+cargo binstall sheldon
+```
+
+### Pre-built binaries
+
+Pre-built binaries for Linux (x86-64, aarch64, armv7) and macOS (x86-64) are
+provided. These can be downloaded directly from the [the releases
+page](https://github.com/rossmacarthur/sheldon/releases).
+
+Alternatively, the following script can be used to automatically detect your host
+system, download the required artifact, and extract the `sheldon` binary to the
+given directory.
+
+```sh
+curl --proto '=https' -fLsS https://rossmacarthur.github.io/install/crate.sh \
+    | bash -s -- --repo rossmacarthur/sheldon --to ~/.local/bin
 ```
 
 ### Building from source
@@ -145,16 +154,17 @@ or
 sheldon init --shell zsh
 ```
 
-This will create `plugins.toml` under `~/.sheldon` or, if defined,
-`$XDG_CONFIG_HOME/sheldon`. You can either edit this file directly or use the
-provided command line interface to add or remove plugins.
+This will create `plugins.toml` under `$XDG_CONFIG_HOME/sheldon`, on most
+systems this will be `~/.config/sheldon/plugins.toml`. You can either edit this
+file directly or use the provided command line interface to add or remove
+plugins.
 
 ### Adding a plugin
 
 To add your first plugin append the following to the Sheldon config file.
 
 ```toml
-# ~/.sheldon/plugins.toml
+# ~/.config/sheldon/plugins.toml
 
 [plugins.base16]
 github = "chriskempson/base16-shell"
@@ -218,10 +228,10 @@ sheldon init --shell zsh
 
 ### `lock`
 
-The `lock` command installs the plugins sources and generates the lock file
-(`~/.sheldon/plugins.lock`). Rerunning this command without any extra options
-will not reinstall plugin sources, just verify that they are correctly
-installed. It will always regenerate the lock file.
+The `lock` command installs the plugins sources and generates the lock file.
+Rerunning this command without any extra options will not reinstall plugin
+sources, just verify that they are correctly installed. It will always
+regenerate the lock file.
 
 ```sh
 sheldon lock
@@ -314,31 +324,19 @@ Set the output coloring.
 * `auto`: Automatically determine whether to use colored output (*default*).
 * `never`: Never use colored output.
 
-##### `--home <home>`
-
-*Environment variable:* `HOME`
-
-Set the users home directory. This is usually automatically detected but might
-be required if you are using an obscure operating system.
-
 ##### `--config-dir <path>`
 
 *Environment variable:* `SHELDON_CONFIG_DIR`
 
-Set the config directory where config will store the configuration file. If
-Sheldon detects an XDG directory structure  ([as described
-below](#xdg-directory-structure)) then this will default to
-`XDG_CONFIG_HOME/sheldon` otherwise it will default to `<home>/.sheldon` where
-`<home>` is the users home directory.
+Set the config directory where the configuration file will be stored. This
+defaults to `$XDG_CONFIG_HOME/sheldon` or `~/.config/sheldon`.
 
 ##### `--data-dir <path>`
 
 *Environment variable:* `SHELDON_DATA_DIR`
 
-Set the data directory where plugins will be downloaded to. If Sheldon detects
-an XDG directory structure ([as described below](#xdg-directory-structure)) then
-this will default to `XDG_DATA_HOME/sheldon` otherwise it will default to
-`<home>/.sheldon` where `<home>` is the users home directory.
+Set the data directory where plugins will be downloaded to. This defaults to
+`$XDG_DATA_HOME/sheldon` or `~/.local/share/sheldon`.
 
 ##### `--config-file <path>`
 
@@ -354,21 +352,6 @@ where `<config-dir>` is the config directory.
 Specify the profile to match plugins against. Plugins which have
 [profiles](https://sheldon.cli.rs/Configuration.html#profiles) configured will only get loaded if one of
 the given profiles matches the profile.
-
-#### XDG directory structure
-
-If any of the following
-[XDG](https://wiki.archlinux.org/title/XDG_Base_Directory) environment variables
-are set then the default [config](#--config-dir-path) and
-[data](#--data-dir-path) directories will change as specified above.
-
-* `XDG_CONFIG_HOME`, defaults to `<home>/.config` where `<home>` is the users
-  home directory.
-* `XDG_CACHE_HOME`
-* `XDG_DATA_HOME`, defaults to `<home>/.local/share` where `<home>` is the users
-  home directory.
-* `XDG_DATA_DIRS`
-* `XDG_CONFIG_DIRS`
 
 ### Completions
 
@@ -401,7 +384,7 @@ location of the source. There are three types of sources, each kind is described
 in this section. A plugin may only specify *one* source type.
 
 ```toml
-# ~/.sheldon/plugins.toml
+# ~/.config/sheldon/plugins.toml
 
 #           ┌─ Unique name for the plugin
 #        ┌──┴─┐
@@ -589,11 +572,10 @@ plugins.
 
 #### `profiles`
 
-A list of profiles this plugin should be used in. If this field is not given
-the plugin will be used regardless of the profile. Otherwise, the plugin is
-only used if the specified
-[profile](https://sheldon.cli.rs/Command-line-interface.html#--profile-profile) is included in the
-configured list of profiles.
+A list of profiles this plugin should be used in. If this field is not given the
+plugin will be used regardless of the profile. Otherwise, the plugin is only
+used if the specified [profile](https://sheldon.cli.rs/Command-line-interface.html#--profile-profile) is
+included in the configured list of profiles.
 
 #### `hooks`
 
@@ -641,7 +623,7 @@ following.
 
 ```toml
 [templates]
-source = { value = '{{ #if hooks.pre }}{{ hooks.pre }}\n{{ /if }}source "{{ file }}"{{ #if hooks.post }}\n{{ hooks.post }}{{ /if }}', each = true }
+source = "{% if hooks | contains: \"pre\" %}{{ hooks.pre }}\n{% endif %}{% for file in files %}source \"{{ file }}\"\n{% endfor %}{% if hooks | contains: \"post\" %}\n{{ hooks.post }}{% endif %}"
 PATH = 'export PATH="{{ dir }}:$PATH"'
 path = 'path=( "{{ dir }}" $path )'
 fpath = 'fpath=( "{{ dir }}" $fpath )'
@@ -656,10 +638,6 @@ will not be sourced.
 github = "owner/repo"
 apply = ["PATH", "fpath"]
 ```
-
-The `each` value, as used in the `source` template above, specifies that the
-template should be applied to each matched file for the plugin. This defaults to
-`false`.
 
 #### Custom templates
 
@@ -678,10 +656,8 @@ Plugins all have the following information that can be used in templates.
 
 * **One or more files.** These are the matched files in the plugin directory
   either discovered using the the global `match` field or specified as a plugin
-  option with `use`. These can be used in templates using `{{ file }}`. This
-  information only makes sense in templates with `each` set to `true`.
-
-* **The Sheldon data directory.** This directory can be used as `{{ data_dir }}`.
+  option with `use`. These can be used in templates by iterating over the files.
+  For example: `{% for file in  files %} ... {{ file }} ... {% endfor %}`.
 
 * **Hooks** Hooks are taken directly from the configuration and can be used as
   `{{ hooks.[KEY] }}`.

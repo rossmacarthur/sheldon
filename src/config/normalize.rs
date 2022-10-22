@@ -8,7 +8,7 @@ use indexmap::IndexMap;
 use url::Url;
 
 use crate::config::file::{GitProtocol, RawConfig, RawPlugin};
-use crate::config::{Config, ExternalPlugin, InlinePlugin, Plugin, Shell, Source, Template};
+use crate::config::{Config, ExternalPlugin, InlinePlugin, Plugin, Shell, Source};
 use crate::util::TEMPLATE_ENGINE;
 
 /// The Gist domain host.
@@ -35,8 +35,8 @@ pub fn normalize(raw_config: RawConfig, warnings: &mut Vec<Error>) -> Result<Con
     // Check that the templates can be compiled.
     for (name, template) in &templates {
         TEMPLATE_ENGINE
-            .compile(&template.value)
-            .with_context(s!("failed to compile template `{}`", name))?;
+            .compile(template)
+            .with_context(|| format!("failed to compile template `{}`", name))?;
     }
 
     let shell = shell.unwrap_or_default();
@@ -49,7 +49,7 @@ pub fn normalize(raw_config: RawConfig, warnings: &mut Vec<Error>) -> Result<Con
     for (name, plugin) in plugins {
         normalized_plugins.push(
             normalize_plugin(plugin, name.clone(), shell, &templates, warnings)
-                .with_context(s!("failed to normalize plugin `{}`", name))?,
+                .with_context(|| format!("failed to normalize plugin `{}`", name))?,
         );
     }
 
@@ -70,7 +70,7 @@ fn normalize_plugin(
     raw_plugin: RawPlugin,
     name: String,
     shell: Shell,
-    templates: &IndexMap<String, Template>,
+    templates: &IndexMap<String, String>,
     warnings: &mut Vec<Error>,
 ) -> Result<Plugin> {
     enum TempSource {
@@ -128,7 +128,7 @@ fn normalize_plugin(
                 repository
             );
             let url = Url::parse(&url_str)
-                .with_context(s!("failed to construct Gist URL using `{}`", repository))?;
+                .with_context(|| format!("failed to construct Gist URL using `{}`", repository))?;
             TempSource::External(Source::Git { url, reference })
         }
         // `github` type
@@ -139,8 +139,9 @@ fn normalize_plugin(
                 GITHUB_HOST,
                 repository
             );
-            let url = Url::parse(&url_str)
-                .with_context(s!("failed to construct GitHub URL using `{}`", repository))?;
+            let url = Url::parse(&url_str).with_context(|| {
+                format!("failed to construct GitHub URL using `{}`", repository)
+            })?;
             TempSource::External(Source::Git { url, reference })
         }
         // `remote` type
@@ -252,7 +253,7 @@ where
 fn validate_template_names(
     shell: Shell,
     apply: &Option<Vec<String>>,
-    templates: &IndexMap<String, Template>,
+    templates: &IndexMap<String, String>,
 ) -> Result<()> {
     if let Some(apply) = apply {
         for name in apply {

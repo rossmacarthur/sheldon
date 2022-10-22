@@ -27,7 +27,7 @@ Then add a template that calls `zsh-defer source` instead of just `source`.
 
 ```toml
 [templates]
-defer = { value = 'zsh-defer source "{{ file }}"', each = true }
+defer = "{% for file in files %}zsh-defer source \"{{ file }}\"\n{% endfor %}"
 ```
 
 Now any plugin that you want to defer you can apply the `defer` template. For
@@ -82,7 +82,7 @@ Add the following to your `~/.zshrc` file.
 ```sh
 # ~/.zshrc
 
-export ZSH="$HOME/.sheldon/repos/github.com/ohmyzsh/ohmyzsh"
+export ZSH="$HOME/.local/share/sheldon/repos/github.com/ohmyzsh/ohmyzsh"
 
 # Oh My Zsh settings here
 

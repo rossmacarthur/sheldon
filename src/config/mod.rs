@@ -31,7 +31,7 @@ pub struct Config {
     /// The default list of template names to apply to each matched file.
     pub apply: Option<Vec<String>>,
     /// A map of name to template string.
-    pub templates: IndexMap<String, Template>,
+    pub templates: IndexMap<String, String>,
     /// Each configured plugin.
     pub plugins: Vec<Plugin>,
 }
@@ -41,15 +41,6 @@ pub struct Config {
 pub enum Shell {
     Bash,
     Zsh,
-}
-
-/// A wrapper around a template string.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
-pub struct Template {
-    /// The actual template string.
-    pub value: String,
-    /// Whether this template should be applied to each file.
-    pub each: bool,
 }
 
 /// A configured plugin.
@@ -123,7 +114,8 @@ where
     P: AsRef<Path>,
 {
     let path = path.as_ref();
-    let bytes = fs::read(path).with_context(s!("failed to read from `{}`", path.display()))?;
+    let bytes =
+        fs::read(path).with_context(|| format!("failed to read from `{}`", path.display()))?;
     let contents = String::from_utf8(bytes).context("config file contents are not valid UTF-8")?;
     let raw_config = toml::from_str(&contents).context("failed to deserialize contents as TOML")?;
     normalize::normalize(raw_config, warnings)

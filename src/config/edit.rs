@@ -70,7 +70,7 @@ impl EditConfig {
     {
         let path = path.as_ref();
         let contents = fs::read_to_string(path)
-            .with_context(s!("failed to read from `{}`", path.display()))?;
+            .with_context(|| format!("failed to read from `{}`", path.display()))?;
         Self::from_str(contents)
     }
 
@@ -119,7 +119,7 @@ impl EditConfig {
     {
         let path = path.as_ref();
         fs::write(path, self.to_string())
-            .with_context(s!("failed to write config to `{}`", path.display()))
+            .with_context(|| format!("failed to write config to `{}`", path.display()))
     }
 }
 
@@ -230,7 +230,7 @@ tag = '0.1.0'
 apply = ["PATH", "source"]
 
 [templates]
-prompt = { value = 'ln -sf "{{ file }}" "{{ data_dir }}/functions/prompt_{{ name }}_setup"', each = true }
+prompt = '{% for file in files %}ln -sf "{{ file }}" "{{ data_dir }}/functions/prompt_{{ name }}_setup"{% endfor %}'
 
 # yes this is the pure plugin
 [plugins.pure]
@@ -257,7 +257,7 @@ use = ["{{ name }}.zsh"]
 apply = ["PATH", "source"]
 
 [templates]
-prompt = { value = 'ln -sf "{{ file }}" "{{ data_dir }}/functions/prompt_{{ name }}_setup"', each = true }
+prompt = '{% for file in files %}ln -sf "{{ file }}" "{{ data_dir }}/functions/prompt_{{ name }}_setup"{% endfor %}'
 
 # yes this is the pure plugin
 [plugins.pure]

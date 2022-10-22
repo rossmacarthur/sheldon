@@ -41,16 +41,11 @@ impl TestCase {
             p
         };
 
-        let xconfig = dirs.config.strip_prefix(dirs.home.path()).unwrap();
-        let xdata = dirs.data.strip_prefix(dirs.home.path()).unwrap();
-
         let subs = upon::value! {
             version: env!("CARGO_PKG_VERSION"),
             home: dirs.home.path(),
             config: &dirs.config,
-            xconfig: xconfig,
             data: &dirs.data,
-            xdata: xdata,
         };
 
         let mut data = HashMap::new();
@@ -70,10 +65,7 @@ impl TestCase {
     where
         S: AsRef<str>,
     {
-        self.data
-            .get(key.as_ref())
-            .cloned()
-            .unwrap_or_else(|| String::new())
+        self.data.get(key.as_ref()).cloned().unwrap_or_default()
     }
 
     fn command(&self, command: &str) -> TestCommand {
@@ -86,6 +78,10 @@ impl TestCase {
 
     fn write_config_file(&self, name: &str) -> io::Result<()> {
         fs::write(self.dirs.config.join(name), self.get(name))
+    }
+
+    fn write_file(&self, path: &Path, name: &str) -> io::Result<()> {
+        fs::write(path, self.get(name))
     }
 
     fn assert_contents(&self, name: &str) -> io::Result<()> {
@@ -399,32 +395,41 @@ fn lock_and_source_hooks() -> io::Result<()> {
 }
 
 #[test]
+fn directories_old() -> io::Result<()> {
+    let case = TestCase::load("directories_old")?;
+    let config_dir = case.dirs.home.path().join(".sheldon");
+    fs::remove_dir(&case.dirs.data).ok();
+    fs::remove_dir(&case.dirs.config).ok();
+    fs::create_dir_all(&config_dir)?;
+    case.write_file(&config_dir.join("plugins.toml"), "plugins.toml")?;
+    case.command("lock")
+        .env_remove("SHELDON_CONFIG_DIR")
+        .env_remove("SHELDON_DATA_DIR")
+        .run()?;
+    case.assert_contents_path("plugins.lock", &config_dir.join("plugins.lock"))?;
+    case.command("source")
+        .env_remove("SHELDON_CONFIG_DIR")
+        .env_remove("SHELDON_DATA_DIR")
+        .run()?;
+    Ok(())
+}
+
+#[test]
 fn directories_default() -> io::Result<()> {
-    let case = TestCase::load("directories")?;
-    case.run()?;
-    case.dirs.assert_conforms();
-    assert_eq!(&case.dirs.data, &case.dirs.config);
-    Ok(())
-}
-
-#[test]
-fn directories_xdg_default() -> io::Result<()> {
-    let dirs = TestDirs::default_xdg()?;
-    let case = TestCase::load_with_dirs("directories", dirs)?;
-    let xdg_cache = case.dirs.home.path().join(".cache");
-    let envs = [("XDG_CACHE_HOME", &xdg_cache)];
+    let dirs = TestDirs::default()?;
+    let case = TestCase::load_with_dirs("directories_default", dirs)?;
     case.write_config_file("plugins.toml")?;
-    case.command("lock").envs(envs).run()?;
+    case.command("lock").run()?;
     case.assert_contents("plugins.lock")?;
-    case.command("source").envs(envs).run()?;
+    case.command("source").run()?;
     case.dirs.assert_conforms();
     Ok(())
 }
 
 #[test]
-fn dirs_xdg_from_env() -> io::Result<()> {
+fn directories_xdg_from_env() -> io::Result<()> {
     let dirs = TestDirs::new("config_custom/sheldon", ".local/custom/sheldon")?;
-    let case = TestCase::load_with_dirs("directories", dirs)?;
+    let case = TestCase::load_with_dirs("directories_xdg_from_env", dirs)?;
     let xdg_config = case.dirs.home.path().join("config_custom");
     let xdg_data = case.dirs.home.path().join(".local/custom");
     let envs = [
@@ -432,9 +437,17 @@ fn dirs_xdg_from_env() -> io::Result<()> {
         ("XDG_DATA_HOME", &xdg_data),
     ];
     case.write_config_file("plugins.toml")?;
-    case.command("lock").envs(envs).run()?;
+    case.command("lock")
+        .env_remove("SHELDON_CONFIG_DIR")
+        .env_remove("SHELDON_DATA_DIR")
+        .envs(envs)
+        .run()?;
     case.assert_contents("plugins.lock")?;
-    case.command("source").envs(envs).run()?;
+    case.command("source")
+        .env_remove("SHELDON_CONFIG_DIR")
+        .env_remove("SHELDON_DATA_DIR")
+        .envs(envs)
+        .run()?;
     case.dirs.assert_conforms();
     Ok(())
 }

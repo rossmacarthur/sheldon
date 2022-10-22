@@ -1,12 +1,82 @@
 # 📝 Release notes
 
-## 0.6.7
+## 0.7.0
 
-*Unreleased*
+*October 13th, 2022*
 
-- [Fix not updating Git source branches after force pushes.](#placeholder)
-  Previously repositories that had a branch that was force pushed to wouldn't
-  be updated by `sheldon lock --update`.
+### Breaking changes
+
+- [Use XDG directories by default.][c3f87dd] Previously Sheldon tried to
+  automatically detect whether the user wanted to use XDG. This proved difficult
+  and Sheldon now follows the [XDG directory structure] by default. Sheldon will
+  log a warning if the old directory `~/.sheldon` is still used as the config
+  directory.
+
+  To use the new location you should move the config file from
+  `~/.sheldon/plugins.toml` to `$XDG_CONFIG_HOME/sheldon/plugins.toml`, which
+  will be `~/.config/sheldon/plugins.toml` if the XDG variable is unset. You can
+  then safely delete the old `~/.sheldon` directory.
+
+  If you wish to preserve the existing behaviour you can simply set the
+  following environment variables.
+  ```sh
+  SHELDON_CONFIG_DIR="$HOME/.sheldon"
+  SHELDON_DATA_DIR="$HOME/.sheldon"
+  ```
+
+- [Update template engine.][c2127c3] Stop using Handlebars in favour of
+  [Jinja-like templating](https://github.com/rossmacarthur/upon). This will only
+  affect you if you were using custom templates.
+
+- [Only apply templates per plugin.][708bd9e] This effectively removes the
+  `each` field from the template configuration. Any templates that are applied
+  to each file in a plugin need to now use a for loop. For example:
+  ```
+  {% for file in files %}
+  source "{{ file }}"
+  {% endfor %}
+  ```
+
+- [Remove clone, download dir and lock file options.][4bbbff4] These paths are
+  no longer configurable, only the data directory is configurable.
+
+### Features
+
+- [Conditional sourcing of plugins using profiles.][#143] This allows you to
+  specify a profile that a plugin is applicable to. The plugin will only be
+  included when Sheldon is run with that profile. A separate lock file will be
+  used for each profile.
+
+  Plugins can specify the profiles using the `profiles` key.
+  ```toml
+  [plugins.example]
+  github = "owner/repo"
+  profiles = ["<name>"]
+  ```
+
+  You can specify the profile in two ways:
+  - Command line flag: `--profile <name>`
+  - Environment variable: `SHELDON_PROFILE=<name>`.
+
+- [Support cargo-binstall.][#144] This allows Sheldon to be installed using
+  `cargo binstall sheldon` which will fetch the release artifact for Sheldon
+  from the GitHub release.
+
+### Fixes
+
+- [Fix not updating Git source branches after force pushes.][d254a6a] Previously
+  repositories with a branch that was force pushed wouldn't be updated by
+  `sheldon lock --update`.
+- Many other fixes and internal improvements.
+
+[#143]: https://github.com/rossmacarthur/sheldon/pull/143
+[#144]: https://github.com/rossmacarthur/sheldon/pull/144
+
+[c3f87dd]: https://github.com/rossmacarthur/sheldon/commit/c3f87dde3017e98845378148acc4cd2268572a7a
+[4bbbff4]: https://github.com/rossmacarthur/sheldon/commit/4bbbff4a423002498e028a56f62897e4425be6a6
+[708bd9e]: https://github.com/rossmacarthur/sheldon/commit/708bd9e3337f107410f977618dc47d6824191a16
+[c2127c3]: https://github.com/rossmacarthur/sheldon/commit/c2127c39f4d131f255f45dda289f496c07272bec
+[d254a6a]: https://github.com/rossmacarthur/sheldon/commit/d254a6aea79ffddc84aa849002328ed017f33bf2
 
 ## 0.6.6
 

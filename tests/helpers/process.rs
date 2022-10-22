@@ -50,7 +50,7 @@ impl TestCommand {
 
         command
             .env_clear()
-            .env("HOME", &dirs.home.path())
+            .env("HOME", dirs.home.path())
             .env("SHELDON_CONFIG_DIR", &dirs.config)
             .env("SHELDON_DATA_DIR", &dirs.data)
             .args(&params)
@@ -85,6 +85,14 @@ impl TestCommand {
         V: AsRef<OsStr>,
     {
         self.command.env(key, val);
+        self
+    }
+
+    pub fn env_remove<K>(mut self, key: K) -> Self
+    where
+        K: AsRef<OsStr>,
+    {
+        self.command.env_remove(key);
         self
     }
 

@@ -1,0 +1,23 @@
+version = "<version>"
+home = "<home>"
+config_dir = "<config>"
+data_dir = "<data>"
+config_file = "<config>/plugins.toml"
+
+[[plugins]]
+name = "testa"
+source_dir = "<data>/downloads/raw.githubusercontent.com/rossmacarthur/sheldon-test/master"
+files = ["<data>/downloads/raw.githubusercontent.com/rossmacarthur/sheldon-test/master/test.plugin.zsh"]
+apply = ["source"]
+
+[[plugins]]
+name = "testb"
+source_dir = "<data>/repos/github.com/rossmacarthur/sheldon-test"
+files = ["<data>/repos/github.com/rossmacarthur/sheldon-test/test.plugin.zsh"]
+apply = ["source"]
+
+[templates]
+PATH = "export PATH=\"{{ dir }}:$PATH\""
+path = "path=( \"{{ dir }}\" $path )"
+fpath = "fpath=( \"{{ dir }}\" $fpath )"
+source = "{% if hooks | contains: \"pre\" %}{{ hooks.pre }}\n{% endif %}{% for file in files %}source \"{{ file }}\"\n{% endfor %}{% if hooks | contains: \"post\" %}\n{{ hooks.post }}{% endif %}"

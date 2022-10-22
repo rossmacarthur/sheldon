@@ -16,7 +16,6 @@ _sheldon() {
     local context curcontext="$curcontext" state line
     _arguments "${_arguments_options[@]}" \
 '--color=[Output coloring: always, auto, or never]:WHEN: ' \
-'--home=[The home directory]:PATH: ' \
 '--config-dir=[The configuration directory]:PATH: ' \
 '--data-dir=[The data directory]:PATH: ' \
 '--config-file=[The config file]:PATH: ' \

@@ -55,7 +55,7 @@ pub fn git_dir(ctx: &Context, url: &Url) -> Result<PathBuf> {
     let mut dir = ctx.clone_dir().to_path_buf();
     dir.push(
         url.host_str()
-            .with_context(s!("URL `{}` has no host", url))?,
+            .with_context(|| format!("URL `{}` has no host", url))?,
     );
     dir.push(url.path().trim_start_matches('/'));
     Ok(dir)
@@ -65,12 +65,12 @@ pub fn remote_dir_and_file(ctx: &Context, url: &Url) -> Result<(PathBuf, PathBuf
     let mut dir = ctx.download_dir().to_path_buf();
     dir.push(
         url.host_str()
-            .with_context(s!("URL `{}` has no host", url))?,
+            .with_context(|| format!("URL `{}` has no host", url))?,
     );
 
     let segments: Vec<_> = url
         .path_segments()
-        .with_context(s!("URL `{}` is cannot-be-a-base", url))?
+        .with_context(|| format!("URL `{}` is cannot-be-a-base", url))?
         .collect();
     let (base, rest) = segments.split_last().unwrap();
     let base = if base.is_empty() { "index" } else { *base };
