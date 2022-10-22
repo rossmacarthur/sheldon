@@ -248,7 +248,7 @@ following.
 
 ```toml
 [templates]
-source = "{% for file in files %}source \"{{ file }}\"\n{% endfor %}"
+source = "{% if hooks | contains: \"pre\" %}{{ hooks.pre }}\n{% endif %}{% for file in files %}source \"{{ file }}\"\n{% endfor %}{% if hooks | contains: \"post\" %}\n{{ hooks.post }}{% endif %}"
 PATH = 'export PATH="{{ dir }}:$PATH"'
 path = 'path=( "{{ dir }}" $path )'
 fpath = 'fpath=( "{{ dir }}" $fpath )'
