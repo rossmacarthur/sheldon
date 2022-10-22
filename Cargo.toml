@@ -14,11 +14,14 @@ build = "build.rs"
 include = ["src/**/*", "LICENSE-*", "README.md", "build.rs"]
 
 [profile.release]
+strip = "symbols"
+
+[profile.compact]
+inherits = "release"
 opt-level = "s"
 lto = true
 panic = "abort"
 codegen-units = 1
-strip = "symbols"
 
 [package.metadata.binstall]
 pkg-url = "{ repo }/releases/download/{ version }/sheldon-{ version }-{ target }.tar.gz"
