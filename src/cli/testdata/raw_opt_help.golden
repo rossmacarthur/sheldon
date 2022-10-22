@@ -1,4 +1,4 @@
-sheldon {version}
+sheldon {{ version }}
 Ross MacArthur <ross@macarthur.io>
 Fast, configurable, shell plugin manager.
 
@@ -6,18 +6,15 @@ USAGE:
     sheldon [OPTIONS] <SUBCOMMAND>
 
 OPTIONS:
-    -q, --quiet                  Suppress any informational output
-    -v, --verbose                Use verbose output
-        --color <WHEN>           Output coloring: always, auto, or never [default: auto]
-        --config-dir <PATH>      The configuration directory [env: SHELDON_CONFIG_DIR=]
-        --data-dir <PATH>        The data directory [env: SHELDON_DATA_DIR=]
-        --config-file <PATH>     The config file [env: SHELDON_CONFIG_FILE=]
-        --lock-file <PATH>       The lock file [env: SHELDON_LOCK_FILE=]
-        --clone-dir <PATH>       The directory where git sources are cloned to [env: SHELDON_CLONE_DIR=]
-        --download-dir <PATH>    The directory where remote sources are downloaded to [env: SHELDON_DOWNLOAD_DIR=]
-        --profile <PROFILE>      The profile used for conditional plugins [env: SHELDON_PROFILE=]
-    -h, --help                   Print help information
-    -V, --version                Print version information
+    -q, --quiet                 Suppress any informational output
+    -v, --verbose               Use verbose output
+        --color <WHEN>          Output coloring: always, auto, or never [default: auto]
+        --config-dir <PATH>     The configuration directory [env: SHELDON_CONFIG_DIR=]
+        --data-dir <PATH>       The data directory [env: SHELDON_DATA_DIR=]
+        --config-file <PATH>    The config file [env: SHELDON_CONFIG_FILE=]
+        --profile <PROFILE>     The profile used for conditional plugins [env: SHELDON_PROFILE=]
+    -h, --help                  Print help information
+    -V, --version               Print version information
 
 SUBCOMMANDS:
     init           Initialize a new config file

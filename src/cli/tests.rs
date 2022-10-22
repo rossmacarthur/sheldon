@@ -3,7 +3,6 @@ use super::*;
 use std::iter;
 
 use pretty_assertions::assert_eq;
-use serde::Serialize;
 
 use crate::cli::color_choice::ColorChoice;
 
@@ -49,16 +48,7 @@ fn raw_opt_long_version() {
 #[test]
 fn raw_opt_help() {
     setup();
-
-    #[derive(Serialize)]
-    struct Context {
-        version: &'static str,
-    }
-
-    let ctx = Context {
-        version: build::CRATE_RELEASE,
-    };
-
+    let ctx = upon::value! { version: build::CRATE_RELEASE };
     for opt in &["-h", "--help"] {
         let err = raw_opt_err(&[opt]);
         goldie::assert_template!(&ctx, err.to_string());
@@ -79,9 +69,6 @@ fn raw_opt_no_options() {
             config_dir: None,
             data_dir: None,
             config_file: None,
-            lock_file: None,
-            clone_dir: None,
-            download_dir: None,
             profile: None,
             command: RawCommand::Lock {
                 update: false,
@@ -108,12 +95,6 @@ fn raw_opt_options() {
             "/test",
             "--config-file",
             "/plugins.toml",
-            "--lock-file",
-            "/test/plugins.lock",
-            "--clone-dir",
-            "/repos",
-            "--download-dir",
-            "/downloads",
             "--profile",
             "profile",
             "lock",
@@ -126,9 +107,6 @@ fn raw_opt_options() {
             config_dir: Some("/test".into()),
             data_dir: Some("/test".into()),
             config_file: Some("/plugins.toml".into()),
-            lock_file: Some("/test/plugins.lock".into()),
-            clone_dir: Some("/repos".into()),
-            download_dir: Some("/downloads".into()),
             profile: Some("profile".into()),
             command: RawCommand::Lock {
                 update: false,

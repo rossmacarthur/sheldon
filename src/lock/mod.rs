@@ -1,8 +1,7 @@
-mod clean;
 mod file;
 mod plugin;
 mod script;
-mod source;
+pub mod source;
 
 use std::fs;
 use std::path::Path;
@@ -36,7 +35,7 @@ where
 {
     let path = path.as_ref();
     let locked: LockedConfig = toml::from_str(&String::from_utf8_lossy(
-        &fs::read(&path)
+        &fs::read(path)
             .with_context(s!("failed to read locked config from `{}`", path.display()))?,
     ))
     .context("failed to deserialize locked config")?;
@@ -208,7 +207,7 @@ impl Shell {
         static DEFAULT_TEMPLATES_BASH: Lazy<IndexMap<String, Template>> = Lazy::new(|| {
             indexmap_into! {
                 "PATH" => "export PATH=\"{{ dir }}:$PATH\"",
-                "source" => Template::from("{{ #if hooks.pre }}{{ hooks.pre }}\n{{ /if }}source \"{{ file }}\"{{ #if hooks.post }}\n{{ hooks.post }}{{ /if }}").each(true)
+                "source" => Template::from("{% if hooks | contains: \"pre\" %}{{ hooks.pre }}\n{% endif %}source \"{{ file }}\"{% if hooks | contains: \"post\" %}\n{{ hooks.post }}{% endif %}").each(true)
             }
         });
         static DEFAULT_TEMPLATES_ZSH: Lazy<IndexMap<String, Template>> = Lazy::new(|| {
@@ -216,7 +215,7 @@ impl Shell {
                 "PATH" => "export PATH=\"{{ dir }}:$PATH\"",
                 "path" => "path=( \"{{ dir }}\" $path )",
                 "fpath" => "fpath=( \"{{ dir }}\" $fpath )",
-                "source" => Template::from("{{ #if hooks.pre }}{{ hooks.pre }}\n{{ /if }}source \"{{ file }}\"{{ #if hooks.post }}\n{{ hooks.post }}{{ /if }}").each(true)
+                "source" => Template::from("{% if hooks | contains: \"pre\" %}{{ hooks.pre }}\n{% endif %}source \"{{ file }}\"{% if hooks | contains: \"post\" %}\n{{ hooks.post }}{% endif %}").each(true)
             }
         });
         match self {
@@ -271,9 +270,6 @@ fn is_context_equal(left: &Context, right: &Context) -> bool {
         && left.config_dir == right.config_dir
         && left.data_dir == right.data_dir
         && left.config_file == right.config_file
-        && left.lock_file == right.lock_file
-        && left.clone_dir == right.clone_dir
-        && left.download_dir == right.download_dir
         && left.profile == right.profile
 }
 
@@ -367,7 +363,6 @@ mod tests {
                 hooks: None,
             })],
         };
-        let locked = config(&ctx, cfg).unwrap();
         let test_dir = ctx.clone_dir().join("github.com/rossmacarthur/another-dir");
         let test_file = test_dir.join("test.txt");
         fs::create_dir_all(&test_dir).unwrap();
@@ -378,10 +373,12 @@ mod tests {
                 .open(&test_file)
                 .unwrap();
         }
-
         let mut warnings = Vec::new();
-        locked.clean(&ctx, &mut warnings);
+        crate::config::clean(&ctx, &mut warnings, &cfg).unwrap();
         assert!(warnings.is_empty());
+        assert!(!test_file.exists());
+        assert!(!test_dir.exists());
+        let _ = config(&ctx, cfg).unwrap();
         assert!(ctx
             .clone_dir()
             .join("github.com/rossmacarthur/sheldon-test")
@@ -390,8 +387,6 @@ mod tests {
             .clone_dir()
             .join("github.com/rossmacarthur/sheldon-test/test.plugin.zsh")
             .exists());
-        assert!(!test_file.exists());
-        assert!(!test_dir.exists());
     }
 
     #[test]
@@ -402,9 +397,6 @@ home = "<home>"
 config_dir = "<config>"
 data_dir = "<data>"
 config_file = "<config>/plugins.toml"
-lock_file = "<data>/plugins.lock"
-clone_dir = "<data>/repos"
-download_dir = "<data>/downloads"
 plugins = []
 
 [templates]

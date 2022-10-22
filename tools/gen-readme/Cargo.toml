@@ -5,13 +5,10 @@ authors = ["Ross MacArthur <ross@macarthur.io>"]
 edition = "2021"
 publish = false
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 anyhow = "1.0.58"
-handlebars = "4.3.1"
-maplit = "1.0.2"
 pulldown-cmark = "0.9.1"
 pulldown-cmark-to-cmark = "10.0.2"
 pulldown-cmark-toc = "0.1.1"
 regex-macro = "0.2.0"
+upon = "0.4.0"

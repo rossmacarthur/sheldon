@@ -43,7 +43,7 @@ _sheldon() {
 
     case "${cmd}" in
         sheldon)
-            opts="-h -V -q -v --help --version --quiet --verbose --color --home --config-dir --data-dir --config-file --lock-file --clone-dir --download-dir --profile init add edit remove lock source completions version"
+            opts="-h -V -q -v --help --version --quiet --verbose --color --home --config-dir --data-dir --config-file --profile init add edit remove lock source completions version"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 1 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -66,18 +66,6 @@ _sheldon() {
                     return 0
                     ;;
                 --config-file)
-                    COMPREPLY=($(compgen -f "${cur}"))
-                    return 0
-                    ;;
-                --lock-file)
-                    COMPREPLY=($(compgen -f "${cur}"))
-                    return 0
-                    ;;
-                --clone-dir)
-                    COMPREPLY=($(compgen -f "${cur}"))
-                    return 0
-                    ;;
-                --download-dir)
                     COMPREPLY=($(compgen -f "${cur}"))
                     return 0
                     ;;

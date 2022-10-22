@@ -9,6 +9,7 @@ use url::Url;
 
 use crate::config::file::{GitProtocol, RawConfig, RawPlugin};
 use crate::config::{Config, ExternalPlugin, InlinePlugin, Plugin, Shell, Source, Template};
+use crate::util::TEMPLATE_ENGINE;
 
 /// The Gist domain host.
 const GIST_HOST: &str = "gist.github.com";
@@ -31,9 +32,10 @@ pub fn normalize(raw_config: RawConfig, warnings: &mut Vec<Error>) -> Result<Con
         warnings.push(anyhow!("unused config key: `{}`", key))
     });
 
+    // Check that the templates can be compiled.
     for (name, template) in &templates {
-        // Check that the templates can be compiled.
-        handlebars::Template::compile(&template.value)
+        TEMPLATE_ENGINE
+            .compile(&template.value)
             .with_context(s!("failed to compile template `{}`", name))?;
     }
 

@@ -143,7 +143,7 @@ fn edit(ctx: &Context) -> Result<()> {
     let handle = editor::Editor::default()?.edit(path, &original_contents)?;
     status!(ctx, "Opened", &"config in temporary file for editing");
     let config = handle.wait_and_update(&original_contents)?;
-    config.to_path(&path)?;
+    config.to_path(path)?;
     header!(ctx, "Updated", path);
     Ok(())
 }
@@ -195,7 +195,6 @@ fn lock(ctx: &Context, warnings: &mut Vec<Error>) -> Result<()> {
         }
         Err(last)
     } else {
-        locked.clean(ctx, warnings);
         let path = ctx.lock_file();
         locked.to_path(path).context("failed to write lock file")?;
         header!(ctx, "Locked", path);
@@ -234,7 +233,6 @@ fn source(ctx: &Context, warnings: &mut Vec<Error>) -> Result<()> {
         .context("failed to render source")?;
 
     if to_path && locked_config.errors.is_empty() {
-        locked_config.clean(ctx, warnings);
         locked_config
             .to_path(lock_path)
             .context("failed to write lock file")?;
@@ -255,5 +253,6 @@ fn locked(ctx: &Context, warnings: &mut Vec<Error>) -> Result<LockedConfig> {
     let path = ctx.config_file();
     let config = config::from_path(path, warnings).context("failed to load config file")?;
     header!(ctx, "Loaded", path);
+    config::clean(ctx, warnings, &config)?;
     lock::config(ctx, config)
 }

@@ -1,0 +1,13 @@
+[plugins.test]
+github = "rossmacarthur/sheldon-test"
+[plugins.test.hooks]
+pre = "pre"
+
+[plugins.inline-test]
+inline = """
+{% if hooks | contains: "pre" %}{{ hooks.pre }}
+{% endif %}echo 'testing...'
+{% if hooks | contains: "post" %}{{ hooks.post }}
+{% endif %}"""
+[plugins.inline-test.hooks]
+post = "post"

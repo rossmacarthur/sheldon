@@ -3,11 +3,13 @@ use std::path::{Path, PathBuf};
 use anyhow::{bail, Context as ResultExt, Result};
 use indexmap::IndexMap;
 use maplit::hashmap;
+use serde::Serialize;
 
 use crate::config::{ExternalPlugin, Source, Template};
 use crate::context::Context;
 use crate::lock::file::LockedExternalPlugin;
 use crate::lock::source::LockedSource;
+use crate::util::TEMPLATE_ENGINE;
 
 /// Consume the [`ExternalPlugin`] and convert it to a [`LockedExternalPlugin`].
 pub fn lock(
@@ -41,10 +43,6 @@ pub fn lock(
             hooks,
         }
     } else {
-        // Handlebars instance to do the rendering
-        let mut hbs = handlebars::Handlebars::new();
-        hbs.set_strict_mode(true);
-
         // Data to use in template rendering
         let mut data = hashmap! {
             "data_dir" => ctx
@@ -56,9 +54,7 @@ pub fn lock(
 
         let source_dir = locked_source.dir;
         let plugin_dir = if let Some(dir) = dir {
-            let rendered = hbs
-                .render_template(&dir, &data)
-                .with_context(s!("failed to render template `{}`", dir))?;
+            let rendered = render_template(&dir, &data)?;
             Some(source_dir.join(rendered))
         } else {
             None
@@ -75,10 +71,7 @@ pub fn lock(
         if let Some(uses) = &uses {
             let patterns = uses
                 .iter()
-                .map(|u| {
-                    hbs.render_template(u, &data)
-                        .with_context(s!("failed to render template `{}`", u))
-                })
+                .map(|u| render_template(u, &data))
                 .collect::<Result<Vec<_>>>()?;
             if !match_globs(dir, &patterns, &mut files)? {
                 bail!("failed to find any files matching any of `{:?}`", patterns);
@@ -86,9 +79,7 @@ pub fn lock(
         // Otherwise we try to figure out which files to use...
         } else {
             for g in global_matches {
-                let pattern = hbs
-                    .render_template(g, &data)
-                    .with_context(s!("failed to render template `{}`", g))?;
+                let pattern = render_template(g, &data)?;
                 if match_globs(dir, &[pattern], &mut files)? {
                     break;
                 }
@@ -111,6 +102,17 @@ pub fn lock(
             hooks,
         }
     })
+}
+
+fn render_template<S>(template: &str, ctx: S) -> Result<String>
+where
+    S: Serialize,
+{
+    TEMPLATE_ENGINE
+        .compile(template)
+        .with_context(s!("failed to compile template `{}`", template))?
+        .render(ctx)
+        .with_context(s!("failed to render template `{}`", template))
 }
 
 fn match_globs(dir: &Path, patterns: &[String], files: &mut Vec<PathBuf>) -> Result<bool> {

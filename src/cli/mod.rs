@@ -68,9 +68,6 @@ impl Opt {
             data_dir,
             config_dir,
             config_file,
-            lock_file,
-            clone_dir,
-            download_dir,
             profile,
             command,
         } = raw_opt;
@@ -168,9 +165,12 @@ impl Opt {
         let config_dir = config_dir.unwrap_or(config_pre);
         let data_dir = data_dir.unwrap_or(data_pre);
         let config_file = config_file.unwrap_or_else(|| config_dir.join("plugins.toml"));
-        let lock_file = lock_file.unwrap_or_else(|| data_dir.join("plugins.lock"));
-        let clone_dir = clone_dir.unwrap_or_else(|| data_dir.join("repos"));
-        let download_dir = download_dir.unwrap_or_else(|| data_dir.join("downloads"));
+        let lock_file = match profile.as_deref() {
+            Some("") | None => data_dir.join("plugins.lock"),
+            Some(p) => data_dir.join(&format!("plugins.{}.lock", p)),
+        };
+        let clone_dir = data_dir.join("repos");
+        let download_dir = data_dir.join("downloads");
 
         let ctx = Context {
             version: build::CRATE_RELEASE.to_string(),

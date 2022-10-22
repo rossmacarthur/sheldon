@@ -1,0 +1,5 @@
+pre
+source "<data>/repos/github.com/rossmacarthur/sheldon-test/test.plugin.zsh"
+echo 'testing...'
+post
+

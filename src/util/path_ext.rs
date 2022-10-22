@@ -24,7 +24,7 @@ pub trait PathExt {
 impl PathExt for Path {
     /// Returns the modified time of the file if available.
     fn metadata_modified(&self) -> Option<time::SystemTime> {
-        fs::metadata(&self).and_then(|m| m.modified()).ok()
+        fs::metadata(self).and_then(|m| m.modified()).ok()
     }
 
     /// Returns whether the file at this path is newer than the file at the

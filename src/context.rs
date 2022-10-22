@@ -17,10 +17,14 @@ pub struct Context {
     pub config_dir: PathBuf,
     pub data_dir: PathBuf,
     pub config_file: PathBuf,
-    pub lock_file: PathBuf,
-    pub clone_dir: PathBuf,
-    pub download_dir: PathBuf,
     pub profile: Option<String>,
+
+    #[serde(skip)]
+    pub lock_file: PathBuf,
+    #[serde(skip)]
+    pub clone_dir: PathBuf,
+    #[serde(skip)]
+    pub download_dir: PathBuf,
     #[serde(skip)]
     pub output: Output,
     #[serde(skip)]
@@ -181,7 +185,7 @@ impl ToMessage for &Path {
 pub fn log_error(no_color: bool, color: Color, prefix: &str, err: &Error) {
     let pretty = err
         .chain()
-        .map(|c| c.to_string().replace("Template error: ", ""))
+        .map(|c| c.to_string())
         .collect::<Vec<_>>()
         .join("\n  due to: ");
     if no_color {

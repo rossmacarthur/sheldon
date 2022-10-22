@@ -12,20 +12,29 @@ struct Data<'a> {
     name: &'a str,
     dir: Option<&'a str>,
     file: Option<&'a str>,
-    hooks: Option<&'a BTreeMap<String, String>>,
+    hooks: &'a BTreeMap<String, String>,
 }
 
 impl LockedConfig {
     /// Generate the script.
     pub fn script(&self, ctx: &Context) -> Result<String> {
         // Compile the templates
-        let mut templates = handlebars::Handlebars::new();
-        templates.set_strict_mode(true);
-        templates.register_escape_fn(handlebars::no_escape);
+        let mut engine = upon::Engine::new();
+        engine.add_filter("contains", |map: BTreeMap<String, _>, key: String| { map.contains_key(&key) });
         for (name, template) in &self.templates {
-            templates
-                .register_template_string(name, &template.value)
+            engine
+                .add_template(name, &template.value)
                 .with_context(s!("failed to compile template `{}`", name))?;
+        }
+
+        macro_rules! render {
+            ($name:expr, $data:expr) => {
+                &engine
+                    .get_template($name)
+                    .unwrap()
+                    .render($data)
+                    .with_context(s!("failed to render template `{}`", $name))?
+            };
         }
 
         let mut script = String::new();
@@ -40,6 +49,7 @@ impl LockedConfig {
                             .context("plugin directory is not valid UTF-8")?;
 
                         // Data to use in template rendering
+                        let empty_hooks = BTreeMap::new();
                         let mut data = Data {
                             data_dir: self
                                 .ctx
@@ -49,7 +59,7 @@ impl LockedConfig {
                             name: &plugin.name,
                             dir: Some(dir_as_str),
                             file: None,
-                            hooks: plugin.hooks.as_ref(),
+                            hooks: plugin.hooks.as_ref().unwrap_or(&empty_hooks),
                         };
 
                         if self.templates.get(name.as_str()).unwrap().each {
@@ -57,25 +67,18 @@ impl LockedConfig {
                                 let as_str =
                                     file.to_str().context("plugin file is not valid UTF-8")?;
                                 data.file = Some(as_str);
-                                script.push_str(
-                                    &templates
-                                        .render(name, &data)
-                                        .with_context(s!("failed to render template `{}`", name))?,
-                                );
+                                script.push_str(render!(name, &data));
                                 script.push('\n');
                             }
                         } else {
-                            script.push_str(
-                                &templates
-                                    .render(name, &data)
-                                    .with_context(s!("failed to render template `{}`", name))?,
-                            );
+                            script.push_str(render!(name, &data));
                             script.push('\n');
                         }
                     }
                     status_v!(ctx, "Rendered", &plugin.name);
                 }
                 LockedPlugin::Inline(plugin) => {
+                    let empty_hooks = BTreeMap::new();
                     let data = Data {
                         data_dir: self
                             .ctx
@@ -85,11 +88,13 @@ impl LockedConfig {
                         name: &plugin.name,
                         dir: None,
                         file: None,
-                        hooks: plugin.hooks.as_ref(),
+                        hooks: plugin.hooks.as_ref().unwrap_or(&empty_hooks),
                     };
                     script.push_str(
-                        &templates
-                            .render_template(&plugin.raw, &data)
+                        &engine
+                            .compile(&plugin.raw)
+                            .with_context(s!("failed to compile inline plugin `{}`", &plugin.name))?
+                            .render(&data)
                             .with_context(s!(
                                 "failed to render inline plugin `{}`",
                                 &plugin.name

@@ -1,5 +1,6 @@
 //! The user configuration.
 
+mod clean;
 mod edit;
 mod file;
 mod normalize;
@@ -15,6 +16,7 @@ use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 use url::Url;
 
+pub use crate::config::clean::clean;
 pub use crate::config::edit::{EditConfig, EditPlugin};
 pub use crate::config::file::{GistRepository, GitHubRepository, GitProtocol, RawPlugin};
 pub use crate::config::profile::MatchesProfile;
@@ -70,7 +72,7 @@ pub struct ExternalPlugin {
     pub uses: Option<Vec<String>>,
     /// What templates to apply to each matched file.
     pub apply: Option<Vec<String>>,
-    /// Only use this plugin under one of the given profiles
+    /// Only use this plugin under one of the given profiles.
     pub profiles: Option<Vec<String>>,
     /// Hooks executed during template evaluation.
     pub hooks: Option<BTreeMap<String, String>>,
@@ -109,7 +111,7 @@ pub struct InlinePlugin {
     pub name: String,
     /// The actual source.
     pub raw: String,
-    /// Only use this plugin under one of the given profiles
+    /// Only use this plugin under one of the given profiles.
     pub profiles: Option<Vec<String>>,
     /// Hooks executed during template evaluation.
     pub hooks: Option<BTreeMap<String, String>>,
@@ -121,7 +123,7 @@ where
     P: AsRef<Path>,
 {
     let path = path.as_ref();
-    let bytes = fs::read(&path).with_context(s!("failed to read from `{}`", path.display()))?;
+    let bytes = fs::read(path).with_context(s!("failed to read from `{}`", path.display()))?;
     let contents = String::from_utf8(bytes).context("config file contents are not valid UTF-8")?;
     let raw_config = toml::from_str(&contents).context("failed to deserialize contents as TOML")?;
     normalize::normalize(raw_config, warnings)
