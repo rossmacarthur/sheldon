@@ -11,7 +11,7 @@ use std::io;
 use std::path::{Path, PathBuf};
 use std::process;
 
-use anyhow::anyhow;
+use anyhow::{anyhow, Context as ResultExt, Result};
 use clap::{CommandFactory, Parser};
 use clap_complete as complete;
 
@@ -130,8 +130,14 @@ impl Opt {
             }
         };
 
-        let (config_dir, data_dir) = resolve_dirs(&home, config_dir, data_dir, output.no_color);
-        let config_file = config_file.unwrap_or_else(|| config_dir.join("plugins.toml"));
+        let (config_file, config_dir, data_dir) =
+            match resolve_paths(&home, config_file, config_dir, data_dir, output.no_color) {
+                Ok(paths) => paths,
+                Err(err) => {
+                    log_error(output.no_color, &err);
+                    process::exit(1);
+                }
+            };
         let lock_file = match profile.as_deref() {
             Some("") | None => data_dir.join("plugins.lock"),
             Some(p) => data_dir.join(&format!("plugins.{}.lock", p)),
@@ -228,12 +234,13 @@ impl LockMode {
     }
 }
 
-fn resolve_dirs(
+fn resolve_paths(
     home: &Path,
+    config_file: Option<PathBuf>,
     config_dir: Option<PathBuf>,
     data_dir: Option<PathBuf>,
     no_color: bool,
-) -> (PathBuf, PathBuf) {
+) -> Result<(PathBuf, PathBuf, PathBuf)> {
     // TODO: Remove this warning in a later release and stop falling back to
     // the old directory.
     let err = anyhow!(
@@ -251,16 +258,35 @@ See the release notes at https://github.com/rossmacarthur/sheldon for more infor
 "#,
     );
     let mut using_old = false;
-    let config_dir = config_dir.unwrap_or_else(|| {
-        let default = default_config_dir(home);
-        let old = home.join(".sheldon");
-        if old.exists() && !default.exists() {
-            log_error_as_warning(no_color, &err);
-            using_old = true;
-            return old;
+    let (config_file, config_dir) = match config_file {
+        Some(file) => {
+            let dir = file
+                .parent()
+                .with_context(|| {
+                    format!(
+                        "failed to get parent directory of config file path `{}`",
+                        file.display()
+                    )
+                })?
+                .to_path_buf();
+            (file, dir)
         }
-        default
-    });
+        None => {
+            let dir = config_dir.unwrap_or_else(|| {
+                let default = default_config_dir(home);
+                let old = home.join(".sheldon");
+                if old.exists() && !default.exists() {
+                    log_error_as_warning(no_color, &err);
+                    using_old = true;
+                    return old;
+                }
+                default
+            });
+            let file = dir.join("plugins.toml");
+            (file, dir)
+        }
+    };
+
     let data_dir = data_dir.unwrap_or_else(|| {
         let default = default_data_dir(home);
         if using_old && !default.exists() {
@@ -268,7 +294,8 @@ See the release notes at https://github.com/rossmacarthur/sheldon for more infor
         }
         default
     });
-    (config_dir, data_dir)
+
+    Ok((config_file, config_dir, data_dir))
 }
 
 fn default_config_dir(home: &Path) -> PathBuf {
