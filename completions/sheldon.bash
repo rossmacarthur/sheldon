@@ -8,33 +8,33 @@ _sheldon() {
 
     for i in ${COMP_WORDS[@]}
     do
-        case "${i}" in
-            "$1")
+        case "${cmd},${i}" in
+            ",$1")
                 cmd="sheldon"
                 ;;
-            add)
-                cmd+="__add"
+            sheldon,add)
+                cmd="sheldon__add"
                 ;;
-            completions)
-                cmd+="__completions"
+            sheldon,completions)
+                cmd="sheldon__completions"
                 ;;
-            edit)
-                cmd+="__edit"
+            sheldon,edit)
+                cmd="sheldon__edit"
                 ;;
-            init)
-                cmd+="__init"
+            sheldon,init)
+                cmd="sheldon__init"
                 ;;
-            lock)
-                cmd+="__lock"
+            sheldon,lock)
+                cmd="sheldon__lock"
                 ;;
-            remove)
-                cmd+="__remove"
+            sheldon,remove)
+                cmd="sheldon__remove"
                 ;;
-            source)
-                cmd+="__source"
+            sheldon,source)
+                cmd="sheldon__source"
                 ;;
-            version)
-                cmd+="__version"
+            sheldon,version)
+                cmd="sheldon__version"
                 ;;
             *)
                 ;;
@@ -43,7 +43,7 @@ _sheldon() {
 
     case "${cmd}" in
         sheldon)
-            opts="-h -V -q -v --help --version --quiet --verbose --color --config-dir --data-dir --config-file --profile init add edit remove lock source completions version"
+            opts="-q -v -h -V --quiet --verbose --color --config-dir --data-dir --config-file --profile --help --version init add edit remove lock source completions version"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 1 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0

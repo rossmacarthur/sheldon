@@ -2,6 +2,7 @@ use super::*;
 
 use std::iter;
 
+use clap::error::ErrorKind;
 use pretty_assertions::assert_eq;
 
 use crate::cli::color_choice::ColorChoice;
@@ -31,7 +32,7 @@ fn raw_opt_version() {
         err.to_string(),
         format!("sheldon {}\n", build::CRATE_RELEASE)
     );
-    assert_eq!(err.kind, clap::ErrorKind::DisplayVersion);
+    assert_eq!(err.kind(), ErrorKind::DisplayVersion);
 }
 
 #[test]
@@ -42,7 +43,7 @@ fn raw_opt_long_version() {
         err.to_string(),
         format!("sheldon {}\n", build::CRATE_LONG_VERSION)
     );
-    assert_eq!(err.kind, clap::ErrorKind::DisplayVersion);
+    assert_eq!(err.kind(), ErrorKind::DisplayVersion);
 }
 
 #[test]
@@ -52,7 +53,7 @@ fn raw_opt_help() {
     for opt in &["-h", "--help"] {
         let err = raw_opt_err(&[opt]);
         goldie::assert_template!(&ctx, err.to_string());
-        assert_eq!(err.kind, clap::ErrorKind::DisplayHelp);
+        assert_eq!(err.kind(), ErrorKind::DisplayHelp);
     }
 }
 
@@ -117,7 +118,10 @@ fn raw_opt_subcommand_required() {
     setup();
     let err = raw_opt_err(&[]);
     goldie::assert!(err.to_string());
-    assert_eq!(err.kind, clap::ErrorKind::MissingSubcommand);
+    assert_eq!(
+        err.kind(),
+        ErrorKind::DisplayHelpOnMissingArgumentOrSubcommand
+    );
 }
 
 #[test]
@@ -125,15 +129,15 @@ fn raw_opt_init_help() {
     setup();
     let err = raw_opt_err(&["init", "--help"]);
     goldie::assert!(err.to_string());
-    assert_eq!(err.kind, clap::ErrorKind::DisplayHelp);
+    assert_eq!(err.kind(), ErrorKind::DisplayHelp);
 }
 
 #[test]
 fn raw_opt_init_with_invalid_shell() {
     setup();
     assert_eq!(
-        raw_opt_err(&["init", "--shell", "ksh",]).kind,
-        clap::ErrorKind::ValueValidation
+        raw_opt_err(&["init", "--shell", "ksh",]).kind(),
+        ErrorKind::ValueValidation
     );
 }
 
@@ -142,15 +146,15 @@ fn raw_opt_add_help() {
     setup();
     let err = raw_opt_err(&["add", "--help"]);
     goldie::assert!(err.to_string());
-    assert_eq!(err.kind, clap::ErrorKind::DisplayHelp);
+    assert_eq!(err.kind(), ErrorKind::DisplayHelp);
 }
 
 #[test]
 fn raw_opt_add_no_source() {
     setup();
     assert_eq!(
-        raw_opt_err(&["add", "test",]).kind,
-        clap::ErrorKind::MissingRequiredArgument
+        raw_opt_err(&["add", "test",]).kind(),
+        ErrorKind::MissingRequiredArgument
     );
 }
 
@@ -366,8 +370,8 @@ fn raw_opt_add_remote_with_reference_expect_conflict() {
             "--branch",
             "feature"
         ])
-        .kind,
-        clap::ErrorKind::ArgumentConflict
+        .kind(),
+        ErrorKind::ArgumentConflict
     );
 }
 
@@ -383,8 +387,8 @@ fn raw_opt_add_local_with_reference_expect_conflict() {
             "--tag",
             "0.1.0"
         ])
-        .kind,
-        clap::ErrorKind::ArgumentConflict
+        .kind(),
+        ErrorKind::ArgumentConflict
     );
 }
 
@@ -400,8 +404,8 @@ fn raw_opt_add_git_with_github_expect_conflict() {
             "--github",
             "rossmacarthur/sheldon-test",
         ])
-        .kind,
-        clap::ErrorKind::ArgumentConflict
+        .kind(),
+        ErrorKind::ArgumentConflict
     );
 }
 
@@ -417,8 +421,8 @@ fn raw_opt_add_git_with_protocol_expect_conflict() {
             "--proto",
             "ssh",
         ])
-        .kind,
-        clap::ErrorKind::ArgumentConflict
+        .kind(),
+        ErrorKind::ArgumentConflict
     );
 }
 
@@ -434,8 +438,8 @@ fn raw_opt_add_remote_with_protocol_expect_conflict() {
             "--proto",
             "ssh",
         ])
-        .kind,
-        clap::ErrorKind::ArgumentConflict
+        .kind(),
+        ErrorKind::ArgumentConflict
     );
 }
 
@@ -451,8 +455,8 @@ fn raw_opt_add_local_with_protocol_expect_conflict() {
             "--proto",
             "ssh",
         ])
-        .kind,
-        clap::ErrorKind::ArgumentConflict
+        .kind(),
+        ErrorKind::ArgumentConflict
     );
 }
 
@@ -461,15 +465,15 @@ fn raw_opt_lock_help() {
     setup();
     let err = raw_opt_err(&["lock", "--help"]);
     goldie::assert!(err.to_string());
-    assert_eq!(err.kind, clap::ErrorKind::DisplayHelp);
+    assert_eq!(err.kind(), ErrorKind::DisplayHelp);
 }
 
 #[test]
 fn raw_opt_lock_with_update_and_reinstall_expect_conflict() {
     setup();
     assert_eq!(
-        raw_opt_err(&["lock", "--update", "--reinstall"]).kind,
-        clap::ErrorKind::ArgumentConflict
+        raw_opt_err(&["lock", "--update", "--reinstall"]).kind(),
+        ErrorKind::ArgumentConflict
     );
 }
 
@@ -478,14 +482,14 @@ fn raw_opt_source_help() {
     setup();
     let err = raw_opt_err(&["source", "--help"]);
     goldie::assert!(err.to_string());
-    assert_eq!(err.kind, clap::ErrorKind::DisplayHelp);
+    assert_eq!(err.kind(), ErrorKind::DisplayHelp);
 }
 
 #[test]
 fn raw_opt_source_with_update_and_reinstall_expect_conflict() {
     setup();
     assert_eq!(
-        raw_opt_err(&["source", "--update", "--reinstall"]).kind,
-        clap::ErrorKind::ArgumentConflict
+        raw_opt_err(&["source", "--update", "--reinstall"]).kind(),
+        ErrorKind::ArgumentConflict
     );
 }

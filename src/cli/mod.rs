@@ -12,7 +12,7 @@ use std::path::{Path, PathBuf};
 use std::process;
 
 use anyhow::anyhow;
-use clap::{IntoApp, Parser};
+use clap::{CommandFactory, Parser};
 use clap_complete as complete;
 
 use crate::cli::raw::{Add, RawCommand, RawOpt};
@@ -97,8 +97,8 @@ impl Opt {
                 Command::Source
             }
             RawCommand::Completions { shell } => {
-                let mut app = RawOpt::into_app();
                 let shell = complete::Shell::from(shell);
+                let mut app = RawOpt::command();
                 clap_complete::generate(shell, &mut app, build::CRATE_NAME, &mut io::stdout());
                 process::exit(0);
             }

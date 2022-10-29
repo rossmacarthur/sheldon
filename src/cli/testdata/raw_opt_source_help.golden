@@ -1,11 +1,9 @@
-sheldon-source 
 Generate and print out the script
 
-USAGE:
-    sheldon source [OPTIONS]
+Usage: sheldon source [OPTIONS]
 
-OPTIONS:
-        --relock       Regenerate the lock file
-        --update       Update all plugin sources (implies --relock)
-        --reinstall    Reinstall all plugin sources (implies --relock)
-    -h, --help         Print help information
+Options:
+      --relock     Regenerate the lock file
+      --update     Update all plugin sources (implies --relock)
+      --reinstall  Reinstall all plugin sources (implies --relock)
+  -h, --help       Print help information

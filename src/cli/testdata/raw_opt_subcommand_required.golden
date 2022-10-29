@@ -1,6 +1,27 @@
-error: 'sheldon' requires a subcommand but one was not provided
+sheldon 0.7.0
+Ross MacArthur <ross@macarthur.io>
+Fast, configurable, shell plugin manager.
 
-USAGE:
-    sheldon [OPTIONS] <SUBCOMMAND>
+Usage:
+  sheldon [OPTIONS] <COMMAND>
 
-For more information try --help
+Commands:
+  init         Initialize a new config file
+  add          Add a new plugin to the config file
+  edit         Open up the config file in the default editor
+  remove       Remove a plugin from the config file
+  lock         Install the plugins sources and generate the lock file
+  source       Generate and print out the script
+  completions  Generate completions for the given shell
+  version      Prints detailed version information
+
+Options:
+  -q, --quiet               Suppress any informational output
+  -v, --verbose             Use verbose output
+      --color <WHEN>        Output coloring: always, auto, or never [default: auto]
+      --config-dir <PATH>   The configuration directory [env: SHELDON_CONFIG_DIR=]
+      --data-dir <PATH>     The data directory [env: SHELDON_DATA_DIR=]
+      --config-file <PATH>  The config file [env: SHELDON_CONFIG_FILE=]
+      --profile <PROFILE>   The profile used for conditional plugins [env: SHELDON_PROFILE=]
+  -h, --help                Print help information
+  -V, --version             Print version information
