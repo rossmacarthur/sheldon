@@ -1,9 +1,7 @@
-sheldon-init 
 Initialize a new config file
 
-USAGE:
-    sheldon init [OPTIONS]
+Usage: sheldon init [OPTIONS]
 
-OPTIONS:
-        --shell <SHELL>    The type of shell, accepted values are: bash, zsh
-    -h, --help             Print help information
+Options:
+      --shell <SHELL>  The type of shell, accepted values are: bash, zsh
+  -h, --help           Print help information

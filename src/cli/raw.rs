@@ -1,6 +1,8 @@
+#![deny(missing_docs)]
+
 use std::path::PathBuf;
 
-use clap::{AppSettings, ArgGroup, Parser};
+use clap::{ArgGroup, Parser};
 use clap_complete as complete;
 use url::Url;
 
@@ -8,17 +10,26 @@ use crate::cli::color_choice::ColorChoice;
 use crate::config::{GistRepository, GitHubRepository, GitProtocol, Shell};
 use crate::util::build;
 
+const HELP_TEMPLATE: &str = "\
+{before-help}{bin} {version}
+{author}
+{about}
+
+{usage-heading}
+{tab}{usage}
+
+{all-args}{after-help}";
+
 #[derive(Debug, PartialEq, Eq, Parser)]
 #[clap(
     author,
-    about,
     version = build::CRATE_RELEASE,
     long_version = build::CRATE_LONG_VERSION,
-    term_width = 120,
-    global_setting = AppSettings::DeriveDisplayOrder,
-    global_setting = AppSettings::DisableHelpSubcommand,
-    global_setting = AppSettings::DisableColoredHelp,
-    setting = AppSettings::SubcommandRequired,
+    about,
+    long_about = None,
+    help_template = HELP_TEMPLATE,
+    disable_help_subcommand(true),
+    subcommand_required(true),
 )]
 pub struct RawOpt {
     /// Suppress any informational output.
@@ -164,19 +175,19 @@ pub struct Add {
     pub dir: Option<String>,
 
     /// Which files to use in this plugin.
-    #[clap(long = "use", value_name = "MATCH", multiple_values(true))]
+    #[clap(long = "use", value_name = "MATCH", num_args(1..))]
     pub uses: Option<Vec<String>>,
 
     /// Templates to apply to this plugin.
-    #[clap(long, value_name = "TEMPLATE", multiple_values(true))]
+    #[clap(long, value_name = "TEMPLATE", num_args(1..))]
     pub apply: Option<Vec<String>>,
 
     /// Only use this plugin under one of the given profiles
-    #[clap(long, value_name = "PROFILES", multiple_values(true))]
+    #[clap(long, value_name = "PROFILES", num_args(1..))]
     pub profiles: Option<Vec<String>>,
 
     /// Hooks executed during template evaluation.
-    #[clap(long, value_name = "SCRIPT", value_parser = key_value_parser, multiple_values(true))]
+    #[clap(long, value_name = "SCRIPT", value_parser = key_value_parser, num_args(1..))]
     pub hooks: Option<Vec<(String, String)>>,
 }
 

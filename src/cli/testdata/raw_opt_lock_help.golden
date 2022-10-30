@@ -1,10 +1,8 @@
-sheldon-lock 
 Install the plugins sources and generate the lock file
 
-USAGE:
-    sheldon lock [OPTIONS]
+Usage: sheldon lock [OPTIONS]
 
-OPTIONS:
-        --update       Update all plugin sources
-        --reinstall    Reinstall all plugin sources
-    -h, --help         Print help information
+Options:
+      --update     Update all plugin sources
+      --reinstall  Reinstall all plugin sources
+  -h, --help       Print help information

@@ -18,7 +18,6 @@ on: [push, pull_request]
 
 env:
   CRATE: sheldon
-  CARGO_TERM_COLOR: always
 
 jobs:
 
@@ -41,11 +40,10 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Setup Rust
-      run: |
-        rustup set profile default
-        rustup toolchain install ${{ matrix.toolchain }}
-        rustup override set ${{ matrix.toolchain }}
+    - uses: dtolnay/rust-toolchain@master
+      with:
+        toolchain: ${{ matrix.toolchain }}
+        components: clippy, rustfmt
 
     - name: Rustfmt
       run: cargo fmt -- --check
@@ -75,11 +73,9 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Setup Rust
-      run: |
-        rustup set profile minimal
-        rustup toolchain install stable
-        rustup override set stable
+    - uses: dtolnay/rust-toolchain@stable
+      with:
+        target: ${{ matrix.target }}
 
     - name: Test
       run: |
@@ -95,13 +91,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-
-    - name: Setup Rust
-      run: |
-        rustup set profile minimal
-        rustup toolchain install stable
-        rustup override set stable
-
+    - uses: dtolnay/rust-toolchain@stable
     - name: Check README
       run: cargo run --package gen-readme -- --check
 
@@ -114,12 +104,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-
-    - name: Setup Rust
-      run: |
-        rustup set profile minimal
-        rustup toolchain install stable
-        rustup override set stable
+    - uses: dtolnay/rust-toolchain@stable
 
     - name: Generate completions (bash)
       run: cargo run -- completions --shell bash > completions/$CRATE.bash
@@ -160,12 +145,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-
-    - name: Setup Rust
-      run: |
-        rustup set profile minimal
-        rustup toolchain install stable
-        rustup override set stable
+    - uses: dtolnay/rust-toolchain@stable
 
     - name: Publish
       env:
@@ -195,12 +175,9 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Rust
-        run: |
-          rustup set profile minimal
-          rustup toolchain install stable
-          rustup override set stable
-          rustup target add ${{ matrix.target }} --toolchain stable
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          target: ${{ matrix.target }}
 
       - name: Build
         run: |

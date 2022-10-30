@@ -1,8 +1,8 @@
 version = "<version>"
 home = "<home>"
-config_dir = "<config>"
+config_dir = "<home>"
 data_dir = "<data>"
-config_file = "<config>/test.toml"
+config_file = "<home>/test.toml"
 plugins = []
 
 [templates]

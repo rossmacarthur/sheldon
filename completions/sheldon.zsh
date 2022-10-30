@@ -16,18 +16,18 @@ _sheldon() {
     local context curcontext="$curcontext" state line
     _arguments "${_arguments_options[@]}" \
 '--color=[Output coloring: always, auto, or never]:WHEN: ' \
-'--config-dir=[The configuration directory]:PATH: ' \
-'--data-dir=[The data directory]:PATH: ' \
-'--config-file=[The config file]:PATH: ' \
+'--config-dir=[The configuration directory]:PATH:_files' \
+'--data-dir=[The data directory]:PATH:_files' \
+'--config-file=[The config file]:PATH:_files' \
 '--profile=[The profile used for conditional plugins]:PROFILE: ' \
-'-h[Print help information]' \
-'--help[Print help information]' \
-'-V[Print version information]' \
-'--version[Print version information]' \
 '-q[Suppress any informational output]' \
 '--quiet[Suppress any informational output]' \
 '-v[Use verbose output]' \
 '--verbose[Use verbose output]' \
+'-h[Print help information]' \
+'--help[Print help information]' \
+'-V[Print version information]' \
+'--version[Print version information]' \
 ":: :_sheldon_commands" \
 "*::: :->sheldon" \
 && ret=0
@@ -50,7 +50,7 @@ _arguments "${_arguments_options[@]}" \
 '--gist=[Add a clonable Gist snippet]:ID: ' \
 '--github=[Add a clonable GitHub repository]:REPO: ' \
 '--remote=[Add a downloadable file]:URL: ' \
-'--local=[Add a local directory]:DIR: ' \
+'--local=[Add a local directory]:DIR:_files' \
 '(--git --remote --local)--proto=[The Git protocol for a Gist or GitHub plugin]:PROTO: ' \
 '--branch=[Checkout the tip of a branch]:BRANCH: ' \
 '--rev=[Checkout a specific commit]:SHA: ' \

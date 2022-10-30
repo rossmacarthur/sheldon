@@ -333,8 +333,9 @@ fn lock_and_source_inline() -> io::Result<()> {
 #[test]
 fn lock_and_source_override_config_file() -> io::Result<()> {
     let case = TestCase::load("override_config_file")?;
-    let config_file = case.dirs.config.join("test.toml");
-    case.write_config_file("test.toml")?;
+    let config_file = case.dirs.home.path().join("test.toml");
+    fs::remove_dir(&case.dirs.config).ok();
+    case.write_file(&config_file, "test.toml")?;
     case.command("lock")
         .env("SHELDON_CONFIG_FILE", &config_file)
         .run()?;

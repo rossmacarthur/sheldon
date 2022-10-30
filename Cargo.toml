@@ -13,6 +13,16 @@ categories = ["command-line-utilities"]
 build = "build.rs"
 include = ["src/**/*", "LICENSE-*", "README.md", "build.rs"]
 
+[profile.release]
+strip = "symbols"
+
+[profile.compact]
+inherits = "release"
+opt-level = "s"
+lto = true
+panic = "abort"
+codegen-units = 1
+
 [package.metadata.binstall]
 pkg-url = "{ repo }/releases/download/{ version }/sheldon-{ version }-{ target }.tar.gz"
 
@@ -20,8 +30,7 @@ pkg-url = "{ repo }/releases/download/{ version }/sheldon-{ version }-{ target }
 anyhow = "1.0.65"
 atty = "0.2.14"
 casual = "0.2.0"
-clap = { version = "3.2.22", features = ["cargo", "env", "derive"] }
-clap_complete = "3.2.5"
+clap_complete = "4.0.3"
 constcat = "0.2.0"
 curl = "0.4.44"
 fmutex = "0.1.0"
@@ -43,6 +52,14 @@ url = { version = "2.3.1", features = ["serde"] }
 walkdir = "2.3.2"
 which = { version = "4.3.0", default-features = false }
 yansi = "0.5.1"
+
+[dependencies.clap]
+version = "4.0.18"
+default-features = false
+features = [
+    "std", "help", "usage", "error-context", "suggestions", # default excluding "color"
+    "cargo", "env", "derive"                                # optional
+]
 
 [build-dependencies]
 anyhow = "1.0.65"
