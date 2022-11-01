@@ -1,5 +1,21 @@
 # 📝 Release notes
 
+## 0.7.1
+
+*November 1st, 2022*
+
+- [Fix bug with custom config file.][#156] Previously, the  default config
+  directory still needed to exist for Sheldon to work properly.
+
+- [Add `compact` release profile.][#145] This profile is optimized for binary
+  size.
+  ```
+  cargo install --profile compact sheldon
+  ```
+
+[#156]: https://github.com/rossmacarthur/sheldon/issues/156
+[#145]: https://github.com/rossmacarthur/sheldon/issues/145
+
 ## 0.7.0
 
 *October 13th, 2022*

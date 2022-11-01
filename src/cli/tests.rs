@@ -117,7 +117,8 @@ fn raw_opt_options() {
 fn raw_opt_subcommand_required() {
     setup();
     let err = raw_opt_err(&[]);
-    goldie::assert!(err.to_string());
+    let ctx = upon::value! { version: build::CRATE_RELEASE };
+    goldie::assert_template!(&ctx, err.to_string());
     assert_eq!(
         err.kind(),
         ErrorKind::DisplayHelpOnMissingArgumentOrSubcommand

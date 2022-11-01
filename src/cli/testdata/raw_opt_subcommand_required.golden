@@ -1,4 +1,4 @@
-sheldon 0.7.0
+sheldon {{ version }}
 Ross MacArthur <ross@macarthur.io>
 Fast, configurable, shell plugin manager.
 
