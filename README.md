@@ -96,6 +96,14 @@ using [Cargo](https://doc.rust-lang.org/cargo/), the Rust package manager.
 cargo install sheldon
 ```
 
+In some circumstances this can fail due to the fact that Cargo does not use
+`Cargo.lock` file by default. You can force Cargo to use it using the `--locked`
+option.
+
+```sh
+cargo install sheldon --locked
+```
+
 ### Cargo BInstall
 
 Sheldon can be installed using
