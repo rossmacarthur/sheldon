@@ -49,7 +49,7 @@ impl TestCase {
         };
 
         let mut data = HashMap::new();
-        for entry in fs::read_dir(&dir)? {
+        for entry in fs::read_dir(dir)? {
             let path = entry?.path();
             let name = path.file_name().unwrap().to_str().unwrap().to_owned();
             let raw = fs::read_to_string(&path)?;
@@ -147,7 +147,7 @@ fn lock_and_source_clean() -> io::Result<()> {
         fs::OpenOptions::new()
             .create(true)
             .write(true)
-            .open(&data.join("repos/test.com/test.txt"))?;
+            .open(data.join("repos/test.com/test.txt"))?;
     }
 
     case.run()?;
@@ -169,14 +169,14 @@ fn lock_and_source_clean_permission_denied() -> io::Result<()> {
             .open(data.join("repos/test.com/test.txt"))?;
     }
     fs::set_permissions(
-        &data.join("repos/test.com"),
+        data.join("repos/test.com"),
         fs::Permissions::from_mode(0o000),
     )?;
 
     case.run()?;
 
     fs::set_permissions(
-        &data.join("repos/test.com"),
+        data.join("repos/test.com"),
         fs::Permissions::from_mode(0o777),
     )?;
 

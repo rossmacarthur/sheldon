@@ -65,7 +65,7 @@ impl LockedConfig {
         }
         fs::write(
             path,
-            &toml::to_string(&self).context("failed to serialize locked config")?,
+            toml::to_string(&self).context("failed to serialize locked config")?,
         )
         .with_context(|| format!("failed to write locked config to `{}`", path.display()))?;
         Ok(())

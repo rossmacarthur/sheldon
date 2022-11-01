@@ -64,7 +64,7 @@ mod tests {
         assert_eq!(locked.file, Some(file.clone()));
         assert_eq!(
             fs::read_to_string(&file).unwrap(),
-            fs::read_to_string(&manifest_dir.join("LICENSE-MIT")).unwrap()
+            fs::read_to_string(manifest_dir.join("LICENSE-MIT")).unwrap()
         );
 
         let modified = fs::metadata(&file).unwrap().modified().unwrap();
@@ -76,7 +76,7 @@ mod tests {
         assert_eq!(locked.file, Some(file.clone()));
         assert_eq!(
             fs::read_to_string(&file).unwrap(),
-            fs::read_to_string(&manifest_dir.join("LICENSE-MIT")).unwrap()
+            fs::read_to_string(manifest_dir.join("LICENSE-MIT")).unwrap()
         );
         assert!(fs::metadata(&file).unwrap().modified().unwrap() > modified)
     }
