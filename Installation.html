@@ -147,6 +147,11 @@
 using <a href="https://doc.rust-lang.org/cargo/">Cargo</a>, the Rust package manager.</p>
 <pre><code class="language-sh">cargo install sheldon
 </code></pre>
+<p>In some circumstances this can fail due to the fact that Cargo does not use
+<code>Cargo.lock</code> file by default. You can force Cargo to use it using the <code>--locked</code>
+option.</p>
+<pre><code class="language-sh">cargo install sheldon --locked
+</code></pre>
 <h2 id="cargo-binstall"><a class="header" href="#cargo-binstall">Cargo BInstall</a></h2>
 <p>Sheldon can be installed using
 <a href="https://github.com/cargo-bins/cargo-binstall"><code>cargo-binstall</code></a>, which will

@@ -169,6 +169,11 @@ updated in parallel and as a result Sheldon is blazingly fast.</p>
 using <a href="https://doc.rust-lang.org/cargo/">Cargo</a>, the Rust package manager.</p>
 <pre><code class="language-sh">cargo install sheldon
 </code></pre>
+<p>In some circumstances this can fail due to the fact that Cargo does not use
+<code>Cargo.lock</code> file by default. You can force Cargo to use it using the <code>--locked</code>
+option.</p>
+<pre><code class="language-sh">cargo install sheldon --locked
+</code></pre>
 <h2 id="cargo-binstall"><a class="header" href="#cargo-binstall">Cargo BInstall</a></h2>
 <p>Sheldon can be installed using
 <a href="https://github.com/cargo-bins/cargo-binstall"><code>cargo-binstall</code></a>, which will
@@ -720,6 +725,20 @@ use = [&quot;async.zsh&quot;, &quot;pure.zsh&quot;]
 <pre><code class="language-sh">sheldon add pure --github sindresorhus/pure --use async.zsh pure.zsh
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="-release-notes"><a class="header" href="#-release-notes">📝 Release notes</a></h1>
+<h2 id="071"><a class="header" href="#071">0.7.1</a></h2>
+<p><em>November 1st, 2022</em></p>
+<ul>
+<li>
+<p><a href="https://github.com/rossmacarthur/sheldon/issues/156">Fix bug with custom config file.</a> Previously, the  default config
+directory still needed to exist for Sheldon to work properly.</p>
+</li>
+<li>
+<p><a href="https://github.com/rossmacarthur/sheldon/issues/145">Add <code>compact</code> release profile.</a> This profile is optimized for binary
+size.</p>
+<pre><code>cargo install --profile compact sheldon
+</code></pre>
+</li>
+</ul>
 <h2 id="070"><a class="header" href="#070">0.7.0</a></h2>
 <p><em>October 13th, 2022</em></p>
 <h3 id="breaking-changes"><a class="header" href="#breaking-changes">Breaking changes</a></h3>
