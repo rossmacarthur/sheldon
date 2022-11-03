@@ -46,12 +46,24 @@
 
 - [Only apply templates per plugin.][708bd9e] This effectively removes the
   `each` field from the template configuration. Any templates that are applied
-  to each file in a plugin need to now use a for loop. For example:
+  to each file in a plugin need to now use a for loop.
+
+  Previously, you could use
+  ```toml
+  [templates]
+  defer = { value = 'zsh-defer source "{{ file }}"', each = true }
   ```
-  {% for file in files %}
-  source "{{ file }}"
-  {% endfor %}
+
+  You must now use a `for` loop
+  ```toml
+  [templates]
+  defer = """{% for file in files %}
+  zsh-defer source "{{ file }}"
+  {% endfor %}"""
   ```
+
+  Having templates only applied per plugin and not both per plugin and per file
+  in a plugin makes rendering a lot simpler and the config easier to understand.
 
 - [Remove clone, download dir and lock file options.][4bbbff4] These paths are
   no longer configurable, only the data directory is configurable.
