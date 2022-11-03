@@ -180,11 +180,19 @@ affect you if you were using custom templates.</p>
 <li>
 <p><a href="https://github.com/rossmacarthur/sheldon/commit/708bd9e3337f107410f977618dc47d6824191a16">Only apply templates per plugin.</a> This effectively removes the
 <code>each</code> field from the template configuration. Any templates that are applied
-to each file in a plugin need to now use a for loop. For example:</p>
-<pre><code>{% for file in files %}
-source &quot;{{ file }}&quot;
-{% endfor %}
+to each file in a plugin need to now use a for loop.</p>
+<p>Previously, you could use</p>
+<pre><code class="language-toml">[templates]
+defer = { value = 'zsh-defer source &quot;{{ file }}&quot;', each = true }
 </code></pre>
+<p>You must now use a <code>for</code> loop</p>
+<pre><code class="language-toml">[templates]
+defer = &quot;&quot;&quot;{% for file in files %}
+zsh-defer source &quot;{{ file }}&quot;
+{% endfor %}&quot;&quot;&quot;
+</code></pre>
+<p>Having templates only applied per plugin and not both per plugin and per file
+in a plugin makes rendering a lot simpler and the config easier to understand.</p>
 </li>
 <li>
 <p><a href="https://github.com/rossmacarthur/sheldon/commit/4bbbff4a423002498e028a56f62897e4425be6a6">Remove clone, download dir and lock file options.</a> These paths are
