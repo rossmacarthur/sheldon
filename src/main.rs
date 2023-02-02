@@ -245,7 +245,7 @@ fn source(ctx: &Context, warnings: &mut Vec<Error>) -> Result<()> {
         }
     }
 
-    print!("{}", script);
+    print!("{script}");
     Ok(())
 }
 

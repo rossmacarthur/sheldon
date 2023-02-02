@@ -43,9 +43,9 @@ impl fmt::Display for Source {
         match self {
             Self::Git { url, reference } => {
                 let checkout: GitCheckout = reference.clone().into();
-                write!(f, "{}{}", url, checkout)
+                write!(f, "{url}{checkout}")
             }
-            Self::Remote { url, .. } => write!(f, "{}", url),
+            Self::Remote { url, .. } => write!(f, "{url}"),
             Self::Local { dir } => write!(f, "{}", dir.display()),
         }
     }
@@ -55,7 +55,7 @@ pub fn git_dir(ctx: &Context, url: &Url) -> Result<PathBuf> {
     let mut dir = ctx.clone_dir().to_path_buf();
     dir.push(
         url.host_str()
-            .with_context(|| format!("URL `{}` has no host", url))?,
+            .with_context(|| format!("URL `{url}` has no host"))?,
     );
     dir.push(url.path().trim_start_matches('/'));
     Ok(dir)
@@ -65,12 +65,12 @@ pub fn remote_dir_and_file(ctx: &Context, url: &Url) -> Result<(PathBuf, PathBuf
     let mut dir = ctx.download_dir().to_path_buf();
     dir.push(
         url.host_str()
-            .with_context(|| format!("URL `{}` has no host", url))?,
+            .with_context(|| format!("URL `{url}` has no host"))?,
     );
 
     let segments: Vec<_> = url
         .path_segments()
-        .with_context(|| format!("URL `{}` is cannot-be-a-base", url))?
+        .with_context(|| format!("URL `{url}` is cannot-be-a-base"))?
         .collect();
     let (base, rest) = segments.split_last().unwrap();
     let base = if base.is_empty() { "index" } else { *base };

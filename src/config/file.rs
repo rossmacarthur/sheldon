@@ -134,11 +134,11 @@ impl fmt::Display for GistRepository {
             Self {
                 owner: Some(owner),
                 identifier,
-            } => write!(f, "{}/{}", owner, identifier),
+            } => write!(f, "{owner}/{identifier}"),
             Self {
                 owner: None,
                 identifier,
-            } => write!(f, "{}", identifier),
+            } => write!(f, "{identifier}"),
         }
     }
 }

@@ -140,7 +140,7 @@ impl Opt {
             };
         let lock_file = match profile.as_deref() {
             Some("") | None => data_dir.join("plugins.lock"),
-            Some(p) => data_dir.join(format!("plugins.{}.lock", p)),
+            Some(p) => data_dir.join(format!("plugins.{p}.lock")),
         };
         let clone_dir = data_dir.join("repos");
         let download_dir = data_dir.join("downloads");

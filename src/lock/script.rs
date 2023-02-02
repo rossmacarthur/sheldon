@@ -20,7 +20,7 @@ impl LockedConfig {
         for (name, template) in &self.templates {
             engine
                 .add_template(name, template)
-                .with_context(|| format!("failed to compile template `{}`", name))?;
+                .with_context(|| format!("failed to compile template `{name}`"))?;
         }
 
         let mut script = String::new();
@@ -47,7 +47,7 @@ impl LockedConfig {
                             .get_template(name)
                             .unwrap()
                             .render(&data)
-                            .with_context(|| format!("failed to render template `{}`", name))?;
+                            .with_context(|| format!("failed to render template `{name}`"))?;
                         script.push_str(out);
                         if !out.ends_with('\n') {
                             script.push('\n');

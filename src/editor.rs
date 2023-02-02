@@ -145,7 +145,7 @@ impl Child {
                     .context("edited config is invalid, not updating config file")
             }
         } else {
-            bail!("editor terminated with {}", exit_status)
+            bail!("editor terminated with {exit_status}")
         }
     }
 }

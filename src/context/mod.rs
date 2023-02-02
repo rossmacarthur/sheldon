@@ -175,7 +175,7 @@ impl Context {
         } else {
             eprintln!(
                 "{} {}",
-                Paint::new(format!("{: >10}", prefix)).fg(color).bold(),
+                Paint::new(format!("{prefix: >10}")).fg(color).bold(),
                 msg
             );
         }
@@ -193,7 +193,7 @@ impl Context {
 pub fn log_error(no_color: bool, err: &Error) {
     let pretty = prettyify_error(err);
     if no_color {
-        eprintln!("\nERROR: {}", pretty);
+        eprintln!("\nERROR: {pretty}");
     } else {
         eprintln!("\n{} {}", Paint::red("error:").bold(), pretty);
     }
@@ -202,7 +202,7 @@ pub fn log_error(no_color: bool, err: &Error) {
 pub fn log_error_as_warning(no_color: bool, err: &Error) {
     let pretty = prettyify_error(err);
     if no_color {
-        eprintln!("\nWARNING: {}", pretty);
+        eprintln!("\nWARNING: {pretty}");
     } else {
         eprintln!("\n{} {}", Paint::yellow("warning:").bold(), pretty);
     }

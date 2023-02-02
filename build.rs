@@ -46,7 +46,7 @@ impl CommandExt for process::Command {
     fn output_text(&mut self) -> Result<String> {
         let output = self
             .output()
-            .with_context(|| format!("could not execute subprocess: `{:?}`", self))?;
+            .with_context(|| format!("could not execute subprocess: `{self:?}`"))?;
         if !output.status.success() {
             bail!(format_error_msg(self, &output));
         }
@@ -69,7 +69,7 @@ fn print_git_env(dir: &Path, key: &str, cmd: &str) -> Result<()> {
         Err(err) if is_io_not_found(&err) => return Ok(()),
         Err(err) => return Err(err),
     };
-    println!("cargo:rustc-env={}={}", key, value);
+    println!("cargo:rustc-env={key}={value}");
     Ok(())
 }
 

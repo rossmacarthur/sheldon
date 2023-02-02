@@ -71,8 +71,8 @@ impl TestCase {
     fn command(&self, command: &str) -> TestCommand {
         TestCommand::new(&self.dirs)
             .expect_exit_code(0)
-            .expect_stdout(self.get(format!("{}.stdout", command)))
-            .expect_stderr(self.get(format!("{}.stderr", command)))
+            .expect_stdout(self.get(format!("{command}.stdout")))
+            .expect_stderr(self.get(format!("{command}.stderr")))
             .arg(command)
     }
 
@@ -453,7 +453,7 @@ fn version() -> io::Result<()> {
     let maybe_commit_date = option_env!("GIT_COMMIT_DATE");
     let commit_info =
         if let (Some(commit_hash), Some(commit_date)) = (maybe_commit_hash, maybe_commit_date) {
-            format!(" ({} {})", commit_hash, commit_date)
+            format!(" ({commit_hash} {commit_date})")
         } else {
             "".to_string()
         };

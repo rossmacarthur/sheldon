@@ -28,7 +28,7 @@ pub fn lock(ctx: &Context, dir: PathBuf, file: PathBuf, url: &Url) -> Result<Loc
         let temp_file_handle = fs::File::create(path)
             .with_context(|| format!("failed to create `{}`", path.display()))?;
         util::download(url.as_ref(), temp_file_handle)
-            .with_context(|| format!("failed to download `{}`", url))?;
+            .with_context(|| format!("failed to download `{url}`"))?;
     }
     temp_file
         .rename(&file)
