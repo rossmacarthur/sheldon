@@ -1,0 +1,14 @@
+[[doc]]
+input = [
+    "docs/src/Installation.md",
+    "docs/src/Getting-started.md",
+    "docs/src/Command-line-interface.md",
+    "docs/src/Configuration.md",
+]
+output = "README.md"
+template = "docs/README_TEMPLATE.md"
+
+[links]
+"Command-line-interface.md" = "https://sheldon.cli.rs/Command-line-interface.html"
+"Configuration.md" = "https://sheldon.cli.rs/Configuration.html"
+"Examples.md" = "https://sheldon.cli.rs/Examples.html"

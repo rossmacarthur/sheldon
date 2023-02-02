@@ -92,8 +92,12 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - uses: dtolnay/rust-toolchain@stable
+
+    - name: Install cargo-onedoc
+      run: cargo install cargo-onedoc --locked
+
     - name: Check README
-      run: cargo run --package gen-readme -- --check
+      run: cargo onedoc --check
 
   # ---------------------------------------------------------------------------
   # Check completions
