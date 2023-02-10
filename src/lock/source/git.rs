@@ -83,7 +83,7 @@ fn install(ctx: &Context, dir: PathBuf, url: &Url, checkout: GitCheckout) -> Res
         let repo = git::clone(url, temp_dir.path())?;
         git::checkout(&repo, checkout.resolve(&repo)?)?;
         git::submodule_update(&repo).context("failed to recursively update")?;
-    }
+    } // `repo` must be dropped before renaming the directory
     temp_dir
         .rename(&dir)
         .context("failed to rename temporary clone directory")?;
