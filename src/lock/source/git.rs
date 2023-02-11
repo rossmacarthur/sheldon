@@ -79,9 +79,11 @@ fn checkout(
 fn install(ctx: &Context, dir: PathBuf, url: &Url, checkout: GitCheckout) -> Result<LockedSource> {
     let temp_dir =
         TempPath::new_force(&dir).context("failed to prepare temporary clone directory")?;
-    let repo = git::clone(url, temp_dir.path())?;
-    git::checkout(&repo, checkout.resolve(&repo)?)?;
-    git::submodule_update(&repo).context("failed to recursively update")?;
+    {
+        let repo = git::clone(url, temp_dir.path())?;
+        git::checkout(&repo, checkout.resolve(&repo)?)?;
+        git::submodule_update(&repo).context("failed to recursively update")?;
+    } // `repo` must be dropped before renaming the directory
     temp_dir
         .rename(&dir)
         .context("failed to rename temporary clone directory")?;
