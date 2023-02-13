@@ -112,6 +112,7 @@ impl fmt::Display for Shell {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Bash => f.write_str("bash"),
+            Self::Fish => f.write_str("fish"),
             Self::Zsh => f.write_str("zsh"),
         }
     }
@@ -180,7 +181,7 @@ impl Default for Shell {
 
 /// Produced when we fail to parse the shell type.
 #[derive(Debug, Error)]
-#[error("expected one of `bash` or `zsh`, got `{}`", self.0)]
+#[error("expected one of `bash`, `fish`, or `zsh`, got `{}`", self.0)]
 pub struct ParseShellError(String);
 
 impl FromStr for Shell {
@@ -189,6 +190,7 @@ impl FromStr for Shell {
     fn from_str(s: &str) -> result::Result<Self, Self::Err> {
         match &*s.to_lowercase() {
             "bash" => Ok(Self::Bash),
+            "fish" => Ok(Self::Fish),
             "zsh" => Ok(Self::Zsh),
             s => Err(ParseShellError(s.to_string())),
         }
@@ -365,7 +367,7 @@ mod tests {
         let error = toml::from_str::<ShellTest>("s = 'ksh'").unwrap_err();
         assert_eq!(
             error.to_string(),
-            "expected one of `bash` or `zsh`, got `ksh` for key `s` at line 1 column 5"
+            "expected one of `bash`, `fish`, or `zsh`, got `ksh` for key `s` at line 1 column 5"
         )
     }
 

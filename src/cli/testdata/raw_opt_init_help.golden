@@ -3,5 +3,5 @@ Initialize a new config file
 Usage: sheldon init [OPTIONS]
 
 Options:
-      --shell <SHELL>  The type of shell, accepted values are: bash, zsh
+      --shell <SHELL>  The type of shell, accepted values are: bash, fish, zsh
   -h, --help           Print help information
