@@ -2,7 +2,7 @@
 name = "sheldon"
 version = "0.7.1"
 authors = ["Ross MacArthur <ross@macarthur.io>"]
-edition = "2018"
+edition = "2021"
 description = "Fast, configurable, shell plugin manager."
 documentation = "https://sheldon.cli.rs"
 readme = "README.md"
@@ -27,34 +27,34 @@ codegen-units = 1
 pkg-url = "{ repo }/releases/download/{ version }/sheldon-{ version }-{ target }.tar.gz"
 
 [dependencies]
-anyhow = "1.0.65"
+anyhow = "1.0.71"
 atty = "0.2.14"
 casual = "0.2.0"
-clap_complete = "4.0.3"
-constcat = "0.2.0"
+clap_complete = "4.2.2"
+constcat = "0.3.0"
 curl = "0.4.44"
 fmutex = "0.1.0"
-git2 = { version = "0.15.0", features = ["vendored-libgit2"] }
+git2 = { version = "0.17.1", features = ["vendored-libgit2"] }
 globwalk = "0.8.1"
-home = "0.5.4"
-indexmap = { version = "1.9.1", features = ["rayon", "serde"] }
+home = "0.5.5"
+indexmap = { version = "1.9.3", features = ["rayon", "serde"] }
 itertools = "0.10.5"
 maplit = "1.0.2"
-once_cell = "1.15.0"
-rayon = "1.5.3"
+once_cell = "1.17.1"
+rayon = "1.7.0"
 regex-macro = "0.2.0"
-serde = { version = "1.0.145", features = ["derive"] }
-thiserror = "1.0.37"
+serde = { version = "1.0.162", features = ["derive"] }
+thiserror = "1.0.40"
 toml = { version = "0.5.9", features = ["preserve_order"] }
 toml_edit = "0.14.4"
-upon = { version = "0.4.0", default-features = false, features = ["serde"] }
+upon = { version = "0.6.0", default-features = false, features = ["serde"] }
 url = { version = "2.3.1", features = ["serde"] }
-walkdir = "2.3.2"
-which = { version = "4.3.0", default-features = false }
+walkdir = "2.3.3"
+which = { version = "4.4.0", default-features = false }
 yansi = "0.5.1"
 
 [dependencies.clap]
-version = "4.0.18"
+version = "4.2.7"
 default-features = false
 features = [
     "std", "help", "usage", "error-context", "suggestions", # default excluding "color"
@@ -62,9 +62,9 @@ features = [
 ]
 
 [build-dependencies]
-anyhow = "1.0.65"
+anyhow = "1.0.71"
 
 [dev-dependencies]
-goldie = "0.4.1"
+goldie = "0.4.3"
 pretty_assertions = "1.3.0"
-tempfile = "3.3.0"
+tempfile = "3.5.0"
