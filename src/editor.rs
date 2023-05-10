@@ -11,6 +11,7 @@ use anyhow::{anyhow, bail, Context as ResultExt, Result};
 use thiserror::Error;
 
 use crate::config::EditConfig;
+use crate::context::Context;
 use crate::util::TempPath;
 
 /// Possible environment variables.
@@ -94,7 +95,7 @@ impl Editor {
     }
 
     /// Open a file for editing with initial contents.
-    pub fn edit(self, path: &Path, contents: &str) -> Result<Child> {
+    pub fn edit(self, ctx: &Context, path: &Path, contents: &str) -> Result<Child> {
         let (overwrite, temp) = match TempPath::new(path) {
             Ok(temp) => (true, temp),
             Err(path) => {
@@ -103,7 +104,7 @@ impl Editor {
                 let temp = || TempPath::new_unchecked(path);
                 if temp_contents == contents {
                     (false, temp())
-                } else {
+                } else if ctx.interactive {
                     match casual::prompt(
                         "It looks like you already started editing the config file, what do you \
                          want to do?\n  [A] Abort, [R] Reopen, [O] Overwrite: ",
@@ -114,6 +115,8 @@ impl Editor {
                         Choice::Reopen => (false, temp()),
                         Choice::Overwrite => (true, temp()),
                     }
+                } else {
+                    (true, temp())
                 }
             }
         };

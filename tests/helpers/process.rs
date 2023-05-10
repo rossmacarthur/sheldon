@@ -54,6 +54,7 @@ impl TestCommand {
             .env("SHELDON_CONFIG_DIR", &dirs.config)
             .env("SHELDON_DATA_DIR", &dirs.data)
             .args(&params)
+            .arg("--non-interactive")
             .arg("--verbose");
 
         Self {

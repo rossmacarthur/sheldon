@@ -32,6 +32,8 @@ pub struct Context {
     #[serde(skip)]
     pub output: Output,
     #[serde(skip)]
+    pub interactive: bool,
+    #[serde(skip)]
     pub lock_mode: Option<LockMode>,
 }
 

@@ -325,6 +325,7 @@ mod tests {
                     verbosity: crate::context::Verbosity::Quiet,
                     no_color: true,
                 },
+                interactive: true,
                 lock_mode: None,
             }
         }

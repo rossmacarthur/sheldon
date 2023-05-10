@@ -64,6 +64,7 @@ fn raw_opt_no_options() {
         raw_opt(&["lock"]),
         RawOpt {
             quiet: false,
+            non_interactive: false,
             verbose: false,
             color: Default::default(),
             config_dir: None,
@@ -99,6 +100,7 @@ fn raw_opt_options() {
         ]),
         RawOpt {
             quiet: true,
+            non_interactive: false,
             verbose: true,
             color: ColorChoice::Never,
             config_dir: Some("/test".into()),

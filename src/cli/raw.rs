@@ -36,6 +36,10 @@ pub struct RawOpt {
     #[clap(long, short)]
     pub quiet: bool,
 
+    /// Suppress any interactive prompts and assume "yes" as the answer.
+    #[clap(long)]
+    pub non_interactive: bool,
+
     /// Use verbose output.
     #[clap(long, short)]
     pub verbose: bool,

@@ -17,6 +17,7 @@ Commands:
 
 Options:
   -q, --quiet               Suppress any informational output
+      --non-interactive     Suppress any interactive prompts and assume "yes" as the answer
   -v, --verbose             Use verbose output
       --color <WHEN>        Output coloring: always, auto, or never [default: auto]
       --config-dir <PATH>   The configuration directory [env: SHELDON_CONFIG_DIR=]
