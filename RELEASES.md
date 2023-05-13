@@ -1,10 +1,38 @@
 # 📝 Release notes
 
+## 0.7.2
+
+*May 13th, 2023*
+
+- [Add --non-interactive option to suppress prompts.][#163] This option is
+  defined as a global option so it must be specified before the subcommand.
+  ```sh
+  sheldon --non-interactive init --shell zsh
+  ```
+
+- [Add experimental fish shell support.][#128] It is now possible to initialize
+  Sheldon to use the Fish shell.
+  ```
+  sheldon init --shell fish
+  ```
+  This makes Sheldon change the global matches and templates to be tailored to
+  Fish. Add the following to your Fish config
+  ```
+  eval "$(sheldon source)"
+  ```
+
+- [Fix 'PermissionDenied' during rename of temporary clone directory.][#162]
+
+[#128]: https://github.com/rossmacarthur/sheldon/issues/128
+[#162]: https://github.com/rossmacarthur/sheldon/issues/162
+[#163]: https://github.com/rossmacarthur/sheldon/issues/163
+[22b81e3]: https://github.com/rossmacarthur/sheldon/commit/22b81e3a1a04fefa856cc9c187715bd0e2a2b95f
+
 ## 0.7.1
 
 *November 1st, 2022*
 
-- [Fix bug with custom config file.][#156] Previously, the  default config
+- [Fix bug with custom config file.][#156] Previously, the default config
   directory still needed to exist for Sheldon to work properly.
 
 - [Add `compact` release profile.][#145] This profile is optimized for binary
