@@ -5,8 +5,10 @@
         <meta charset="UTF-8">
         <title>sheldon docs</title>
         <meta name="robots" content="noindex" />
+
+
         <!-- Custom HTML head -->
-        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#ffffff" />
@@ -17,25 +19,29 @@
         <link rel="stylesheet" href="css/general.css">
         <link rel="stylesheet" href="css/chrome.css">
         <link rel="stylesheet" href="css/print.css" media="print">
+
         <!-- Fonts -->
         <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
         <link rel="stylesheet" href="fonts/fonts.css">
+
         <!-- Highlight.js Stylesheets -->
         <link rel="stylesheet" href="highlight.css">
         <link rel="stylesheet" href="tomorrow-night.css">
         <link rel="stylesheet" href="ayu-highlight.css">
 
         <!-- Custom theme stylesheets -->
+
     </head>
     <body>
+    <div id="body-container">
         <!-- Provide site root to javascript -->
-        <script type="text/javascript">
+        <script>
             var path_to_root = "";
             var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
         </script>
 
         <!-- Work around some values being stored in localStorage wrapped in quotes -->
-        <script type="text/javascript">
+        <script>
             try {
                 var theme = localStorage.getItem('mdbook-theme');
                 var sidebar = localStorage.getItem('mdbook-sidebar');
@@ -51,7 +57,7 @@
         </script>
 
         <!-- Set the theme before any content is loaded, prevents flash -->
-        <script type="text/javascript">
+        <script>
             var theme;
             try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
             if (theme === null || theme === undefined) { theme = default_theme; }
@@ -63,12 +69,14 @@
         </script>
 
         <!-- Hide / unhide sidebar before it is displayed -->
-        <script type="text/javascript">
+        <script>
             var html = document.querySelector('html');
-            var sidebar = 'hidden';
+            var sidebar = null;
             if (document.body.clientWidth >= 1080) {
                 try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
                 sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
             }
             html.classList.remove('sidebar-visible');
             html.classList.add("sidebar-" + sidebar);
@@ -84,7 +92,7 @@
         <div id="page-wrapper" class="page-wrapper">
 
             <div class="page">
-                <div id="menu-bar-hover-placeholder"></div>
+                                <div id="menu-bar-hover-placeholder"></div>
                 <div id="menu-bar" class="menu-bar sticky bordered">
                     <div class="left-buttons">
                         <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
@@ -94,7 +102,7 @@
                             <i class="fa fa-paint-brush"></i>
                         </button>
                         <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
-                            <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
                             <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
                             <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
                             <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
@@ -114,6 +122,7 @@
                         <a href="https://github.com/rossmacarthur/sheldon" title="Git repository" aria-label="Git repository">
                             <i id="git-repository-button" class="fa fa-github"></i>
                         </a>
+
                     </div>
                 </div>
 
@@ -127,8 +136,9 @@
                         </ul>
                     </div>
                 </div>
+
                 <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
-                <script type="text/javascript">
+                <script>
                     document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
                     document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
                     Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
@@ -548,6 +558,9 @@ values for several global config settings. This includes the global
 <p>or</p>
 <pre><code class="language-toml">shell = &quot;zsh&quot;
 </code></pre>
+<p>as well as the experimental</p>
+<pre><code class="language-toml">shell = &quot;fish&quot;
+</code></pre>
 <h3 id="match"><a class="header" href="#match"><code>match</code></a></h3>
 <p>A list of glob patterns to match against a plugin's contents. The first pattern
 that matches any files will be used by default as a plugin's <code>use</code> field. This
@@ -573,6 +586,18 @@ defaults to</p>
     &quot;*.plugin.sh&quot;,
     &quot;*.bash&quot;,
     &quot;*.sh&quot;
+]
+</code></pre>
+<p>If the shell is Fish then this defaults to</p>
+<pre><code class="language-toml">match = [
+    &quot;conf.d/{{ name }}.fish&quot;,
+    &quot;conf.d/{!_*,*}.fish&quot;,
+    &quot;{completions,functions}/{{ name }}.fish&quot;,
+    &quot;{completions,functions}/{!_*,*}.fish&quot;,
+    &quot;{completions,functions}/*.fish&quot;,
+    &quot;{{ name }}.fish&quot;,
+    &quot;{!_*,*}.fish&quot;,
+    &quot;*.fish&quot;
 ]
 </code></pre>
 <h3 id="apply-1"><a class="header" href="#apply-1"><code>apply</code></a></h3>
@@ -725,11 +750,34 @@ use = [&quot;async.zsh&quot;, &quot;pure.zsh&quot;]
 <pre><code class="language-sh">sheldon add pure --github sindresorhus/pure --use async.zsh pure.zsh
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="-release-notes"><a class="header" href="#-release-notes">📝 Release notes</a></h1>
+<h2 id="072"><a class="header" href="#072">0.7.2</a></h2>
+<p><em>May 13th, 2023</em></p>
+<ul>
+<li>
+<p><a href="https://github.com/rossmacarthur/sheldon/issues/163">Add --non-interactive option to suppress prompts.</a> This option is
+defined as a global option so it must be specified before the subcommand.</p>
+<pre><code class="language-sh">sheldon --non-interactive init --shell zsh
+</code></pre>
+</li>
+<li>
+<p><a href="https://github.com/rossmacarthur/sheldon/issues/128">Add experimental fish shell support.</a> It is now possible to initialize
+Sheldon to use the Fish shell.</p>
+<pre><code>sheldon init --shell fish
+</code></pre>
+<p>This makes Sheldon change the global matches and templates to be tailored to
+Fish. Add the following to your Fish config</p>
+<pre><code>eval &quot;$(sheldon source)&quot;
+</code></pre>
+</li>
+<li>
+<p><a href="https://github.com/rossmacarthur/sheldon/issues/162">Fix 'PermissionDenied' during rename of temporary clone directory.</a></p>
+</li>
+</ul>
 <h2 id="071"><a class="header" href="#071">0.7.1</a></h2>
 <p><em>November 1st, 2022</em></p>
 <ul>
 <li>
-<p><a href="https://github.com/rossmacarthur/sheldon/issues/156">Fix bug with custom config file.</a> Previously, the  default config
+<p><a href="https://github.com/rossmacarthur/sheldon/issues/156">Fix bug with custom config file.</a> Previously, the default config
 directory still needed to exist for Sheldon to work properly.</p>
 </li>
 <li>
@@ -1110,31 +1158,43 @@ prior versions.</p>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
+
+
                         <div style="clear: both"></div>
                     </nav>
                 </div>
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
+
             </nav>
 
         </div>
 
-        <script type="text/javascript">
+
+
+
+        <script>
             window.playground_copyable = true;
         </script>
-        <script src="elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
-        <script src="mark.min.js" type="text/javascript" charset="utf-8"></script>
-        <script src="searcher.js" type="text/javascript" charset="utf-8"></script>
-        <script src="clipboard.min.js" type="text/javascript" charset="utf-8"></script>
-        <script src="highlight.js" type="text/javascript" charset="utf-8"></script>
-        <script src="book.js" type="text/javascript" charset="utf-8"></script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
 
         <!-- Custom JS scripts -->
-        <script type="text/javascript">
+
+        <script>
         window.addEventListener('load', function() {
             window.setTimeout(window.print, 100);
         });
         </script>
+
+    </div>
     </body>
 </html>
