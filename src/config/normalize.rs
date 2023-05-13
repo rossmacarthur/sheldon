@@ -29,14 +29,14 @@ pub fn normalize(raw_config: RawConfig, warnings: &mut Vec<Error>) -> Result<Con
     } = raw_config;
 
     check_extra_toml(rest, |key| {
-        warnings.push(anyhow!("unused config key: `{}`", key))
+        warnings.push(anyhow!("unused config key: `{key}`"))
     });
 
     // Check that the templates can be compiled.
     for (name, template) in &templates {
         TEMPLATE_ENGINE
             .compile(template)
-            .with_context(|| format!("failed to compile template `{}`", name))?;
+            .with_context(|| format!("failed to compile template `{name}`"))?;
     }
 
     let shell = shell.unwrap_or_default();
@@ -49,7 +49,7 @@ pub fn normalize(raw_config: RawConfig, warnings: &mut Vec<Error>) -> Result<Con
     for (name, plugin) in plugins {
         normalized_plugins.push(
             normalize_plugin(plugin, name.clone(), shell, &templates, warnings)
-                .with_context(|| format!("failed to normalize plugin `{}`", name))?,
+                .with_context(|| format!("failed to normalize plugin `{name}`"))?,
         );
     }
 
@@ -111,7 +111,7 @@ fn normalize_plugin(
     }
 
     check_extra_toml(rest, |key| {
-        warnings.push(anyhow!("unused config key: `plugins.{}.{}`", name, key))
+        warnings.push(anyhow!("unused config key: `plugins.{name}.{key}`"))
     });
 
     let raw_source = match (git, gist, github, remote, local, inline) {
@@ -128,7 +128,7 @@ fn normalize_plugin(
                 repository
             );
             let url = Url::parse(&url_str)
-                .with_context(|| format!("failed to construct Gist URL using `{}`", repository))?;
+                .with_context(|| format!("failed to construct Gist URL using `{repository}`"))?;
             TempSource::External(Source::Git { url, reference })
         }
         // `github` type
@@ -139,9 +139,8 @@ fn normalize_plugin(
                 GITHUB_HOST,
                 repository
             );
-            let url = Url::parse(&url_str).with_context(|| {
-                format!("failed to construct GitHub URL using `{}`", repository)
-            })?;
+            let url = Url::parse(&url_str)
+                .with_context(|| format!("failed to construct GitHub URL using `{repository}`"))?;
             TempSource::External(Source::Git { url, reference })
         }
         // `remote` type
@@ -151,10 +150,10 @@ fn normalize_plugin(
         // `inline` type
         (None, None, None, None, None, Some(raw)) => TempSource::Inline(raw),
         (None, None, None, None, None, None) => {
-            bail!("plugin `{}` has no source fields", name);
+            bail!("plugin `{name}` has no source fields");
         }
         _ => {
-            bail!("plugin `{}` has multiple source fields", name);
+            bail!("plugin `{name}` has multiple source fields");
         }
     };
 
@@ -190,7 +189,7 @@ fn normalize_plugin(
             ];
             for (field, is_some) in &unsupported {
                 if *is_some {
-                    bail!("the {} not supported by inline plugins", field);
+                    bail!("the {field} not supported by inline plugins");
                 }
             }
             Ok(Plugin::Inline(InlinePlugin {
@@ -258,7 +257,7 @@ fn validate_template_names(
     if let Some(apply) = apply {
         for name in apply {
             if !shell.default_templates().contains_key(name) && !templates.contains_key(name) {
-                bail!("unknown template `{}`", name);
+                bail!("unknown template `{name}`");
             }
         }
     }
@@ -293,7 +292,7 @@ mod tests {
                 if a == b {
                     continue;
                 }
-                let text = format!("{} = '{}'\n{} = '{}'", a, example_a, b, example_b);
+                let text = format!("{a} = '{example_a}'\n{b} = '{example_b}'");
                 let raw = toml::from_str::<RawPlugin>(&text).unwrap();
                 let err = normalize_plugin(
                     raw,

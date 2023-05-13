@@ -40,6 +40,7 @@ pub struct Config {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Shell {
     Bash,
+    Fish,
     Zsh,
 }
 

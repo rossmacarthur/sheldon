@@ -140,7 +140,7 @@ fn edit(ctx: &Context) -> Result<()> {
             config.to_string()
         }
     };
-    let handle = editor::Editor::default()?.edit(path, &original_contents)?;
+    let handle = editor::Editor::default()?.edit(ctx, path, &original_contents)?;
     ctx.log_status("Opened", &"config in temporary file for editing");
     let config = handle.wait_and_update(&original_contents)?;
     config.to_path(path)?;
@@ -165,10 +165,12 @@ fn remove(ctx: &Context, name: String) -> Result<()> {
 /// Generic function to initialize the config file.
 fn init_config(ctx: &Context, shell: Option<Shell>, path: &Path, err: Error) -> Result<EditConfig> {
     if underlying_io_error_kind(&err) == Some(io::ErrorKind::NotFound) {
-        if !casual::confirm(format!(
-            "Initialize new config file `{}`?",
-            &ctx.replace_home(path).display()
-        )) {
+        if ctx.interactive
+            && !casual::confirm(format!(
+                "Initialize new config file `{}`?",
+                &ctx.replace_home(path).display()
+            ))
+        {
             bail!("aborted initialization!");
         };
         if let Some(parent) = path.parent() {
@@ -245,7 +247,7 @@ fn source(ctx: &Context, warnings: &mut Vec<Error>) -> Result<()> {
         }
     }
 
-    print!("{}", script);
+    print!("{script}");
     Ok(())
 }
 

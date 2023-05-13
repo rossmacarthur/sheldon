@@ -5,4 +5,4 @@ Usage: sheldon lock [OPTIONS]
 Options:
       --update     Update all plugin sources
       --reinstall  Reinstall all plugin sources
-  -h, --help       Print help information
+  -h, --help       Print help

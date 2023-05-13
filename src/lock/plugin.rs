@@ -101,16 +101,16 @@ where
 {
     TEMPLATE_ENGINE
         .compile(template)
-        .with_context(|| format!("failed to compile template `{}`", template))?
+        .with_context(|| format!("failed to compile template `{template}`"))?
         .render(ctx)
-        .with_context(|| format!("failed to render template `{}`", template))
+        .with_context(|| format!("failed to render template `{template}`"))
 }
 
 fn match_globs(dir: &Path, patterns: &[String], files: &mut Vec<PathBuf>) -> Result<bool> {
     let debug = || {
         patterns
             .iter()
-            .map(|p| format!("`{}`", p))
+            .map(|p| format!("`{p}`"))
             .collect::<Vec<_>>()
             .join(", ")
     };

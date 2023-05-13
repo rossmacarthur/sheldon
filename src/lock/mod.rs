@@ -113,13 +113,13 @@ pub fn config(ctx: &Context, config: Config) -> Result<LockedConfig> {
                     Ok(vec![])
                 } else {
                     let source = source::lock(ctx, source)
-                        .with_context(|| format!("failed to install source `{}`", source_name))?;
+                        .with_context(|| format!("failed to install source `{source_name}`"))?;
 
                     let mut locked = Vec::with_capacity(plugins.len());
                     for (index, plugin) in plugins {
                         let name = plugin.name.clone();
                         let plugin = plugin::lock(ctx, source.clone(), matches, apply, plugin)
-                            .with_context(|| format!("failed to install plugin `{}`", name));
+                            .with_context(|| format!("failed to install plugin `{name}`"));
                         locked.push((index, plugin));
                     }
                     Ok(locked)
@@ -184,6 +184,18 @@ impl Shell {
                 "*.sh"
             ]
         });
+        static DEFAULT_MATCHES_FISH: Lazy<Vec<String>> = Lazy::new(|| {
+            vec_into![
+                "conf.d/{{ name }}.fish",
+                "conf.d/{!_*,*}.fish",
+                "{completions,functions}/{{ name }}.fish",
+                "{completions,functions}/{!_*,*}.fish",
+                "{completions,functions}/*.fish",
+                "{{ name }}.fish",
+                "{!_*,*}.fish",
+                "*.fish"
+            ]
+        });
         static DEFAULT_MATCHES_ZSH: Lazy<Vec<String>> = Lazy::new(|| {
             vec_into![
                 "{{ name }}.plugin.zsh",
@@ -198,6 +210,7 @@ impl Shell {
         });
         match self {
             Self::Bash => &DEFAULT_MATCHES_BASH,
+            Self::Fish => &DEFAULT_MATCHES_FISH,
             Self::Zsh => &DEFAULT_MATCHES_ZSH,
         }
     }
@@ -210,6 +223,12 @@ impl Shell {
                 "source" => "{% if hooks | contains: \"pre\" %}{{ hooks.pre }}\n{% endif %}{% for file in files %}source \"{{ file }}\"\n{% endfor %}{% if hooks | contains: \"post\" %}\n{{ hooks.post }}{% endif %}"
             }
         });
+        static DEFAULT_TEMPLATES_FISH: Lazy<IndexMap<String, String>> = Lazy::new(|| {
+            indexmap_into! {
+                "add_path" => "fish_add_path \"{{ dir }}\"",
+                "source" => "{% for file in files %}source \"{{ file }}\"\n{% endfor %}"
+            }
+        });
         static DEFAULT_TEMPLATES_ZSH: Lazy<IndexMap<String, String>> = Lazy::new(|| {
             indexmap_into! {
                 "PATH" => "export PATH=\"{{ dir }}:$PATH\"",
@@ -220,6 +239,7 @@ impl Shell {
         });
         match self {
             Self::Bash => &DEFAULT_TEMPLATES_BASH,
+            Self::Fish => &DEFAULT_TEMPLATES_FISH,
             Self::Zsh => &DEFAULT_TEMPLATES_ZSH,
         }
     }
@@ -305,6 +325,7 @@ mod tests {
                     verbosity: crate::context::Verbosity::Quiet,
                     no_color: true,
                 },
+                interactive: true,
                 lock_mode: None,
             }
         }

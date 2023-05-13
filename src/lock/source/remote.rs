@@ -28,7 +28,7 @@ pub fn lock(ctx: &Context, dir: PathBuf, file: PathBuf, url: &Url) -> Result<Loc
         let temp_file_handle = fs::File::create(path)
             .with_context(|| format!("failed to create `{}`", path.display()))?;
         util::download(url.as_ref(), temp_file_handle)
-            .with_context(|| format!("failed to download `{}`", url))?;
+            .with_context(|| format!("failed to download `{url}`"))?;
     }
     temp_file
         .rename(&file)
@@ -64,7 +64,7 @@ mod tests {
         assert_eq!(locked.file, Some(file.clone()));
         assert_eq!(
             fs::read_to_string(&file).unwrap(),
-            fs::read_to_string(&manifest_dir.join("LICENSE-MIT")).unwrap()
+            fs::read_to_string(manifest_dir.join("LICENSE-MIT")).unwrap()
         );
 
         let modified = fs::metadata(&file).unwrap().modified().unwrap();
@@ -76,7 +76,7 @@ mod tests {
         assert_eq!(locked.file, Some(file.clone()));
         assert_eq!(
             fs::read_to_string(&file).unwrap(),
-            fs::read_to_string(&manifest_dir.join("LICENSE-MIT")).unwrap()
+            fs::read_to_string(manifest_dir.join("LICENSE-MIT")).unwrap()
         );
         assert!(fs::metadata(&file).unwrap().modified().unwrap() > modified)
     }

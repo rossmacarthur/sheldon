@@ -17,11 +17,12 @@ Commands:
 
 Options:
   -q, --quiet               Suppress any informational output
+      --non-interactive     Suppress any interactive prompts and assume "yes" as the answer
   -v, --verbose             Use verbose output
       --color <WHEN>        Output coloring: always, auto, or never [default: auto]
       --config-dir <PATH>   The configuration directory [env: SHELDON_CONFIG_DIR=]
       --data-dir <PATH>     The data directory [env: SHELDON_DATA_DIR=]
       --config-file <PATH>  The config file [env: SHELDON_CONFIG_FILE=]
       --profile <PROFILE>   The profile used for conditional plugins [env: SHELDON_PROFILE=]
-  -h, --help                Print help information
-  -V, --version             Print version information
+  -h, --help                Print help
+  -V, --version             Print version

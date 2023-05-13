@@ -1,5 +1,5 @@
 _sheldon() {
-    local i cur prev opts cmds
+    local i cur prev opts cmd
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
@@ -43,7 +43,7 @@ _sheldon() {
 
     case "${cmd}" in
         sheldon)
-            opts="-q -v -h -V --quiet --verbose --color --config-dir --data-dir --config-file --profile --help --version init add edit remove lock source completions version"
+            opts="-q -v -h -V --quiet --non-interactive --verbose --color --config-dir --data-dir --config-file --profile --help --version init add edit remove lock source completions version"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 1 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0

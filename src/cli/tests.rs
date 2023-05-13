@@ -64,6 +64,7 @@ fn raw_opt_no_options() {
         raw_opt(&["lock"]),
         RawOpt {
             quiet: false,
+            non_interactive: false,
             verbose: false,
             color: Default::default(),
             config_dir: None,
@@ -99,6 +100,7 @@ fn raw_opt_options() {
         ]),
         RawOpt {
             quiet: true,
+            non_interactive: false,
             verbose: true,
             color: ColorChoice::Never,
             config_dir: Some("/test".into()),
@@ -117,7 +119,8 @@ fn raw_opt_options() {
 fn raw_opt_subcommand_required() {
     setup();
     let err = raw_opt_err(&[]);
-    goldie::assert!(err.to_string());
+    let ctx = upon::value! { version: build::CRATE_RELEASE };
+    goldie::assert_template!(&ctx, err.to_string());
     assert_eq!(
         err.kind(),
         ErrorKind::DisplayHelpOnMissingArgumentOrSubcommand

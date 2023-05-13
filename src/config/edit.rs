@@ -43,7 +43,7 @@ impl EditConfig {
                 //        shell = ... above the header comment.
                 let config = config.replace(
                     "\n[plugins]",
-                    &format!("\nshell = \"{}\"\n\n[plugins]", shell),
+                    &format!("\nshell = \"{shell}\"\n\n[plugins]"),
                 );
                 Self::from_str(config).unwrap()
             }
@@ -101,7 +101,7 @@ impl EditConfig {
                 }
                 *item = table;
             }
-            _ => bail!("plugin with name `{}` already exists", name),
+            _ => bail!("plugin with name `{name}` already exists"),
         }
 
         Ok(())

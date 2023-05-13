@@ -309,6 +309,12 @@ or
 shell = "zsh"
 ```
 
+as well as the experimental
+
+```toml
+shell = "fish"
+```
+
 ### `match`
 
 A list of glob patterns to match against a plugin's contents. The first pattern
@@ -340,6 +346,21 @@ match = [
     "*.plugin.sh",
     "*.bash",
     "*.sh"
+]
+```
+
+If the shell is Fish then this defaults to
+
+```toml
+match = [
+    "conf.d/{{ name }}.fish",
+    "conf.d/{!_*,*}.fish",
+    "{completions,functions}/{{ name }}.fish",
+    "{completions,functions}/{!_*,*}.fish",
+    "{completions,functions}/*.fish",
+    "{{ name }}.fish",
+    "{!_*,*}.fish",
+    "*.fish"
 ]
 ```
 

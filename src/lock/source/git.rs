@@ -58,7 +58,7 @@ fn checkout(
     let current_oid = repo.head()?.target().context("current HEAD as no target")?;
     let expected_oid = checkout.resolve(repo)?;
     if current_oid == expected_oid {
-        ctx.log_status("Checked", &format!("{}{}", url, checkout))
+        ctx.log_status("Checked", &format!("{url}{checkout}"))
     } else {
         git::checkout(repo, expected_oid)?;
         git::submodule_update(repo).context("failed to recursively update")?;
@@ -79,13 +79,15 @@ fn checkout(
 fn install(ctx: &Context, dir: PathBuf, url: &Url, checkout: GitCheckout) -> Result<LockedSource> {
     let temp_dir =
         TempPath::new_force(&dir).context("failed to prepare temporary clone directory")?;
-    let repo = git::clone(url, temp_dir.path())?;
-    git::checkout(&repo, checkout.resolve(&repo)?)?;
-    git::submodule_update(&repo).context("failed to recursively update")?;
+    {
+        let repo = git::clone(url, temp_dir.path())?;
+        git::checkout(&repo, checkout.resolve(&repo)?)?;
+        git::submodule_update(&repo).context("failed to recursively update")?;
+    } // `repo` must be dropped before renaming the directory
     temp_dir
         .rename(&dir)
         .context("failed to rename temporary clone directory")?;
-    ctx.log_status("Cloned", &format!("{}{}", url, checkout));
+    ctx.log_status("Cloned", &format!("{url}{checkout}"));
     Ok(LockedSource { dir, file: None })
 }
 
@@ -93,7 +95,7 @@ impl fmt::Display for GitCheckout {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::DefaultBranch => write!(f, ""),
-            Self::Branch(s) | Self::Rev(s) | Self::Tag(s) => write!(f, "@{}", s),
+            Self::Branch(s) | Self::Rev(s) | Self::Tag(s) => write!(f, "@{s}"),
         }
     }
 }

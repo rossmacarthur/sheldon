@@ -92,8 +92,12 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - uses: dtolnay/rust-toolchain@stable
+
+    - name: Install cargo-onedoc
+      run: cargo install cargo-onedoc --locked
+
     - name: Check README
-      run: cargo run --package gen-readme -- --check
+      run: cargo onedoc --check
 
   # ---------------------------------------------------------------------------
   # Check completions
@@ -130,7 +134,7 @@ jobs:
 
       - name: Calculate version from tag
         id: version
-        run: echo "::set-output name=value::${GITHUB_REF#refs/tags/}"
+        run: echo "value=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
 
       - name: Check tag against package version
         run: grep '^version = "${{ steps.version.outputs.value }}"$' Cargo.toml
@@ -184,20 +188,9 @@ jobs:
           cargo install cross
           cross build --locked --release --target ${{ matrix.target }}
 
-      - name: Strip binary (macOS)
-        if: matrix.target == 'x86_64-apple-darwin'
-        run: strip target/${{ matrix.target }}/release/$CRATE
-
-      - name: Strip binary (Linux)
-        if: matrix.target != 'x86_64-apple-darwin'
-        run: |
-          docker run --rm -v $PWD/target:/target \
-            rossmacarthur/sheldon-cross:${{ matrix.target}}-0.2.1 \
-            ${{ matrix.prefix}}-strip /target/${{ matrix.target }}/release/$CRATE
-
       - name: Calculate version from tag
         id: version
-        run: echo "::set-output name=value::${GITHUB_REF#refs/tags/}"
+        run: echo "value=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
 
       - name: Archive
         id: archive
@@ -212,7 +205,7 @@ jobs:
           tar cfz "../$archive" -- *
           cd ..
           rm -r release
-          echo "::set-output name=path::$archive"
+          echo "path=$archive" >> $GITHUB_OUTPUT
 
       - uses: softprops/action-gh-release@v1
         env:

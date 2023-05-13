@@ -15,19 +15,20 @@ _sheldon() {
 
     local context curcontext="$curcontext" state line
     _arguments "${_arguments_options[@]}" \
-'--color=[Output coloring: always, auto, or never]:WHEN: ' \
+'--color=[Output coloring\: always, auto, or never]:WHEN: ' \
 '--config-dir=[The configuration directory]:PATH:_files' \
 '--data-dir=[The data directory]:PATH:_files' \
 '--config-file=[The config file]:PATH:_files' \
 '--profile=[The profile used for conditional plugins]:PROFILE: ' \
 '-q[Suppress any informational output]' \
 '--quiet[Suppress any informational output]' \
+'--non-interactive[Suppress any interactive prompts and assume "yes" as the answer]' \
 '-v[Use verbose output]' \
 '--verbose[Use verbose output]' \
-'-h[Print help information]' \
-'--help[Print help information]' \
-'-V[Print version information]' \
-'--version[Print version information]' \
+'-h[Print help]' \
+'--help[Print help]' \
+'-V[Print version]' \
+'--version[Print version]' \
 ":: :_sheldon_commands" \
 "*::: :->sheldon" \
 && ret=0
@@ -39,9 +40,9 @@ _sheldon() {
         case $line[1] in
             (init)
 _arguments "${_arguments_options[@]}" \
-'--shell=[The type of shell, accepted values are: bash, zsh]:SHELL: ' \
-'-h[Print help information]' \
-'--help[Print help information]' \
+'--shell=[The type of shell, accepted values are\: bash, fish, zsh]:SHELL: ' \
+'-h[Print help]' \
+'--help[Print help]' \
 && ret=0
 ;;
 (add)
@@ -60,21 +61,21 @@ _arguments "${_arguments_options[@]}" \
 '*--apply=[Templates to apply to this plugin]:TEMPLATE: ' \
 '*--profiles=[Only use this plugin under one of the given profiles]:PROFILES: ' \
 '*--hooks=[Hooks executed during template evaluation]:SCRIPT: ' \
-'-h[Print help information]' \
-'--help[Print help information]' \
+'-h[Print help]' \
+'--help[Print help]' \
 ':name -- A unique name for this plugin:' \
 && ret=0
 ;;
 (edit)
 _arguments "${_arguments_options[@]}" \
-'-h[Print help information]' \
-'--help[Print help information]' \
+'-h[Print help]' \
+'--help[Print help]' \
 && ret=0
 ;;
 (remove)
 _arguments "${_arguments_options[@]}" \
-'-h[Print help information]' \
-'--help[Print help information]' \
+'-h[Print help]' \
+'--help[Print help]' \
 ':name -- A unique name for this plugin:' \
 && ret=0
 ;;
@@ -82,8 +83,8 @@ _arguments "${_arguments_options[@]}" \
 _arguments "${_arguments_options[@]}" \
 '--update[Update all plugin sources]' \
 '(--update)--reinstall[Reinstall all plugin sources]' \
-'-h[Print help information]' \
-'--help[Print help information]' \
+'-h[Print help]' \
+'--help[Print help]' \
 && ret=0
 ;;
 (source)
@@ -91,21 +92,21 @@ _arguments "${_arguments_options[@]}" \
 '--relock[Regenerate the lock file]' \
 '--update[Update all plugin sources (implies --relock)]' \
 '(--update)--reinstall[Reinstall all plugin sources (implies --relock)]' \
-'-h[Print help information]' \
-'--help[Print help information]' \
+'-h[Print help]' \
+'--help[Print help]' \
 && ret=0
 ;;
 (completions)
 _arguments "${_arguments_options[@]}" \
-'--shell=[The type of shell, accepted values are: bash, zsh]:SHELL: ' \
-'-h[Print help information]' \
-'--help[Print help information]' \
+'--shell=[The type of shell, accepted values are\: bash, zsh]:SHELL: ' \
+'-h[Print help]' \
+'--help[Print help]' \
 && ret=0
 ;;
 (version)
 _arguments "${_arguments_options[@]}" \
-'-h[Print help information]' \
-'--help[Print help information]' \
+'-h[Print help]' \
+'--help[Print help]' \
 && ret=0
 ;;
         esac
@@ -168,4 +169,8 @@ _sheldon__version_commands() {
     _describe -t commands 'sheldon version commands' commands "$@"
 }
 
-_sheldon "$@"
+if [ "$funcstack[1]" = "_sheldon" ]; then
+    _sheldon "$@"
+else
+    compdef _sheldon sheldon
+fi

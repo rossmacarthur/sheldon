@@ -54,6 +54,7 @@ impl TestCommand {
             .env("SHELDON_CONFIG_DIR", &dirs.config)
             .env("SHELDON_DATA_DIR", &dirs.data)
             .args(&params)
+            .arg("--non-interactive")
             .arg("--verbose");
 
         Self {
@@ -124,22 +125,31 @@ impl TestCommand {
         if let Some(exit_code) = self.expect_exit_code {
             assert_eq!(
                 result_exit_code, exit_code,
-                "\nexit code: {}\nstdout:\n{}\nstderr:\n{}\n",
-                result_exit_code, result_stdout, result_stderr
+                "
+exit code: {result_exit_code}
+stdout: {result_stdout}
+stderr: {result_stderr}
+",
             );
         }
         if let Some(stdout) = self.expect_stdout {
             assert_eq!(
                 result_stdout, stdout,
-                "\nexit code: {}\nstdout:\n{}\nstderr:\n{}\n",
-                result_exit_code, result_stdout, result_stderr
+                "
+exit code: {result_exit_code}
+stdout: {result_stdout}
+stderr: {result_stderr}
+",
             );
         }
         if let Some(stderr) = self.expect_stderr {
             assert_eq!(
                 result_stderr, stderr,
-                "\nexit code: {}\nstdout:\n{}\nstderr:\n{}\n",
-                result_exit_code, result_stdout, result_stderr
+                "
+exit code: {result_exit_code}
+stdout: {result_stdout}
+stderr: {result_stderr}
+",
             );
         }
         Ok(())

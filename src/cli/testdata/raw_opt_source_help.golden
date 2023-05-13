@@ -6,4 +6,4 @@ Options:
       --relock     Regenerate the lock file
       --update     Update all plugin sources (implies --relock)
       --reinstall  Reinstall all plugin sources (implies --relock)
-  -h, --help       Print help information
+  -h, --help       Print help

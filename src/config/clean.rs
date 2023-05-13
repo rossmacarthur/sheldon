@@ -70,14 +70,13 @@ fn remove_path(ctx: &Context, path: &Path) -> Result<()> {
     let path_display = &path_replace_home.display();
     if path
         .metadata()
-        .with_context(|| format!("failed to fetch metadata for `{}`", path_display))?
+        .with_context(|| format!("failed to fetch metadata for `{path_display}`"))?
         .is_dir()
     {
         fs::remove_dir_all(path)
-            .with_context(|| format!("failed to remove directory `{}`", path_display))?;
+            .with_context(|| format!("failed to remove directory `{path_display}`"))?;
     } else {
-        fs::remove_file(path)
-            .with_context(|| format!("failed to remove file `{}`", path_display))?;
+        fs::remove_file(path).with_context(|| format!("failed to remove file `{path_display}`"))?;
     }
     ctx.log_verbose_warning("Removed", path_display);
     Ok(())

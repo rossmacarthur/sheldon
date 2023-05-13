@@ -36,6 +36,10 @@ pub struct RawOpt {
     #[clap(long, short)]
     pub quiet: bool,
 
+    /// Suppress any interactive prompts and assume "yes" as the answer.
+    #[clap(long)]
+    pub non_interactive: bool,
+
     /// Use verbose output.
     #[clap(long, short)]
     pub verbose: bool,
@@ -69,7 +73,7 @@ pub struct RawOpt {
 pub enum RawCommand {
     /// Initialize a new config file.
     Init {
-        /// The type of shell, accepted values are: bash, zsh.
+        /// The type of shell, accepted values are: bash, fish, zsh.
         #[clap(long, value_name = "SHELL")]
         shell: Option<Shell>,
     },
@@ -195,6 +199,7 @@ impl From<Shell> for complete::Shell {
     fn from(s: Shell) -> Self {
         match s {
             Shell::Bash => complete::Shell::Bash,
+            Shell::Fish => complete::Shell::Fish,
             Shell::Zsh => complete::Shell::Zsh,
         }
     }

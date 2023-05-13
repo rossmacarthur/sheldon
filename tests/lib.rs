@@ -49,7 +49,7 @@ impl TestCase {
         };
 
         let mut data = HashMap::new();
-        for entry in fs::read_dir(&dir)? {
+        for entry in fs::read_dir(dir)? {
             let path = entry?.path();
             let name = path.file_name().unwrap().to_str().unwrap().to_owned();
             let raw = fs::read_to_string(&path)?;
@@ -71,8 +71,8 @@ impl TestCase {
     fn command(&self, command: &str) -> TestCommand {
         TestCommand::new(&self.dirs)
             .expect_exit_code(0)
-            .expect_stdout(self.get(format!("{}.stdout", command)))
-            .expect_stderr(self.get(format!("{}.stderr", command)))
+            .expect_stdout(self.get(format!("{command}.stdout")))
+            .expect_stderr(self.get(format!("{command}.stderr")))
             .arg(command)
     }
 
@@ -147,7 +147,7 @@ fn lock_and_source_clean() -> io::Result<()> {
         fs::OpenOptions::new()
             .create(true)
             .write(true)
-            .open(&data.join("repos/test.com/test.txt"))?;
+            .open(data.join("repos/test.com/test.txt"))?;
     }
 
     case.run()?;
@@ -169,14 +169,14 @@ fn lock_and_source_clean_permission_denied() -> io::Result<()> {
             .open(data.join("repos/test.com/test.txt"))?;
     }
     fs::set_permissions(
-        &data.join("repos/test.com"),
+        data.join("repos/test.com"),
         fs::Permissions::from_mode(0o000),
     )?;
 
     case.run()?;
 
     fs::set_permissions(
-        &data.join("repos/test.com"),
+        data.join("repos/test.com"),
         fs::Permissions::from_mode(0o777),
     )?;
 
@@ -461,7 +461,7 @@ fn version() -> io::Result<()> {
     let maybe_commit_date = option_env!("GIT_COMMIT_DATE");
     let commit_info =
         if let (Some(commit_hash), Some(commit_date)) = (maybe_commit_hash, maybe_commit_date) {
-            format!(" ({} {})", commit_hash, commit_date)
+            format!(" ({commit_hash} {commit_date})")
         } else {
             "".to_string()
         };

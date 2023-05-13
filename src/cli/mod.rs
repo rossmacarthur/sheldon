@@ -62,6 +62,7 @@ impl Opt {
     fn from_raw_opt(raw_opt: RawOpt) -> Self {
         let RawOpt {
             quiet,
+            non_interactive,
             verbose,
             color,
             data_dir,
@@ -140,7 +141,7 @@ impl Opt {
             };
         let lock_file = match profile.as_deref() {
             Some("") | None => data_dir.join("plugins.lock"),
-            Some(p) => data_dir.join(&format!("plugins.{}.lock", p)),
+            Some(p) => data_dir.join(format!("plugins.{p}.lock")),
         };
         let clone_dir = data_dir.join("repos");
         let download_dir = data_dir.join("downloads");
@@ -156,6 +157,7 @@ impl Opt {
             download_dir,
             profile,
             output,
+            interactive: !non_interactive,
             lock_mode,
         };
 
