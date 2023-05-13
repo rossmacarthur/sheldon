@@ -667,7 +667,7 @@ Plugins all have the following information that can be used in templates.
   option with `use`. These can be used in templates by iterating over the files.
   For example: `{% for file in  files %} ... {{ file }} ... {% endfor %}`.
 
-* **Hooks** Hooks are taken directly from the configuration and can be used as
+- **Hooks** Hooks are taken directly from the configuration and can be used as
   `{{ hooks.[KEY] }}`.
 
 To add or update a template add a new key to the `[templates]` table in the
