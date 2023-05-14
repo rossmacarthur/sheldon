@@ -19,9 +19,21 @@ impl LockedConfig {
     pub fn script(&self, ctx: &Context) -> Result<String> {
         // Compile the templates
         let mut engine = upon::Engine::new();
-        engine.add_filter("contains", |map: BTreeMap<String, _>, key: String| {
-            map.contains_key(&key)
+        engine.add_filter(
+            "get",
+            |map: &BTreeMap<String, upon::Value>, key: &str| -> Option<upon::Value> {
+                map.get(key).cloned()
+            },
+        );
+        engine.add_filter("nl", |mut v: upon::Value| -> upon::Value {
+            if let upon::Value::String(s) = &mut v {
+                if !s.ends_with('\n') {
+                    s.push('\n');
+                }
+            }
+            v
         });
+
         for (name, template) in &self.templates {
             engine
                 .add_template(name, template)

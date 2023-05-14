@@ -220,13 +220,13 @@ impl Shell {
         static DEFAULT_TEMPLATES_BASH: Lazy<IndexMap<String, String>> = Lazy::new(|| {
             indexmap_into! {
                 "PATH" => "export PATH=\"{{ dir }}:$PATH\"",
-                "source" => "{% if hooks | contains: \"pre\" %}{{ hooks.pre }}\n{% endif %}{% for file in files %}source \"{{ file }}\"\n{% endfor %}{% if hooks | contains: \"post\" %}\n{{ hooks.post }}{% endif %}"
+                "source" => "{{ hooks | get: \"pre\" | nl }}{% for file in files %}source \"{{ file }}\"\n{% endfor %}{{ hooks | get: \"post\" | nl }}"
             }
         });
         static DEFAULT_TEMPLATES_FISH: Lazy<IndexMap<String, String>> = Lazy::new(|| {
             indexmap_into! {
                 "add_path" => "fish_add_path \"{{ dir }}\"",
-                "source" => "{% for file in files %}source \"{{ file }}\"\n{% endfor %}"
+                "source" => "{{ hooks | get: \"pre\" | nl }}{% for file in files %}source \"{{ file }}\"\n{% endfor %}{{ hooks | get: \"post\" | nl }}"
             }
         });
         static DEFAULT_TEMPLATES_ZSH: Lazy<IndexMap<String, String>> = Lazy::new(|| {
@@ -234,7 +234,7 @@ impl Shell {
                 "PATH" => "export PATH=\"{{ dir }}:$PATH\"",
                 "path" => "path=( \"{{ dir }}\" $path )",
                 "fpath" => "fpath=( \"{{ dir }}\" $fpath )",
-                "source" => "{% if hooks | contains: \"pre\" %}{{ hooks.pre }}\n{% endif %}{% for file in files %}source \"{{ file }}\"\n{% endfor %}{% if hooks | contains: \"post\" %}\n{{ hooks.post }}{% endif %}"
+                "source" => "{{ hooks | get: \"pre\" | nl }}{% for file in files %}source \"{{ file }}\"\n{% endfor %}{{ hooks | get: \"post\" | nl }}"
             }
         });
         match self {

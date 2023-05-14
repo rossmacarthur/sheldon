@@ -15,7 +15,7 @@ pre = "pre"
 
 [[plugins]]
 name = "inline-test"
-raw = "{% if hooks | contains: \"pre\" %}{{ hooks.pre }}\n{% endif %}echo 'testing...'\n{% if hooks | contains: \"post\" %}{{ hooks.post }}\n{% endif %}"
+raw = "{{ hooks | get: \"pre\" | nl }}echo 'testing...'\n{{ hooks | get: \"post\" | nl }}"
 
 [plugins.hooks]
 post = "post"
@@ -24,4 +24,4 @@ post = "post"
 PATH = "export PATH=\"{{ dir }}:$PATH\""
 path = "path=( \"{{ dir }}\" $path )"
 fpath = "fpath=( \"{{ dir }}\" $fpath )"
-source = "{% if hooks | contains: \"pre\" %}{{ hooks.pre }}\n{% endif %}{% for file in files %}source \"{{ file }}\"\n{% endfor %}{% if hooks | contains: \"post\" %}\n{{ hooks.post }}{% endif %}"
+source = "{{ hooks | get: \"pre\" | nl }}{% for file in files %}source \"{{ file }}\"\n{% endfor %}{{ hooks | get: \"post\" | nl }}"
