@@ -50,7 +50,6 @@ impl LockedConfig {
                     for f in &plugin.files {
                         files.push(f.to_str().context("plugin directory is not valid UTF-8")?);
                     }
-                    let empty_hooks = BTreeMap::new();
                     let data = ExternalData {
                         name: &plugin.name,
                         dir: plugin
@@ -58,7 +57,7 @@ impl LockedConfig {
                             .to_str()
                             .context("plugin directory is not valid UTF-8")?,
                         files,
-                        hooks: plugin.hooks.as_ref().unwrap_or(&empty_hooks),
+                        hooks: &plugin.hooks,
                     };
 
                     for name in &plugin.apply {
@@ -76,10 +75,9 @@ impl LockedConfig {
                 }
                 LockedPlugin::Inline(plugin) => {
                     // Data to use in template rendering
-                    let empty_hooks = BTreeMap::new();
                     let data = upon::value! {
                         name: &plugin,
-                        hooks: plugin.hooks.as_ref().unwrap_or(&empty_hooks),
+                        hooks: &plugin.hooks,
                     };
                     let out = engine
                         .compile(&plugin.raw)

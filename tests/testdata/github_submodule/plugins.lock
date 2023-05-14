@@ -11,6 +11,8 @@ plugin_dir = "<data>/repos/github.com/rossmacarthur/sheldon-test/self/self"
 files = ["<data>/repos/github.com/rossmacarthur/sheldon-test/self/self/test.plugin.zsh"]
 apply = ["source"]
 
+[plugins.hooks]
+
 [templates]
 PATH = "export PATH=\"{{ dir }}:$PATH\""
 path = "path=( \"{{ dir }}\" $path )"

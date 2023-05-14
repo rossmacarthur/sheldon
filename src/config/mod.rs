@@ -67,7 +67,7 @@ pub struct ExternalPlugin {
     /// Only use this plugin under one of the given profiles.
     pub profiles: Option<Vec<String>>,
     /// Hooks executed during template evaluation.
-    pub hooks: Option<BTreeMap<String, String>>,
+    pub hooks: BTreeMap<String, String>,
 }
 
 /// The source for a [`Plugin`].
@@ -106,7 +106,7 @@ pub struct InlinePlugin {
     /// Only use this plugin under one of the given profiles.
     pub profiles: Option<Vec<String>>,
     /// Hooks executed during template evaluation.
-    pub hooks: Option<BTreeMap<String, String>>,
+    pub hooks: BTreeMap<String, String>,
 }
 
 /// Load a [`Config`] from the given path.

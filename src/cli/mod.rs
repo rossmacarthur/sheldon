@@ -6,6 +6,7 @@ mod raw;
 #[cfg(test)]
 mod tests;
 
+use std::collections::BTreeMap;
 use std::env;
 use std::io;
 use std::path::{Path, PathBuf};
@@ -185,7 +186,9 @@ impl EditPlugin {
             hooks,
         } = add;
 
-        let hooks = hooks.map(|h| h.into_iter().collect());
+        let hooks = hooks
+            .map(|h| h.into_iter().collect())
+            .unwrap_or(BTreeMap::new());
 
         let reference = match (branch, rev, tag) {
             (Some(s), None, None) => Some(GitReference::Branch(s)),

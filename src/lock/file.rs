@@ -51,7 +51,7 @@ pub struct LockedExternalPlugin {
     /// What templates to apply to each file.
     pub apply: Vec<String>,
     /// Hooks executed during template evaluation.
-    pub hooks: Option<BTreeMap<String, String>>,
+    pub hooks: BTreeMap<String, String>,
 }
 
 impl LockedConfig {

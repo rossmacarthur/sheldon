@@ -75,7 +75,7 @@ pub struct RawPlugin {
     /// set in the SHELDON_PROFILE environment variable.
     pub profiles: Option<Vec<String>>,
     /// Hooks executed during template evaluation.
-    pub hooks: Option<BTreeMap<String, String>>,
+    pub hooks: BTreeMap<String, String>,
     /// Any extra keys,
     #[serde(flatten, deserialize_with = "deserialize_rest_toml_value")]
     pub rest: Option<toml::Value>,
@@ -516,10 +516,7 @@ mod tests {
     #[test]
     fn raw_plugin_deserialize_hooks() {
         let expected = RawPlugin {
-            hooks: Some(BTreeMap::from([
-                ("pre".into(), "PRE".into()),
-                ("post".into(), "POST".into()),
-            ])),
+            hooks: BTreeMap::from([("pre".into(), "PRE".into()), ("post".into(), "POST".into())]),
             ..Default::default()
         };
         let plugin: RawPlugin = toml::from_str("hooks.pre = 'PRE'\nhooks.post = 'POST'").unwrap();

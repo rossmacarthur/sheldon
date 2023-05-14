@@ -10,11 +10,15 @@ source_dir = "<home>/.sheldon/downloads/raw.githubusercontent.com/rossmacarthur/
 files = ["<home>/.sheldon/downloads/raw.githubusercontent.com/rossmacarthur/sheldon-test/master/test.plugin.zsh"]
 apply = ["source"]
 
+[plugins.hooks]
+
 [[plugins]]
 name = "testb"
 source_dir = "<home>/.sheldon/repos/github.com/rossmacarthur/sheldon-test"
 files = ["<home>/.sheldon/repos/github.com/rossmacarthur/sheldon-test/test.plugin.zsh"]
 apply = ["source"]
+
+[plugins.hooks]
 
 [templates]
 PATH = "export PATH=\"{{ dir }}:$PATH\""

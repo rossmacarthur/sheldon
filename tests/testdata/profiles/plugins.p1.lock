@@ -11,10 +11,14 @@ source_dir = "<data>/repos/github.com/rossmacarthur/sheldon-test"
 files = ["<data>/repos/github.com/rossmacarthur/sheldon-test/test.plugin.zsh"]
 apply = ["source"]
 
+[plugins.hooks]
+
 [[plugins]]
 name = "inline-test"
 raw = "echo 'testing...'"
 profiles = ["p1", "p2"]
+
+[plugins.hooks]
 
 [templates]
 PATH = "export PATH=\"{{ dir }}:$PATH\""

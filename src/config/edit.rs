@@ -195,6 +195,8 @@ tag = "0.1.0"
 [plugins.sheldon-test]
 git = 'https://github.com/rossmacarthur/sheldon-test'
 branch = 'feature'
+
+[plugins.sheldon-test.hooks]
 "#
         )
     }
@@ -218,6 +220,8 @@ branch = 'feature'
 [plugins.sheldon-test]
 github = 'rossmacarthur/sheldon-test'
 tag = '0.1.0'
+
+[plugins.sheldon-test.hooks]
 "#
         )
     }
@@ -258,6 +262,8 @@ apply = ["PATH", "source"]
 
 [templates]
 prompt = '{% for file in files %}ln -sf "{{ file }}" "{{ data_dir }}/functions/prompt_{{ name }}_setup"{% endfor %}'
+
+[plugins.sheldon-test.hooks]
 
 # yes this is the pure plugin
 [plugins.pure]

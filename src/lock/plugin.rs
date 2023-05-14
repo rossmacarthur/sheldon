@@ -141,6 +141,7 @@ fn match_globs(dir: &Path, patterns: &[String], files: &mut Vec<PathBuf>) -> Res
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::collections::BTreeMap;
 
     use url::Url;
 
@@ -161,7 +162,7 @@ mod tests {
             dir: None,
             uses: Some(vec!["*.md".into(), "{{ name }}.plugin.zsh".into()]),
             apply: None,
-            hooks: None,
+            hooks: BTreeMap::new(),
             profiles: None,
         };
         let locked_source = source::lock(&ctx, plugin.source.clone()).unwrap();
@@ -195,7 +196,7 @@ mod tests {
             dir: None,
             uses: None,
             apply: None,
-            hooks: None,
+            hooks: BTreeMap::new(),
             profiles: None,
         };
         let locked_source = source::lock(&ctx, plugin.source.clone()).unwrap();
@@ -230,7 +231,7 @@ mod tests {
             dir: None,
             uses: None,
             apply: None,
-            hooks: None,
+            hooks: BTreeMap::new(),
             profiles: None,
         };
         let locked_source = source::lock(&ctx, plugin.source.clone()).unwrap();
@@ -267,7 +268,7 @@ mod tests {
             dir: None,
             uses: None,
             apply: None,
-            hooks: None,
+            hooks: BTreeMap::new(),
             profiles: None,
         };
         let locked_source = source::lock(&ctx, plugin.source.clone()).unwrap();

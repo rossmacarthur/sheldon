@@ -298,7 +298,7 @@ impl LockedExternalPlugin {
 
 #[cfg(test)]
 mod tests {
-
+    use std::collections::BTreeMap;
     use url::Url;
 
     use super::*;
@@ -374,7 +374,7 @@ mod tests {
                 uses: None,
                 apply: None,
                 profiles: None,
-                hooks: None,
+                hooks: BTreeMap::new(),
             })],
         };
         let test_dir = ctx.clone_dir().join("github.com/rossmacarthur/another-dir");
