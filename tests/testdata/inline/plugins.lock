@@ -16,8 +16,6 @@ apply = ["source"]
 name = "inline-test"
 raw = "echo 'testing...'"
 
-[plugins.hooks]
-
 [templates]
 PATH = "export PATH=\"{{ dir }}:$PATH\""
 path = "path=( \"{{ dir }}\" $path )"

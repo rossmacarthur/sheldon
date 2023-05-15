@@ -271,7 +271,6 @@ fn validate_template_names(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::collections::BTreeMap;
 
     use crate::config::{GitHubRepository, GitReference};
 
@@ -322,7 +321,7 @@ mod tests {
             uses: None,
             apply: None,
             profiles: None,
-            hooks: BTreeMap::new(),
+            hooks: None,
         });
         let raw_plugin = RawPlugin {
             git: Some(url),
@@ -355,7 +354,7 @@ mod tests {
             uses: None,
             apply: None,
             profiles: None,
-            hooks: BTreeMap::new(),
+            hooks: None,
         });
         let raw_plugin = RawPlugin {
             gist: Some(
@@ -391,7 +390,7 @@ mod tests {
             uses: None,
             apply: None,
             profiles: None,
-            hooks: BTreeMap::new(),
+            hooks: None,
         });
         let raw_plugin = RawPlugin {
             gist: Some("579d02802b1cc17baed07753d09f5009".parse().unwrap()),
@@ -424,7 +423,7 @@ mod tests {
             uses: None,
             apply: None,
             profiles: None,
-            hooks: BTreeMap::new(),
+            hooks: None,
         });
         let raw_plugin = RawPlugin {
             gist: Some(
@@ -459,7 +458,7 @@ mod tests {
             uses: None,
             apply: None,
             profiles: None,
-            hooks: BTreeMap::new(),
+            hooks: None,
         });
         let raw_plugin = RawPlugin {
             github: Some(GitHubRepository {
@@ -493,7 +492,7 @@ mod tests {
             uses: None,
             apply: None,
             profiles: None,
-            hooks: BTreeMap::new(),
+            hooks: None,
         });
         let raw_plugin = RawPlugin {
             github: Some(GitHubRepository {
@@ -526,7 +525,7 @@ mod tests {
             uses: None,
             apply: None,
             profiles: None,
-            hooks: BTreeMap::new(),
+            hooks: None,
         });
         let raw_plugin = RawPlugin {
             github: Some(GitHubRepository {
@@ -560,7 +559,7 @@ mod tests {
             uses: None,
             apply: None,
             profiles: None,
-            hooks: BTreeMap::new(),
+            hooks: None,
         });
         let raw_plugin = RawPlugin {
             remote: Some(url),
@@ -641,7 +640,7 @@ mod tests {
             uses: None,
             apply: None,
             profiles: None,
-            hooks: BTreeMap::new(),
+            hooks: None,
         });
         let raw_plugin = RawPlugin {
             local: Some("/home/temp".into()),
@@ -665,7 +664,7 @@ mod tests {
             name: name.clone(),
             raw: "echo 'this is a test'\n".to_string(),
             profiles: None,
-            hooks: BTreeMap::new(),
+            hooks: None,
         });
         let raw_plugin = RawPlugin {
             inline: Some("echo 'this is a test'\n".to_string()),

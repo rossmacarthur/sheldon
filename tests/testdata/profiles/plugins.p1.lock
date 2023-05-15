@@ -18,8 +18,6 @@ name = "inline-test"
 raw = "echo 'testing...'"
 profiles = ["p1", "p2"]
 
-[plugins.hooks]
-
 [templates]
 PATH = "export PATH=\"{{ dir }}:$PATH\""
 path = "path=( \"{{ dir }}\" $path )"

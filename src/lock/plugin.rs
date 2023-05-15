@@ -1,3 +1,4 @@
+use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
 use anyhow::{bail, Context as ResultExt, Result};
@@ -29,6 +30,7 @@ pub fn lock(
     } = plugin;
 
     let apply = apply.unwrap_or_else(|| global_apply.to_vec());
+    let hooks = hooks.unwrap_or(BTreeMap::new());
 
     Ok(if let Source::Remote { .. } = source {
         let LockedSource { dir, file } = locked_source;
@@ -141,7 +143,6 @@ fn match_globs(dir: &Path, patterns: &[String], files: &mut Vec<PathBuf>) -> Res
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::collections::BTreeMap;
 
     use url::Url;
 
@@ -162,7 +163,7 @@ mod tests {
             dir: None,
             uses: Some(vec!["*.md".into(), "{{ name }}.plugin.zsh".into()]),
             apply: None,
-            hooks: BTreeMap::new(),
+            hooks: None,
             profiles: None,
         };
         let locked_source = source::lock(&ctx, plugin.source.clone()).unwrap();
@@ -196,7 +197,7 @@ mod tests {
             dir: None,
             uses: None,
             apply: None,
-            hooks: BTreeMap::new(),
+            hooks: None,
             profiles: None,
         };
         let locked_source = source::lock(&ctx, plugin.source.clone()).unwrap();
@@ -231,7 +232,7 @@ mod tests {
             dir: None,
             uses: None,
             apply: None,
-            hooks: BTreeMap::new(),
+            hooks: None,
             profiles: None,
         };
         let locked_source = source::lock(&ctx, plugin.source.clone()).unwrap();
@@ -268,7 +269,7 @@ mod tests {
             dir: None,
             uses: None,
             apply: None,
-            hooks: BTreeMap::new(),
+            hooks: None,
             profiles: None,
         };
         let locked_source = source::lock(&ctx, plugin.source.clone()).unwrap();
