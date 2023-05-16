@@ -1,3 +1,4 @@
+use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
 use anyhow::{bail, Context as ResultExt, Result};
@@ -24,10 +25,12 @@ pub fn lock(
         dir,
         uses,
         apply,
+        hooks,
         profiles: _,
     } = plugin;
 
     let apply = apply.unwrap_or_else(|| global_apply.to_vec());
+    let hooks = hooks.unwrap_or(BTreeMap::new());
 
     Ok(if let Source::Remote { .. } = source {
         let LockedSource { dir, file } = locked_source;
@@ -37,6 +40,7 @@ pub fn lock(
             plugin_dir: None,
             files: vec![file.unwrap()],
             apply,
+            hooks,
         }
     } else {
         // Data to use in template rendering
@@ -88,6 +92,7 @@ pub fn lock(
             plugin_dir,
             files,
             apply,
+            hooks,
         }
     })
 }
@@ -158,6 +163,7 @@ mod tests {
             dir: None,
             uses: Some(vec!["*.md".into(), "{{ name }}.plugin.zsh".into()]),
             apply: None,
+            hooks: None,
             profiles: None,
         };
         let locked_source = source::lock(&ctx, plugin.source.clone()).unwrap();
@@ -191,6 +197,7 @@ mod tests {
             dir: None,
             uses: None,
             apply: None,
+            hooks: None,
             profiles: None,
         };
         let locked_source = source::lock(&ctx, plugin.source.clone()).unwrap();
@@ -225,6 +232,7 @@ mod tests {
             dir: None,
             uses: None,
             apply: None,
+            hooks: None,
             profiles: None,
         };
         let locked_source = source::lock(&ctx, plugin.source.clone()).unwrap();
@@ -261,6 +269,7 @@ mod tests {
             dir: None,
             uses: None,
             apply: None,
+            hooks: None,
             profiles: None,
         };
         let locked_source = source::lock(&ctx, plugin.source.clone()).unwrap();

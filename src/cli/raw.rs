@@ -189,6 +189,10 @@ pub struct Add {
     /// Only use this plugin under one of the given profiles
     #[clap(long, value_name = "PROFILES", num_args(1..))]
     pub profiles: Option<Vec<String>>,
+
+    /// Hooks executed during template evaluation.
+    #[clap(long, value_name = "SCRIPT", value_parser = key_value_parser, num_args(1..))]
+    pub hooks: Option<Vec<(String, String)>>,
 }
 
 impl From<Shell> for complete::Shell {
@@ -198,5 +202,15 @@ impl From<Shell> for complete::Shell {
             Shell::Fish => complete::Shell::Fish,
             Shell::Zsh => complete::Shell::Zsh,
         }
+    }
+}
+
+fn key_value_parser(s: &str) -> Result<(String, String), String> {
+    match s.split_once('=') {
+        Some((k, v)) => Ok((k.to_string(), v.to_string())),
+        _ => Err(format!(
+            "{} isn't a valid key-value pair separated with =",
+            s
+        )),
     }
 }

@@ -10,8 +10,10 @@ source_dir = "<data>/repos/github.com/rossmacarthur/sheldon-test"
 files = ["<data>/repos/github.com/rossmacarthur/sheldon-test/test.plugin.zsh"]
 apply = ["source"]
 
+[plugins.hooks]
+
 [templates]
 PATH = "export PATH=\"{{ dir }}:$PATH\""
 path = "path=( \"{{ dir }}\" $path )"
 fpath = "fpath=( \"{{ dir }}\" $fpath )"
-source = "{% for file in files %}source \"{{ file }}\"\n{% endfor %}"
+source = "{{ hooks | get: \"pre\" | nl }}{% for file in files %}source \"{{ file }}\"\n{% endfor %}{{ hooks | get: \"post\" | nl }}"

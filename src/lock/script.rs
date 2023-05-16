@@ -1,5 +1,6 @@
 use anyhow::{Context as ResultExt, Result};
 use serde::Serialize;
+use std::collections::BTreeMap;
 
 use crate::context::Context;
 use crate::lock::file::LockedPlugin;
@@ -10,6 +11,7 @@ struct ExternalData<'a> {
     name: &'a str,
     dir: &'a str,
     files: Vec<&'a str>,
+    hooks: &'a BTreeMap<String, String>,
 }
 
 impl LockedConfig {
@@ -17,6 +19,21 @@ impl LockedConfig {
     pub fn script(&self, ctx: &Context) -> Result<String> {
         // Compile the templates
         let mut engine = upon::Engine::new();
+        engine.add_filter(
+            "get",
+            |map: &BTreeMap<String, upon::Value>, key: &str| -> Option<upon::Value> {
+                map.get(key).cloned()
+            },
+        );
+        engine.add_filter("nl", |mut v: upon::Value| -> upon::Value {
+            if let upon::Value::String(s) = &mut v {
+                if !s.ends_with('\n') {
+                    s.push('\n');
+                }
+            }
+            v
+        });
+
         for (name, template) in &self.templates {
             engine
                 .add_template(name, template)
@@ -40,6 +57,7 @@ impl LockedConfig {
                             .to_str()
                             .context("plugin directory is not valid UTF-8")?,
                         files,
+                        hooks: &plugin.hooks,
                     };
 
                     for name in &plugin.apply {
@@ -57,7 +75,10 @@ impl LockedConfig {
                 }
                 LockedPlugin::Inline(plugin) => {
                     // Data to use in template rendering
-                    let data = upon::value! { name: &plugin };
+                    let data = upon::value! {
+                        name: &plugin,
+                        hooks: &plugin.hooks,
+                    };
                     let out = engine
                         .compile(&plugin.raw)
                         .with_context(|| {

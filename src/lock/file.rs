@@ -1,5 +1,6 @@
 //! The raw lock file.
 
+use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -49,6 +50,8 @@ pub struct LockedExternalPlugin {
     pub files: Vec<PathBuf>,
     /// What templates to apply to each file.
     pub apply: Vec<String>,
+    /// Hooks executed during template evaluation.
+    pub hooks: BTreeMap<String, String>,
 }
 
 impl LockedConfig {

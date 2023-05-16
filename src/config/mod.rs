@@ -6,6 +6,7 @@ mod file;
 mod normalize;
 mod profile;
 
+use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::str;
@@ -65,6 +66,8 @@ pub struct ExternalPlugin {
     pub apply: Option<Vec<String>>,
     /// Only use this plugin under one of the given profiles.
     pub profiles: Option<Vec<String>>,
+    /// Hooks executed during template evaluation.
+    pub hooks: Option<BTreeMap<String, String>>,
 }
 
 /// The source for a [`Plugin`].
@@ -102,6 +105,8 @@ pub struct InlinePlugin {
     pub raw: String,
     /// Only use this plugin under one of the given profiles.
     pub profiles: Option<Vec<String>>,
+    /// Hooks executed during template evaluation.
+    pub hooks: Option<BTreeMap<String, String>>,
 }
 
 /// Load a [`Config`] from the given path.

@@ -11,6 +11,14 @@ files = ["<data>/repos/github.com/rossmacarthur/sheldon-test/test.plugin.zsh"]
 apply = ["source"]
 
 [plugins.hooks]
+pre = "pre"
+
+[[plugins]]
+name = "inline-test"
+raw = "{{ hooks | get: \"pre\" | nl }}echo 'testing...'\n{{ hooks | get: \"post\" | nl }}"
+
+[plugins.hooks]
+post = "post"
 
 [templates]
 PATH = "export PATH=\"{{ dir }}:$PATH\""

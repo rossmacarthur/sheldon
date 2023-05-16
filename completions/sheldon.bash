@@ -77,7 +77,7 @@ _sheldon() {
             return 0
             ;;
         sheldon__add)
-            opts="-h --git --gist --github --remote --local --proto --branch --rev --tag --dir --use --apply --profiles --help <NAME>"
+            opts="-h --git --gist --github --remote --local --proto --branch --rev --tag --dir --use --apply --profiles --hooks --help <NAME>"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -132,6 +132,10 @@ _sheldon() {
                     return 0
                     ;;
                 --profiles)
+                    COMPREPLY=($(compgen -f "${cur}"))
+                    return 0
+                    ;;
+                --hooks)
                     COMPREPLY=($(compgen -f "${cur}"))
                     return 0
                     ;;

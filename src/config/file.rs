@@ -1,5 +1,6 @@
 //! The raw config file.
 
+use std::collections::BTreeMap;
 use std::fmt;
 use std::path::PathBuf;
 use std::result;
@@ -73,6 +74,8 @@ pub struct RawPlugin {
     /// If configured, only installs this plugin if one of the given profiles is
     /// set in the SHELDON_PROFILE environment variable.
     pub profiles: Option<Vec<String>>,
+    /// Hooks executed during template evaluation.
+    pub hooks: Option<BTreeMap<String, String>>,
     /// Any extra keys,
     #[serde(flatten, deserialize_with = "deserialize_rest_toml_value")]
     pub rest: Option<toml::Value>,
@@ -507,6 +510,19 @@ mod tests {
             ..Default::default()
         };
         let plugin: RawPlugin = toml::from_str("profiles = ['p1', 'p2']").unwrap();
+        assert_eq!(plugin, expected);
+    }
+
+    #[test]
+    fn raw_plugin_deserialize_hooks() {
+        let expected = RawPlugin {
+            hooks: Some(BTreeMap::from([
+                ("pre".into(), "PRE".into()),
+                ("post".into(), "POST".into()),
+            ])),
+            ..Default::default()
+        };
+        let plugin: RawPlugin = toml::from_str("hooks.pre = 'PRE'\nhooks.post = 'POST'").unwrap();
         assert_eq!(plugin, expected);
     }
 }

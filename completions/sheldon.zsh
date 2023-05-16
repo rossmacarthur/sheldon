@@ -60,6 +60,7 @@ _arguments "${_arguments_options[@]}" \
 '*--use=[Which files to use in this plugin]:MATCH: ' \
 '*--apply=[Templates to apply to this plugin]:TEMPLATE: ' \
 '*--profiles=[Only use this plugin under one of the given profiles]:PROFILES: ' \
+'*--hooks=[Hooks executed during template evaluation]:SCRIPT: ' \
 '-h[Print help]' \
 '--help[Print help]' \
 ':name -- A unique name for this plugin:' \

@@ -202,6 +202,19 @@ plugin will be used regardless of the profile. Otherwise, the plugin is only
 used if the specified [profile](Command-line-interface.md#--profile-profile) is
 included in the configured list of profiles.
 
+### `hooks`
+
+Statements executed around plugin installation.
+
+```toml
+[plugins.example]
+github = "owner/repo"
+
+[plugins.example.hooks]
+pre = "export TEST=test"
+post = "unset TEST"
+```
+
 ## Inline plugins
 
 For convenience it also possible to define Inline plugins. An Inline plugin must
@@ -235,7 +248,7 @@ following.
 
 ```toml
 [templates]
-source = "{% for file in files %}source \"{{ file }}\"\n{% endfor %}"
+source = "{{ hooks | get: \"pre\" | nl }}{% for file in files %}source \"{{ file }}\"\n{% endfor %}{{ hooks | get: \"post\" | nl }}"
 PATH = 'export PATH="{{ dir }}:$PATH"'
 path = 'path=( "{{ dir }}" $path )'
 fpath = 'fpath=( "{{ dir }}" $fpath )'
@@ -270,6 +283,9 @@ Plugins all have the following information that can be used in templates.
   either discovered using the the global `match` field or specified as a plugin
   option with `use`. These can be used in templates by iterating over the files.
   For example: `{% for file in  files %} ... {{ file }} ... {% endfor %}`.
+
+* **Hooks** Hooks are taken directly from the configuration and can be used as
+  `{{ hooks.[KEY] }}`.
 
 To add or update a template add a new key to the `[templates]` table in the
 config file. Take a look at the [examples](Examples.md) for some interesting

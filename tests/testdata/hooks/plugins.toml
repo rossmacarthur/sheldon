@@ -1,0 +1,11 @@
+[plugins.test]
+github = "rossmacarthur/sheldon-test"
+[plugins.test.hooks]
+pre = "pre"
+
+[plugins.inline-test]
+inline = """
+{{ hooks | get: "pre" | nl }}echo 'testing...'
+{{ hooks | get: "post" | nl }}"""
+[plugins.inline-test.hooks]
+post = "post"

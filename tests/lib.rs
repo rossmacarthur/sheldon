@@ -388,6 +388,14 @@ fn lock_and_source_profiles() -> io::Result<()> {
 }
 
 #[test]
+fn lock_and_source_hooks() -> io::Result<()> {
+    let case = TestCase::load("hooks")?;
+    case.run()?;
+    check_sheldon_test(&case.dirs.data).unwrap();
+    Ok(())
+}
+
+#[test]
 fn directories_old() -> io::Result<()> {
     let case = TestCase::load("directories_old")?;
     let config_dir = case.dirs.home.path().join(".sheldon");

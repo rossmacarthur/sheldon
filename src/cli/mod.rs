@@ -182,7 +182,10 @@ impl EditPlugin {
             uses,
             apply,
             profiles,
+            hooks,
         } = add;
+
+        let hooks = hooks.map(|h| h.into_iter().collect());
 
         let reference = match (branch, rev, tag) {
             (Some(s), None, None) => Some(GitReference::Branch(s)),
@@ -209,6 +212,7 @@ impl EditPlugin {
                 uses,
                 apply,
                 profiles,
+                hooks,
                 rest: None,
             }),
         )

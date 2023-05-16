@@ -220,13 +220,13 @@ impl Shell {
         static DEFAULT_TEMPLATES_BASH: Lazy<IndexMap<String, String>> = Lazy::new(|| {
             indexmap_into! {
                 "PATH" => "export PATH=\"{{ dir }}:$PATH\"",
-                "source" => "{% for file in files %}source \"{{ file }}\"\n{% endfor %}"
+                "source" => "{{ hooks | get: \"pre\" | nl }}{% for file in files %}source \"{{ file }}\"\n{% endfor %}{{ hooks | get: \"post\" | nl }}"
             }
         });
         static DEFAULT_TEMPLATES_FISH: Lazy<IndexMap<String, String>> = Lazy::new(|| {
             indexmap_into! {
                 "add_path" => "fish_add_path \"{{ dir }}\"",
-                "source" => "{% for file in files %}source \"{{ file }}\"\n{% endfor %}"
+                "source" => "{{ hooks | get: \"pre\" | nl }}{% for file in files %}source \"{{ file }}\"\n{% endfor %}{{ hooks | get: \"post\" | nl }}"
             }
         });
         static DEFAULT_TEMPLATES_ZSH: Lazy<IndexMap<String, String>> = Lazy::new(|| {
@@ -234,7 +234,7 @@ impl Shell {
                 "PATH" => "export PATH=\"{{ dir }}:$PATH\"",
                 "path" => "path=( \"{{ dir }}\" $path )",
                 "fpath" => "fpath=( \"{{ dir }}\" $fpath )",
-                "source" => "{% for file in files %}source \"{{ file }}\"\n{% endfor %}"
+                "source" => "{{ hooks | get: \"pre\" | nl }}{% for file in files %}source \"{{ file }}\"\n{% endfor %}{{ hooks | get: \"post\" | nl }}"
             }
         });
         match self {
@@ -298,7 +298,6 @@ impl LockedExternalPlugin {
 
 #[cfg(test)]
 mod tests {
-
     use url::Url;
 
     use super::*;
@@ -374,6 +373,7 @@ mod tests {
                 uses: None,
                 apply: None,
                 profiles: None,
+                hooks: None,
             })],
         };
         let test_dir = ctx.clone_dir().join("github.com/rossmacarthur/another-dir");
