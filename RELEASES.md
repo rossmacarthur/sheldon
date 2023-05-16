@@ -1,5 +1,30 @@
 # 📝 Release notes
 
+## 0.7.3
+
+*Unreleased*
+
+- [Add configurable hooks in templates.][#150] This allows you to specify
+  arbitrary hooks for a plugin that can be used in templates. These are
+  specified under `plugins.<name>.hooks`. The default `source` templates have
+  been updated to support hooks with the names `pre` and `post`. The `pre` hook
+  will be inserted before the plugin is sourced and the `post` after the plugin
+  is sourced. If you are using a custom template like `defer` it will need to
+  be updated to support hooks.
+
+  For example this can be used to set variables after a plugin is sourced.
+  ```toml
+  [plugins.enhancd]
+  github = "b4b4r07/enhancd"
+
+  [plugins.enhancd.hooks]
+  post = 'export ENHANCD_HOOK_AFTER_CD = "ls"'
+  ```
+
+  *Contributed by [**@mkroli**](https://github.com/mkroli)*
+
+[#150]: https://github.com/rossmacarthur/sheldon/issues/150
+
 ## 0.7.2
 
 *May 13th, 2023*
@@ -23,6 +48,8 @@
 
 - [Fix 'PermissionDenied' during rename of temporary clone directory.][#162]
 
+  *Contributed by [**sceneq**](https://github.com/sceneq)*
+
 [#128]: https://github.com/rossmacarthur/sheldon/issues/128
 [#162]: https://github.com/rossmacarthur/sheldon/issues/162
 [#163]: https://github.com/rossmacarthur/sheldon/issues/163
@@ -40,6 +67,8 @@
   ```
   cargo install --profile compact sheldon
   ```
+
+  *Contributed by [**@mkroli**](https://github.com/mkroli)*
 
 [#156]: https://github.com/rossmacarthur/sheldon/issues/156
 [#145]: https://github.com/rossmacarthur/sheldon/issues/145
@@ -114,9 +143,13 @@
   - Command line flag: `--profile <name>`
   - Environment variable: `SHELDON_PROFILE=<name>`.
 
+  *Contributed by [**@mkroli**](https://github.com/mkroli)*
+
 - [Support cargo-binstall.][#144] This allows Sheldon to be installed using
   `cargo binstall sheldon` which will fetch the release artifact for Sheldon
   from the GitHub release.
+
+  *Contributed by [**@Jackenmen**](https://github.com/Jackenmen)*
 
 ### Fixes
 
@@ -165,8 +198,9 @@
 
 *March 27th, 2021*
 
-- [Support Git proxy settings.][#116] <small>(Contributed by
-  [**@iclac**](https://github.com/iclac).)</small>
+- [Support Git proxy settings.][#116]
+
+  *Contributed by [**@iclac**](https://github.com/iclac)*
 
 [#116]: https://github.com/rossmacarthur/sheldon/issues/116
 
@@ -208,17 +242,19 @@
   set then Sheldon will adopt the [XDG directory structure] by default. The
   config file will be located at `$XDG_CONFIG_HOME/sheldon/plugins.toml` and
   downloaded data will be located in `$XDG_CONFIG_DATA/sheldon`.
-  <small>(Contributed by
-  [**@tapeinosyne**](https://github.com/tapeinosyne).)</small>
+
+  *Contributed by [**@tapeinosyne**](https://github.com/tapeinosyne)*
+
 - [Change the default lock file location.][10c64a3] For non-XDG directory
   structures the lock file now always defaults to
   `$SHELDON_DATA_DIR/plugins.lock`. It previously was the config file path with
   a `.lock` extension.
+
 - [Remove the Sheldon root.][#112] The `root` directory has been replaced by
   individual directories for configuration and data: `config_dir` and
   `data_dir`. Both default to `$HOME/.sheldon`, the old default `root`.
-  <small>(Contributed by
-  [**@tapeinosyne**](https://github.com/tapeinosyne).)</small>
+
+  *Contributed by [**@tapeinosyne**](https://github.com/tapeinosyne)*
 
   If you used Sheldon's defaults, everything will just keep working as it did;
   no action needs to be taken. Otherwise, you may refer to this migration table:
