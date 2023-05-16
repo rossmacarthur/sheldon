@@ -2,7 +2,7 @@
 
 ## 0.7.3
 
-*Unreleased*
+*May 16th, 2023*
 
 - [Add configurable hooks in templates.][#150] This allows you to specify
   arbitrary hooks for a plugin that can be used in templates. These are
