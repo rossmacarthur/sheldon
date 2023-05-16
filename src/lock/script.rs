@@ -76,7 +76,7 @@ impl LockedConfig {
                 LockedPlugin::Inline(plugin) => {
                     // Data to use in template rendering
                     let data = upon::value! {
-                        name: &plugin,
+                        name: &plugin.name,
                         hooks: &plugin.hooks,
                     };
                     let out = engine
