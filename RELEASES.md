@@ -20,6 +20,12 @@
   [plugins.enhancd.hooks]
   post = 'export ENHANCD_HOOK_AFTER_CD = "ls"'
   ```
+  
+  To use `defer` custom template, please update to this .
+  ```toml
+  [templates]
+  defer = "{{ hooks | get: \"pre\" | nl }}{% for file in files %}zsh-defer source \"{{ file }}\"\n{% endfor %}{{ hooks | get: \"post\" | nl }}"
+  ```
 
   *Contributed by [**@mkroli**](https://github.com/mkroli)*
 
