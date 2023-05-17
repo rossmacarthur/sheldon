@@ -148,6 +148,31 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="-release-notes"><a class="header" href="#-release-notes">📝 Release notes</a></h1>
+<h2 id="073"><a class="header" href="#073">0.7.3</a></h2>
+<p><em>May 16th, 2023</em></p>
+<ul>
+<li>
+<p><a href="https://github.com/rossmacarthur/sheldon/issues/150">Add configurable hooks in templates.</a> This allows you to specify
+arbitrary hooks for a plugin that can be used in templates. These are
+specified under <code>plugins.&lt;name&gt;.hooks</code>. The default <code>source</code> templates have
+been updated to support hooks with the names <code>pre</code> and <code>post</code>. The <code>pre</code> hook
+will be inserted before the plugin is sourced and the <code>post</code> after the plugin
+is sourced. If you are using a custom template like <code>defer</code> it will need to
+be updated to support hooks.</p>
+<p>For example this can be used to set variables after a plugin is sourced.</p>
+<pre><code class="language-toml">[plugins.enhancd]
+github = &quot;b4b4r07/enhancd&quot;
+
+[plugins.enhancd.hooks]
+post = 'export ENHANCD_HOOK_AFTER_CD = &quot;ls&quot;'
+</code></pre>
+<p>To use <code>defer</code> custom template, please update to this .</p>
+<pre><code class="language-toml">[templates]
+defer = &quot;{{ hooks | get: \&quot;pre\&quot; | nl }}{% for file in files %}zsh-defer source \&quot;{{ file }}\&quot;\n{% endfor %}{{ hooks | get: \&quot;post\&quot; | nl }}&quot;
+</code></pre>
+<p><em>Contributed by <a href="https://github.com/mkroli"><strong>@mkroli</strong></a></em></p>
+</li>
+</ul>
 <h2 id="072"><a class="header" href="#072">0.7.2</a></h2>
 <p><em>May 13th, 2023</em></p>
 <ul>
@@ -169,6 +194,7 @@ Fish. Add the following to your Fish config</p>
 </li>
 <li>
 <p><a href="https://github.com/rossmacarthur/sheldon/issues/162">Fix 'PermissionDenied' during rename of temporary clone directory.</a></p>
+<p><em>Contributed by <a href="https://github.com/sceneq"><strong>sceneq</strong></a></em></p>
 </li>
 </ul>
 <h2 id="071"><a class="header" href="#071">0.7.1</a></h2>
@@ -183,6 +209,7 @@ directory still needed to exist for Sheldon to work properly.</p>
 size.</p>
 <pre><code>cargo install --profile compact sheldon
 </code></pre>
+<p><em>Contributed by <a href="https://github.com/mkroli"><strong>@mkroli</strong></a></em></p>
 </li>
 </ul>
 <h2 id="070"><a class="header" href="#070">0.7.0</a></h2>
@@ -249,11 +276,13 @@ profiles = [&quot;&lt;name&gt;&quot;]
 <li>Command line flag: <code>--profile &lt;name&gt;</code></li>
 <li>Environment variable: <code>SHELDON_PROFILE=&lt;name&gt;</code>.</li>
 </ul>
+<p><em>Contributed by <a href="https://github.com/mkroli"><strong>@mkroli</strong></a></em></p>
 </li>
 <li>
 <p><a href="https://github.com/rossmacarthur/sheldon/pull/144">Support cargo-binstall.</a> This allows Sheldon to be installed using
 <code>cargo binstall sheldon</code> which will fetch the release artifact for Sheldon
 from the GitHub release.</p>
+<p><em>Contributed by <a href="https://github.com/Jackenmen"><strong>@Jackenmen</strong></a></em></p>
 </li>
 </ul>
 <h3 id="fixes"><a class="header" href="#fixes">Fixes</a></h3>
@@ -283,8 +312,10 @@ symlink Sheldon will now emit an error.</li>
 <h2 id="063"><a class="header" href="#063">0.6.3</a></h2>
 <p><em>March 27th, 2021</em></p>
 <ul>
-<li><a href="https://github.com/rossmacarthur/sheldon/issues/116">Support Git proxy settings.</a> <small>(Contributed by
-<a href="https://github.com/iclac"><strong>@iclac</strong></a>.)</small></li>
+<li>
+<p><a href="https://github.com/rossmacarthur/sheldon/issues/116">Support Git proxy settings.</a></p>
+<p><em>Contributed by <a href="https://github.com/iclac"><strong>@iclac</strong></a></em></p>
+</li>
 </ul>
 <h2 id="062"><a class="header" href="#062">0.6.2</a></h2>
 <p><em>March 13th, 2021</em></p>
@@ -313,9 +344,8 @@ re-open it or overwrite.</li>
 <p><a href="https://github.com/rossmacarthur/sheldon/pull/110">Support XDG directory structure.</a> If any XDG environment variable is
 set then Sheldon will adopt the <a href="https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html">XDG directory structure</a> by default. The
 config file will be located at <code>$XDG_CONFIG_HOME/sheldon/plugins.toml</code> and
-downloaded data will be located in <code>$XDG_CONFIG_DATA/sheldon</code>.
-<small>(Contributed by
-<a href="https://github.com/tapeinosyne"><strong>@tapeinosyne</strong></a>.)</small></p>
+downloaded data will be located in <code>$XDG_CONFIG_DATA/sheldon</code>.</p>
+<p><em>Contributed by <a href="https://github.com/tapeinosyne"><strong>@tapeinosyne</strong></a></em></p>
 </li>
 <li>
 <p><a href="https://github.com/rossmacarthur/sheldon/commit/10c64a3cd0e1f95536a821016a165728dde59779">Change the default lock file location.</a> For non-XDG directory
@@ -326,9 +356,8 @@ a <code>.lock</code> extension.</p>
 <li>
 <p><a href="https://github.com/rossmacarthur/sheldon/pull/112">Remove the Sheldon root.</a> The <code>root</code> directory has been replaced by
 individual directories for configuration and data: <code>config_dir</code> and
-<code>data_dir</code>. Both default to <code>$HOME/.sheldon</code>, the old default <code>root</code>.
-<small>(Contributed by
-<a href="https://github.com/tapeinosyne"><strong>@tapeinosyne</strong></a>.)</small></p>
+<code>data_dir</code>. Both default to <code>$HOME/.sheldon</code>, the old default <code>root</code>.</p>
+<p><em>Contributed by <a href="https://github.com/tapeinosyne"><strong>@tapeinosyne</strong></a></em></p>
 <p>If you used Sheldon's defaults, everything will just keep working as it did;
 no action needs to be taken. Otherwise, you may refer to this migration table:</p>
 <div class="table-wrapper"><table><thead><tr><th style="text-align: right"></th><th>Old</th><th>New</th></tr></thead><tbody>

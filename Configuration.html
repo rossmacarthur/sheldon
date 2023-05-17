@@ -274,6 +274,15 @@ plugins.</p>
 plugin will be used regardless of the profile. Otherwise, the plugin is only
 used if the specified <a href="Command-line-interface.html#--profile-profile">profile</a> is
 included in the configured list of profiles.</p>
+<h3 id="hooks"><a class="header" href="#hooks"><code>hooks</code></a></h3>
+<p>Statements executed around plugin installation.</p>
+<pre><code class="language-toml">[plugins.example]
+github = &quot;owner/repo&quot;
+
+[plugins.example.hooks]
+pre = &quot;export TEST=test&quot;
+post = &quot;unset TEST&quot;
+</code></pre>
 <h2 id="inline-plugins"><a class="header" href="#inline-plugins">Inline plugins</a></h2>
 <p>For convenience it also possible to define Inline plugins. An Inline plugin must
 set the <code>inline</code> field and specify the raw source.</p>
@@ -299,7 +308,7 @@ using. The following are available for both Bash and Zsh.</p>
 <p>As template strings in the config file they could be represented like the
 following.</p>
 <pre><code class="language-toml">[templates]
-source = &quot;{% for file in files %}source \&quot;{{ file }}\&quot;\n{% endfor %}&quot;
+source = &quot;{{ hooks | get: \&quot;pre\&quot; | nl }}{% for file in files %}source \&quot;{{ file }}\&quot;\n{% endfor %}{{ hooks | get: \&quot;post\&quot; | nl }}&quot;
 PATH = 'export PATH=&quot;{{ dir }}:$PATH&quot;'
 path = 'path=( &quot;{{ dir }}&quot; $path )'
 fpath = 'fpath=( &quot;{{ dir }}&quot; $fpath )'
@@ -331,6 +340,10 @@ can be used in templates with <code>{{ dir }}</code>.</p>
 either discovered using the the global <code>match</code> field or specified as a plugin
 option with <code>use</code>. These can be used in templates by iterating over the files.
 For example: <code>{% for file in  files %} ... {{ file }} ... {% endfor %}</code>.</p>
+</li>
+<li>
+<p><strong>Hooks</strong> Hooks are taken directly from the configuration and can be used as
+<code>{{ hooks.[KEY] }}</code>.</p>
 </li>
 </ul>
 <p>To add or update a template add a new key to the <code>[templates]</code> table in the
