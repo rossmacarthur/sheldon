@@ -119,7 +119,7 @@ impl Opt {
 
         let output = Output {
             verbosity,
-            no_color: color.is_no_color(),
+            no_color: !color.is_color(),
         };
 
         let home = match home::home_dir() {

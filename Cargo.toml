@@ -3,6 +3,7 @@ name = "sheldon"
 version = "0.7.3"
 authors = ["Ross MacArthur <ross@macarthur.io>"]
 edition = "2021"
+rust-version = "1.70"
 description = "Fast, configurable, shell plugin manager."
 documentation = "https://sheldon.cli.rs"
 readme = "README.md"
@@ -28,7 +29,6 @@ pkg-url = "{ repo }/releases/download/{ version }/sheldon-{ version }-{ target }
 
 [dependencies]
 anyhow = "1.0.71"
-atty = "0.2.14"
 casual = "0.2.0"
 clap_complete = "4.2.2"
 constcat = "0.3.0"

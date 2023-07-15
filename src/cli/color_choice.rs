@@ -1,4 +1,6 @@
 use std::fmt;
+use std::io;
+use std::io::IsTerminal;
 use std::str::FromStr;
 
 use thiserror::Error;
@@ -48,11 +50,11 @@ impl FromStr for ColorChoice {
 }
 
 impl ColorChoice {
-    pub fn is_no_color(self) -> bool {
+    pub fn is_color(self) -> bool {
         match self {
-            Self::Always => false,
-            Self::Auto => !atty::is(atty::Stream::Stderr),
-            Self::Never => true,
+            Self::Always => true,
+            Self::Auto => io::stderr().is_terminal(),
+            Self::Never => false,
         }
     }
 }
