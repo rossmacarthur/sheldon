@@ -4,9 +4,10 @@
 
 *Fast, configurable, shell plugin manager*
 
-[![Crates.io version](https://img.shields.io/crates/v/sheldon.svg)](https://crates.io/crates/sheldon)
-[![Download](https://img.shields.io/github/v/release/rossmacarthur/sheldon)](https://github.com/rossmacarthur/sheldon/releases/latest)
-[![Build Status](https://img.shields.io/github/actions/workflow/status/rossmacarthur/sheldon/build.yaml?branch=trunk)](https://github.com/rossmacarthur/sheldon/actions/workflows/build.yaml)
+[![Crates.io version](https://badgers.space/crates/version/sheldon)](https://crates.io/crates/sheldon)
+[![Download](https://badgers.space/github/release/rossmacarthur/sheldon)](https://github.com/rossmacarthur/sheldon/releases/latest)
+[![License](https://badgers.space/github/license/rossmacarthur/sheldon)](https://github.com/rossmacarthur/sheldon#license)
+[![Build Status](https://badgers.space/github/checks/rossmacarthur/sheldon/trunk?label=build)](https://github.com/rossmacarthur/sheldon/actions/workflows/build.yaml)
 
 ## Features
 
