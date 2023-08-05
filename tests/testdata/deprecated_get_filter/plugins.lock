@@ -1,0 +1,19 @@
+version = "<version>"
+home = "<home>"
+config_dir = "<config>"
+data_dir = "<data>"
+config_file = "<config>/plugins.toml"
+
+[[plugins]]
+name = "test"
+source_dir = "<data>/repos/github.com/rossmacarthur/sheldon-test"
+files = ["<data>/repos/github.com/rossmacarthur/sheldon-test/test.plugin.zsh"]
+apply = ["source"]
+
+[plugins.hooks]
+
+[templates]
+PATH = "export PATH=\"{{ dir }}:$PATH\""
+path = "path=( \"{{ dir }}\" $path )"
+fpath = "fpath=( \"{{ dir }}\" $fpath )"
+source = "{{ hooks | get: \"pre\" | nl }}{% for file in files %}source \"{{ file }}\"\n{% endfor %}{{ hooks | get: \"post\" | nl }}"

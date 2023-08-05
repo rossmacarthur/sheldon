@@ -401,8 +401,16 @@ fn lock_and_source_hooks() -> io::Result<()> {
 }
 
 #[test]
-fn directories_old() -> io::Result<()> {
-    let case = TestCase::load("directories_old")?;
+fn lock_and_source_deprecated_get_filter() -> io::Result<()> {
+    let case = TestCase::load("deprecated_get_filter")?;
+    case.run()?;
+    check_sheldon_test(&case.dirs.data).unwrap();
+    Ok(())
+}
+
+#[test]
+fn deprecated_directories() -> io::Result<()> {
+    let case = TestCase::load("deprecated_directories")?;
     let config_dir = case.dirs.home.path().join(".sheldon");
     fs::remove_dir(&case.dirs.data).ok();
     fs::remove_dir(&case.dirs.config).ok();

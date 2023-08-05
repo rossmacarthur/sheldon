@@ -1,6 +1,8 @@
-use anyhow::{Context as ResultExt, Result};
+use anyhow::{Context as ResultExt, Error, Result};
+use once_cell::sync::Lazy;
 use serde::Serialize;
 use std::collections::BTreeMap;
+use std::sync::Mutex;
 
 use crate::context::Context;
 use crate::lock::file::LockedPlugin;
@@ -16,12 +18,15 @@ struct ExternalData<'a> {
 
 impl LockedConfig {
     /// Generate the script.
-    pub fn script(&self, ctx: &Context) -> Result<String> {
-        // Compile the templates
+    pub fn script(&self, ctx: &Context, warnings: &mut Vec<Error>) -> Result<String> {
+        static USED_GET: Lazy<Mutex<bool>> = Lazy::new(|| Mutex::new(false));
+
         let mut engine = upon::Engine::new();
+
         engine.add_filter(
             "get",
             |map: &BTreeMap<String, upon::Value>, key: &str| -> Option<upon::Value> {
+                *USED_GET.lock().unwrap() = true;
                 map.get(key).cloned()
             },
         );
@@ -34,6 +39,7 @@ impl LockedConfig {
             v
         });
 
+        // Compile the templates
         for (name, template) in &self.templates {
             engine
                 .add_template(name, template)
@@ -97,6 +103,14 @@ impl LockedConfig {
                     ctx.log_verbose_status("Inlined", &plugin.name);
                 }
             }
+        }
+
+        if *USED_GET.lock().unwrap() {
+            warnings.push(Error::msg(
+                "use of deprecated filter `get` in [templates], please use the `?.` operator \
+                 instead.\nFor example: `{{ hooks | get: \"pre\" | nl }}` can be written `{{ \
+                 hook?.pre | nl }}`",
+            ));
         }
 
         Ok(script)
