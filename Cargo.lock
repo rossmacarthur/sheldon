@@ -803,7 +803,7 @@ dependencies = [
  "thiserror",
  "toml",
  "toml_edit",
- "upon 0.6.0",
+ "upon 0.7.1",
  "url",
  "walkdir",
  "which",
@@ -967,9 +967,9 @@ dependencies = [
 
 [[package]]
 name = "upon"
-version = "0.6.0"
+version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "98503344deda52a763050feff749ba70544524ab39cc00f50cc6b4bfdaf3a634"
+checksum = "21a9260fe394dfd8ab204a8eab40f88eb9a331bb852147d24fc0aff6b30daa02"
 dependencies = [
  "serde",
 ]

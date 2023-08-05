@@ -5,7 +5,7 @@ pre = "pre"
 
 [plugins.inline-test]
 inline = """
-{{ hooks | get: "pre" | nl }}echo 'testing...'
-{{ hooks | get: "post" | nl }}"""
+{{ hooks?.pre | nl }}echo 'testing...'
+{{ hooks?.post | nl }}"""
 [plugins.inline-test.hooks]
 post = "post"

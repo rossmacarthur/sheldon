@@ -20,7 +20,7 @@
   [plugins.enhancd.hooks]
   post = 'export ENHANCD_HOOK_AFTER_CD = "ls"'
   ```
-  
+
   To use `defer` custom template, please update to this .
   ```toml
   [templates]

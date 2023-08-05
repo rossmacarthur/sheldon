@@ -53,7 +53,12 @@ impl TestCase {
             let path = entry?.path();
             let name = path.file_name().unwrap().to_str().unwrap().to_owned();
             let raw = fs::read_to_string(&path)?;
-            let value = ENGINE.compile(&raw).unwrap().render(&subs).unwrap();
+            let value = ENGINE
+                .compile(&raw)
+                .unwrap()
+                .render(&subs)
+                .to_string()
+                .unwrap();
             data.insert(name, value);
         }
 

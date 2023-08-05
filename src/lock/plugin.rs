@@ -105,6 +105,7 @@ where
         .compile(template)
         .with_context(|| format!("failed to compile template `{template}`"))?
         .render(ctx)
+        .to_string()
         .with_context(|| format!("failed to render template `{template}`"))
 }
 

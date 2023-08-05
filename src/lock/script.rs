@@ -65,6 +65,7 @@ impl LockedConfig {
                             .get_template(name)
                             .unwrap()
                             .render(&data)
+                            .to_string()
                             .with_context(|| format!("failed to render template `{name}`"))?;
                         script.push_str(out);
                         if !out.ends_with('\n') {
@@ -85,6 +86,7 @@ impl LockedConfig {
                             format!("failed to compile inline plugin `{}`", &plugin.name)
                         })?
                         .render(&data)
+                        .to_string()
                         .with_context(|| {
                             format!("failed to render inline plugin `{}`", &plugin.name)
                         })?;

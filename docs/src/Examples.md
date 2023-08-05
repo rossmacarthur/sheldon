@@ -27,7 +27,7 @@ Then add a template that calls `zsh-defer source` instead of just `source`.
 
 ```toml
 [templates]
-defer = "{{ hooks | get: \"pre\" | nl }}{% for file in files %}zsh-defer source \"{{ file }}\"\n{% endfor %}{{ hooks | get: \"post\" | nl }}"
+defer = "{{ hooks?.pre | nl }}{% for file in files %}zsh-defer source \"{{ file }}\"\n{% endfor %}{{ hooks?.post | nl }}"
 ```
 
 Now any plugin that you want to defer you can apply the `defer` template. For
