@@ -61,6 +61,7 @@ jobs:
       matrix:
         include:
         - { os: macos-latest, target: x86_64-apple-darwin }
+        - { os: macos-latest, target: aarch64-apple-darwin }
         - { os: ubuntu-latest, target: x86_64-unknown-linux-musl }
         - { os: ubuntu-latest, target: aarch64-unknown-linux-musl }
         - { os: ubuntu-latest, target: armv7-unknown-linux-musleabihf }
@@ -72,6 +73,10 @@ jobs:
     - uses: actions/checkout@v3
       with:
         fetch-depth: 0
+
+    - if: matrix.target == 'aarch64-apple-darwin'
+      name: Install the correct OpenSSL
+      run: arch -arm64 brew install openssl@1.1
 
     - uses: dtolnay/rust-toolchain@stable
       with:
@@ -167,6 +172,7 @@ jobs:
       matrix:
         include:
         - { os: macos-latest, target: x86_64-apple-darwin }
+        - { os: macos-latest, target: aarch64-apple-darwin }
         - { os: ubuntu-latest, target: x86_64-unknown-linux-musl, prefix: x86_64-linux-musl }
         - { os: ubuntu-latest, target: aarch64-unknown-linux-musl, prefix: aarch64-linux-musl }
         - { os: ubuntu-latest, target: armv7-unknown-linux-musleabihf, prefix: arm-linux-musleabihf }
