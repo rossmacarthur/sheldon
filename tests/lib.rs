@@ -5,11 +5,19 @@ use std::env;
 use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
+use std::sync::Once;
 
 use once_cell::sync::Lazy;
 use pretty_assertions::assert_eq;
 
 use crate::helpers::{TestCommand, TestDirs};
+
+fn setup() {
+    rayon::ThreadPoolBuilder::new()
+        .num_threads(1)
+        .build_global()
+        .unwrap();
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // Utilities
@@ -20,15 +28,19 @@ struct TestCase {
     data: HashMap<String, String>,
 }
 
+static SETUP: Once = Once::new();
+
 impl TestCase {
     /// Load the test case with the given name.
     fn load(name: &str) -> io::Result<Self> {
+        SETUP.call_once(setup);
         let dirs = TestDirs::default()?;
         Self::load_with_dirs(name, dirs)
     }
 
     /// Load the test case in the given directories.
     fn load_with_dirs(name: &str, dirs: TestDirs) -> io::Result<Self> {
+        SETUP.call_once(setup);
         static ENGINE: Lazy<upon::Engine> = Lazy::new(|| {
             let syntax = upon::Syntax::builder().expr("<", ">").build();
             upon::Engine::with_syntax(syntax)
