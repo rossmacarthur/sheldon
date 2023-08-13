@@ -5,11 +5,19 @@ use std::env;
 use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
+use std::sync::Once;
 
 use once_cell::sync::Lazy;
 use pretty_assertions::assert_eq;
 
 use crate::helpers::{TestCommand, TestDirs};
+
+fn setup() {
+    rayon::ThreadPoolBuilder::new()
+        .num_threads(1)
+        .build_global()
+        .unwrap();
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // Utilities
@@ -23,6 +31,9 @@ struct TestCase {
 impl TestCase {
     /// Load the test case with the given name.
     fn load(name: &str) -> io::Result<Self> {
+        static SETUP: Once = Once::new();
+        SETUP.call_once(setup);
+
         let dirs = TestDirs::default()?;
         Self::load_with_dirs(name, dirs)
     }
