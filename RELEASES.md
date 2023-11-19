@@ -1,5 +1,26 @@
 # 📝 Release notes
 
+## 0.7.4
+
+*Unreleased*
+
+- [Support optional access in templates.][4038307] This allows you to use the
+  `.?` operator in templates to optionally access a field in templates, for
+  example `{{ hooks?.pre }}` will return `None` and not error if `pre` is not
+  present in `hooks`. You will now receive a deprecation warning if you use the
+  `get` filter which does the same thing.
+
+
+  Custom templates might have to be updated, for example if you were using a
+  custom `defer` template you would need to update it to the following.
+
+  ```toml
+  [templates]
+  defer = "{{ hooks?.pre | nl }}{% for file in files %}zsh-defer source \"{{ file }}\"\n{% endfor %}{{ hooks?.post | nl }}"
+  ```
+
+[4038307]: https://github.com/rossmacarthur/sheldon/commit/40383074c54c3935908bf76401b42878285510cd
+
 ## 0.7.3
 
 *May 16th, 2023*
@@ -21,7 +42,8 @@
   post = 'export ENHANCD_HOOK_AFTER_CD = "ls"'
   ```
 
-  To use `defer` custom template, please update to this .
+  Custom templates might have to be updated, for example if you were using a
+  custom `defer` template you would need to update it to the following.
   ```toml
   [templates]
   defer = "{{ hooks | get: \"pre\" | nl }}{% for file in files %}zsh-defer source \"{{ file }}\"\n{% endfor %}{{ hooks | get: \"post\" | nl }}"
