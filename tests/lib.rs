@@ -68,7 +68,7 @@ impl TestCase {
             let value = ENGINE
                 .compile(&raw)
                 .unwrap()
-                .render(&subs)
+                .render(&ENGINE, &subs)
                 .to_string()
                 .unwrap();
             data.insert(name, value);
@@ -101,15 +101,18 @@ impl TestCase {
         fs::write(path, self.get(name))
     }
 
+    #[track_caller]
     fn assert_contents(&self, name: &str) -> io::Result<()> {
         self.assert_contents_path(name, &self.dirs.data.join(name))
     }
 
+    #[track_caller]
     fn assert_contents_path(&self, name: &str, path: &Path) -> io::Result<()> {
         assert_eq!(&fs::read_to_string(path)?, &self.get(name));
         Ok(())
     }
 
+    #[track_caller]
     fn run(&self) -> io::Result<()> {
         self.write_config_file("plugins.toml")?;
         self.command("lock").run()?;

@@ -91,7 +91,7 @@ impl LockedConfig {
                         .with_context(|| {
                             format!("failed to compile inline plugin `{}`", &plugin.name)
                         })?
-                        .render(&data)
+                        .render(&engine, &data)
                         .to_string()
                         .with_context(|| {
                             format!("failed to render inline plugin `{}`", &plugin.name)

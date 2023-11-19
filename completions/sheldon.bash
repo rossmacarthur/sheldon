@@ -255,4 +255,4 @@ _sheldon() {
     esac
 }
 
-complete -F _sheldon -o bashdefault -o default sheldon
+complete -F _sheldon -o nosort -o bashdefault -o default sheldon

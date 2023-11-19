@@ -11,7 +11,6 @@ use std::result;
 use anyhow::Error;
 use once_cell::sync::Lazy;
 
-pub use crate::util::path_ext::PathExt;
 pub use crate::util::temp::TempPath;
 
 pub static TEMPLATE_ENGINE: Lazy<upon::Engine> = Lazy::new(upon::Engine::new);

@@ -191,10 +191,9 @@ tag = "0.1.0"
             .unwrap();
         assert_eq!(
             config.doc.to_string(),
-            r#"
-[plugins.sheldon-test]
-git = 'https://github.com/rossmacarthur/sheldon-test'
-branch = 'feature'
+            r#"[plugins.sheldon-test]
+git = "https://github.com/rossmacarthur/sheldon-test"
+branch = "feature"
 "#
         )
     }
@@ -214,10 +213,9 @@ branch = 'feature'
             .unwrap();
         assert_eq!(
             config.doc.to_string(),
-            r#"
-[plugins.sheldon-test]
-github = 'rossmacarthur/sheldon-test'
-tag = '0.1.0'
+            r#"[plugins.sheldon-test]
+github = "rossmacarthur/sheldon-test"
+tag = "0.1.0"
 "#
         )
     }
@@ -266,8 +264,8 @@ apply = ["prompt"]
 use = ["{{ name }}.zsh"]
 
 [plugins.sheldon-test]
-github = 'rossmacarthur/sheldon-test'
-tag = '0.1.0'
+github = "rossmacarthur/sheldon-test"
+tag = "0.1.0"
     "#
         )
     }

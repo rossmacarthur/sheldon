@@ -101,10 +101,10 @@ fn render_template<S>(template: &str, ctx: S) -> Result<String>
 where
     S: Serialize,
 {
-    TEMPLATE_ENGINE
+    let t = TEMPLATE_ENGINE
         .compile(template)
-        .with_context(|| format!("failed to compile template `{template}`"))?
-        .render(ctx)
+        .with_context(|| format!("failed to compile template `{template}`"))?;
+    t.render(&TEMPLATE_ENGINE, ctx)
         .to_string()
         .with_context(|| format!("failed to render template `{template}`"))
 }

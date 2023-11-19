@@ -632,7 +632,9 @@ following.
 
 ```toml
 [templates]
-source = "{{ hooks?.pre | nl }}{% for file in files %}source \"{{ file }}\"\n{% endfor %}{{ hooks?.post | nl }}"
+source = """
+{{ hooks?.pre | nl }}{% for file in files %}source \"{{ file }}\"
+{% endfor %}{{ hooks?.post | nl }}"""
 PATH = 'export PATH="{{ dir }}:$PATH"'
 path = 'path=( "{{ dir }}" $path )'
 fpath = 'fpath=( "{{ dir }}" $fpath )'

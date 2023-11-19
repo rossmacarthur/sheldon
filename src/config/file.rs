@@ -370,7 +370,12 @@ mod tests {
         let error = toml::from_str::<ShellTest>("s = 'ksh'").unwrap_err();
         assert_eq!(
             error.to_string(),
-            "expected one of `bash`, `fish`, or `zsh`, got `ksh` for key `s` at line 1 column 5"
+            "TOML parse error at line 1, column 5
+  |
+1 | s = 'ksh'
+  |     ^^^^^
+expected one of `bash`, `fish`, or `zsh`, got `ksh`
+"
         )
     }
 
@@ -424,9 +429,13 @@ mod tests {
         .unwrap_err();
         assert_eq!(
             error.to_string(),
-            "`rossmacarthur/579d02802b1cc17baed07753d09f5009/test` is not a valid Gist \
-             identifier, the hash or username/hash should be provided for key `g` at line 1 \
-             column 5"
+            "TOML parse error at line 1, column 5
+  |
+1 | g = 'rossmacarthur/579d02802b1cc17baed07753d09f5009/test'
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+`rossmacarthur/579d02802b1cc17baed07753d09f5009/test` is not a valid Gist identifier, the hash or \
+             username/hash should be provided
+"
         );
     }
 
@@ -435,8 +444,12 @@ mod tests {
         let error = toml::from_str::<TestGistRepository>("g = 'nothex'").unwrap_err();
         assert_eq!(
             error.to_string(),
-            "`nothex` is not a valid Gist identifier, the hash or username/hash should be \
-             provided for key `g` at line 1 column 5"
+            "TOML parse error at line 1, column 5
+  |
+1 | g = 'nothex'
+  |     ^^^^^^^^
+`nothex` is not a valid Gist identifier, the hash or username/hash should be provided
+"
         );
     }
 
@@ -464,8 +477,13 @@ mod tests {
             toml::from_str::<TestGitHubRepository>("g = 'rossmacarthur/sheldon/test'").unwrap_err();
         assert_eq!(
             error.to_string(),
-            "`rossmacarthur/sheldon/test` is not a valid GitHub repository, the \
-             username/repository should be provided for key `g` at line 1 column 5"
+            "TOML parse error at line 1, column 5
+  |
+1 | g = 'rossmacarthur/sheldon/test'
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+`rossmacarthur/sheldon/test` is not a valid GitHub repository, the username/repository should be \
+             provided
+"
         );
     }
 
@@ -474,8 +492,12 @@ mod tests {
         let error = toml::from_str::<TestGitHubRepository>("g = 'noslash'").unwrap_err();
         assert_eq!(
             error.to_string(),
-            "`noslash` is not a valid GitHub repository, the username/repository should be \
-             provided for key `g` at line 1 column 5"
+            "TOML parse error at line 1, column 5
+  |
+1 | g = 'noslash'
+  |     ^^^^^^^^^
+`noslash` is not a valid GitHub repository, the username/repository should be provided
+"
         );
     }
 
