@@ -2,7 +2,7 @@
 
 ## 0.7.4
 
-*Unreleased*
+*November 19th, 2023*
 
 - [Support optional access in templates.][4038307] This allows you to use the
   `.?` operator in templates to optionally access a field in templates, for
