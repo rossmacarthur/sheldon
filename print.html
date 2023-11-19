@@ -1,17 +1,17 @@
 <!DOCTYPE HTML>
-<html lang="en" class="sidebar-visible no-js light">
+<html lang="en" class="light" dir="ltr">
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
         <title>sheldon docs</title>
-        <meta name="robots" content="noindex" />
+        <meta name="robots" content="noindex">
 
 
         <!-- Custom HTML head -->
         
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta name="theme-color" content="#ffffff" />
+        <meta name="theme-color" content="#ffffff">
 
         <link rel="icon" href="favicon.svg">
         <link rel="shortcut icon" href="favicon.png">
@@ -32,7 +32,7 @@
         <!-- Custom theme stylesheets -->
 
     </head>
-    <body>
+    <body class="sidebar-visible no-js">
     <div id="body-container">
         <!-- Provide site root to javascript -->
         <script>
@@ -62,24 +62,29 @@
             try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
             if (theme === null || theme === undefined) { theme = default_theme; }
             var html = document.querySelector('html');
-            html.classList.remove('no-js')
             html.classList.remove('light')
             html.classList.add(theme);
-            html.classList.add('js');
+            var body = document.querySelector('body');
+            body.classList.remove('no-js')
+            body.classList.add('js');
         </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
 
         <!-- Hide / unhide sidebar before it is displayed -->
         <script>
-            var html = document.querySelector('html');
+            var body = document.querySelector('body');
             var sidebar = null;
+            var sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
             if (document.body.clientWidth >= 1080) {
                 try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
                 sidebar = sidebar || 'visible';
             } else {
                 sidebar = 'hidden';
             }
-            html.classList.remove('sidebar-visible');
-            html.classList.add("sidebar-" + sidebar);
+            sidebar_toggle.checked = sidebar === 'visible';
+            body.classList.remove('sidebar-visible');
+            body.classList.add("sidebar-" + sidebar);
         </script>
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
@@ -89,15 +94,37 @@
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
 
+        <!-- Track and set sidebar scroll position -->
+        <script>
+            var sidebarScrollbox = document.querySelector('#sidebar .sidebar-scrollbox');
+            sidebarScrollbox.addEventListener('click', function(e) {
+                if (e.target.tagName === 'A') {
+                    sessionStorage.setItem('sidebar-scroll', sidebarScrollbox.scrollTop);
+                }
+            }, { passive: true });
+            var sidebarScrollTop = sessionStorage.getItem('sidebar-scroll');
+            sessionStorage.removeItem('sidebar-scroll');
+            if (sidebarScrollTop) {
+                // preserve sidebar scroll position when navigating via links within sidebar
+                sidebarScrollbox.scrollTop = sidebarScrollTop;
+            } else {
+                // scroll sidebar to current active section when navigating via "next/previous chapter" buttons
+                var activeSection = document.querySelector('#sidebar .active');
+                if (activeSection) {
+                    activeSection.scrollIntoView({ block: 'center' });
+                }
+            }
+        </script>
+
         <div id="page-wrapper" class="page-wrapper">
 
             <div class="page">
                                 <div id="menu-bar-hover-placeholder"></div>
-                <div id="menu-bar" class="menu-bar sticky bordered">
+                <div id="menu-bar" class="menu-bar sticky">
                     <div class="left-buttons">
-                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
                             <i class="fa fa-bars"></i>
-                        </button>
+                        </label>
                         <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
                             <i class="fa fa-paint-brush"></i>
                         </button>
@@ -520,7 +547,9 @@ using. The following are available for both Bash and Zsh.</p>
 <p>As template strings in the config file they could be represented like the
 following.</p>
 <pre><code class="language-toml">[templates]
-source = &quot;{{ hooks | get: \&quot;pre\&quot; | nl }}{% for file in files %}source \&quot;{{ file }}\&quot;\n{% endfor %}{{ hooks | get: \&quot;post\&quot; | nl }}&quot;
+source = &quot;&quot;&quot;
+{{ hooks?.pre | nl }}{% for file in files %}source \&quot;{{ file }}\&quot;
+{% endfor %}{{ hooks?.post | nl }}&quot;&quot;&quot;
 PATH = 'export PATH=&quot;{{ dir }}:$PATH&quot;'
 path = 'path=( &quot;{{ dir }}&quot; $path )'
 fpath = 'fpath=( &quot;{{ dir }}&quot; $fpath )'
@@ -637,7 +666,7 @@ that will use the <code>defer</code> template. Sheldon always processes plugins 
 order they are defined in the config file.</p>
 <p>Then add a template that calls <code>zsh-defer source</code> instead of just <code>source</code>.</p>
 <pre><code class="language-toml">[templates]
-defer = &quot;{{ hooks | get: \&quot;pre\&quot; | nl }}{% for file in files %}zsh-defer source \&quot;{{ file }}\&quot;\n{% endfor %}{{ hooks | get: \&quot;post\&quot; | nl }}&quot;
+defer = &quot;{{ hooks?.pre | nl }}{% for file in files %}zsh-defer source \&quot;{{ file }}\&quot;\n{% endfor %}{{ hooks?.post | nl }}&quot;
 </code></pre>
 <p>Now any plugin that you want to defer you can apply the <code>defer</code> template. For
 example if you wanted to defer loading of <code>zsh-syntax-highlighting</code>.</p>
@@ -763,6 +792,22 @@ use = [&quot;async.zsh&quot;, &quot;pure.zsh&quot;]
 <pre><code class="language-sh">sheldon add pure --github sindresorhus/pure --use async.zsh pure.zsh
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="-release-notes"><a class="header" href="#-release-notes">📝 Release notes</a></h1>
+<h2 id="074"><a class="header" href="#074">0.7.4</a></h2>
+<p><em>November 19th, 2023</em></p>
+<ul>
+<li>
+<p><a href="https://github.com/rossmacarthur/sheldon/commit/40383074c54c3935908bf76401b42878285510cd">Support optional access in templates.</a> This allows you to use the
+<code>.?</code> operator in templates to optionally access a field in templates, for
+example <code>{{ hooks?.pre }}</code> will return <code>None</code> and not error if <code>pre</code> is not
+present in <code>hooks</code>. You will now receive a deprecation warning if you use the
+<code>get</code> filter which does the same thing.</p>
+<p>Custom templates might have to be updated, for example if you were using a
+custom <code>defer</code> template you would need to update it to the following.</p>
+<pre><code class="language-toml">[templates]
+defer = &quot;{{ hooks?.pre | nl }}{% for file in files %}zsh-defer source \&quot;{{ file }}\&quot;\n{% endfor %}{{ hooks?.post | nl }}&quot;
+</code></pre>
+</li>
+</ul>
 <h2 id="073"><a class="header" href="#073">0.7.3</a></h2>
 <p><em>May 16th, 2023</em></p>
 <ul>
@@ -781,7 +826,8 @@ github = &quot;b4b4r07/enhancd&quot;
 [plugins.enhancd.hooks]
 post = 'export ENHANCD_HOOK_AFTER_CD = &quot;ls&quot;'
 </code></pre>
-<p>To use <code>defer</code> custom template, please update to this .</p>
+<p>Custom templates might have to be updated, for example if you were using a
+custom <code>defer</code> template you would need to update it to the following.</p>
 <pre><code class="language-toml">[templates]
 defer = &quot;{{ hooks | get: \&quot;pre\&quot; | nl }}{% for file in files %}zsh-defer source \&quot;{{ file }}\&quot;\n{% endfor %}{{ hooks | get: \&quot;post\&quot; | nl }}&quot;
 </code></pre>
