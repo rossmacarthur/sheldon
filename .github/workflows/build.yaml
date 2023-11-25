@@ -64,6 +64,8 @@ jobs:
         - { os: ubuntu-latest, target: x86_64-unknown-linux-musl }
         - { os: ubuntu-latest, target: aarch64-unknown-linux-musl }
         - { os: ubuntu-latest, target: armv7-unknown-linux-musleabihf }
+        - { os: windows-latest, target: x86_64-pc-windows-msvc }
+        - { os: windows-latest, target: aarch64-pc-windows-msvc }
 
     name: test (${{ matrix.target }})
     runs-on: ${{ matrix.os }}
@@ -170,6 +172,8 @@ jobs:
         - { os: ubuntu-latest, target: x86_64-unknown-linux-musl, prefix: x86_64-linux-musl }
         - { os: ubuntu-latest, target: aarch64-unknown-linux-musl, prefix: aarch64-linux-musl }
         - { os: ubuntu-latest, target: armv7-unknown-linux-musleabihf, prefix: arm-linux-musleabihf }
+        - { os: windows-latest, target: x86_64-pc-windows-msvc }
+        - { os: windows-latest, target: aarch64-pc-windows-msvc }
 
     name: release (${{ matrix.target }})
     runs-on: ${{ matrix.os }}
