@@ -2,4 +2,4 @@ UNLOCKED ~/.local/share/sheldon/plugins.lock
   RENDERED test
 
 WARNING: use of deprecated filter `get` in [templates], please use the `?.` operator instead.
-For example: `{{ hooks | get: "pre" | nl }}` can be written `{{ hook?.pre | nl }}`
+For example: `{{ hooks | get: "pre" | nl }}` can be written `{{ hooks?.pre | nl }}`
