@@ -109,7 +109,7 @@ impl LockedConfig {
             warnings.push(Error::msg(
                 "use of deprecated filter `get` in [templates], please use the `?.` operator \
                  instead.\nFor example: `{{ hooks | get: \"pre\" | nl }}` can be written `{{ \
-                 hook?.pre | nl }}`",
+                 hooks?.pre | nl }}`",
             ));
         }
 
