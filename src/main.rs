@@ -7,6 +7,8 @@ mod editor;
 mod lock;
 mod util;
 
+use anyhow::anyhow;
+use fs2::FileExt;
 use std::fs;
 use std::io;
 use std::panic;
@@ -42,12 +44,10 @@ fn main() {
 pub fn run_command(ctx: &Context, command: Command) -> Result<()> {
     // We always try to acquire the mutex but it is only strictly necessary for
     // the lock and source commands.
-    let _guard = match acquire_mutex(ctx, ctx.config_dir()) {
-        Ok(g) => Some(g),
-        Err(_) if !matches!(command, Command::Lock | Command::Source) => None,
-        Err(err) => {
-            return Err(err).context("failed to acquire lock on config directory");
-        }
+    let _guard = match acquire_mutex(ctx.config_dir()) {
+        Ok(()) => ctx.log_verbose_header("Blocking", &format!("acquired lock on config directory")),
+        Err(_) if !matches!(command, Command::Lock | Command::Source) => (),
+        Err(err) => return Err(err),
     };
     let mut warnings = Vec::new();
     let result = match command {
@@ -64,21 +64,16 @@ pub fn run_command(ctx: &Context, command: Command) -> Result<()> {
     result
 }
 
-fn acquire_mutex(ctx: &Context, path: &Path) -> Result<fmutex::Guard> {
-    match fmutex::try_lock(path).with_context(|| format!("failed to open `{}`", path.display()))? {
-        Some(g) => Ok(g),
-        None => {
-            ctx.log_warning(
-                "Blocking",
-                &format!(
-                    "waiting for file lock on {}",
-                    ctx.replace_home(path).display()
-                ),
-            );
-            fmutex::lock(path)
-                .with_context(|| format!("failed to acquire file lock `{}`", path.display()))
-        }
-    }
+fn acquire_mutex(path: &Path) -> Result<()> {
+    let file_open = fs::File::open(path);
+    let file = match file_open {
+        Ok(file) => file,
+        Err(err) => return Err(anyhow!("failed to open `{}`: {}", path.display(), err)),
+    };
+
+    // Block until we can acquire the lock
+    file.lock_exclusive()
+        .context("failed to acquire lock on config directory")
 }
 
 /// Executes the `init` subcommand.

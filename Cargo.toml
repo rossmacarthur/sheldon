@@ -33,7 +33,7 @@ casual = "0.2.0"
 clap_complete = "4.4.4"
 constcat = "0.4.0"
 curl = "0.4.44"
-fmutex = "0.1.0"
+fs2 = "0.4.3"
 git2 = { version = "0.18.1", features = ["vendored-libgit2"] }
 globwalk = "0.8.1"
 home = "0.5.5"
