@@ -27,6 +27,7 @@ fn main() {
     let res = panic::catch_unwind(|| {
         let Opt { ctx, command } = cli::from_args();
         if let Err(err) = run_command(&ctx, command) {
+            println!("{}", err);
             ctx.log_error(&err);
             process::exit(2);
         }
@@ -64,8 +65,31 @@ pub fn run_command(ctx: &Context, command: Command) -> Result<()> {
     result
 }
 
+/// Returns the file to use for the filesystem mutex. On Windows, this is usually a lock
+/// file within the config directory.
+#[cfg(target_os = "windows")]
+fn get_file_for_mutex(path: &Path) -> io::Result<fs::File> {
+    let windows_lockfile = path.join(".windowslock");
+    fs::OpenOptions::new()
+        .read(true)
+        .write(true)
+        .create(true)
+        .open(windows_lockfile)
+}
+
+/// Returns the file/folder to use for the filesystem mutex. On non-Windows platforms,
+/// this is usually the config directory itself.
+#[cfg(not(target_os = "windows"))]
+fn get_file_for_mutex(path: &Path) -> io::Result<fs::File> {
+    fs::OpenOptions::new()
+        .read(true)
+        .write(true)
+        .create(true)
+        .open(path)
+}
+
 fn acquire_mutex(path: &Path) -> Result<()> {
-    let file_open = fs::File::open(path);
+    let file_open = get_file_for_mutex(path);
     let file = match file_open {
         Ok(file) => file,
         Err(err) => return Err(anyhow!("failed to open `{}`: {}", path.display(), err)),
