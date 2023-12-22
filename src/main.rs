@@ -27,7 +27,6 @@ fn main() {
     let res = panic::catch_unwind(|| {
         let Opt { ctx, command } = cli::from_args();
         if let Err(err) = run_command(&ctx, command) {
-            println!("{}", err);
             ctx.log_error(&err);
             process::exit(2);
         }
@@ -45,9 +44,12 @@ fn main() {
 pub fn run_command(ctx: &Context, command: Command) -> Result<()> {
     // We always try to acquire the mutex but it is only strictly necessary for
     // the lock and source commands.
-    let _guard = match acquire_mutex(ctx.config_dir()) {
-        Ok(()) => ctx.log_verbose_header("Blocking", &format!("acquired lock on config directory")),
-        Err(_) if !matches!(command, Command::Lock | Command::Source) => (),
+    let file_mutex = match acquire_mutex(ctx.config_dir()) {
+        Ok(file) => {
+            ctx.log_verbose_status("File", &format!("acquired lock on config directory"));
+            Some(file)
+        }
+        Err(_) if !matches!(command, Command::Lock | Command::Source) => None,
         Err(err) => return Err(err),
     };
     let mut warnings = Vec::new();
@@ -62,6 +64,19 @@ pub fn run_command(ctx: &Context, command: Command) -> Result<()> {
     for err in &warnings {
         ctx.log_error_as_warning(err);
     }
+
+    // Release file mutex
+    match file_mutex
+        .map(|file| {
+            file.unlock()
+                .context("failed to release lock on config directory")
+        })
+        .transpose()
+    {
+        Ok(_) => {}
+        Err(err) => ctx.log_error_as_warning(&err),
+    };
+
     result
 }
 
@@ -88,7 +103,7 @@ fn get_file_for_mutex(path: &Path) -> io::Result<fs::File> {
         .open(path)
 }
 
-fn acquire_mutex(path: &Path) -> Result<()> {
+fn acquire_mutex(path: &Path) -> Result<fs::File> {
     let file_open = get_file_for_mutex(path);
     let file = match file_open {
         Ok(file) => file,
@@ -96,8 +111,13 @@ fn acquire_mutex(path: &Path) -> Result<()> {
     };
 
     // Block until we can acquire the lock
-    file.lock_exclusive()
+    match file
+        .lock_exclusive()
         .context("failed to acquire lock on config directory")
+    {
+        Ok(_) => Ok(file),
+        Err(err) => Err(err),
+    }
 }
 
 /// Executes the `init` subcommand.
