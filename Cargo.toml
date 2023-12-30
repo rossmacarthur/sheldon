@@ -34,7 +34,7 @@ clap_complete = "4.4.4"
 constcat = "0.4.0"
 curl = "0.4.44"
 fmutex = "0.1.0"
-git2 = { version = "0.18.1", features = ["vendored-libgit2"] }
+git2 = "0.18.1"
 globwalk = "0.8.1"
 home = "0.5.5"
 indexmap = { version = "2.1.0", features = ["rayon", "serde"] }
@@ -68,3 +68,26 @@ anyhow = "1.0.75"
 goldie = "0.4.3"
 pretty_assertions = "1.4.0"
 tempfile = "3.8.1"
+
+[features]
+# By default vendor libgit2 since we rely on some modern features.
+default = ["vendored-libgit2"]
+
+# Vendor and statically link curl, libgit2, and openssl
+vendored = ["vendored-curl", "vendored-libgit2", "vendored-openssl"]
+
+# Vendor and statically link curl
+vendored-curl = ["curl/static-curl"]
+
+# Vendor and statically link libgit2
+#
+# Disabling this will not force the usage of the system libgit2, you can do that
+# using LIBGIT2_NO_VENDOR=1 which will error at compile time if the system
+# libgit2 is not a high enough version.
+vendored-libgit2 = ["git2/vendored-libgit2"]
+
+# Vendor and statically link openssl
+#
+# Disabling this will not force the usage of the system OpenSSL you can do that
+# using OPENSSL_NO_VENDOR=1
+vendored-openssl = ["git2/vendored-openssl", "curl/static-ssl"]
