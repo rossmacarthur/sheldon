@@ -58,7 +58,7 @@ fn checkout(
     let current_oid = repo.head()?.target().context("current HEAD as no target")?;
     let expected_oid = checkout.resolve(repo)?;
     if current_oid == expected_oid {
-        ctx.log_status("Checked", &format!("{url}{checkout}"))
+        ctx.log_status("Checked", &format!("{url}{checkout}"));
     } else {
         git::checkout(repo, expected_oid)?;
         git::submodule_update(repo).context("failed to recursively update")?;
@@ -247,7 +247,7 @@ mod tests {
         assert_eq!(
             head.target().unwrap().to_string(),
             "ad149784a1538291f2477fb774eeeed4f4d29e45"
-        )
+        );
     }
 
     #[test]
@@ -271,6 +271,6 @@ mod tests {
         assert_eq!(
             head.target().unwrap().to_string(),
             "ad149784a1538291f2477fb774eeeed4f4d29e45"
-        )
+        );
     }
 }

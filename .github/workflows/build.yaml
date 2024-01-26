@@ -50,7 +50,7 @@ jobs:
 
     - name: Clippy
       continue-on-error: ${{ matrix.toolchain == 'nightly' }}
-      run: cargo clippy --workspace -- -D clippy::items-after-statements -D clippy::if-not-else
+      run: cargo clippy --workspace
 
   # ---------------------------------------------------------------------------
   # Test

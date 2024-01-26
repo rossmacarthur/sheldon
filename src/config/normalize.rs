@@ -29,7 +29,7 @@ pub fn normalize(raw_config: RawConfig, warnings: &mut Vec<Error>) -> Result<Con
     } = raw_config;
 
     check_extra_toml(rest, |key| {
-        warnings.push(anyhow!("unused config key: `{key}`"))
+        warnings.push(anyhow!("unused config key: `{key}`"));
     });
 
     // Check that the templates can be compiled.
@@ -111,7 +111,7 @@ fn normalize_plugin(
     }
 
     check_extra_toml(rest, |key| {
-        warnings.push(anyhow!("unused config key: `plugins.{name}.{key}`"))
+        warnings.push(anyhow!("unused config key: `plugins.{name}.{key}`"));
     });
 
     let raw_source = match (git, gist, github, remote, local, inline) {
@@ -243,7 +243,7 @@ where
 {
     if let Some(toml::Value::Table(table)) = rest {
         for key in table.keys() {
-            f(key)
+            f(key);
         }
     }
 }
@@ -302,7 +302,7 @@ mod tests {
                     &mut Vec::new(),
                 )
                 .unwrap_err();
-                assert_eq!(err.to_string(), "plugin `test` has multiple source fields")
+                assert_eq!(err.to_string(), "plugin `test` has multiple source fields");
             }
         }
     }

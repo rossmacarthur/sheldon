@@ -195,7 +195,7 @@ tag = "0.1.0"
 git = "https://github.com/rossmacarthur/sheldon-test"
 branch = "feature"
 "#
-        )
+        );
     }
 
     #[test]
@@ -217,7 +217,7 @@ branch = "feature"
 github = "rossmacarthur/sheldon-test"
 tag = "0.1.0"
 "#
-        )
+        );
     }
 
     #[test]
@@ -267,6 +267,6 @@ use = ["{{ name }}.zsh"]
 github = "rossmacarthur/sheldon-test"
 tag = "0.1.0"
     "#
-        )
+        );
     }
 }

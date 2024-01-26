@@ -46,7 +46,7 @@ mod tests {
     fn lock_local() {
         let temp = tempfile::tempdir().expect("create temporary directory");
         let dir = temp.path();
-        let _ = git_clone_sheldon_test(&temp);
+        let _repo = git_clone_sheldon_test(&temp);
 
         let locked = lock(&Context::testing(dir), dir.to_path_buf()).unwrap();
 

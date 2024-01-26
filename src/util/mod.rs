@@ -13,7 +13,7 @@ use once_cell::sync::Lazy;
 
 pub use crate::util::temp::TempPath;
 
-pub static TEMPLATE_ENGINE: Lazy<upon::Engine> = Lazy::new(upon::Engine::new);
+pub static TEMPLATE_ENGINE: Lazy<upon::Engine<'static>> = Lazy::new(upon::Engine::new);
 
 /// Returns the underlying error kind for the given error.
 pub fn underlying_io_error_kind(error: &Error) -> Option<io::ErrorKind> {

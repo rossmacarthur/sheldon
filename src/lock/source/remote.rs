@@ -78,6 +78,6 @@ mod tests {
             fs::read_to_string(&file).unwrap(),
             fs::read_to_string(manifest_dir.join("LICENSE-MIT")).unwrap()
         );
-        assert!(fs::metadata(&file).unwrap().modified().unwrap() > modified)
+        assert!(fs::metadata(&file).unwrap().modified().unwrap() > modified);
     }
 }

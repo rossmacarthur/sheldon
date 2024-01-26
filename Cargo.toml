@@ -91,3 +91,15 @@ vendored-libgit2 = ["git2/vendored-libgit2"]
 # Disabling this will not force the usage of the system OpenSSL you can do that
 # using OPENSSL_NO_VENDOR=1
 vendored-openssl = ["git2/vendored-openssl", "curl/static-ssl"]
+
+[lints.rust]
+elided_lifetimes_in_paths = "warn"
+let_underscore_drop = "warn"
+macro_use_extern_crate = "warn"
+meta_variable_misuse = "warn"
+unsafe_op_in_unsafe_fn = "warn"
+
+[lints.clippy]
+if_not_else = "warn"
+items_after_statements = "warn"
+semicolon_if_nothing_returned = "warn"

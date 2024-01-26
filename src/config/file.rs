@@ -362,7 +362,7 @@ mod tests {
     #[test]
     fn shell_deserialize_as_str() {
         let test: ShellTest = toml::from_str("s = 'bash'").unwrap();
-        assert_eq!(test.s, Shell::Bash)
+        assert_eq!(test.s, Shell::Bash);
     }
 
     #[test]
@@ -376,7 +376,7 @@ mod tests {
   |     ^^^^^
 expected one of `bash`, `fish`, or `zsh`, got `ksh`
 "
-        )
+        );
     }
 
     #[derive(Debug, Deserialize)]

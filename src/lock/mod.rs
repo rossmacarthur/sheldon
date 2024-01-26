@@ -391,7 +391,7 @@ mod tests {
         assert!(warnings.is_empty());
         assert!(!test_file.exists());
         assert!(!test_dir.exists());
-        let _ = config(&ctx, cfg).unwrap();
+        let _locked_cfg = config(&ctx, cfg).unwrap();
         assert!(ctx
             .clone_dir()
             .join("github.com/rossmacarthur/sheldon-test")

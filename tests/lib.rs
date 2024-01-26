@@ -40,11 +40,12 @@ impl TestCase {
 
     /// Load the test case in the given directories.
     fn load_with_dirs(name: &str, dirs: TestDirs) -> io::Result<Self> {
-        SETUP.call_once(setup);
-        static ENGINE: Lazy<upon::Engine> = Lazy::new(|| {
+        static ENGINE: Lazy<upon::Engine<'_>> = Lazy::new(|| {
             let syntax = upon::Syntax::builder().expr("<", ">").build();
             upon::Engine::with_syntax(syntax)
         });
+
+        SETUP.call_once(setup);
 
         let dir = {
             let mut p = PathBuf::from(env!("CARGO_MANIFEST_DIR"));

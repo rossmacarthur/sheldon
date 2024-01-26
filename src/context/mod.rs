@@ -129,13 +129,13 @@ impl Context {
 
     pub fn log_header(&self, prefix: &str, msg: impl ToMessage) {
         if self.verbosity() >= Verbosity::Normal {
-            self.log_header_impl(prefix, msg.to_message(self))
+            self.log_header_impl(prefix, msg.to_message(self));
         }
     }
 
     pub fn log_verbose_header(&self, prefix: &str, msg: impl ToMessage) {
         if self.verbosity() >= Verbosity::Verbose {
-            self.log_header_impl(prefix, msg.to_message(self))
+            self.log_header_impl(prefix, msg.to_message(self));
         }
     }
 
@@ -184,11 +184,11 @@ impl Context {
     }
 
     pub fn log_error(&self, err: &Error) {
-        log_error(self.output.no_color, err)
+        log_error(self.output.no_color, err);
     }
 
     pub fn log_error_as_warning(&self, err: &Error) {
-        log_error_as_warning(self.output.no_color, err)
+        log_error_as_warning(self.output.no_color, err);
     }
 }
 
