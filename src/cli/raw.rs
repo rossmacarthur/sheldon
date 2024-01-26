@@ -100,6 +100,10 @@ pub enum RawCommand {
         /// Reinstall all plugin sources.
         #[clap(long, conflicts_with = "update")]
         reinstall: bool,
+
+        /// The profile used for conditional plugins.
+        #[clap(value_name = "PROFILE", env = "SHELDON_PROFILE")]
+        profile: Option<String>,
     },
 
     /// Generate and print out the script.
@@ -115,6 +119,10 @@ pub enum RawCommand {
         /// Reinstall all plugin sources (implies --relock).
         #[clap(long, conflicts_with = "update")]
         reinstall: bool,
+
+        /// The profile used for conditional plugins.
+        #[clap(value_name = "PROFILE", env = "SHELDON_PROFILE")]
+        profile: Option<String>,
     },
 
     /// Generate completions for the given shell.

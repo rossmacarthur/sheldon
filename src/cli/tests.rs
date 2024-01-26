@@ -73,7 +73,8 @@ fn raw_opt_no_options() {
             profile: None,
             command: RawCommand::Lock {
                 update: false,
-                reinstall: false
+                reinstall: false,
+                profile: None,
             },
         }
     );
@@ -97,6 +98,7 @@ fn raw_opt_options() {
             "--profile",
             "profile",
             "lock",
+            "profile2",
         ]),
         RawOpt {
             quiet: true,
@@ -109,7 +111,8 @@ fn raw_opt_options() {
             profile: Some("profile".into()),
             command: RawCommand::Lock {
                 update: false,
-                reinstall: false
+                reinstall: false,
+                profile: Some("profile2".into()),
             },
         }
     );

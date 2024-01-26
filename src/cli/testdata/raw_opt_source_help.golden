@@ -1,6 +1,9 @@
 Generate and print out the script
 
-Usage: sheldon source [OPTIONS]
+Usage: sheldon source [OPTIONS] [PROFILE]
+
+Arguments:
+  [PROFILE]  The profile used for conditional plugins [env: SHELDON_PROFILE=]
 
 Options:
       --relock     Regenerate the lock file

@@ -1,6 +1,9 @@
 Install the plugins sources and generate the lock file
 
-Usage: sheldon lock [OPTIONS]
+Usage: sheldon lock [OPTIONS] [PROFILE]
+
+Arguments:
+  [PROFILE]  The profile used for conditional plugins [env: SHELDON_PROFILE=]
 
 Options:
       --update     Update all plugin sources

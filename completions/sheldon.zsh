@@ -85,6 +85,7 @@ _arguments "${_arguments_options[@]}" \
 '(--update)--reinstall[Reinstall all plugin sources]' \
 '-h[Print help]' \
 '--help[Print help]' \
+'::profile -- The profile used for conditional plugins:' \
 && ret=0
 ;;
 (source)
@@ -94,6 +95,7 @@ _arguments "${_arguments_options[@]}" \
 '(--update)--reinstall[Reinstall all plugin sources (implies --relock)]' \
 '-h[Print help]' \
 '--help[Print help]' \
+'::profile -- The profile used for conditional plugins:' \
 && ret=0
 ;;
 (completions)
