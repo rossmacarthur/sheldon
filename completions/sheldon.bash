@@ -197,7 +197,7 @@ _sheldon() {
             return 0
             ;;
         sheldon__lock)
-            opts="-h --update --reinstall --help"
+            opts="-h --update --reinstall --help [PROFILE]"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -225,7 +225,7 @@ _sheldon() {
             return 0
             ;;
         sheldon__source)
-            opts="-h --relock --update --reinstall --help"
+            opts="-h --relock --update --reinstall --help [PROFILE]"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0

@@ -67,7 +67,7 @@ impl Opt {
             data_dir,
             config_dir,
             config_file,
-            profile,
+            mut profile,
             command,
         } = raw_opt;
 
@@ -84,7 +84,12 @@ impl Opt {
             }
             RawCommand::Edit => Command::Edit,
             RawCommand::Remove { name } => Command::Remove { name },
-            RawCommand::Lock { update, reinstall } => {
+            RawCommand::Lock {
+                update,
+                reinstall,
+                profile: profile_arg,
+            } => {
+                profile = profile_arg.or(profile);
                 lock_mode = LockMode::from_lock_flags(update, reinstall);
                 Command::Lock
             }
@@ -92,7 +97,9 @@ impl Opt {
                 relock,
                 update,
                 reinstall,
+                profile: p,
             } => {
+                profile = p.or(profile);
                 lock_mode = LockMode::from_source_flags(relock, update, reinstall);
                 Command::Source
             }
