@@ -90,7 +90,9 @@
             <div class="sidebar-scrollbox">
                 <ol class="chapter"><li class="chapter-item expanded affix "><a href="Introduction.html">Introduction</a></li><li class="chapter-item expanded "><a href="Installation.html">📦 Installation</a></li><li class="chapter-item expanded "><a href="Getting-started.html">🚀 Getting started</a></li><li class="chapter-item expanded "><a href="Command-line-interface.html" class="active">💻 Command line interface</a></li><li class="chapter-item expanded "><a href="Configuration.html">⚙️ Configuration</a></li><li class="chapter-item expanded "><a href="Examples.html">💡 Examples</a></li><li class="chapter-item expanded "><a href="RELEASES.html">📝 Release notes</a></li></ol>
             </div>
-            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
         </nav>
 
         <!-- Track and set sidebar scroll position -->
@@ -213,7 +215,7 @@ regenerate the lock file.</p>
 is an up to date lock file, if not, then it will first do the equivalent of the
 lock command above. This command is usually used with the built-in shell <code>eval</code>
 command.</p>
-<pre><code class="language-sh">eval &quot;$(sheldon source)&quot;
+<pre><code class="language-sh">eval "$(sheldon source)"
 </code></pre>
 <p>But you can also run it directly to inspect the output. The output of this
 command is highly configurable. You can define your own custom templates to
@@ -234,7 +236,7 @@ used you should set the <code>EDITOR</code> environment variable.</p>
 <pre><code class="language-sh">EDITOR=vim sheldon edit
 </code></pre>
 <p>Or with Visual Studio Code</p>
-<pre><code class="language-sh">EDITOR=&quot;code --wait&quot; sheldon edit
+<pre><code class="language-sh">EDITOR="code --wait" sheldon edit
 </code></pre>
 <h2 id="remove"><a class="header" href="#remove"><code>remove</code></a></h2>
 <p>This command removes a plugin from the config file. It does nothing else but

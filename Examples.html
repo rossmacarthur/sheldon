@@ -90,7 +90,9 @@
             <div class="sidebar-scrollbox">
                 <ol class="chapter"><li class="chapter-item expanded affix "><a href="Introduction.html">Introduction</a></li><li class="chapter-item expanded "><a href="Installation.html">📦 Installation</a></li><li class="chapter-item expanded "><a href="Getting-started.html">🚀 Getting started</a></li><li class="chapter-item expanded "><a href="Command-line-interface.html">💻 Command line interface</a></li><li class="chapter-item expanded "><a href="Configuration.html">⚙️ Configuration</a></li><li class="chapter-item expanded "><a href="Examples.html" class="active">💡 Examples</a></li><li class="chapter-item expanded "><a href="RELEASES.html">📝 Release notes</a></li></ol>
             </div>
-            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
         </nav>
 
         <!-- Track and set sidebar scroll position -->
@@ -186,58 +188,58 @@ deferred loading working with Sheldon using
 <a href="https://github.com/romkatv/zsh-defer">romkatv/zsh-defer</a>.</p>
 <p>Firstly, you should add <code>zsh-defer</code> as a plugin.</p>
 <pre><code class="language-toml">[plugins.zsh-defer]
-github = &quot;romkatv/zsh-defer&quot;
+github = "romkatv/zsh-defer"
 </code></pre>
 <p>Important: the <code>zsh-defer</code> plugin definition should be placed before any plugins
 that will use the <code>defer</code> template. Sheldon always processes plugins in the
 order they are defined in the config file.</p>
 <p>Then add a template that calls <code>zsh-defer source</code> instead of just <code>source</code>.</p>
 <pre><code class="language-toml">[templates]
-defer = &quot;{{ hooks?.pre | nl }}{% for file in files %}zsh-defer source \&quot;{{ file }}\&quot;\n{% endfor %}{{ hooks?.post | nl }}&quot;
+defer = "{{ hooks?.pre | nl }}{% for file in files %}zsh-defer source \"{{ file }}\"\n{% endfor %}{{ hooks?.post | nl }}"
 </code></pre>
 <p>Now any plugin that you want to defer you can apply the <code>defer</code> template. For
 example if you wanted to defer loading of <code>zsh-syntax-highlighting</code>.</p>
 <pre><code class="language-toml">[plugins.zsh-syntax-highlighting]
-github = &quot;zsh-users/zsh-syntax-highlighting&quot;
-apply = [&quot;defer&quot;]
+github = "zsh-users/zsh-syntax-highlighting"
+apply = ["defer"]
 </code></pre>
 <h2 id="overriding-the-path-template"><a class="header" href="#overriding-the-path-template">Overriding the PATH template</a></h2>
 <p>The built-in <strong>PATH</strong> template adds the directory path to the beginning of the
 <code>PATH</code> variable, we might want to change it to the be added at the end. We could
 do this like this</p>
 <pre><code class="language-toml">[templates]
-PATH = 'export PATH=&quot;$PATH:{{ dir }}&quot;'
+PATH = 'export PATH="$PATH:{{ dir }}"'
 </code></pre>
 <p>You can then apply it to the plugin like this</p>
 <pre><code class="language-toml">[plugins.example]
-github = &quot;owner/repo&quot;
-apply = [&quot;source&quot;, &quot;PATH&quot;]
+github = "owner/repo"
+apply = ["source", "PATH"]
 </code></pre>
 <p><strong>Note:</strong> this would change the behavior of <strong>PATH</strong> for <em>all</em> plugins using it.</p>
 <h2 id="zsh-frameworks"><a class="header" href="#zsh-frameworks">Zsh frameworks</a></h2>
 <h3 id="ohmyzsh"><a class="header" href="#ohmyzsh"><a href="https://github.com/ohmyzsh/ohmyzsh">ohmyzsh</a></a></h3>
 <p>Add the following to the Sheldon config file.</p>
 <pre><code class="language-toml">[plugins.oh-my-zsh]
-github = &quot;ohmyzsh/ohmyzsh&quot;
+github = "ohmyzsh/ohmyzsh"
 </code></pre>
 <p>Or run the following to automatically add it.</p>
-<pre><code class="language-sh">sheldon add oh-my-zsh --github &quot;ohmyzsh/ohmyzsh&quot;
+<pre><code class="language-sh">sheldon add oh-my-zsh --github "ohmyzsh/ohmyzsh"
 </code></pre>
 <p>Add the following to your <code>~/.zshrc</code> file.</p>
 <pre><code class="language-sh"># ~/.zshrc
 
-export ZSH=&quot;$HOME/.local/share/sheldon/repos/github.com/ohmyzsh/ohmyzsh&quot;
+export ZSH="$HOME/.local/share/sheldon/repos/github.com/ohmyzsh/ohmyzsh"
 
 # Oh My Zsh settings here
 
-eval &quot;$(sheldon source)&quot;
+eval "$(sheldon source)"
 </code></pre>
 <h2 id="zsh-plugins"><a class="header" href="#zsh-plugins">Zsh plugins</a></h2>
 <h3 id="autosuggestions"><a class="header" href="#autosuggestions"><a href="https://github.com/zsh-users/zsh-autosuggestions">autosuggestions</a></a></h3>
 <p>Add the following to the Sheldon config file.</p>
 <pre><code class="language-toml">[plugins.zsh-autosuggestions]
-github = &quot;zsh-users/zsh-autosuggestions&quot;
-use = [&quot;{{ name }}.zsh&quot;]
+github = "zsh-users/zsh-autosuggestions"
+use = ["{{ name }}.zsh"]
 </code></pre>
 <p>Or run the following to automatically add it.</p>
 <pre><code class="language-sh">sheldon add zsh-autosuggestions --github zsh-users/zsh-autosuggestions --use '{{ name }}.zsh'
@@ -245,9 +247,9 @@ use = [&quot;{{ name }}.zsh&quot;]
 <h3 id="autojump"><a class="header" href="#autojump"><a href="https://github.com/wting/autojump">autojump</a></a></h3>
 <p>Add the following to the Sheldon config file.</p>
 <pre><code class="language-toml">[plugins.autojump]
-github = &quot;wting/autojump&quot;
-dir = &quot;bin&quot;
-apply = [&quot;PATH&quot;, &quot;source&quot;]
+github = "wting/autojump"
+dir = "bin"
+apply = ["PATH", "source"]
 </code></pre>
 <p>Or run the following to automatically add it.</p>
 <pre><code class="language-sh">sheldon add autojump --github wting/autojump --dir bin --apply PATH source
@@ -255,7 +257,7 @@ apply = [&quot;PATH&quot;, &quot;source&quot;]
 <h3 id="syntax-highlighting"><a class="header" href="#syntax-highlighting"><a href="https://github.com/zsh-users/zsh-syntax-highlighting">syntax-highlighting</a></a></h3>
 <p>Add the following to the Sheldon config file.</p>
 <pre><code class="language-toml">[plugins.zsh-syntax-highlighting]
-github = &quot;zsh-users/zsh-syntax-highlighting&quot;
+github = "zsh-users/zsh-syntax-highlighting"
 </code></pre>
 <p>Or run the following to automatically add it.</p>
 <pre><code class="language-sh">sheldon add zsh-syntax-highlighting --github zsh-users/zsh-syntax-highlighting
@@ -263,15 +265,15 @@ github = &quot;zsh-users/zsh-syntax-highlighting&quot;
 <h3 id="blackbox"><a class="header" href="#blackbox"><a href="https://github.com/StackExchange/blackbox">blackbox</a></a></h3>
 <p>Add the following to the Sheldon config file.</p>
 <pre><code class="language-toml">[plugins.blackbox]
-github = &quot;StackExchange/blackbox&quot;
+github = "StackExchange/blackbox"
 </code></pre>
 <p>Or run the following to automatically add it.</p>
 <pre><code class="language-sh">sheldon add blackbox --github StackExchange/blackbox
 </code></pre>
 <h3 id="zlua"><a class="header" href="#zlua"><a href="https://github.com/skywind3000/z.lua">z.lua</a></a></h3>
 <p>Add the following to the Sheldon config file.</p>
-<pre><code class="language-toml">[plugins.&quot;z.lua&quot;]
-github = &quot;skywind3000/z.lua&quot;
+<pre><code class="language-toml">[plugins."z.lua"]
+github = "skywind3000/z.lua"
 </code></pre>
 <p>Or run the following to automatically add it.</p>
 <pre><code class="language-sh">sheldon add z.lua --github skywind3000/z.lua
@@ -279,7 +281,7 @@ github = &quot;skywind3000/z.lua&quot;
 <h3 id="enhancd"><a class="header" href="#enhancd"><a href="https://github.com/b4b4r07/enhancd">enhancd</a></a></h3>
 <p>Add the following to the Sheldon config file.</p>
 <pre><code class="language-toml">[plugins.enhancd]
-github = &quot;b4b4r07/enhancd&quot;
+github = "b4b4r07/enhancd"
 </code></pre>
 <p>Or run the following to automatically add it.</p>
 <pre><code class="language-sh">sheldon add enhancd --github b4b4r07/enhancd
@@ -287,7 +289,7 @@ github = &quot;b4b4r07/enhancd&quot;
 <h3 id="base16"><a class="header" href="#base16"><a href="https://github.com/chriskempson/base16-shell">base16</a></a></h3>
 <p>Add the following to the Sheldon config file.</p>
 <pre><code class="language-toml">[plugins.base16]
-github = &quot;chriskempson/base16-shell&quot;
+github = "chriskempson/base16-shell"
 </code></pre>
 <p>Or run the following to automatically add it.</p>
 <pre><code class="language-sh">sheldon add base16 --github chriskempson/base16-shell
@@ -296,7 +298,7 @@ github = &quot;chriskempson/base16-shell&quot;
 <h3 id="powerlevel10k"><a class="header" href="#powerlevel10k"><a href="https://github.com/romkatv/powerlevel10k">powerlevel10k</a></a></h3>
 <p>Add the following to the Sheldon config file.</p>
 <pre><code class="language-toml">[plugins.powerlevel10k]
-github = &quot;romkatv/powerlevel10k&quot;
+github = "romkatv/powerlevel10k"
 </code></pre>
 <p>Or run the following to automatically add it.</p>
 <pre><code>sheldon add powerlevel10k --github romkatv/powerlevel10k
@@ -304,7 +306,7 @@ github = &quot;romkatv/powerlevel10k&quot;
 <h3 id="spaceship"><a class="header" href="#spaceship"><a href="https://github.com/spaceship-prompt/spaceship-prompt">spaceship</a></a></h3>
 <p>Add the following to the Sheldon config file.</p>
 <pre><code class="language-toml">[plugins.spaceship]
-github = &quot;spaceship-prompt/spaceship-prompt&quot;
+github = "spaceship-prompt/spaceship-prompt"
 </code></pre>
 <p>Or run the following to automatically add it.</p>
 <pre><code class="language-sh">sheldon add spaceship --github spaceship-prompt/spaceship-prompt
@@ -312,8 +314,8 @@ github = &quot;spaceship-prompt/spaceship-prompt&quot;
 <h3 id="pure"><a class="header" href="#pure"><a href="https://github.com/sindresorhus/pure">pure</a></a></h3>
 <p>Add the following to the Sheldon config file.</p>
 <pre><code class="language-toml">[plugins.pure]
-github = &quot;sindresorhus/pure&quot;
-use = [&quot;async.zsh&quot;, &quot;pure.zsh&quot;]
+github = "sindresorhus/pure"
+use = ["async.zsh", "pure.zsh"]
 </code></pre>
 <p>Or run the following to automatically add it.</p>
 <pre><code class="language-sh">sheldon add pure --github sindresorhus/pure --use async.zsh pure.zsh

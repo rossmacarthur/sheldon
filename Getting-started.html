@@ -90,7 +90,9 @@
             <div class="sidebar-scrollbox">
                 <ol class="chapter"><li class="chapter-item expanded affix "><a href="Introduction.html">Introduction</a></li><li class="chapter-item expanded "><a href="Installation.html">📦 Installation</a></li><li class="chapter-item expanded "><a href="Getting-started.html" class="active">🚀 Getting started</a></li><li class="chapter-item expanded "><a href="Command-line-interface.html">💻 Command line interface</a></li><li class="chapter-item expanded "><a href="Configuration.html">⚙️ Configuration</a></li><li class="chapter-item expanded "><a href="Examples.html">💡 Examples</a></li><li class="chapter-item expanded "><a href="RELEASES.html">📝 Release notes</a></li></ol>
             </div>
-            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
         </nav>
 
         <!-- Track and set sidebar scroll position -->
@@ -193,7 +195,7 @@ plugins.</p>
 <pre><code class="language-toml"># ~/.config/sheldon/plugins.toml
 
 [plugins.base16]
-github = &quot;chriskempson/base16-shell&quot;
+github = "chriskempson/base16-shell"
 </code></pre>
 <p>Or use the <code>add</code> command to automatically add it.</p>
 <pre><code class="language-sh">sheldon add base16 --github chriskempson/base16-shell
@@ -208,7 +210,7 @@ and print out the shell script to source. Simply add the following to your
 <code>~/.zshrc</code> or <code>~/.bashrc</code> file.</p>
 <pre><code class="language-sh"># ~/.zshrc or ~/.bashrc
 
-eval &quot;$(sheldon source)&quot;
+eval "$(sheldon source)"
 </code></pre>
 
                     </main>

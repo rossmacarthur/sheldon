@@ -90,7 +90,9 @@
             <div class="sidebar-scrollbox">
                 <ol class="chapter"><li class="chapter-item expanded affix "><a href="Introduction.html" class="active">Introduction</a></li><li class="chapter-item expanded "><a href="Installation.html">📦 Installation</a></li><li class="chapter-item expanded "><a href="Getting-started.html">🚀 Getting started</a></li><li class="chapter-item expanded "><a href="Command-line-interface.html">💻 Command line interface</a></li><li class="chapter-item expanded "><a href="Configuration.html">⚙️ Configuration</a></li><li class="chapter-item expanded "><a href="Examples.html">💡 Examples</a></li><li class="chapter-item expanded "><a href="RELEASES.html">📝 Release notes</a></li></ol>
             </div>
-            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
         </nav>
 
         <!-- Track and set sidebar scroll position -->
@@ -180,7 +182,7 @@
 <p>Plugins are specified in a <a href="https://toml.io">TOML</a> configuration file and
 Sheldon renders an install script using user configurable templates.</p>
 <p>A <code>~/.zshrc</code> or <code>~/.bashrc</code> that uses Sheldon simply contains the following.</p>
-<pre><code class="language-sh">eval &quot;$(sheldon source)&quot;
+<pre><code class="language-sh">eval "$(sheldon source)"
 </code></pre>
 <p>Sheldon can manage GitHub or Git repositories, Gists, arbitrary remote scripts
 or binaries, local plugins, and inline plugins. Plugins are installed and

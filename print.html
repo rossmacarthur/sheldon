@@ -91,7 +91,9 @@
             <div class="sidebar-scrollbox">
                 <ol class="chapter"><li class="chapter-item expanded affix "><a href="Introduction.html">Introduction</a></li><li class="chapter-item expanded "><a href="Installation.html">📦 Installation</a></li><li class="chapter-item expanded "><a href="Getting-started.html">🚀 Getting started</a></li><li class="chapter-item expanded "><a href="Command-line-interface.html">💻 Command line interface</a></li><li class="chapter-item expanded "><a href="Configuration.html">⚙️ Configuration</a></li><li class="chapter-item expanded "><a href="Examples.html">💡 Examples</a></li><li class="chapter-item expanded "><a href="RELEASES.html">📝 Release notes</a></li></ol>
             </div>
-            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
         </nav>
 
         <!-- Track and set sidebar scroll position -->
@@ -181,7 +183,7 @@
 <p>Plugins are specified in a <a href="https://toml.io">TOML</a> configuration file and
 Sheldon renders an install script using user configurable templates.</p>
 <p>A <code>~/.zshrc</code> or <code>~/.bashrc</code> that uses Sheldon simply contains the following.</p>
-<pre><code class="language-sh">eval &quot;$(sheldon source)&quot;
+<pre><code class="language-sh">eval "$(sheldon source)"
 </code></pre>
 <p>Sheldon can manage GitHub or Git repositories, Gists, arbitrary remote scripts
 or binaries, local plugins, and inline plugins. Plugins are installed and
@@ -197,6 +199,10 @@ updated in parallel and as a result Sheldon is blazingly fast.</p>
 </ul>
 <p>at your option.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="-installation"><a class="header" href="#-installation">📦 Installation</a></h1>
+<h2 id="nix"><a class="header" href="#nix">Nix</a></h2>
+<p>This repository is a flake, and can be installed using nix profile:</p>
+<pre><code>nix profile install "github:rossmacarthur/sheldon"
+</code></pre>
 <h2 id="homebrew"><a class="header" href="#homebrew">Homebrew</a></h2>
 <p>Sheldon can be installed using Homebrew.</p>
 <pre><code class="language-sh">brew install sheldon
@@ -255,7 +261,7 @@ plugins.</p>
 <pre><code class="language-toml"># ~/.config/sheldon/plugins.toml
 
 [plugins.base16]
-github = &quot;chriskempson/base16-shell&quot;
+github = "chriskempson/base16-shell"
 </code></pre>
 <p>Or use the <code>add</code> command to automatically add it.</p>
 <pre><code class="language-sh">sheldon add base16 --github chriskempson/base16-shell
@@ -270,7 +276,7 @@ and print out the shell script to source. Simply add the following to your
 <code>~/.zshrc</code> or <code>~/.bashrc</code> file.</p>
 <pre><code class="language-sh"># ~/.zshrc or ~/.bashrc
 
-eval &quot;$(sheldon source)&quot;
+eval "$(sheldon source)"
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="-command-line-interface"><a class="header" href="#-command-line-interface">💻 Command line interface</a></h1>
 <p>Sheldon has three different types of commands.</p>
@@ -311,7 +317,7 @@ regenerate the lock file.</p>
 is an up to date lock file, if not, then it will first do the equivalent of the
 lock command above. This command is usually used with the built-in shell <code>eval</code>
 command.</p>
-<pre><code class="language-sh">eval &quot;$(sheldon source)&quot;
+<pre><code class="language-sh">eval "$(sheldon source)"
 </code></pre>
 <p>But you can also run it directly to inspect the output. The output of this
 command is highly configurable. You can define your own custom templates to
@@ -332,7 +338,7 @@ used you should set the <code>EDITOR</code> environment variable.</p>
 <pre><code class="language-sh">EDITOR=vim sheldon edit
 </code></pre>
 <p>Or with Visual Studio Code</p>
-<pre><code class="language-sh">EDITOR=&quot;code --wait&quot; sheldon edit
+<pre><code class="language-sh">EDITOR="code --wait" sheldon edit
 </code></pre>
 <h2 id="remove"><a class="header" href="#remove"><code>remove</code></a></h2>
 <p>This command removes a plugin from the config file. It does nothing else but
@@ -398,7 +404,7 @@ in this section. A plugin may only specify <em>one</em> source type.</p>
 #           ┌─ Unique name for the plugin
 #        ┌──┴─┐
 [plugins.base16]
-github = &quot;chriskempson/base16-shell&quot;
+github = "chriskempson/base16-shell"
 #         └─────┬────┘ └─────┬────┘
 #               │            └─ GitHub repository name
 #               └─ GitHub user or organization
@@ -411,7 +417,7 @@ data directory. There are three flavors of Git sources.</p>
 should be the username or organization and the repository name separated by a
 forward slash. Add the following to the Sheldon config file.</p>
 <pre><code class="language-toml">[plugins.example]
-github = &quot;owner/repo&quot;
+github = "owner/repo"
 </code></pre>
 <p>Or run <code>add</code> with the <code>--github</code> option.</p>
 <pre><code class="language-sh">sheldon add example --github owner/repo
@@ -421,7 +427,7 @@ github = &quot;owner/repo&quot;
 be the hash or username and hash of the Gist. Add the following to the Sheldon
 config file.</p>
 <pre><code class="language-toml">[plugins.example]
-gist = &quot;579d02802b1cc17baed07753d09f5009&quot;
+gist = "579d02802b1cc17baed07753d09f5009"
 </code></pre>
 <p>Or run <code>add</code> with the <code>--gist</code> option.</p>
 <pre><code class="language-sh">sheldon add example --gist 579d02802b1cc17baed07753d09f5009
@@ -430,7 +436,7 @@ gist = &quot;579d02802b1cc17baed07753d09f5009&quot;
 <p>A Git source must set the <code>git</code> field and specify the URL to clone. Add the
 following to the Sheldon config file.</p>
 <pre><code class="language-toml">[plugins.example]
-git = &quot;https://github.com/owner/repo&quot;
+git = "https://github.com/owner/repo"
 </code></pre>
 <p>Or run <code>add</code> with the <code>--git</code> option.</p>
 <pre><code class="language-sh">sheldon add example --git https://github.com/owner/repo
@@ -439,8 +445,8 @@ git = &quot;https://github.com/owner/repo&quot;
 <p>All Git sources also allow setting of one of the <code>branch</code>, <code>tag</code> or <code>rev</code>
 fields. Sheldon will then checkout the repository at this reference.</p>
 <pre><code class="language-toml">[plugins.example]
-github = &quot;owner/repo&quot;
-tag = &quot;v0.1.0&quot;
+github = "owner/repo"
+tag = "v0.1.0"
 </code></pre>
 <p>Or run <code>add</code> with the <code>--tag</code>, <code>--branch</code>, or <code>--rev</code> option.</p>
 <pre><code class="language-sh">sheldon add example --github owner/repo --tag v0.1.0
@@ -450,13 +456,13 @@ tag = &quot;v0.1.0&quot;
 Git or SSH should be used by setting the <code>proto</code> field to the protocol type.
 This must be one of <code>git</code>, <code>https</code>, or <code>ssh</code>.</p>
 <pre><code class="language-toml">[plugins.example]
-github = &quot;owner/repo&quot;
-proto = &quot;ssh&quot;
+github = "owner/repo"
+proto = "ssh"
 </code></pre>
 <p>For a plain Git source you should specify the URL with a <code>git://</code> or <code>ssh://</code>.
 For SSH you will need to specify the username as well (it is <code>git</code> for GitHub).</p>
 <pre><code class="language-toml">[plugins.example]
-git = &quot;ssh://git@github.com/owner/repo&quot;
+git = "ssh://git@github.com/owner/repo"
 </code></pre>
 <h4 id="private-git-repositories"><a class="header" href="#private-git-repositories">Private Git repositories</a></h4>
 <p>Currently Sheldon only supports authentication when cloning using SSH and
@@ -468,7 +474,7 @@ cloning.</p>
 remote source must set the <code>remote</code> field and specify the URL. Add the following
 to the Sheldon config file.</p>
 <pre><code class="language-toml">[plugins.example]
-remote = &quot;https://github.com/owner/repo/raw/branch/plugin.zsh&quot;
+remote = "https://github.com/owner/repo/raw/branch/plugin.zsh"
 </code></pre>
 <p>Or run <code>add</code> with the <code>--remote</code> option.</p>
 <pre><code class="language-sh">sheldon add example --remote https://github.com/owner/repo/raw/branch/plugin.zsh
@@ -478,7 +484,7 @@ remote = &quot;https://github.com/owner/repo/raw/branch/plugin.zsh&quot;
 field and specify a directory. Tildes may be used and will be expanded to the
 current user's home directory. Add the following to the Sheldon config file.</p>
 <pre><code class="language-toml">[plugins.example]
-local = &quot;~/Downloads/plugin&quot;
+local = "~/Downloads/plugin"
 </code></pre>
 <p>Or run <code>add</code> with the <code>--local</code> option.</p>
 <pre><code class="language-sh">sheldon add example --local '~/Downloads/plugin'
@@ -490,8 +496,8 @@ local = &quot;~/Downloads/plugin&quot;
 is not given then the first pattern in the global <a href="Configuration.html#match"><code>match</code></a> field that
 matches any files will be used. Add the following to the Sheldon config file.</p>
 <pre><code class="language-toml">[plugins.example]
-github = &quot;owner/repo&quot;
-use = [&quot;*.zsh&quot;]
+github = "owner/repo"
+use = ["*.zsh"]
 </code></pre>
 <p>Or run <code>add</code> with the <code>--use</code> option when adding the plugin.</p>
 <pre><code class="language-sh">sheldon add example --github owner/repo --use '*.zsh'
@@ -500,8 +506,8 @@ use = [&quot;*.zsh&quot;]
 <p>A list of template names to apply to this plugin. This defaults to the global
 <a href="Configuration.html#apply-1"><code>apply</code></a>.</p>
 <pre><code class="language-toml">[plugins.example]
-github = &quot;owner/repo&quot;
-apply = [&quot;source&quot;, &quot;PATH&quot;]
+github = "owner/repo"
+apply = ["source", "PATH"]
 </code></pre>
 <p>Or run <code>add</code> with the <code>--apply</code> option when adding the plugin.</p>
 <pre><code class="language-sh">sheldon add example --github owner/repo --apply source PATH
@@ -516,17 +522,17 @@ included in the configured list of profiles.</p>
 <h3 id="hooks"><a class="header" href="#hooks"><code>hooks</code></a></h3>
 <p>Statements executed around plugin installation.</p>
 <pre><code class="language-toml">[plugins.example]
-github = &quot;owner/repo&quot;
+github = "owner/repo"
 
 [plugins.example.hooks]
-pre = &quot;export TEST=test&quot;
-post = &quot;unset TEST&quot;
+pre = "export TEST=test"
+post = "unset TEST"
 </code></pre>
 <h2 id="inline-plugins"><a class="header" href="#inline-plugins">Inline plugins</a></h2>
 <p>For convenience it also possible to define Inline plugins. An Inline plugin must
 set the <code>inline</code> field and specify the raw source.</p>
 <pre><code class="language-toml">[plugins.example]
-inline = 'example() { echo &quot;Just an example of inline shell code&quot; }'
+inline = 'example() { echo "Just an example of inline shell code" }'
 </code></pre>
 <h2 id="templates"><a class="header" href="#templates">Templates</a></h2>
 <p>A template defines how the shell source for a particular plugin is generated.
@@ -547,19 +553,19 @@ using. The following are available for both Bash and Zsh.</p>
 <p>As template strings in the config file they could be represented like the
 following.</p>
 <pre><code class="language-toml">[templates]
-source = &quot;&quot;&quot;
-{{ hooks?.pre | nl }}{% for file in files %}source \&quot;{{ file }}\&quot;
-{% endfor %}{{ hooks?.post | nl }}&quot;&quot;&quot;
-PATH = 'export PATH=&quot;{{ dir }}:$PATH&quot;'
-path = 'path=( &quot;{{ dir }}&quot; $path )'
-fpath = 'fpath=( &quot;{{ dir }}&quot; $fpath )'
+source = '''
+{{ hooks?.pre | nl }}{% for file in files %}source "{{ file }}"
+{% endfor %}{{ hooks?.post | nl }}'''
+PATH = 'export PATH="{{ dir }}:$PATH"'
+path = 'path=( "{{ dir }}" $path )'
+fpath = 'fpath=( "{{ dir }}" $fpath )'
 </code></pre>
 <p>For example if we change the <code>apply</code> field for the below plugin, it will only
 add the plugin directory to the <code>PATH</code> and append it to the <code>fpath</code>. The plugin
 will not be sourced.</p>
 <pre><code class="language-toml">[plugins.example]
-github = &quot;owner/repo&quot;
-apply = [&quot;PATH&quot;, &quot;fpath&quot;]
+github = "owner/repo"
+apply = ["PATH", "fpath"]
 </code></pre>
 <h3 id="custom-templates"><a class="header" href="#custom-templates">Custom templates</a></h3>
 <p>It is possible to create your own custom templates, and you can even override
@@ -595,57 +601,42 @@ applications of this.</p>
 <p>Indicates the shell that you are using. This setting will affect the default
 values for several global config settings. This includes the global
 <a href="Configuration.html#match"><code>match</code></a> setting and the available templates. This defaults to <code>zsh</code>.</p>
-<pre><code class="language-toml">shell = &quot;bash&quot;
+<pre><code class="language-toml">shell = "bash"
 </code></pre>
 <p>or</p>
-<pre><code class="language-toml">shell = &quot;zsh&quot;
-</code></pre>
-<p>as well as the experimental</p>
-<pre><code class="language-toml">shell = &quot;fish&quot;
+<pre><code class="language-toml">shell = "zsh"
 </code></pre>
 <h3 id="match"><a class="header" href="#match"><code>match</code></a></h3>
 <p>A list of glob patterns to match against a plugin's contents. The first pattern
 that matches any files will be used by default as a plugin's <code>use</code> field. This
 defaults to</p>
 <pre><code class="language-toml">match = [
-    &quot;{{ name }}.plugin.zsh&quot;,
-    &quot;{{ name }}.zsh&quot;,
-    &quot;{{ name }}.sh&quot;,
-    &quot;{{ name }}.zsh-theme&quot;,
-    &quot;*.plugin.zsh&quot;,
-    &quot;*.zsh&quot;,
-    &quot;*.sh&quot;,
-    &quot;*.zsh-theme&quot;
+    "{{ name }}.plugin.zsh",
+    "{{ name }}.zsh",
+    "{{ name }}.sh",
+    "{{ name }}.zsh-theme",
+    "*.plugin.zsh",
+    "*.zsh",
+    "*.sh",
+    "*.zsh-theme"
 ]
 </code></pre>
 <p>If the shell is Bash then this defaults to</p>
 <pre><code class="language-toml">match = [
-    &quot;{{ name }}.plugin.bash&quot;,
-    &quot;{{ name }}.plugin.sh&quot;,
-    &quot;{{ name }}.bash&quot;,
-    &quot;{{ name }}.sh&quot;,
-    &quot;*.plugin.bash&quot;,
-    &quot;*.plugin.sh&quot;,
-    &quot;*.bash&quot;,
-    &quot;*.sh&quot;
-]
-</code></pre>
-<p>If the shell is Fish then this defaults to</p>
-<pre><code class="language-toml">match = [
-    &quot;conf.d/{{ name }}.fish&quot;,
-    &quot;conf.d/{!_*,*}.fish&quot;,
-    &quot;{completions,functions}/{{ name }}.fish&quot;,
-    &quot;{completions,functions}/{!_*,*}.fish&quot;,
-    &quot;{completions,functions}/*.fish&quot;,
-    &quot;{{ name }}.fish&quot;,
-    &quot;{!_*,*}.fish&quot;,
-    &quot;*.fish&quot;
+    "{{ name }}.plugin.bash",
+    "{{ name }}.plugin.sh",
+    "{{ name }}.bash",
+    "{{ name }}.sh",
+    "*.plugin.bash",
+    "*.plugin.sh",
+    "*.bash",
+    "*.sh"
 ]
 </code></pre>
 <h3 id="apply-1"><a class="header" href="#apply-1"><code>apply</code></a></h3>
 <p>A list of template names to apply to all plugins by default (see
 <a href="Configuration.html#apply"><code>apply</code></a>). This defaults to</p>
-<pre><code class="language-toml">apply = [&quot;source&quot;]
+<pre><code class="language-toml">apply = ["source"]
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="-examples"><a class="header" href="#-examples">💡 Examples</a></h1>
 <p>This section demonstrates the configuration file contents for some common
@@ -659,58 +650,58 @@ deferred loading working with Sheldon using
 <a href="https://github.com/romkatv/zsh-defer">romkatv/zsh-defer</a>.</p>
 <p>Firstly, you should add <code>zsh-defer</code> as a plugin.</p>
 <pre><code class="language-toml">[plugins.zsh-defer]
-github = &quot;romkatv/zsh-defer&quot;
+github = "romkatv/zsh-defer"
 </code></pre>
 <p>Important: the <code>zsh-defer</code> plugin definition should be placed before any plugins
 that will use the <code>defer</code> template. Sheldon always processes plugins in the
 order they are defined in the config file.</p>
 <p>Then add a template that calls <code>zsh-defer source</code> instead of just <code>source</code>.</p>
 <pre><code class="language-toml">[templates]
-defer = &quot;{{ hooks?.pre | nl }}{% for file in files %}zsh-defer source \&quot;{{ file }}\&quot;\n{% endfor %}{{ hooks?.post | nl }}&quot;
+defer = "{{ hooks?.pre | nl }}{% for file in files %}zsh-defer source \"{{ file }}\"\n{% endfor %}{{ hooks?.post | nl }}"
 </code></pre>
 <p>Now any plugin that you want to defer you can apply the <code>defer</code> template. For
 example if you wanted to defer loading of <code>zsh-syntax-highlighting</code>.</p>
 <pre><code class="language-toml">[plugins.zsh-syntax-highlighting]
-github = &quot;zsh-users/zsh-syntax-highlighting&quot;
-apply = [&quot;defer&quot;]
+github = "zsh-users/zsh-syntax-highlighting"
+apply = ["defer"]
 </code></pre>
 <h2 id="overriding-the-path-template"><a class="header" href="#overriding-the-path-template">Overriding the PATH template</a></h2>
 <p>The built-in <strong>PATH</strong> template adds the directory path to the beginning of the
 <code>PATH</code> variable, we might want to change it to the be added at the end. We could
 do this like this</p>
 <pre><code class="language-toml">[templates]
-PATH = 'export PATH=&quot;$PATH:{{ dir }}&quot;'
+PATH = 'export PATH="$PATH:{{ dir }}"'
 </code></pre>
 <p>You can then apply it to the plugin like this</p>
 <pre><code class="language-toml">[plugins.example]
-github = &quot;owner/repo&quot;
-apply = [&quot;source&quot;, &quot;PATH&quot;]
+github = "owner/repo"
+apply = ["source", "PATH"]
 </code></pre>
 <p><strong>Note:</strong> this would change the behavior of <strong>PATH</strong> for <em>all</em> plugins using it.</p>
 <h2 id="zsh-frameworks"><a class="header" href="#zsh-frameworks">Zsh frameworks</a></h2>
 <h3 id="ohmyzsh"><a class="header" href="#ohmyzsh"><a href="https://github.com/ohmyzsh/ohmyzsh">ohmyzsh</a></a></h3>
 <p>Add the following to the Sheldon config file.</p>
 <pre><code class="language-toml">[plugins.oh-my-zsh]
-github = &quot;ohmyzsh/ohmyzsh&quot;
+github = "ohmyzsh/ohmyzsh"
 </code></pre>
 <p>Or run the following to automatically add it.</p>
-<pre><code class="language-sh">sheldon add oh-my-zsh --github &quot;ohmyzsh/ohmyzsh&quot;
+<pre><code class="language-sh">sheldon add oh-my-zsh --github "ohmyzsh/ohmyzsh"
 </code></pre>
 <p>Add the following to your <code>~/.zshrc</code> file.</p>
 <pre><code class="language-sh"># ~/.zshrc
 
-export ZSH=&quot;$HOME/.local/share/sheldon/repos/github.com/ohmyzsh/ohmyzsh&quot;
+export ZSH="$HOME/.local/share/sheldon/repos/github.com/ohmyzsh/ohmyzsh"
 
 # Oh My Zsh settings here
 
-eval &quot;$(sheldon source)&quot;
+eval "$(sheldon source)"
 </code></pre>
 <h2 id="zsh-plugins"><a class="header" href="#zsh-plugins">Zsh plugins</a></h2>
 <h3 id="autosuggestions"><a class="header" href="#autosuggestions"><a href="https://github.com/zsh-users/zsh-autosuggestions">autosuggestions</a></a></h3>
 <p>Add the following to the Sheldon config file.</p>
 <pre><code class="language-toml">[plugins.zsh-autosuggestions]
-github = &quot;zsh-users/zsh-autosuggestions&quot;
-use = [&quot;{{ name }}.zsh&quot;]
+github = "zsh-users/zsh-autosuggestions"
+use = ["{{ name }}.zsh"]
 </code></pre>
 <p>Or run the following to automatically add it.</p>
 <pre><code class="language-sh">sheldon add zsh-autosuggestions --github zsh-users/zsh-autosuggestions --use '{{ name }}.zsh'
@@ -718,9 +709,9 @@ use = [&quot;{{ name }}.zsh&quot;]
 <h3 id="autojump"><a class="header" href="#autojump"><a href="https://github.com/wting/autojump">autojump</a></a></h3>
 <p>Add the following to the Sheldon config file.</p>
 <pre><code class="language-toml">[plugins.autojump]
-github = &quot;wting/autojump&quot;
-dir = &quot;bin&quot;
-apply = [&quot;PATH&quot;, &quot;source&quot;]
+github = "wting/autojump"
+dir = "bin"
+apply = ["PATH", "source"]
 </code></pre>
 <p>Or run the following to automatically add it.</p>
 <pre><code class="language-sh">sheldon add autojump --github wting/autojump --dir bin --apply PATH source
@@ -728,7 +719,7 @@ apply = [&quot;PATH&quot;, &quot;source&quot;]
 <h3 id="syntax-highlighting"><a class="header" href="#syntax-highlighting"><a href="https://github.com/zsh-users/zsh-syntax-highlighting">syntax-highlighting</a></a></h3>
 <p>Add the following to the Sheldon config file.</p>
 <pre><code class="language-toml">[plugins.zsh-syntax-highlighting]
-github = &quot;zsh-users/zsh-syntax-highlighting&quot;
+github = "zsh-users/zsh-syntax-highlighting"
 </code></pre>
 <p>Or run the following to automatically add it.</p>
 <pre><code class="language-sh">sheldon add zsh-syntax-highlighting --github zsh-users/zsh-syntax-highlighting
@@ -736,15 +727,15 @@ github = &quot;zsh-users/zsh-syntax-highlighting&quot;
 <h3 id="blackbox"><a class="header" href="#blackbox"><a href="https://github.com/StackExchange/blackbox">blackbox</a></a></h3>
 <p>Add the following to the Sheldon config file.</p>
 <pre><code class="language-toml">[plugins.blackbox]
-github = &quot;StackExchange/blackbox&quot;
+github = "StackExchange/blackbox"
 </code></pre>
 <p>Or run the following to automatically add it.</p>
 <pre><code class="language-sh">sheldon add blackbox --github StackExchange/blackbox
 </code></pre>
 <h3 id="zlua"><a class="header" href="#zlua"><a href="https://github.com/skywind3000/z.lua">z.lua</a></a></h3>
 <p>Add the following to the Sheldon config file.</p>
-<pre><code class="language-toml">[plugins.&quot;z.lua&quot;]
-github = &quot;skywind3000/z.lua&quot;
+<pre><code class="language-toml">[plugins."z.lua"]
+github = "skywind3000/z.lua"
 </code></pre>
 <p>Or run the following to automatically add it.</p>
 <pre><code class="language-sh">sheldon add z.lua --github skywind3000/z.lua
@@ -752,7 +743,7 @@ github = &quot;skywind3000/z.lua&quot;
 <h3 id="enhancd"><a class="header" href="#enhancd"><a href="https://github.com/b4b4r07/enhancd">enhancd</a></a></h3>
 <p>Add the following to the Sheldon config file.</p>
 <pre><code class="language-toml">[plugins.enhancd]
-github = &quot;b4b4r07/enhancd&quot;
+github = "b4b4r07/enhancd"
 </code></pre>
 <p>Or run the following to automatically add it.</p>
 <pre><code class="language-sh">sheldon add enhancd --github b4b4r07/enhancd
@@ -760,7 +751,7 @@ github = &quot;b4b4r07/enhancd&quot;
 <h3 id="base16"><a class="header" href="#base16"><a href="https://github.com/chriskempson/base16-shell">base16</a></a></h3>
 <p>Add the following to the Sheldon config file.</p>
 <pre><code class="language-toml">[plugins.base16]
-github = &quot;chriskempson/base16-shell&quot;
+github = "chriskempson/base16-shell"
 </code></pre>
 <p>Or run the following to automatically add it.</p>
 <pre><code class="language-sh">sheldon add base16 --github chriskempson/base16-shell
@@ -769,7 +760,7 @@ github = &quot;chriskempson/base16-shell&quot;
 <h3 id="powerlevel10k"><a class="header" href="#powerlevel10k"><a href="https://github.com/romkatv/powerlevel10k">powerlevel10k</a></a></h3>
 <p>Add the following to the Sheldon config file.</p>
 <pre><code class="language-toml">[plugins.powerlevel10k]
-github = &quot;romkatv/powerlevel10k&quot;
+github = "romkatv/powerlevel10k"
 </code></pre>
 <p>Or run the following to automatically add it.</p>
 <pre><code>sheldon add powerlevel10k --github romkatv/powerlevel10k
@@ -777,7 +768,7 @@ github = &quot;romkatv/powerlevel10k&quot;
 <h3 id="spaceship"><a class="header" href="#spaceship"><a href="https://github.com/spaceship-prompt/spaceship-prompt">spaceship</a></a></h3>
 <p>Add the following to the Sheldon config file.</p>
 <pre><code class="language-toml">[plugins.spaceship]
-github = &quot;spaceship-prompt/spaceship-prompt&quot;
+github = "spaceship-prompt/spaceship-prompt"
 </code></pre>
 <p>Or run the following to automatically add it.</p>
 <pre><code class="language-sh">sheldon add spaceship --github spaceship-prompt/spaceship-prompt
@@ -785,13 +776,63 @@ github = &quot;spaceship-prompt/spaceship-prompt&quot;
 <h3 id="pure"><a class="header" href="#pure"><a href="https://github.com/sindresorhus/pure">pure</a></a></h3>
 <p>Add the following to the Sheldon config file.</p>
 <pre><code class="language-toml">[plugins.pure]
-github = &quot;sindresorhus/pure&quot;
-use = [&quot;async.zsh&quot;, &quot;pure.zsh&quot;]
+github = "sindresorhus/pure"
+use = ["async.zsh", "pure.zsh"]
 </code></pre>
 <p>Or run the following to automatically add it.</p>
 <pre><code class="language-sh">sheldon add pure --github sindresorhus/pure --use async.zsh pure.zsh
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="-release-notes"><a class="header" href="#-release-notes">📝 Release notes</a></h1>
+<h2 id="080"><a class="header" href="#080">0.8.0</a></h2>
+<p><em>August 25th, 2024</em></p>
+<h3 id="breaking-changes"><a class="header" href="#breaking-changes">Breaking changes</a></h3>
+<ul>
+<li>
+<p><a href="https://github.com/rossmacarthur/sheldon/commit/048fde33b117bc14398b774c18078219d9dffa4c">Remove deprecated config key and template filters</a></p>
+</li>
+<li>
+<p><a href="https://github.com/rossmacarthur/sheldon/commit/2f68940b131f378f63fb343df3c8836b3a0dcdfa">Remove deprecated directory support</a></p>
+</li>
+<li>
+<p><a href="https://github.com/rossmacarthur/sheldon/commit/f9842b1533f511b07842bb3b01984d25933debea">Stop defaulting to Zsh and allow unspecified shell.</a> This change
+stops the shell defaulting to Zsh when unspecified and allows you to use
+Sheldon without specifying a particular shell.</p>
+</li>
+<li>
+<p><a href="https://github.com/rossmacarthur/sheldon/commit/a804ff231e48a9c7e6895871da9ea926e017058d">Remove experimental Fish shell support.</a> Sheldon is shell agnostic
+enough that you can still get support for Fish by overriding the default
+<code>match</code>, <code>apply</code>, and <code>templates</code> values in the config file.</p>
+</li>
+</ul>
+<h3 id="features"><a class="header" href="#features">Features</a></h3>
+<ul>
+<li>
+<p><a href="https://github.com/rossmacarthur/sheldon/issues/187">Support all clap complete shells.</a> The <code>sheldon completions</code> command
+now supports all shells that clap supports, regardless of whether they are
+supported by Sheldon.</p>
+<pre><code>sheldon completions --shell fish
+</code></pre>
+</li>
+<li>
+<p><a href="https://github.com/rossmacarthur/sheldon/issues/180">Add Nix Flake support.</a> This repository is now a flake, and can be
+installed using nix profile:</p>
+<pre><code>nix profile install "github:rossmacarthur/sheldon"
+</code></pre>
+<p><em>Contributed by <a href="https://github.com/DoomHammer"><strong>DoomHammer</strong></a></em></p>
+</li>
+<li>
+<p><a href="https://github.com/rossmacarthur/sheldon/commit/592abbeb556ed21c821d5c3082ad1c9391b52aa5">Add feature flags to control dependency vendoring.</a> This adds
+various Cargo features to control the vendoring of dependencies when
+installing Sheldon using Cargo. For example if you want to install Sheldon
+with a vendored OpenSSL you can use the following command.</p>
+<pre><code>cargo install sheldon --features vendored-openssl
+</code></pre>
+<p>See
+<a href="https://github.com/rossmacarthur/sheldon/blob/trunk/Cargo.toml">Cargo.toml</a>
+for more information. Or view
+on <a href="https://lib.rs/crates/sheldon/features">lib.rs</a>.</p>
+</li>
+</ul>
 <h2 id="074"><a class="header" href="#074">0.7.4</a></h2>
 <p><em>November 19th, 2023</em></p>
 <ul>
@@ -804,7 +845,7 @@ present in <code>hooks</code>. You will now receive a deprecation warning if you
 <p>Custom templates might have to be updated, for example if you were using a
 custom <code>defer</code> template you would need to update it to the following.</p>
 <pre><code class="language-toml">[templates]
-defer = &quot;{{ hooks?.pre | nl }}{% for file in files %}zsh-defer source \&quot;{{ file }}\&quot;\n{% endfor %}{{ hooks?.post | nl }}&quot;
+defer = "{{ hooks?.pre | nl }}{% for file in files %}zsh-defer source \"{{ file }}\"\n{% endfor %}{{ hooks?.post | nl }}"
 </code></pre>
 </li>
 </ul>
@@ -821,15 +862,15 @@ is sourced. If you are using a custom template like <code>defer</code> it will n
 be updated to support hooks.</p>
 <p>For example this can be used to set variables after a plugin is sourced.</p>
 <pre><code class="language-toml">[plugins.enhancd]
-github = &quot;b4b4r07/enhancd&quot;
+github = "b4b4r07/enhancd"
 
 [plugins.enhancd.hooks]
-post = 'export ENHANCD_HOOK_AFTER_CD = &quot;ls&quot;'
+post = 'export ENHANCD_HOOK_AFTER_CD = "ls"'
 </code></pre>
 <p>Custom templates might have to be updated, for example if you were using a
 custom <code>defer</code> template you would need to update it to the following.</p>
 <pre><code class="language-toml">[templates]
-defer = &quot;{{ hooks | get: \&quot;pre\&quot; | nl }}{% for file in files %}zsh-defer source \&quot;{{ file }}\&quot;\n{% endfor %}{{ hooks | get: \&quot;post\&quot; | nl }}&quot;
+defer = "{{ hooks | get: \"pre\" | nl }}{% for file in files %}zsh-defer source \"{{ file }}\"\n{% endfor %}{{ hooks | get: \"post\" | nl }}"
 </code></pre>
 <p><em>Contributed by <a href="https://github.com/mkroli"><strong>@mkroli</strong></a></em></p>
 </li>
@@ -850,7 +891,7 @@ Sheldon to use the Fish shell.</p>
 </code></pre>
 <p>This makes Sheldon change the global matches and templates to be tailored to
 Fish. Add the following to your Fish config</p>
-<pre><code>eval &quot;$(sheldon source)&quot;
+<pre><code>eval "$(sheldon source)"
 </code></pre>
 </li>
 <li>
@@ -875,7 +916,7 @@ size.</p>
 </ul>
 <h2 id="070"><a class="header" href="#070">0.7.0</a></h2>
 <p><em>October 13th, 2022</em></p>
-<h3 id="breaking-changes"><a class="header" href="#breaking-changes">Breaking changes</a></h3>
+<h3 id="breaking-changes-1"><a class="header" href="#breaking-changes-1">Breaking changes</a></h3>
 <ul>
 <li>
 <p><a href="https://github.com/rossmacarthur/sheldon/commit/c3f87dde3017e98845378148acc4cd2268572a7a">Use XDG directories by default.</a> Previously Sheldon tried to
@@ -889,8 +930,8 @@ will be <code>~/.config/sheldon/plugins.toml</code> if the XDG variable is unset
 then safely delete the old <code>~/.sheldon</code> directory.</p>
 <p>If you wish to preserve the existing behaviour you can simply set the
 following environment variables.</p>
-<pre><code class="language-sh">SHELDON_CONFIG_DIR=&quot;$HOME/.sheldon&quot;
-SHELDON_DATA_DIR=&quot;$HOME/.sheldon&quot;
+<pre><code class="language-sh">SHELDON_CONFIG_DIR="$HOME/.sheldon"
+SHELDON_DATA_DIR="$HOME/.sheldon"
 </code></pre>
 </li>
 <li>
@@ -904,13 +945,13 @@ affect you if you were using custom templates.</p>
 to each file in a plugin need to now use a for loop.</p>
 <p>Previously, you could use</p>
 <pre><code class="language-toml">[templates]
-defer = { value = 'zsh-defer source &quot;{{ file }}&quot;', each = true }
+defer = { value = 'zsh-defer source "{{ file }}"', each = true }
 </code></pre>
 <p>You must now use a <code>for</code> loop</p>
 <pre><code class="language-toml">[templates]
-defer = &quot;&quot;&quot;{% for file in files %}
-zsh-defer source &quot;{{ file }}&quot;
-{% endfor %}&quot;&quot;&quot;
+defer = """{% for file in files %}
+zsh-defer source "{{ file }}"
+{% endfor %}"""
 </code></pre>
 <p>Having templates only applied per plugin and not both per plugin and per file
 in a plugin makes rendering a lot simpler and the config easier to understand.</p>
@@ -920,7 +961,7 @@ in a plugin makes rendering a lot simpler and the config easier to understand.</
 no longer configurable, only the data directory is configurable.</p>
 </li>
 </ul>
-<h3 id="features"><a class="header" href="#features">Features</a></h3>
+<h3 id="features-1"><a class="header" href="#features-1">Features</a></h3>
 <ul>
 <li>
 <p><a href="https://github.com/rossmacarthur/sheldon/pull/143">Conditional sourcing of plugins using profiles.</a> This allows you to
@@ -929,8 +970,8 @@ included when Sheldon is run with that profile. A separate lock file will be
 used for each profile.</p>
 <p>Plugins can specify the profiles using the <code>profiles</code> key.</p>
 <pre><code class="language-toml">[plugins.example]
-github = &quot;owner/repo&quot;
-profiles = [&quot;&lt;name&gt;&quot;]
+github = "owner/repo"
+profiles = ["&lt;name&gt;"]
 </code></pre>
 <p>You can specify the profile in two ways:</p>
 <ul>
@@ -981,7 +1022,7 @@ symlink Sheldon will now emit an error.</li>
 <h2 id="062"><a class="header" href="#062">0.6.2</a></h2>
 <p><em>March 13th, 2021</em></p>
 <ul>
-<li><a href="https://github.com/rossmacarthur/sheldon/commit/a4a06023f5ec582964fdcf3ad036998dace02616">Fix edit bug.</a> If the edit file existed and you chose the &quot;Abort&quot;
+<li><a href="https://github.com/rossmacarthur/sheldon/commit/a4a06023f5ec582964fdcf3ad036998dace02616">Fix edit bug.</a> If the edit file existed and you chose the "Abort"
 option the file would be deleted by mistake.</li>
 <li><a href="https://github.com/rossmacarthur/sheldon/commit/92a23b5289c4c206a228e6bf11ce937c4649047b">Always include details section in version output.</a> This was
 previously excluded if there was no Git information.</li>
@@ -999,7 +1040,7 @@ re-open it or overwrite.</li>
 </ul>
 <h2 id="060"><a class="header" href="#060">0.6.0</a></h2>
 <p><em>October 16th, 2020</em></p>
-<h3 id="breaking-changes-1"><a class="header" href="#breaking-changes-1">Breaking changes</a></h3>
+<h3 id="breaking-changes-2"><a class="header" href="#breaking-changes-2">Breaking changes</a></h3>
 <ul>
 <li>
 <p><a href="https://github.com/rossmacarthur/sheldon/pull/110">Support XDG directory structure.</a> If any XDG environment variable is
@@ -1053,15 +1094,15 @@ where passing <code>--update</code> or <code>--reinstall</code> to the <code>sou
 </ul>
 <h2 id="054"><a class="header" href="#054">0.5.4</a></h2>
 <p><em>August 14th, 2020</em></p>
-<h3 id="features-1"><a class="header" href="#features-1">Features</a></h3>
+<h3 id="features-2"><a class="header" href="#features-2">Features</a></h3>
 <ul>
 <li>
 <p><a href="https://github.com/rossmacarthur/sheldon/commit/a972c3543d3c5ed339028ab316b1c48f733aed7">Support extended glob syntax.</a> This means that <code>{a,b}</code> and <code>!</code> glob
 patterns can now be used. For example, the following is now valid.</p>
 <pre><code class="language-toml">[plugins.ohmyzsh]
-github = &quot;ohmyzsh/ohmyzsh&quot;
-dir = &quot;lib&quot;
-use = [&quot;{!git,!nvm,*}.zsh]
+github = "ohmyzsh/ohmyzsh"
+dir = "lib"
+use = ["{!git,!nvm,*}.zsh]
 </code></pre>
 </li>
 </ul>
@@ -1075,7 +1116,7 @@ removed.</a> These templates were meaningless in a Bash context.</li>
 </ul>
 <h2 id="053"><a class="header" href="#053">0.5.3</a></h2>
 <p><em>July 28th, 2020</em></p>
-<h3 id="features-2"><a class="header" href="#features-2">Features</a></h3>
+<h3 id="features-3"><a class="header" href="#features-3">Features</a></h3>
 <ul>
 <li><a href="https://github.com/rossmacarthur/sheldon/commit/131576dfddc53ec76e87ce6ee64326ae119a383c">Add <code>init</code> command.</a> Adds a new command to Sheldon which initializes
 a config file. Simply run <code>sheldon init</code>.</li>
@@ -1110,7 +1151,7 @@ shipped musl binaries which statically bundle OpenSSL.</li>
 </ul>
 <h2 id="050"><a class="header" href="#050">0.5.0</a></h2>
 <p><em>May 2nd, 2020</em></p>
-<h3 id="features-3"><a class="header" href="#features-3">Features</a></h3>
+<h3 id="features-4"><a class="header" href="#features-4">Features</a></h3>
 <ul>
 <li>
 <p><a href="https://github.com/rossmacarthur/sheldon/commit/140d17142d5be2b0653f559612aebffbd3c39ce1">Add <code>add</code> and <code>remove</code> commands to edit config.</a> These commands will
@@ -1120,8 +1161,8 @@ edit the config file for you.</p>
 </code></pre>
 <p>will add the following to the config file</p>
 <pre><code class="language-toml">[plugins.example]
-github = &quot;owner/repo&quot;
-tag = &quot;v0.1.0&quot;
+github = "owner/repo"
+tag = "v0.1.0"
 </code></pre>
 <p>The following will remove it again.</p>
 <pre><code class="language-sh">sheldon remove example
@@ -1141,7 +1182,7 @@ file it will log warnings when there are unused config keys. Great for
 catching typos!</p>
 </li>
 </ul>
-<h3 id="breaking-changes-2"><a class="header" href="#breaking-changes-2">Breaking changes</a></h3>
+<h3 id="breaking-changes-3"><a class="header" href="#breaking-changes-3">Breaking changes</a></h3>
 <ul>
 <li>
 <p><a href="https://github.com/rossmacarthur/sheldon/commit/18454834cb6f1b2b1ebf2ef52617449b58917f28">Update default root directory and clone directory.</a> The root
@@ -1152,8 +1193,8 @@ mv ~/.sheldon/repositories ~/.sheldon/repos
 </code></pre>
 <p>Or to preserve the old behavior you should export the following before running
 Sheldon.</p>
-<pre><code class="language-sh">export SHELDON_ROOT=&quot;$HOME/.zsh&quot;
-export SHELDON_CLONE_DIR=&quot;$SHELDON_ROOT/repositories&quot;
+<pre><code class="language-sh">export SHELDON_ROOT="$HOME/.zsh"
+export SHELDON_CLONE_DIR="$SHELDON_ROOT/repositories"
 </code></pre>
 </li>
 </ul>
