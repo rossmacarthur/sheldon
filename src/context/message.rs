@@ -16,7 +16,7 @@ pub trait ToMessage {
     fn to_message(&self, ctx: &Context) -> Message<'_>;
 }
 
-impl<'a> fmt::Display for Message<'a> {
+impl fmt::Display for Message<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Message::Borrowed(b) => fmt::Display::fmt(b, f),
