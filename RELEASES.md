@@ -1,5 +1,13 @@
 # 📝 Release notes
 
+## 0.8.1
+
+*February 8th, 2025*
+
+- [Update to libgit2 1.9][7a195493]
+
+[7a195493]: https://github.com/rossmacarthur/sheldon/commit/7a195493252ca908b88b5ddd82dd0fe5ce4ab811
+
 ## 0.8.0
 
 *August 25th, 2024*
