@@ -5,11 +5,11 @@ pub mod source;
 
 use std::fs;
 use std::path::Path;
+use std::sync::LazyLock as Lazy;
 
 use anyhow::{Context as ResultExt, Result};
 use indexmap::{indexmap, IndexMap};
 use itertools::{Either, Itertools};
-use once_cell::sync::Lazy;
 use rayon::prelude::*;
 
 use crate::config::{Config, MatchesProfile, Plugin, Shell};

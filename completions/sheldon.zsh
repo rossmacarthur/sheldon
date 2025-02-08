@@ -19,7 +19,7 @@ _sheldon() {
 '--config-dir=[The configuration directory]:PATH:_files' \
 '--data-dir=[The data directory]:PATH:_files' \
 '--config-file=[The config file]:PATH:_files' \
-'--profile=[The profile used for conditional plugins]:PROFILE: ' \
+'--profile=[The profile used for conditional plugins]:PROFILE:_default' \
 '-q[Suppress any informational output]' \
 '--quiet[Suppress any informational output]' \
 '--non-interactive[Suppress any interactive prompts and assume "yes" as the answer]' \
@@ -47,23 +47,23 @@ _arguments "${_arguments_options[@]}" : \
 ;;
 (add)
 _arguments "${_arguments_options[@]}" : \
-'--git=[Add a clonable Git repository]:URL: ' \
-'--gist=[Add a clonable Gist snippet]:ID: ' \
-'--github=[Add a clonable GitHub repository]:REPO: ' \
-'--remote=[Add a downloadable file]:URL: ' \
+'--git=[Add a clonable Git repository]:URL:_default' \
+'--gist=[Add a clonable Gist snippet]:ID:_default' \
+'--github=[Add a clonable GitHub repository]:REPO:_default' \
+'--remote=[Add a downloadable file]:URL:_default' \
 '--local=[Add a local directory]:DIR:_files' \
-'(--git --remote --local)--proto=[The Git protocol for a Gist or GitHub plugin]:PROTO: ' \
-'--branch=[Checkout the tip of a branch]:BRANCH: ' \
-'--rev=[Checkout a specific commit]:SHA: ' \
-'--tag=[Checkout a specific tag]:TAG: ' \
-'--dir=[Which sub directory to use in this plugin]:PATH: ' \
-'*--use=[Which files to use in this plugin]:MATCH: ' \
-'*--apply=[Templates to apply to this plugin]:TEMPLATE: ' \
-'*--profiles=[Only use this plugin under one of the given profiles]:PROFILES: ' \
-'*--hooks=[Hooks executed during template evaluation]:SCRIPT: ' \
+'(--git --remote --local)--proto=[The Git protocol for a Gist or GitHub plugin]:PROTO:_default' \
+'--branch=[Checkout the tip of a branch]:BRANCH:_default' \
+'--rev=[Checkout a specific commit]:SHA:_default' \
+'--tag=[Checkout a specific tag]:TAG:_default' \
+'--dir=[Which sub directory to use in this plugin]:PATH:_default' \
+'*--use=[Which files to use in this plugin]:MATCH:_default' \
+'*--apply=[Templates to apply to this plugin]:TEMPLATE:_default' \
+'*--profiles=[Only use this plugin under one of the given profiles]:PROFILES:_default' \
+'*--hooks=[Hooks executed during template evaluation]:SCRIPT:_default' \
 '-h[Print help]' \
 '--help[Print help]' \
-':name -- A unique name for this plugin:' \
+':name -- A unique name for this plugin:_default' \
 && ret=0
 ;;
 (edit)
@@ -76,7 +76,7 @@ _arguments "${_arguments_options[@]}" : \
 _arguments "${_arguments_options[@]}" : \
 '-h[Print help]' \
 '--help[Print help]' \
-':name -- A unique name for this plugin:' \
+':name -- A unique name for this plugin:_default' \
 && ret=0
 ;;
 (lock)

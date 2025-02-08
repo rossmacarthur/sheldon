@@ -6,9 +6,9 @@ use std::fs::File;
 use std::io;
 use std::io::Write;
 use std::result;
+use std::sync::LazyLock as Lazy;
 
 use anyhow::Error;
-use once_cell::sync::Lazy;
 
 pub use crate::util::temp::TempPath;
 

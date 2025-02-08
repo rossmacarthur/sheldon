@@ -1,8 +1,9 @@
-use anyhow::{Context as ResultExt, Result};
-use once_cell::sync::Lazy;
-use serde::Serialize;
 use std::collections::BTreeMap;
+use std::sync::LazyLock as Lazy;
 use std::sync::Mutex;
+
+use anyhow::{Context as ResultExt, Result};
+use serde::Serialize;
 
 use crate::context::Context;
 use crate::lock::file::LockedPlugin;

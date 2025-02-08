@@ -5,9 +5,9 @@ use std::env;
 use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
+use std::sync::LazyLock as Lazy;
 use std::sync::Once;
 
-use once_cell::sync::Lazy;
 use pretty_assertions::assert_eq;
 
 use crate::helpers::{TestCommand, TestDirs};

@@ -1,15 +1,14 @@
 //! Git helpers.
 
 use std::path::Path;
+use std::sync::LazyLock as Lazy;
 
+use anyhow::Context as ResultExt;
 use git2::{
     BranchType, Cred, CredentialType, Error, FetchOptions, Oid, RemoteCallbacks, Repository,
     ResetType,
 };
-use once_cell::sync::Lazy;
 use url::Url;
-
-use anyhow::Context as ResultExt;
 
 /// Call a function with generated fetch options.
 fn with_fetch_options<T, F>(f: F) -> anyhow::Result<T>
