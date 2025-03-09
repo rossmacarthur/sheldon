@@ -177,6 +177,7 @@ fn lock_and_source_clean() -> io::Result<()> {
     Ok(())
 }
 
+#[cfg(unix)]
 #[test]
 fn lock_and_source_clean_permission_denied() -> io::Result<()> {
     use std::os::unix::fs::PermissionsExt;

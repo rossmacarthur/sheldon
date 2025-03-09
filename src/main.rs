@@ -64,8 +64,10 @@ pub fn run_command(ctx: &Context, command: Command) -> Result<()> {
     result
 }
 
-fn acquire_mutex(ctx: &Context, path: &Path) -> Result<fmutex::Guard> {
-    match fmutex::try_lock(path).with_context(|| format!("failed to open `{}`", path.display()))? {
+fn acquire_mutex(ctx: &Context, path: &Path) -> Result<fmutex::Guard<'static>> {
+    match fmutex::try_lock_path(path)
+        .with_context(|| format!("failed to open `{}`", path.display()))?
+    {
         Some(g) => Ok(g),
         None => {
             ctx.log_warning(
@@ -75,7 +77,7 @@ fn acquire_mutex(ctx: &Context, path: &Path) -> Result<fmutex::Guard> {
                     ctx.replace_home(path).display()
                 ),
             );
-            fmutex::lock(path)
+            fmutex::lock_path(path)
                 .with_context(|| format!("failed to acquire file lock `{}`", path.display()))
         }
     }
