@@ -2,9 +2,12 @@
 
 ## 0.8.2
 
-*Unreleased*
+*May 22nd, 2025*
 
-- [Reduce scope of file mutex][todo]. This fixes #196.
+- [Reduce scope of file mutex][0cec413d]. This fixes [#196].
+
+[#196]: https://github.com/rossmacarthur/sheldon/issues/196
+[0cec413d]: https://github.com/rossmacarthur/sheldon/commit/0cec413dcd5cb584952447dd2395d5e98d57672f
 
 ## 0.8.1
 
