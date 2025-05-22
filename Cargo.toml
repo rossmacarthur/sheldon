@@ -41,7 +41,7 @@ indexmap = { version = "2.4.0", features = ["rayon", "serde"] }
 itertools = "0.14.0"
 maplit = "1.0.2"
 rayon = "1.10.0"
-regex-macro = "0.2.0"
+regex-macro = "0.3.0"
 serde = { version = "1.0.209", features = ["derive"] }
 thiserror = "2.0.11"
 toml = { version = "0.8.19", features = ["preserve_order"] }

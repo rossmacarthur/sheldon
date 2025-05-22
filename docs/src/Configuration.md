@@ -248,9 +248,9 @@ following.
 
 ```toml
 [templates]
-source = '''
+source = """
 {{ hooks?.pre | nl }}{% for file in files %}source "{{ file }}"
-{% endfor %}{{ hooks?.post | nl }}'''
+{% endfor %}{{ hooks?.post | nl }}"""
 PATH = 'export PATH="{{ dir }}:$PATH"'
 path = 'path=( "{{ dir }}" $path )'
 fpath = 'fpath=( "{{ dir }}" $fpath )'
