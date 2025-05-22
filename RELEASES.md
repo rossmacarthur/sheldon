@@ -1,5 +1,11 @@
 # 📝 Release notes
 
+## 0.8.2
+
+*Unreleased*
+
+- [Reduce scope of file mutex][todo]. This fixes #196.
+
 ## 0.8.1
 
 *February 8th, 2025*

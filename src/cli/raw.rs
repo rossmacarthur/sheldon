@@ -226,9 +226,6 @@ impl clap::ValueEnum for Shell {
 fn key_value_parser(s: &str) -> Result<(String, String), String> {
     match s.split_once('=') {
         Some((k, v)) => Ok((k.to_string(), v.to_string())),
-        _ => Err(format!(
-            "{} isn't a valid key-value pair separated with =",
-            s
-        )),
+        _ => Err(format!("{s} isn't a valid key-value pair separated with =")),
     }
 }

@@ -224,11 +224,12 @@ checksum = "37909eebbb50d72f9059c3b6d82c0463f2ff062c9e95845c43a6c9c0355411be"
 
 [[package]]
 name = "fmutex"
-version = "0.1.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "01e84c17070603126a7b0cd07d0ecc8e8cca4d15b67934ac2740286a84f3086c"
+checksum = "5bd990c8a95704647aeb7cc51b0ea54c5072c824894977cc8ba679459f00bc9a"
 dependencies = [
  "libc",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]

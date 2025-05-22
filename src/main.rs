@@ -40,15 +40,6 @@ fn main() {
 
 /// The main entry point to execute the application.
 pub fn run_command(ctx: &Context, command: Command) -> Result<()> {
-    // We always try to acquire the mutex but it is only strictly necessary for
-    // the lock and source commands.
-    let _guard = match acquire_mutex(ctx, ctx.config_dir()) {
-        Ok(g) => Some(g),
-        Err(_) if !matches!(command, Command::Lock | Command::Source) => None,
-        Err(err) => {
-            return Err(err).context("failed to acquire lock on config directory");
-        }
-    };
     let mut warnings = Vec::new();
     let result = match command {
         Command::Init { shell } => init(ctx, shell),
@@ -64,27 +55,11 @@ pub fn run_command(ctx: &Context, command: Command) -> Result<()> {
     result
 }
 
-fn acquire_mutex(ctx: &Context, path: &Path) -> Result<fmutex::Guard> {
-    match fmutex::try_lock(path).with_context(|| format!("failed to open `{}`", path.display()))? {
-        Some(g) => Ok(g),
-        None => {
-            ctx.log_warning(
-                "Blocking",
-                &format!(
-                    "waiting for file lock on {}",
-                    ctx.replace_home(path).display()
-                ),
-            );
-            fmutex::lock(path)
-                .with_context(|| format!("failed to acquire file lock `{}`", path.display()))
-        }
-    }
-}
-
 /// Executes the `init` subcommand.
 ///
 /// Initialize a new config file.
 fn init(ctx: &Context, shell: Option<Shell>) -> Result<()> {
+    let _guard = access(ctx, Access::W);
     let path = ctx.config_file();
     match path
         .metadata()
@@ -105,6 +80,7 @@ fn init(ctx: &Context, shell: Option<Shell>) -> Result<()> {
 ///
 /// Add a new plugin to the config file.
 fn add(ctx: &Context, name: String, plugin: &EditPlugin) -> Result<()> {
+    let _guard = access(ctx, Access::W);
     let path = ctx.config_file();
     let mut config = match EditConfig::from_path(path) {
         Ok(config) => {
@@ -124,6 +100,7 @@ fn add(ctx: &Context, name: String, plugin: &EditPlugin) -> Result<()> {
 ///
 /// Open up the config file in the default editor.
 fn edit(ctx: &Context) -> Result<()> {
+    let _guard = access(ctx, Access::W);
     let path = ctx.config_file();
     let original_contents = match fs::read_to_string(path)
         .with_context(|| format!("failed to read from `{}`", path.display()))
@@ -152,6 +129,7 @@ fn edit(ctx: &Context) -> Result<()> {
 ///
 /// Remove a plugin from the config file.
 fn remove(ctx: &Context, name: String) -> Result<()> {
+    let _guard = access(ctx, Access::W);
     let path = ctx.config_file();
     let mut config = EditConfig::from_path(path)?;
     ctx.log_header("Loaded", path);
@@ -191,6 +169,8 @@ fn init_config(ctx: &Context, shell: Option<Shell>, path: &Path, err: Error) -> 
 ///
 /// Install the plugins sources and generate the lock file.
 fn lock(ctx: &Context, warnings: &mut Vec<Error>) -> Result<()> {
+    let _guard = access(ctx, Access::W);
+
     let mut locked = locked(ctx, warnings)?;
 
     if let Some(last) = locked.errors.pop() {
@@ -216,36 +196,49 @@ fn source(ctx: &Context, warnings: &mut Vec<Error>) -> Result<()> {
     let mut to_path = true;
 
     let locked_config = if ctx.lock_mode.is_some() || newer_than(config_path, lock_path) {
+        let _g = access(ctx, Access::W)?;
         locked(ctx, warnings)?
     } else {
-        match lock::from_path(lock_path) {
+        let cfg = {
+            let _g = access(ctx, Access::R)?;
+            lock::from_path(lock_path)
+        };
+        match cfg {
             Ok(locked_config) => {
                 if locked_config.verify(ctx) {
                     to_path = false;
                     ctx.log_verbose_header("Unlocked", lock_path);
                     locked_config
                 } else {
+                    let _g = access(ctx, Access::W)?;
                     locked(ctx, warnings)?
                 }
             }
-            Err(_) => locked(ctx, warnings)?,
+            Err(_) => {
+                let _g = access(ctx, Access::W)?;
+                locked(ctx, warnings)?
+            }
         }
     };
 
-    let script = locked_config
-        .script(ctx)
-        .context("failed to render source")?;
+    let script = {
+        let _g = access(ctx, Access::R)?;
+        let script = locked_config
+            .script(ctx)
+            .context("failed to render source")?;
 
-    if to_path && locked_config.errors.is_empty() {
-        locked_config
-            .to_path(lock_path)
-            .context("failed to write lock file")?;
-        ctx.log_header("Locked", lock_path);
-    } else {
-        for err in &locked_config.errors {
-            ctx.log_error(err);
+        if to_path && locked_config.errors.is_empty() {
+            locked_config
+                .to_path(lock_path)
+                .context("failed to write lock file")?;
+            ctx.log_header("Locked", lock_path);
+        } else {
+            for err in &locked_config.errors {
+                ctx.log_error(err);
+            }
         }
-    }
+        script
+    };
 
     print!("{script}");
     Ok(())
@@ -268,4 +261,57 @@ fn locked(ctx: &Context, warnings: &mut Vec<Error>) -> Result<LockedConfig> {
     ctx.log_header("Loaded", path);
     config::clean(ctx, warnings, &config)?;
     lock::config(ctx, config)
+}
+
+#[derive(Debug, Clone, Copy)]
+enum Access {
+    R,
+    W,
+}
+
+fn access(ctx: &Context, mode: Access) -> Result<fmutex::Guard<'static>> {
+    match mode {
+        Access::R => lock_read(ctx).context("failed to acquire exclusive lock on config directory"),
+        Access::W => lock_write(ctx).context("failed to acquire shared lock on config directory"),
+    }
+}
+
+fn lock_write(ctx: &Context) -> Result<fmutex::Guard<'static>> {
+    let path = ctx.config_dir();
+    match fmutex::try_lock_exclusive_path(path)
+        .with_context(|| format!("failed to open `{}`", path.display()))?
+    {
+        Some(g) => Ok(g),
+        None => {
+            ctx.log_warning(
+                "Blocking",
+                &format!(
+                    "waiting for file lock on {}",
+                    ctx.replace_home(path).display()
+                ),
+            );
+            fmutex::lock_exclusive_path(path)
+                .with_context(|| format!("failed to acquire file lock `{}`", path.display()))
+        }
+    }
+}
+
+fn lock_read(ctx: &Context) -> Result<fmutex::Guard<'static>> {
+    let path = ctx.config_dir();
+    match fmutex::try_lock_shared_path(path)
+        .with_context(|| format!("failed to open `{}`", path.display()))?
+    {
+        Some(g) => Ok(g),
+        None => {
+            ctx.log_warning(
+                "Blocking",
+                &format!(
+                    "waiting for file lock on {}",
+                    ctx.replace_home(path).display()
+                ),
+            );
+            fmutex::lock_shared_path(path)
+                .with_context(|| format!("failed to acquire file lock `{}`", path.display()))
+        }
+    }
 }
