@@ -59,7 +59,7 @@ pub fn run_command(ctx: &Context, command: Command) -> Result<()> {
 ///
 /// Initialize a new config file.
 fn init(ctx: &Context, shell: Option<Shell>) -> Result<()> {
-    let _guard = access(ctx, Access::W);
+    let _guard = access(ctx, Access::W)?;
     let path = ctx.config_file();
     match path
         .metadata()
@@ -80,7 +80,7 @@ fn init(ctx: &Context, shell: Option<Shell>) -> Result<()> {
 ///
 /// Add a new plugin to the config file.
 fn add(ctx: &Context, name: String, plugin: &EditPlugin) -> Result<()> {
-    let _guard = access(ctx, Access::W);
+    let _guard = access(ctx, Access::W)?;
     let path = ctx.config_file();
     let mut config = match EditConfig::from_path(path) {
         Ok(config) => {
@@ -100,7 +100,7 @@ fn add(ctx: &Context, name: String, plugin: &EditPlugin) -> Result<()> {
 ///
 /// Open up the config file in the default editor.
 fn edit(ctx: &Context) -> Result<()> {
-    let _guard = access(ctx, Access::W);
+    let _guard = access(ctx, Access::W)?;
     let path = ctx.config_file();
     let original_contents = match fs::read_to_string(path)
         .with_context(|| format!("failed to read from `{}`", path.display()))
@@ -129,7 +129,7 @@ fn edit(ctx: &Context) -> Result<()> {
 ///
 /// Remove a plugin from the config file.
 fn remove(ctx: &Context, name: String) -> Result<()> {
-    let _guard = access(ctx, Access::W);
+    let _guard = access(ctx, Access::W)?;
     let path = ctx.config_file();
     let mut config = EditConfig::from_path(path)?;
     ctx.log_header("Loaded", path);
@@ -169,7 +169,7 @@ fn init_config(ctx: &Context, shell: Option<Shell>, path: &Path, err: Error) -> 
 ///
 /// Install the plugins sources and generate the lock file.
 fn lock(ctx: &Context, warnings: &mut Vec<Error>) -> Result<()> {
-    let _guard = access(ctx, Access::W);
+    let _guard = access(ctx, Access::W)?;
 
     let mut locked = locked(ctx, warnings)?;
 
