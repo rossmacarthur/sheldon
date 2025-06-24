@@ -277,7 +277,7 @@ fn access(ctx: &Context, mode: Access) -> Result<fmutex::Guard<'static>> {
 }
 
 fn lock_write(ctx: &Context) -> Result<fmutex::Guard<'static>> {
-    let path = ctx.config_dir();
+    let path = ctx.config_file();
     match fmutex::try_lock_exclusive_path(path)
         .with_context(|| format!("failed to open `{}`", path.display()))?
     {
