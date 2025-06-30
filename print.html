@@ -42,6 +42,17 @@
         <script src="toc.js"></script>
     </head>
     <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
     <div id="body-container">
         <!-- Work around some values being stored in localStorage wrapped in quotes -->
         <script>
@@ -119,7 +130,7 @@
                             <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
                             <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
                         </ul>
-                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
                             <i class="fa fa-search"></i>
                         </button>
                     </div>
@@ -765,6 +776,11 @@ use = ["async.zsh", "pure.zsh"]
 <pre><code class="language-sh">sheldon add pure --github sindresorhus/pure --use async.zsh pure.zsh
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="-release-notes"><a class="header" href="#-release-notes">📝 Release notes</a></h1>
+<h2 id="083"><a class="header" href="#083">0.8.3</a></h2>
+<p><em>June 30th, 2025</em></p>
+<ul>
+<li><a href="https://github.com/rossmacarthur/sheldon/commit/82776a317ebff33d8b76f8f40c631f6b14ea8269">Fix unhandled error in <code>access</code> function calls</a>.</li>
+</ul>
 <h2 id="082"><a class="header" href="#082">0.8.2</a></h2>
 <p><em>May 22nd, 2025</em></p>
 <ul>
