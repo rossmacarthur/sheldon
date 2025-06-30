@@ -1,5 +1,13 @@
 # 📝 Release notes
 
+## 0.8.3
+
+*June 30th, 2025*
+
+- [Fix unhandled error in `access` function calls][82776a31].
+
+[82776a31]: https://github.com/rossmacarthur/sheldon/commit/82776a317ebff33d8b76f8f40c631f6b14ea8269
+
 ## 0.8.2
 
 *May 22nd, 2025*
