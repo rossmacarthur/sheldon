@@ -46,10 +46,10 @@ serde = { version = "1.0.209", features = ["derive"] }
 thiserror = "2.0.11"
 toml = { version = "0.8.19", features = ["preserve_order"] }
 toml_edit = "0.22.20"
-upon = { version = "0.9.0", default-features = false, features = ["serde", "filters"] }
+upon = { version = "0.10.0", default-features = false, features = ["serde", "functions"] }
 url = { version = "2.5.2", features = ["serde"] }
 walkdir = "2.5.0"
-which = { version = "7.0.2", default-features = false }
+which = "8.0.0"
 yansi = "1.0.1"
 
 [dependencies.clap]
@@ -67,7 +67,7 @@ anyhow = "1.0.86"
 goldie = "0.5.0"
 pretty_assertions = "1.4.0"
 tempfile = "3.12.0"
-upon = { version = "0.9.0", default-features = false, features = ["serde", "filters", "syntax"] }
+upon = { version = "0.10.0", default-features = false, features = ["serde", "functions", "syntax"] }
 
 [features]
 # By default vendor libgit2 since we rely on some modern features.

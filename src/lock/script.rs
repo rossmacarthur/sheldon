@@ -24,14 +24,14 @@ impl LockedConfig {
 
         let mut engine = upon::Engine::new();
 
-        engine.add_filter(
+        engine.add_function(
             "get",
             |map: &BTreeMap<String, upon::Value>, key: &str| -> Option<upon::Value> {
                 *USED_GET.lock().unwrap() = true;
                 map.get(key).cloned()
             },
         );
-        engine.add_filter("nl", |mut v: upon::Value| -> upon::Value {
+        engine.add_function("nl", |mut v: upon::Value| -> upon::Value {
             if let upon::Value::String(s) = &mut v {
                 if !s.ends_with('\n') {
                     s.push('\n');
