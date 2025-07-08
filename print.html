@@ -776,6 +776,14 @@ use = ["async.zsh", "pure.zsh"]
 <pre><code class="language-sh">sheldon add pure --github sindresorhus/pure --use async.zsh pure.zsh
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="-release-notes"><a class="header" href="#-release-notes">📝 Release notes</a></h1>
+<h2 id="084"><a class="header" href="#084">0.8.4</a></h2>
+<p><em>July 8th, 2025</em></p>
+<ul>
+<li><a href="https://github.com/rossmacarthur/sheldon/issues/197">Fix <code>init</code> not working</a>. This fixes the <code>sheldon init</code> command not
+working when the config directory does not exist which was introduced
+<a href="https://github.com/rossmacarthur/sheldon/commit/0cec413dcd5cb584952447dd2395d5e98d57672f">0cec413d</a>. This also ignores not found errors when using <code>add</code>, <code>edit</code>, or
+<code>remove</code> commands.</li>
+</ul>
 <h2 id="083"><a class="header" href="#083">0.8.3</a></h2>
 <p><em>June 30th, 2025</em></p>
 <ul>
