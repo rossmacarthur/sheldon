@@ -2,7 +2,7 @@
 
 ## 0.8.4
 
-*Unreleased*
+*July 8th, 2025*
 
 - [Fix `init` not working][#197]. This fixes the `sheldon init` command not
   working when the config directory does not exist which was introduced
