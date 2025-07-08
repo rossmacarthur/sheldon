@@ -1,5 +1,16 @@
 # 📝 Release notes
 
+## 0.8.4
+
+*Unreleased*
+
+- [Fix `init` not working][#197]. This fixes the `sheldon init` command not
+  working when the config directory does not exist which was introduced
+  [0cec413d]. This also ignores not found errors when using `add`, `edit`, or
+  `remove` commands.
+
+[#197]: https://github.com/rossmacarthur/sheldon/issues/197
+
 ## 0.8.3
 
 *June 30th, 2025*
