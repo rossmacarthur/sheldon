@@ -1,5 +1,11 @@
 # 📝 Release notes
 
+## 0.8.5
+
+*Unreleased*
+
+- [Fix SSH agent authentication not used when cloning submodules][todo]
+
 ## 0.8.4
 
 *July 8th, 2025*

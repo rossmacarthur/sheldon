@@ -6,7 +6,7 @@ use std::sync::LazyLock as Lazy;
 use anyhow::Context as ResultExt;
 use git2::{
     BranchType, Cred, CredentialType, Error, FetchOptions, Oid, RemoteCallbacks, Repository,
-    ResetType,
+    ResetType, SubmoduleUpdateOptions,
 };
 use url::Url;
 
@@ -89,20 +89,29 @@ pub fn checkout(repo: &Repository, oid: Oid) -> anyhow::Result<()> {
 }
 
 /// Recursively update Git submodules.
-pub fn submodule_update(repo: &Repository) -> Result<(), Error> {
-    fn _submodule_update(repo: &Repository, todo: &mut Vec<Repository>) -> Result<(), Error> {
+pub fn submodule_update(repo: &Repository) -> anyhow::Result<()> {
+    fn _submodule_update(
+        repo: &Repository,
+        todo: &mut Vec<Repository>,
+        opts: &mut SubmoduleUpdateOptions<'_>,
+    ) -> anyhow::Result<()> {
         for mut submodule in repo.submodules()? {
-            submodule.update(true, None)?;
+            submodule.update(true, Some(opts))?;
             todo.push(submodule.open()?);
         }
         Ok(())
     }
-    let mut repos = Vec::new();
-    _submodule_update(repo, &mut repos)?;
-    while let Some(repo) = repos.pop() {
-        _submodule_update(&repo, &mut repos)?;
-    }
-    Ok(())
+
+    with_fetch_options(|fetch_opts| {
+        let mut opts = SubmoduleUpdateOptions::new();
+        let opts = opts.fetch(fetch_opts);
+        let mut repos = Vec::new();
+        _submodule_update(repo, &mut repos, opts)?;
+        while let Some(repo) = repos.pop() {
+            _submodule_update(&repo, &mut repos, opts)?;
+        }
+        Ok(())
+    })
 }
 
 fn resolve_refname(repo: &Repository, refname: &str) -> Result<Oid, Error> {
