@@ -2,9 +2,11 @@
 
 ## 0.8.5
 
-*Unreleased*
+*July 22nd, 2025*
 
-- [Fix SSH agent authentication not used when cloning submodules][todo]
+- [Fix SSH agent authentication not used when cloning submodules][f2fa35a2]
+
+[f2fa35a2]: https://github.com/rossmacarthur/sheldon/commit/f2fa35a2c128b0ec290cf3d508fb7f7830e3c7c1
 
 ## 0.8.4
 
