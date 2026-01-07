@@ -6,8 +6,8 @@ use std::sync::{LazyLock as Lazy, Once};
 use anyhow::Context as ResultExt;
 use curl::easy::Easy;
 use git2::{
-    BranchType, Cred, CredentialType, Error, FetchOptions, Oid, RemoteCallbacks, Repository,
-    ResetType, SubmoduleUpdateOptions,
+    BranchType, Config, Cred, CredentialType, Error, FetchOptions, Oid, RemoteCallbacks,
+    Repository, ResetType, SubmoduleUpdateOptions,
 };
 use url::Url;
 
@@ -33,15 +33,25 @@ where
         ))
     });
 
-    // Try to auto-detect the proxy from the git configuration so that
-    // Sheldon can be used behind a proxy.
+    // Prefer proxies set in Git config, then fallback to auto detection that will use environment variables.
     let mut proxy_opts = git2::ProxyOptions::new();
-    proxy_opts.auto();
+    if let Some(proxy_url) = proxy_url_from_git_config() {
+        proxy_opts.url(&proxy_url);
+    } else {
+        proxy_opts.auto();
+    }
 
     let mut opts = FetchOptions::new();
     opts.remote_callbacks(rcb);
     opts.proxy_options(proxy_opts);
     f(opts)
+}
+
+fn proxy_url_from_git_config() -> Option<String> {
+    let cfg = Config::open_default().ok()?;
+
+    // Use the standard git http.proxy setting.
+    cfg.get_string("http.proxy").ok()
 }
 
 fn ensure_git_curl_transport_registered() {
