@@ -1,9 +1,10 @@
 //! Git helpers.
 
 use std::path::Path;
-use std::sync::LazyLock as Lazy;
+use std::sync::{LazyLock as Lazy, Once};
 
 use anyhow::Context as ResultExt;
+use curl::easy::Easy;
 use git2::{
     BranchType, Cred, CredentialType, Error, FetchOptions, Oid, RemoteCallbacks, Repository,
     ResetType, SubmoduleUpdateOptions,
@@ -15,6 +16,8 @@ fn with_fetch_options<T, F>(f: F) -> anyhow::Result<T>
 where
     F: FnOnce(FetchOptions<'_>) -> anyhow::Result<T>,
 {
+    ensure_git_curl_transport_registered();
+
     let mut rcb = RemoteCallbacks::new();
     rcb.credentials(|_, username, allowed| {
         if allowed.contains(CredentialType::SSH_KEY) {
@@ -39,6 +42,25 @@ where
     opts.remote_callbacks(rcb);
     opts.proxy_options(proxy_opts);
     f(opts)
+}
+
+fn ensure_git_curl_transport_registered() {
+    static REGISTER: Once = Once::new();
+
+    REGISTER.call_once(|| {
+        if let Err(err) = register_git_http_transport() {
+            eprintln!("warning: failed to enable libcurl transport for git: {err}");
+        }
+    });
+}
+
+fn register_git_http_transport() -> anyhow::Result<()> {
+    let mut handle = Easy::new();
+    handle.useragent(&format!("sheldon/{}", env!("CARGO_PKG_VERSION")))?;
+    unsafe {
+        git2_curl::register(handle);
+    }
+    Ok(())
 }
 
 /// Open a Git repository.
