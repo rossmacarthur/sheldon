@@ -47,17 +47,12 @@ pub struct Output {
 }
 
 /// The requested verbosity of output.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Default)]
 pub enum Verbosity {
     Quiet,
+    #[default]
     Normal,
     Verbose,
-}
-
-impl Default for Verbosity {
-    fn default() -> Self {
-        Self::Normal
-    }
 }
 
 impl Context {

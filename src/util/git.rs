@@ -33,7 +33,8 @@ where
         ))
     });
 
-    // Prefer proxies set in Git config, then fallback to auto detection that will use environment variables.
+    // Prefer proxies set in Git config,
+    // otherwise fallback to auto detection which uses environment variables.
     let mut proxy_opts = git2::ProxyOptions::new();
     if let Some(proxy_url) = proxy_url_from_git_config() {
         proxy_opts.url(&proxy_url);
