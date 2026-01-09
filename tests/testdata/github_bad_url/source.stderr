@@ -4,4 +4,4 @@ LOADED ~/.config/sheldon/plugins.toml
 
 ERROR: failed to install source `https://github.com/rossmacarthur/sheldon-bad-url`
   due to: failed to git clone `https://github.com/rossmacarthur/sheldon-bad-url`
-  due to: remote authentication required but none available
+  due to: failed to receive HTTP 200 response: got 401; class=Net (12)

@@ -35,6 +35,7 @@ constcat = "0.6.0"
 curl = "0.4.46"
 fmutex = "0.3.0"
 git2 = "0.20.0"
+git2-curl = "0.21.0"
 globwalk = "0.9.1"
 home = "0.5.9"
 indexmap = { version = "2.4.0", features = ["rayon", "serde"] }

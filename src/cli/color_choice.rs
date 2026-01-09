@@ -6,20 +6,15 @@ use std::str::FromStr;
 use thiserror::Error;
 
 /// Whether messages should use color output.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
 pub enum ColorChoice {
     /// Force color output.
     Always,
     /// Intelligently guess whether to use color output.
+    #[default]
     Auto,
     /// Force disable color output.
     Never,
-}
-
-impl Default for ColorChoice {
-    fn default() -> Self {
-        Self::Auto
-    }
 }
 
 impl fmt::Display for ColorChoice {

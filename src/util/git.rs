@@ -1,12 +1,13 @@
 //! Git helpers.
 
 use std::path::Path;
-use std::sync::LazyLock as Lazy;
+use std::sync::{LazyLock as Lazy, Once};
 
 use anyhow::Context as ResultExt;
+use curl::easy::Easy;
 use git2::{
-    BranchType, Cred, CredentialType, Error, FetchOptions, Oid, RemoteCallbacks, Repository,
-    ResetType, SubmoduleUpdateOptions,
+    BranchType, Config, Cred, CredentialType, Error, FetchOptions, Oid, RemoteCallbacks,
+    Repository, ResetType, SubmoduleUpdateOptions,
 };
 use url::Url;
 
@@ -15,6 +16,8 @@ fn with_fetch_options<T, F>(f: F) -> anyhow::Result<T>
 where
     F: FnOnce(FetchOptions<'_>) -> anyhow::Result<T>,
 {
+    ensure_git_curl_transport_registered();
+
     let mut rcb = RemoteCallbacks::new();
     rcb.credentials(|_, username, allowed| {
         if allowed.contains(CredentialType::SSH_KEY) {
@@ -30,15 +33,45 @@ where
         ))
     });
 
-    // Try to auto-detect the proxy from the git configuration so that
-    // Sheldon can be used behind a proxy.
+    // Prefer proxies set in Git config,
+    // otherwise fallback to auto detection which uses environment variables.
     let mut proxy_opts = git2::ProxyOptions::new();
-    proxy_opts.auto();
+    if let Some(proxy_url) = proxy_url_from_git_config() {
+        proxy_opts.url(&proxy_url);
+    } else {
+        proxy_opts.auto();
+    }
 
     let mut opts = FetchOptions::new();
     opts.remote_callbacks(rcb);
     opts.proxy_options(proxy_opts);
     f(opts)
+}
+
+fn proxy_url_from_git_config() -> Option<String> {
+    let cfg = Config::open_default().ok()?;
+
+    // Use the standard git http.proxy setting.
+    cfg.get_string("http.proxy").ok()
+}
+
+fn ensure_git_curl_transport_registered() {
+    static REGISTER: Once = Once::new();
+
+    REGISTER.call_once(|| {
+        if let Err(err) = register_git_http_transport() {
+            eprintln!("warning: failed to enable libcurl transport for git: {err}");
+        }
+    });
+}
+
+fn register_git_http_transport() -> anyhow::Result<()> {
+    let mut handle = Easy::new();
+    handle.useragent(&format!("sheldon/{}", env!("CARGO_PKG_VERSION")))?;
+    unsafe {
+        git2_curl::register(handle);
+    }
+    Ok(())
 }
 
 /// Open a Git repository.
