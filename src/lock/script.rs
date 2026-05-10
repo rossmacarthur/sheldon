@@ -90,12 +90,12 @@ impl LockedConfig {
                     let out = engine
                         .compile(&plugin.raw)
                         .with_context(|| {
-                            format!("failed to compile inline plugin `{}`", &plugin.name)
+                            format!("failed to compile inline plugin `{}`", plugin.name)
                         })?
                         .render(&engine, &data)
                         .to_string()
                         .with_context(|| {
-                            format!("failed to render inline plugin `{}`", &plugin.name)
+                            format!("failed to render inline plugin `{}`", plugin.name)
                         })?;
                     script.push_str(&out);
                     if !out.ends_with('\n') {

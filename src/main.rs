@@ -146,7 +146,7 @@ fn init_config(ctx: &Context, shell: Option<Shell>, path: &Path, err: Error) -> 
         if ctx.interactive
             && !casual::confirm(format!(
                 "Initialize new config file `{}`?",
-                &ctx.replace_home(path).display()
+                ctx.replace_home(path).display()
             ))
         {
             bail!("aborted initialization!");
@@ -155,7 +155,7 @@ fn init_config(ctx: &Context, shell: Option<Shell>, path: &Path, err: Error) -> 
             fs::create_dir_all(parent).with_context(|| {
                 format!(
                     "failed to create directory `{}`",
-                    &ctx.replace_home(parent).display()
+                    ctx.replace_home(parent).display()
                 )
             })?;
         }
