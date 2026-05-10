@@ -17,28 +17,28 @@ _sheldon() {
                 cmd="sheldon"
                 ;;
             sheldon,add)
-                cmd="sheldon__add"
+                cmd="sheldon__subcmd__add"
                 ;;
             sheldon,completions)
-                cmd="sheldon__completions"
+                cmd="sheldon__subcmd__completions"
                 ;;
             sheldon,edit)
-                cmd="sheldon__edit"
+                cmd="sheldon__subcmd__edit"
                 ;;
             sheldon,init)
-                cmd="sheldon__init"
+                cmd="sheldon__subcmd__init"
                 ;;
             sheldon,lock)
-                cmd="sheldon__lock"
+                cmd="sheldon__subcmd__lock"
                 ;;
             sheldon,remove)
-                cmd="sheldon__remove"
+                cmd="sheldon__subcmd__remove"
                 ;;
             sheldon,source)
-                cmd="sheldon__source"
+                cmd="sheldon__subcmd__source"
                 ;;
             sheldon,version)
-                cmd="sheldon__version"
+                cmd="sheldon__subcmd__version"
                 ;;
             *)
                 ;;
@@ -80,7 +80,7 @@ _sheldon() {
             COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
             return 0
             ;;
-        sheldon__add)
+        sheldon__subcmd__add)
             opts="-h --git --gist --github --remote --local --proto --branch --rev --tag --dir --use --apply --profiles --hooks --help <NAME>"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
@@ -150,7 +150,7 @@ _sheldon() {
             COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
             return 0
             ;;
-        sheldon__completions)
+        sheldon__subcmd__completions)
             opts="-h --shell --help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
@@ -168,7 +168,7 @@ _sheldon() {
             COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
             return 0
             ;;
-        sheldon__edit)
+        sheldon__subcmd__edit)
             opts="-h --help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
@@ -182,7 +182,7 @@ _sheldon() {
             COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
             return 0
             ;;
-        sheldon__init)
+        sheldon__subcmd__init)
             opts="-h --shell --help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
@@ -200,7 +200,7 @@ _sheldon() {
             COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
             return 0
             ;;
-        sheldon__lock)
+        sheldon__subcmd__lock)
             opts="-h --update --reinstall --help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
@@ -214,7 +214,7 @@ _sheldon() {
             COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
             return 0
             ;;
-        sheldon__remove)
+        sheldon__subcmd__remove)
             opts="-h --help <NAME>"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
@@ -228,7 +228,7 @@ _sheldon() {
             COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
             return 0
             ;;
-        sheldon__source)
+        sheldon__subcmd__source)
             opts="-h --relock --update --reinstall --help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
@@ -242,7 +242,7 @@ _sheldon() {
             COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
             return 0
             ;;
-        sheldon__version)
+        sheldon__subcmd__version)
             opts="-h --help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )

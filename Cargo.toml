@@ -12,7 +12,7 @@ keywords = ["shell", "plugin", "manager", "zsh", "bash"]
 categories = ["command-line-utilities"]
 build = "build.rs"
 include = ["src/**/*", "LICENSE-*", "README.md", "build.rs"]
-rust-version = "1.81.0"
+rust-version = "1.90.0"
 
 [profile.release]
 strip = "symbols"
@@ -44,8 +44,8 @@ rayon = "1.10.0"
 regex-macro = "0.3.0"
 serde = { version = "1.0.209", features = ["derive"] }
 thiserror = "2.0.11"
-toml = { version = "0.9.2", features = ["preserve_order"] }
-toml_edit = "0.23.2"
+toml = { version = "1.0.7", features = ["preserve_order"] }
+toml_edit = "0.25.5"
 upon = { version = "0.10.0", default-features = false, features = ["serde", "functions"] }
 url = { version = "2.5.2", features = ["serde"] }
 walkdir = "2.5.0"
@@ -64,7 +64,7 @@ features = [
 anyhow = "1.0.86"
 
 [dev-dependencies]
-goldie = "0.5.0"
+goldie = { version = "0.7.0", default-features = false, features = ["color", "template"] }
 pretty_assertions = "1.4.0"
 tempfile = "3.12.0"
 upon = { version = "0.10.0", default-features = false, features = ["serde", "functions", "syntax"] }

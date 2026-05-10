@@ -128,43 +128,43 @@ _sheldon_commands() {
     )
     _describe -t commands 'sheldon commands' commands "$@"
 }
-(( $+functions[_sheldon__add_commands] )) ||
-_sheldon__add_commands() {
+(( $+functions[_sheldon__subcmd__add_commands] )) ||
+_sheldon__subcmd__add_commands() {
     local commands; commands=()
     _describe -t commands 'sheldon add commands' commands "$@"
 }
-(( $+functions[_sheldon__completions_commands] )) ||
-_sheldon__completions_commands() {
+(( $+functions[_sheldon__subcmd__completions_commands] )) ||
+_sheldon__subcmd__completions_commands() {
     local commands; commands=()
     _describe -t commands 'sheldon completions commands' commands "$@"
 }
-(( $+functions[_sheldon__edit_commands] )) ||
-_sheldon__edit_commands() {
+(( $+functions[_sheldon__subcmd__edit_commands] )) ||
+_sheldon__subcmd__edit_commands() {
     local commands; commands=()
     _describe -t commands 'sheldon edit commands' commands "$@"
 }
-(( $+functions[_sheldon__init_commands] )) ||
-_sheldon__init_commands() {
+(( $+functions[_sheldon__subcmd__init_commands] )) ||
+_sheldon__subcmd__init_commands() {
     local commands; commands=()
     _describe -t commands 'sheldon init commands' commands "$@"
 }
-(( $+functions[_sheldon__lock_commands] )) ||
-_sheldon__lock_commands() {
+(( $+functions[_sheldon__subcmd__lock_commands] )) ||
+_sheldon__subcmd__lock_commands() {
     local commands; commands=()
     _describe -t commands 'sheldon lock commands' commands "$@"
 }
-(( $+functions[_sheldon__remove_commands] )) ||
-_sheldon__remove_commands() {
+(( $+functions[_sheldon__subcmd__remove_commands] )) ||
+_sheldon__subcmd__remove_commands() {
     local commands; commands=()
     _describe -t commands 'sheldon remove commands' commands "$@"
 }
-(( $+functions[_sheldon__source_commands] )) ||
-_sheldon__source_commands() {
+(( $+functions[_sheldon__subcmd__source_commands] )) ||
+_sheldon__subcmd__source_commands() {
     local commands; commands=()
     _describe -t commands 'sheldon source commands' commands "$@"
 }
-(( $+functions[_sheldon__version_commands] )) ||
-_sheldon__version_commands() {
+(( $+functions[_sheldon__subcmd__version_commands] )) ||
+_sheldon__subcmd__version_commands() {
     local commands; commands=()
     _describe -t commands 'sheldon version commands' commands "$@"
 }
