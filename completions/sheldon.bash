@@ -81,7 +81,7 @@ _sheldon() {
             return 0
             ;;
         sheldon__subcmd__add)
-            opts="-h --git --gist --github --remote --local --proto --branch --rev --tag --dir --use --apply --profiles --hooks --help <NAME>"
+            opts="-h --git --gist --github --remote --local --proto --branch --rev --tag --dir --use --apply --profiles --hooks --help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -215,7 +215,7 @@ _sheldon() {
             return 0
             ;;
         sheldon__subcmd__remove)
-            opts="-h --help <NAME>"
+            opts="-h --help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
