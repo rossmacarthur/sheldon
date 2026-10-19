@@ -236,7 +236,8 @@ Available built-in templates are different depending on what shell you are
 using. The following are available for both Bash and Zsh.
 
 * **source**: source each file in a plugin.
-* **PATH**: add the plugin directory to the `PATH` variable.
+* **PATH**: add the plugin directory to the `PATH` variable if it is not already
+  present.
 
 If you are using Zsh then the following are also available.
 
@@ -251,7 +252,7 @@ following.
 source = """
 {{ hooks?.pre | nl }}{% for file in files %}source "{{ file }}"
 {% endfor %}{{ hooks?.post | nl }}"""
-PATH = 'export PATH="{{ dir }}:$PATH"'
+PATH = 'case ":$PATH:" in *:"{{ dir }}":*) ;; *) PATH="{{ dir }}:$PATH" ;; esac; export PATH'
 path = 'path=( "{{ dir }}" $path )'
 fpath = 'fpath=( "{{ dir }}" $fpath )'
 ```

@@ -210,13 +210,13 @@ impl Shell {
     pub fn default_templates(&self) -> &IndexMap<String, String> {
         static DEFAULT_TEMPLATES_BASH: Lazy<IndexMap<String, String>> = Lazy::new(|| {
             indexmap_into! {
-                "PATH" => "export PATH=\"{{ dir }}:$PATH\"",
+                "PATH" => "case \":$PATH:\" in *:\"{{ dir }}\":*) ;; *) PATH=\"{{ dir }}:$PATH\" ;; esac; export PATH",
                 "source" => "{{ hooks?.pre | nl }}{% for file in files %}source \"{{ file }}\"\n{% endfor %}{{ hooks?.post | nl }}"
             }
         });
         static DEFAULT_TEMPLATES_ZSH: Lazy<IndexMap<String, String>> = Lazy::new(|| {
             indexmap_into! {
-                "PATH" => "export PATH=\"{{ dir }}:$PATH\"",
+                "PATH" => "case \":$PATH:\" in *:\"{{ dir }}\":*) ;; *) PATH=\"{{ dir }}:$PATH\" ;; esac; export PATH",
                 "path" => "path=( \"{{ dir }}\" $path )",
                 "fpath" => "fpath=( \"{{ dir }}\" $fpath )",
                 "source" => "{{ hooks?.pre | nl }}{% for file in files %}source \"{{ file }}\"\n{% endfor %}{{ hooks?.post | nl }}"
@@ -310,6 +310,103 @@ mod tests {
                 },
                 interactive: true,
                 lock_mode: None,
+            }
+        }
+    }
+
+    #[test]
+    fn path_template_preserves_existing_elements() {
+        let cases = [
+            (
+                "/plugins/bin",
+                "/usr/bin:/bin",
+                "/plugins/bin:/usr/bin:/bin",
+            ),
+            (
+                "/plugins/bin",
+                "/plugins/bin:/usr/bin",
+                "/plugins/bin:/usr/bin",
+            ),
+            (
+                "/plugins/bin",
+                "/usr/bin:/plugins/bin:/bin",
+                "/usr/bin:/plugins/bin:/bin",
+            ),
+            (
+                "/plugins/bin",
+                "/usr/bin:/plugins/bin",
+                "/usr/bin:/plugins/bin",
+            ),
+            (
+                "/plugins/bin",
+                "/plugins/binary:/usr/bin",
+                "/plugins/bin:/plugins/binary:/usr/bin",
+            ),
+            (
+                "/plugins/bin",
+                "/other/plugins/bin:/usr/bin",
+                "/plugins/bin:/other/plugins/bin:/usr/bin",
+            ),
+            (
+                "/plugins/bin",
+                "/plugins/bin/subdir:/usr/bin",
+                "/plugins/bin:/plugins/bin/subdir:/usr/bin",
+            ),
+            (
+                "/plugins/my bin",
+                "/usr/bin:/plugins/my bin",
+                "/usr/bin:/plugins/my bin",
+            ),
+            ("/plugins/my bin", "/usr/bin", "/plugins/my bin:/usr/bin"),
+            (
+                "/plugins/[bin]*",
+                "/plugins/b:/usr/bin",
+                "/plugins/[bin]*:/plugins/b:/usr/bin",
+            ),
+            ("/plugins/bin", "", "/plugins/bin:"),
+            ("/plugins/bin", ":/usr/bin::", "/plugins/bin::/usr/bin::"),
+            (
+                "/plugins/bin",
+                "/plugins/bin:/plugins/bin",
+                "/plugins/bin:/plugins/bin",
+            ),
+        ];
+        for (shell, bin) in [(Shell::Bash, "bash"), (Shell::Zsh, "zsh")] {
+            let bin_path = match which::which(bin) {
+                Ok(path) => path,
+                Err(which::Error::CannotFindBinaryPath) => {
+                    eprintln!("skipping {bin}: shell is not installed");
+                    continue;
+                }
+                Err(err) => panic!("failed to locate {bin}: {err}"),
+            };
+            for (dir, path, expected) in cases {
+                let engine = upon::Engine::new();
+                let template = engine.compile(&shell.default_templates()["PATH"]).unwrap();
+                let script = template
+                    .render(&engine, upon::value! { dir: dir })
+                    .to_string()
+                    .unwrap();
+                // Check a child shell too so an existing, unexported PATH is still exported.
+                let command = format!(
+                    "PATH=$1\n\
+                     typeset +x PATH\n\
+                     {script}\n\
+                     {script}\n\
+                     \"$2\" -f -c 'printf \"%s\" \"$PATH\"'"
+                );
+                let output = std::process::Command::new(&bin_path)
+                    .args(["-f", "-c", &command, bin, path, bin_path.to_str().unwrap()])
+                    .env_clear()
+                    .env("PATH", path)
+                    .output()
+                    .unwrap();
+                assert!(output.status.success(), "{bin}: {:?}", output.stderr);
+                assert_eq!(
+                    String::from_utf8(output.stdout).unwrap(),
+                    expected,
+                    "{bin}: dir={dir:?}, PATH={path:?}",
+                );
             }
         }
     }

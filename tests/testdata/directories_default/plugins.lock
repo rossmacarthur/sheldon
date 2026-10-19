@@ -21,7 +21,7 @@ apply = ["source"]
 [plugins.hooks]
 
 [templates]
-PATH = 'export PATH="{{ dir }}:$PATH"'
+PATH = 'case ":$PATH:" in *:"{{ dir }}":*) ;; *) PATH="{{ dir }}:$PATH" ;; esac; export PATH'
 path = 'path=( "{{ dir }}" $path )'
 fpath = 'fpath=( "{{ dir }}" $fpath )'
 source = """
