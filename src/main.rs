@@ -182,6 +182,7 @@ fn lock(ctx: &Context, warnings: &mut Vec<Error>) -> Result<()> {
         let path = ctx.lock_file();
         locked.to_path(path).context("failed to write lock file")?;
         ctx.log_header("Locked", path);
+        warn_empty_profile(ctx, &locked);
         Ok(())
     }
 }
@@ -240,8 +241,20 @@ fn source(ctx: &Context, warnings: &mut Vec<Error>) -> Result<()> {
         script
     };
 
+    warn_empty_profile(ctx, &locked_config);
     print!("{script}");
     Ok(())
+}
+
+fn warn_empty_profile(ctx: &Context, locked: &LockedConfig) {
+    if locked.plugins.is_empty() && locked.errors.is_empty() {
+        if let Some(profile) = ctx.profile() {
+            ctx.log_warning(
+                "Warning",
+                &format!("profile `{profile}` matches no plugins"),
+            );
+        }
+    }
 }
 
 /// Returns `true` if the left path is newer than the right.

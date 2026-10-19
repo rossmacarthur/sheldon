@@ -414,6 +414,105 @@ fn lock_and_source_profiles() -> io::Result<()> {
     Ok(())
 }
 
+fn check_profile_selection(
+    config: &str,
+    profile: Option<&str>,
+    script: &str,
+    warning: bool,
+) -> io::Result<()> {
+    for first_command in ["lock", "source"] {
+        let dirs = TestDirs::default()?;
+        fs::write(dirs.config.join("plugins.toml"), config)?;
+        let lock_name = profile
+            .map(|profile| format!("plugins.{profile}.lock"))
+            .unwrap_or_else(|| "plugins.lock".to_string());
+        let warning = if warning {
+            format!(
+                "   WARNING profile `{}` matches no plugins\n",
+                profile.unwrap()
+            )
+        } else {
+            String::new()
+        };
+
+        for command in [first_command, "source"] {
+            let cached = dirs.data.join(&lock_name).exists();
+            let status = if cached {
+                format!("UNLOCKED ~/.local/share/sheldon/{lock_name}\n")
+            } else {
+                format!(
+                    "LOADED ~/.config/sheldon/plugins.toml\nLOCKED ~/.local/share/sheldon/{lock_name}\n"
+                )
+            };
+            let rendered = if command == "source" && !script.is_empty() {
+                "   INLINED test\n"
+            } else {
+                ""
+            };
+            let status = if cached {
+                format!("{status}{rendered}")
+            } else if command == "source" {
+                status.replace("LOCKED ", &format!("{rendered}LOCKED "))
+            } else {
+                status
+            };
+            let mut cmd = TestCommand::new(&dirs)
+                .expect_exit_code(0)
+                .expect_stdout(if command == "source" { script } else { "" }.to_string())
+                .expect_stderr(format!("{status}{warning}"));
+            if let Some(profile) = profile {
+                cmd = if first_command == "lock" {
+                    cmd.env("SHELDON_PROFILE", profile)
+                } else {
+                    cmd.arg("--profile").arg(profile)
+                };
+            }
+            cmd.arg(command).run()?;
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn profile_matches_no_plugins() -> io::Result<()> {
+    check_profile_selection(
+        "[plugins.test]\ninline = 'echo test'\nprofiles = ['work']\n",
+        Some("wrok"),
+        "",
+        true,
+    )
+}
+
+#[test]
+fn profile_matches_inline_plugin() -> io::Result<()> {
+    check_profile_selection(
+        "[plugins.test]\ninline = 'echo test'\nprofiles = ['work']\n",
+        Some("work"),
+        "echo test\n",
+        false,
+    )
+}
+
+#[test]
+fn profile_default_excludes_conditional_plugins() -> io::Result<()> {
+    check_profile_selection(
+        "[plugins.test]\ninline = 'echo test'\nprofiles = ['work']\n",
+        None,
+        "",
+        false,
+    )
+}
+
+#[test]
+fn profile_keeps_unconditional_plugin() -> io::Result<()> {
+    check_profile_selection(
+        "[plugins.test]\ninline = 'echo test'\n[plugins.conditional]\ninline = 'echo work'\nprofiles = ['work']\n",
+        Some("wrok"),
+        "echo test\n",
+        false,
+    )
+}
+
 #[test]
 fn lock_and_source_hooks() -> io::Result<()> {
     let case = TestCase::load("hooks")?;
